@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>XenSQL</title>
+    <script>
+      // Boot cache: paint the right theme/lang on the first frame, before the
+      // bundle loads. Mirrored from the authoritative settings.json on change.
+      (function () {
+        try {
+          var theme = localStorage.getItem('xensql-theme');
+          if (theme === 'light') {
+            document.documentElement.dataset.theme = 'light';
+          } else {
+            document.documentElement.dataset.theme = 'dark';
+          }
+          var lang = localStorage.getItem('xensql-language');
+          if (lang === 'de' || lang === 'en' || lang === 'bg') {
+            document.documentElement.lang = lang;
+          }
+        } catch (e) {
+          document.documentElement.dataset.theme = 'dark';
+        }
+      })();
+    </script>
+    <style>
+      html,
+      body,
+      #root {
+        background: #0f1117;
+        color: #e6edf3;
+      }
+      html[data-theme='light'],
+      html[data-theme='light'] body,
+      html[data-theme='light'] #root {
+        background: #ffffff;
+        color: #1f2328;
+      }
+      /* Loading splash until the app hydrates and paints. Follows the boot-script
+         theme so a warm cache means no flash; main.tsx fades it out on first paint. */
+      #app-loading {
+        position: fixed;
+        inset: 0;
+        z-index: 9999;
+        display: grid;
+        place-items: center;
+        background: #0f1117;
+        transition: opacity 0.2s ease;
+      }
+      html[data-theme='light'] #app-loading {
+        background: #ffffff;
+      }
+      #app-loading.is-hidden {
+        opacity: 0;
+        pointer-events: none;
+      }
+      #app-loading .spinner {
+        width: 28px;
+        height: 28px;
+        border: 3px solid rgba(230, 237, 243, 0.2);
+        border-top-color: #e6edf3;
+        border-radius: 50%;
+        animation: app-loading-spin 0.7s linear infinite;
+      }
+      html[data-theme='light'] #app-loading .spinner {
+        border-color: rgba(31, 35, 40, 0.15);
+        border-top-color: #1f2328;
+      }
+      @keyframes app-loading-spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        #app-loading .spinner {
+          animation: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <div id="app-loading">
+      <div class="spinner" role="status" aria-label="Loading"></div>
+    </div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

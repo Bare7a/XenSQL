@@ -1,0 +1,138 @@
+import type {
+  ConnectionConfig,
+  ConnectionFolder,
+  EditorTab,
+  HistoryEntry,
+  QueryResult,
+  SavedQuery,
+  TableDataRequest,
+} from '@/types';
+import {
+  normalizeColumns,
+  normalizeHistory,
+  normalizeSavedQueries,
+  normalizeSchemaBundle,
+  normalizeSchemas,
+  normalizeTables,
+  toArray,
+} from '@/shared/lib/normalize';
+
+import {
+  ListConnections,
+  SaveConnection,
+  DeleteConnection,
+  ReorderConnections,
+  TestConnection,
+  Connect,
+  CancelQuery,
+  Disconnect,
+  IsConnected,
+  GetConnectionStatus,
+  LoadSchemaData,
+  ListFolders,
+  SaveFolder,
+  DeleteFolder,
+  PickSQLiteFile,
+  GetPendingFile,
+  ListSchemas,
+  ListTables,
+  ListColumns,
+  ExecuteQueryStream,
+  QueryTableStream,
+  UpdateRow,
+  DeleteRows,
+  InsertRow,
+  GetQueryHistory,
+  ClearQueryHistory,
+  DeleteQueryHistoryEntry,
+  ListSavedQueries,
+  SaveSavedQuery,
+  DeleteSavedQuery,
+  GetEditorSession,
+  GetAppInfo,
+  SaveEditorSession,
+  FormatSQL,
+  ExportResult,
+  CopyToClipboard,
+  PickExportSavePath,
+  SaveTextFile,
+  BeginTransaction,
+  CommitTransaction,
+  RollbackTransaction,
+  CleanupTabTransaction,
+} from '@wails/go/main/App';
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const cast = <T>(p: Promise<unknown>): Promise<T> => p as Promise<T>;
+
+export const api = {
+  listConnections: async (): Promise<ConnectionConfig[]> =>
+    toArray<ConnectionConfig>(await ListConnections()),
+  saveConnection: (cfg: ConnectionConfig): Promise<ConnectionConfig> => cast(SaveConnection(cfg as never)),
+  deleteConnection: (id: string): Promise<boolean> => DeleteConnection(id),
+  reorderConnections: (orderedIds: string[]): Promise<boolean> => ReorderConnections(orderedIds),
+  testConnection: (cfg: ConnectionConfig): Promise<void> => TestConnection(cfg as never),
+  connect: (id: string): Promise<void> => Connect(id),
+  cancelQuery: (connId: string): Promise<boolean> => CancelQuery(connId),
+  disconnect: (id: string): Promise<void> => Disconnect(id),
+  isConnected: (id: string): Promise<boolean> => IsConnected(id),
+  getConnectionStatus: (id: string) =>
+    cast<import('@/types').ConnectionStatus>(GetConnectionStatus(id)),
+  loadSchemaData: async (id: string) => normalizeSchemaBundle(await LoadSchemaData(id)),
+  listFolders: (): Promise<ConnectionFolder[]> => cast(ListFolders()),
+  saveFolder: (f: ConnectionFolder): Promise<ConnectionFolder> => cast(SaveFolder(f as never)),
+  deleteFolder: (id: string): Promise<void> => DeleteFolder(id),
+  pickSQLiteFile: (): Promise<string> => PickSQLiteFile(),
+  listSchemas: async (connId: string) => normalizeSchemas(await ListSchemas(connId)),
+  listTables: async (connId: string, schema: string) =>
+    normalizeTables(await ListTables(connId, schema)),
+  listColumns: async (connId: string, schema: string, table: string) =>
+    normalizeColumns(await ListColumns(connId, schema, table)),
+  executeQueryStream: (connId: string, tabId: string, sql: string): Promise<void> =>
+    cast(ExecuteQueryStream(connId, tabId, sql)),
+  queryTableStream: (connId: string, tabId: string, req: TableDataRequest): Promise<void> =>
+    cast(QueryTableStream(connId, tabId, req as never)),
+  updateRow: (
+    connId: string,
+    upd: { schema: string; table: string; primaryKey: Record<string, unknown>; changes: Record<string, unknown> }
+  ): Promise<void> => UpdateRow(connId, upd as never),
+  deleteRows: (
+    connId: string,
+    del: { schema: string; table: string; primaryKeys: Record<string, unknown>[] }
+  ): Promise<number> => DeleteRows(connId, del as never),
+  insertRow: (
+    connId: string,
+    schema: string,
+    table: string,
+    values: Record<string, unknown>
+  ): Promise<Record<string, unknown>> => cast(InsertRow(connId, schema, table, values)),
+  getQueryHistory: async (connId: string, limit: number): Promise<HistoryEntry[]> =>
+    normalizeHistory(await GetQueryHistory(connId, limit)),
+  clearQueryHistory: (connId: string): Promise<void> => ClearQueryHistory(connId),
+  deleteQueryHistoryEntry: (id: string): Promise<boolean> => DeleteQueryHistoryEntry(id),
+  listSavedQueries: async (connId: string): Promise<SavedQuery[]> =>
+    normalizeSavedQueries(await ListSavedQueries(connId)),
+  saveSavedQuery: (q: SavedQuery): Promise<SavedQuery> => cast(SaveSavedQuery(q as never)),
+  deleteSavedQuery: (id: string): Promise<boolean> => DeleteSavedQuery(id),
+  getEditorSession: (): Promise<{ tabs: EditorTab[]; activeTab: string }> =>
+    cast(GetEditorSession()),
+  saveEditorSession: (session: { tabs: EditorTab[]; activeTab: string }): Promise<void> =>
+    SaveEditorSession(session as never),
+  formatSQL: (sql: string): Promise<string> => Promise.resolve(FormatSQL(sql)),
+  exportResult: (result: QueryResult, format: string): Promise<string> =>
+    cast(ExportResult(result as never, format)),
+  copyToClipboard: (text: string): Promise<void> => CopyToClipboard(text),
+  pickExportSavePath: (ext: string): Promise<string> => PickExportSavePath(ext),
+  saveTextFile: (path: string, content: string): Promise<void> => SaveTextFile(path, content),
+  getAppInfo: (): Promise<import('@/shared/lib/appInfo').AppInfo> => cast(GetAppInfo()),
+  getPendingFile: (): Promise<{ filePath: string; name: string } | null> => cast(GetPendingFile()),
+  beginTransaction: (connectionId: string, tabId: string): Promise<void> =>
+    cast(BeginTransaction(connectionId, tabId)),
+  commitTransaction: (tabId: string): Promise<void> => cast(CommitTransaction(tabId)),
+  rollbackTransaction: (tabId: string): Promise<void> => cast(RollbackTransaction(tabId)),
+  cleanupTabTransaction: (tabId: string): Promise<void> => cast(CleanupTabTransaction(tabId)),
+};
+
+export function newTabId(): string {
+  return `tab-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+}

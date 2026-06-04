@@ -1,0 +1,101 @@
+import type { Dispatch, SetStateAction } from 'react';
+import type { FocusCol } from '@/shared/lib/grid';
+
+interface Props {
+  rowIdx: number;
+  ci: number;
+  colPos: FocusCol;
+  col: string;
+  optimisticKey: string;
+  defaultValue: string;
+  rows: unknown[][];
+  lastCommittedEditRef: React.RefObject<{ row: number; colPos: number } | null>;
+  setOptimisticEdited: Dispatch<SetStateAction<Set<string>>>;
+  setEditTick: Dispatch<SetStateAction<number>>;
+  setEditing: Dispatch<SetStateAction<{ row: number; col: number } | null>>;
+  onCellEdit: (rowIdx: number, col: string, value: string | null) => void;
+  focusRow: (globalIdx: number, colPos?: FocusCol) => void;
+  focusElement: (globalIdx: number, colPos: FocusCol) => void;
+}
+
+export function TableViewCellEditor({
+  rowIdx,
+  ci,
+  colPos,
+  col,
+  optimisticKey,
+  defaultValue,
+  rows,
+  lastCommittedEditRef,
+  setOptimisticEdited,
+  setEditTick,
+  setEditing,
+  onCellEdit,
+  focusRow,
+  focusElement,
+}: Props) {
+  return (
+    <input
+      className="table-view-cell-input"
+      autoFocus
+      defaultValue={defaultValue}
+      onBlur={(e) => {
+        (e.target as HTMLInputElement)
+          .closest('td')
+          ?.classList.add('cell-pending-edit');
+
+        // Blank editor => NULL (no separate empty-string affordance); other whitespace preserved.
+        const raw = e.target.value;
+        const next = raw === '' ? null : raw;
+        const origRaw = rows[rowIdx]?.[ci];
+        const orig = origRaw == null ? null : String(origRaw);
+        const reverted = (next == null ? null : String(next)) === orig;
+        lastCommittedEditRef.current = { row: rowIdx, colPos };
+        setOptimisticEdited((prevSet) => {
+          const nextSet = new Set(prevSet);
+          if (reverted) nextSet.delete(optimisticKey);
+          else nextSet.add(optimisticKey);
+          return nextSet;
+        });
+        // Always notify; the pane reconciles (records the edit, or clears it on revert).
+        onCellEdit(rowIdx, col, next);
+        setEditTick((x) => x + 1);
+
+        setEditing(null);
+
+        requestAnimationFrame(() => {
+          focusRow(rowIdx, colPos);
+          focusElement(rowIdx, colPos);
+        });
+        setTimeout(() => {
+          focusRow(rowIdx, colPos);
+          focusElement(rowIdx, colPos);
+        }, 0);
+        setTimeout(() => {
+          focusRow(rowIdx, colPos);
+          focusElement(rowIdx, colPos);
+        }, 50);
+      }}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter') {
+          e.stopPropagation();
+          (e.target as HTMLInputElement).blur();
+          return;
+        }
+        if (e.key === 'Escape') {
+          e.stopPropagation();
+          setEditing(null);
+          return;
+        }
+        if (
+          e.key === 'ArrowLeft' ||
+          e.key === 'ArrowRight' ||
+          e.key === 'ArrowUp' ||
+          e.key === 'ArrowDown'
+        ) {
+          e.stopPropagation();
+        }
+      }}
+    />
+  );
+}
