@@ -22,15 +22,12 @@ jobs:
     strategy:
       matrix:
         build:
-          - name: XenSQL
+          - os: ubuntu-latest
             platform: linux/amd64
-            os: ubuntu-latest
-          - name: XenSQL
+          - os: windows-latest
             platform: windows/amd64
-            os: windows-latest
-          - name: XenSQL
+          - os: macos-latest
             platform: darwin/universal
-            os: macos-latest
 
     runs-on: ${{ matrix.build.os }}
 
@@ -86,6 +83,18 @@ jobs:
             TAGS="-tags webkit2_41"
           fi
           wails build -platform ${{ matrix.build.platform }} -clean $TAGS
+
+      - name: Package macOS (.dmg)
+        if: matrix.build.platform == 'darwin/universal'
+        shell: bash
+        run: |
+          set -e
+
+          APP_PATH="build/bin/XenSQL.app"
+          DMG_PATH="build/bin/XenSQL.dmg"
+
+          hdiutil create -volname "XenSQL" -srcfolder "$APP_PATH" -ov -format UDZO "$DMG_PATH"
+          rm -rf "$APP_PATH"
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
