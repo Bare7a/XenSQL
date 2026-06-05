@@ -79,9 +79,13 @@ jobs:
         run: npm ci
 
       - name: Build with Wails
-        run: wails build -platform ${{ matrix.build.platform }} -clean 
-        env:
-          VERSION: ${{ steps.version.outputs.VERSION }}
+        run: |
+          TAGS=""
+          if [ "${{ matrix.build.platform }}" = "linux/amd64" ]; then
+            TAGS="-tags webkit2_41"
+          fi
+          
+          wails build -platform ${{ matrix.build.platform }} -clean $TAGS
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
