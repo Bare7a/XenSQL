@@ -2,6 +2,7 @@ import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api, newTabId } from '@/shared/lib/api';
 import { appError, appPrompt } from '@/shared/lib/appDialog';
+import { refreshSavedQueries } from '@/shared/lib/savedQueriesSync';
 import { findTabForSavedQuery } from '@/features/editor/lib/savedQueryTab';
 import {
   useActiveTab,
@@ -23,15 +24,14 @@ export function useSavedQueryActions(
   const activeTab = useActiveTab();
   const selectedConnectionId = useSelectedConnectionId();
   const savedQueries = useSavedQueries();
-  const { addTab, updateTab, setActiveTab, setSelectedConnection, setSavedQueries } =
-    useStoreActions();
+  const { addTab, updateTab, setActiveTab, setSelectedConnection } = useStoreActions();
 
   const persistTabSavedQuery = useCallback(
     async (tab: EditorTab): Promise<boolean> => {
       if (!tab.savedQueryId) return false;
       try {
         const prev = savedQueries.find((q) => q.id === tab.savedQueryId);
-        const saved = await api.saveSavedQuery({
+        await api.saveSavedQuery({
           id: tab.savedQueryId,
           name: tab.title,
           connectionId: tab.connectionId,
@@ -40,14 +40,14 @@ export function useSavedQueryActions(
           updatedAt: '',
         });
         updateTab(tab.id, { savedSqlBaseline: tab.sql });
-        setSavedQueries(savedQueries.map((q) => (q.id === saved.id ? saved : q)));
+        await refreshSavedQueries();
         return true;
       } catch (err) {
         void appError(err, t('errors.saveQueryFailed'));
         return false;
       }
     },
-    [savedQueries, setSavedQueries, updateTab, t]
+    [savedQueries, updateTab, t]
   );
 
   const handleSaveQuery = useCallback(async () => {
@@ -78,11 +78,11 @@ export function useSavedQueryActions(
         title: saved.name,
         savedSqlBaseline: activeTab.sql,
       });
-      setSavedQueries([saved, ...savedQueries.filter((q) => q.id !== saved.id)]);
+      await refreshSavedQueries();
     } catch (err) {
       void appError(err, t('errors.saveQueryFailed'));
     }
-  }, [activeTab, savedQueries, setSavedQueries, updateTab, persistTabSavedQuery, t]);
+  }, [activeTab, updateTab, persistTabSavedQuery, t]);
 
   const openRenameDialog = useCallback(() => {
     if (!activeTab?.savedQueryId) return;
@@ -104,14 +104,14 @@ export function useSavedQueryActions(
       try {
         const saved = await api.saveSavedQuery({ ...prev, name });
         updateTab(tab.id, { title: saved.name });
-        setSavedQueries(savedQueries.map((q) => (q.id === saved.id ? saved : q)));
+        await refreshSavedQueries();
       } catch (err) {
         void appError(err, t('errors.renameQueryFailed'));
       } finally {
         setRenameTabId(null);
       }
     },
-    [renameTabId, tabs, savedQueries, setSavedQueries, updateTab, setRenameTabId, t]
+    [renameTabId, tabs, savedQueries, updateTab, setRenameTabId, t]
   );
 
   const openSavedQuery = useCallback(

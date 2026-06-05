@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { BookmarkPlus, Search, Trash2 } from 'lucide-react';
 import { api } from '@/shared/lib/api';
 import { appAlert, appConfirm, appError, appPrompt } from '@/shared/lib/appDialog';
+import { refreshSavedQueries } from '@/shared/lib/savedQueriesSync';
 import { appToast } from '@/shared/lib/appToast';
 import { ContextMenu } from '@/shared/components/ContextMenu';
 import { useContextMenu } from '@/shared/hooks/useContextMenu';
@@ -90,6 +91,7 @@ export function HistoryPanel({ onOpenQuery }: HistoryPanelProps) {
           createdAt: '',
           updatedAt: '',
         });
+        await refreshSavedQueries();
         appToast.success(t('toast.savedQuery'));
       } catch (err) {
         void appError(err, t('errors.saveQueryFailed'));

@@ -1,8 +1,9 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ArrowDownAZ, CalendarPlus, Clock, Edit2, Pin, PinOff, Search, Trash2 } from 'lucide-react';
 import { api } from '@/shared/lib/api';
 import { appConfirm, appError } from '@/shared/lib/appDialog';
+import { refreshSavedQueries } from '@/shared/lib/savedQueriesSync';
 import { ContextMenu } from '@/shared/components/ContextMenu';
 import { useContextMenu } from '@/shared/hooks/useContextMenu';
 import { useListKeyboardNav } from '@/shared/hooks/useListKeyboardNav';
@@ -13,7 +14,6 @@ import { RenameQueryDialog } from '@/features/editor/RenameQueryDialog';
 import type { SavedQuery } from '@/types';
 import {
   useActiveTab,
-  useActiveTabId,
   useConnections,
   useResolvedConnectionId,
   useSavedQueries,
@@ -44,9 +44,8 @@ export function SavedQueriesPanel({ onOpenSavedQuery }: SavedQueriesPanelProps) 
   const savedQueries = useSavedQueries();
   const connections = useConnections();
   const activeTab = useActiveTab();
-  const activeTabId = useActiveTabId();
   const tabs = useTabs();
-  const { setSavedQueries, updateTab } = useStoreActions();
+  const { updateTab } = useStoreActions();
   const { pinned, isPinned, toggle: togglePin } = usePinnedQueries();
 
   const [filter, setFilter] = useState('');
@@ -63,19 +62,6 @@ export function SavedQueriesPanel({ onOpenSavedQuery }: SavedQueriesPanelProps) 
   );
 
   const resolvedConnId = useResolvedConnectionId();
-
-  const loadSavedQueries = useCallback(async () => {
-    try {
-      setSavedQueries(await api.listSavedQueries(''));
-    } catch (err) {
-      void appError(err, t('errors.generic'));
-      setSavedQueries([]);
-    }
-  }, [setSavedQueries, t]);
-
-  useEffect(() => {
-    void loadSavedQueries();
-  }, [loadSavedQueries, activeTabId]);
 
   const changeSort = useCallback((next: SortKey) => {
     setSort(next);
@@ -136,7 +122,7 @@ export function SavedQueriesPanel({ onOpenSavedQuery }: SavedQueriesPanelProps) 
       for (const tab of tabs) {
         if (tab.savedQueryId === item.id) updateTab(tab.id, { title: saved.name });
       }
-      await loadSavedQueries();
+      await refreshSavedQueries();
     } catch (err) {
       void appError(err, t('errors.renameQueryFailed'));
     } finally {
@@ -162,10 +148,10 @@ export function SavedQueriesPanel({ onOpenSavedQuery }: SavedQueriesPanelProps) 
         void appError(new Error('delete failed'), t('errors.generic'));
         return;
       }
-      await loadSavedQueries();
+      await refreshSavedQueries();
     } catch (err) {
       void appError(err, t('errors.generic'));
-      await loadSavedQueries();
+      await refreshSavedQueries();
     }
   };
 
@@ -180,12 +166,12 @@ export function SavedQueriesPanel({ onOpenSavedQuery }: SavedQueriesPanelProps) 
           createdAt: '',
           updatedAt: '',
         });
-        await loadSavedQueries();
+        await refreshSavedQueries();
       } catch (err) {
         void appError(err, t('errors.generic'));
       }
     },
-    [loadSavedQueries, t]
+    [t]
   );
 
   const openRowMenu = useCallback(
