@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Version (e.g. v1.0.0). Leave empty to use commit SHA.'
+        description: 'Version tag (e.g. v1.0.0). Leave empty to use commit SHA.'
         required: false
         type: string
 
@@ -43,18 +43,18 @@ jobs:
 
       - name: Determine version
         id: version
+        shell: bash
         run: |
-          if [[ -n "${{ github.event.inputs.version }}" ]]; then
+          if [ -n "${{ github.event.inputs.version }}" ]; then
             echo "VERSION=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
-          elif [[ "${{ github.ref_type }}" == "tag" ]]; then
+          elif [ "${{ github.ref_type }}" = "tag" ]; then
             echo "VERSION=${{ github.ref_name }}" >> $GITHUB_OUTPUT
           else
             echo "VERSION=dev-${GITHUB_SHA::8}" >> $GITHUB_OUTPUT
           fi
-        shell: bash
 
       - name: Build with Wails
-        uses: dAppServer/wails-build-action@v2.2
+        uses: snider/build@v3
         id: build
         with:
           build-name: ${{ matrix.build.name }}
