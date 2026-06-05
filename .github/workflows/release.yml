@@ -53,14 +53,29 @@ jobs:
             echo "VERSION=dev-${GITHUB_SHA::8}" >> $GITHUB_OUTPUT
           fi
 
-      - name: Build with Wails
-        uses: snider/build@v3
-        id: build
+      - name: Set up Go
+        uses: actions/setup-go@v5
         with:
-          build-name: ${{ matrix.build.name }}
-          build-platform: ${{ matrix.build.platform }}
-          package: false
           go-version: '1.26'
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install Wails CLI
+        run: go install github.com/wailsapp/wails/v2/cmd/wails@latest
+
+      - name: Install frontend dependencies
+        working-directory: ./frontend
+        run: npm ci
+
+      - name: Build with Wails
+        run: wails build -platform ${{ matrix.build.platform }} -clean 
+        env:
+          VERSION: ${{ steps.version.outputs.VERSION }}
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
