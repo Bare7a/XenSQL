@@ -84,7 +84,6 @@ jobs:
           if [ "${{ matrix.build.platform }}" = "linux/amd64" ]; then
             TAGS="-tags webkit2_41"
           fi
-
           wails build -platform ${{ matrix.build.platform }} -clean $TAGS
 
       - name: Upload artifacts
