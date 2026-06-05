@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { api } from '@/shared/lib/api';
+import { refreshSavedQueries } from '@/shared/lib/savedQueriesSync';
 import { useAppStore } from '@/store/appStore';
 import type { EditorTab } from '@/types';
 import { emptyTableViewPending } from '@/types';
@@ -46,6 +47,7 @@ export function useAppInit() {
         api.listConnections(),
         api.listFolders(),
         api.getEditorSession(),
+        refreshSavedQueries(),
       ]);
       setConnections(connections);
       setFolders(folders);

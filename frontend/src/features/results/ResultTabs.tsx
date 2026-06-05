@@ -29,15 +29,18 @@ export function ResultTabs({ results, activeIndex, onSelect }: Props) {
             type="button"
             role="tab"
             aria-selected={isActive}
-            className={`result-tab${isActive ? ' result-tab-active' : ''}${rs.error ? ' result-tab-error' : ''}`}
+            className={`result-tab${isActive ? ' active' : ''}${rs.error ? ' error' : ''}`}
             onClick={() => onSelect(i)}
             data-tooltip={tooltip}
           >
-            <span>{t('results.resultLabel', { n: i + 1 })}</span>
+            <span className="result-tab-text">
+              {t('results.resultLabel', { n: i + 1 })}
+              {!rs.error && count != null ? (
+                <span className="result-tab-count">{count.toLocaleString()}</span>
+              ) : null}
+            </span>
             {rs.error ? (
               <CircleAlert className="icon-xs" />
-            ) : count != null ? (
-              <span className="result-tab-count">{count}</span>
             ) : null}
           </button>
         );
