@@ -1,0 +1,91 @@
+name: Release XenSQL
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version (e.g. v1.0.0). Leave empty to use commit SHA.'
+        required: false
+        type: string
+
+permissions:
+  contents: write
+
+env:
+  NODE_OPTIONS: '--max-old-space-size=4096'
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        build:
+          - name: XenSQL
+            platform: linux/amd64
+            os: ubuntu-latest
+          - name: XenSQL
+            platform: windows/amd64
+            os: windows-latest
+          - name: XenSQL
+            platform: darwin/universal
+            os: macos-latest
+
+    runs-on: ${{ matrix.build.os }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 0
+
+      - name: Determine version
+        id: version
+        run: |
+          if [[ -n "${{ github.event.inputs.version }}" ]]; then
+            echo "VERSION=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
+          elif [[ "${{ github.ref_type }}" == "tag" ]]; then
+            echo "VERSION=${{ github.ref_name }}" >> $GITHUB_OUTPUT
+          else
+            echo "VERSION=dev-${GITHUB_SHA::8}" >> $GITHUB_OUTPUT
+          fi
+        shell: bash
+
+      - name: Build with Wails
+        uses: dAppServer/wails-build-action@v2.2
+        id: build
+        with:
+          build-name: ${{ matrix.build.name }}
+          build-platform: ${{ matrix.build.platform }}
+          package: false
+          go-version: '1.26'
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.build.name }}-${{ matrix.build.platform }}
+          path: build/bin/*
+          if-no-files-found: error
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
+
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.event.inputs.version || github.ref_name }}
+          name: XenSQL ${{ github.event.inputs.version || github.ref_name }}
+          files: artifacts/**/*
+          generate_release_notes: true
+          draft: false
+          prerelease: ${{ contains(github.event.inputs.version || github.ref_name, 'beta') || contains(github.event.inputs.version || github.ref_name, 'rc') }}
