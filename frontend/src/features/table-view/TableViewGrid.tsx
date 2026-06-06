@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useGridColumns } from '@/shared/hooks/useGridColumns';
 import { useGridCopyExport, type CopiedCells } from '@/shared/hooks/useGridCopyExport';
@@ -60,7 +60,9 @@ interface Props {
   onRefresh?: () => void;
 }
 
-export function TableViewGrid({
+// Memoized so the grid skips TableViewPane's parent-only re-renders (filter typing, focus
+// tracking, apply/loading toggles) — props are stabilized there to make this hold.
+export const TableViewGrid = memo(function TableViewGrid({
   columns,
   columnTypes,
   rows,
@@ -727,4 +729,4 @@ export function TableViewGrid({
       )}
     </div>
   );
-}
+});

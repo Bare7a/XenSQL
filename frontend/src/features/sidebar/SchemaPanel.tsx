@@ -129,6 +129,21 @@ export function SchemaPanel({
     [copyText, openMenu, t]
   );
 
+  // Stable callbacks so memo(SchemaTableRow) holds across tree re-renders.
+  const handleToggleTable = useCallback(
+    (schemaName: string, table: string) => {
+      if (connId) void toggleTableColumns(connId, schemaName, table);
+    },
+    [connId, toggleTableColumns]
+  );
+  const handleBrowseTableRow = useCallback(
+    (schemaName: string, table: string) => {
+      if (connId) onBrowseTable(connId, schemaName, table);
+    },
+    [connId, onBrowseTable]
+  );
+  const handleColumnClick = useCallback((colName: string) => insertSqlIntoEditor(colName), []);
+
   const visibleTablesByKey = useMemo<Record<string, TableInfo[]> | null>(() => {
     if (!schemaSearch || !connId) return null;
     const out: Record<string, TableInfo[]> = {};
@@ -259,12 +274,10 @@ export function SchemaPanel({
                   if (!isOpen) void loadTables(connId, sch.name);
                   else setExpandedSchemas((e) => ({ ...e, [key]: false }));
                 }}
-                onToggleTable={(schemaName, table) =>
-                  void toggleTableColumns(connId, schemaName, table)
-                }
+                onToggleTable={handleToggleTable}
                 onTableContextMenu={openTableMenu}
-                onBrowse={(schemaName, table) => onBrowseTable(connId, schemaName, table)}
-                onColumnClick={(colName) => insertSqlIntoEditor(colName)}
+                onBrowse={handleBrowseTableRow}
+                onColumnClick={handleColumnClick}
                 onColumnContextMenu={openColumnMenu}
               />
             );

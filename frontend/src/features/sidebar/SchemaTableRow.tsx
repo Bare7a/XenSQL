@@ -1,3 +1,4 @@
+import { memo, useMemo } from 'react';
 import { ChevronDown, ChevronRight, Columns3, Eye, Loader2, Table2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { cx } from '@/shared/lib/cx';
@@ -5,41 +6,54 @@ import type { ColumnInfo, TableInfo } from '@/types';
 import { columnMatchesSearch } from '@/features/sidebar/hooks/useSchemaTree';
 
 interface SchemaTableRowProps {
+  schemaName: string;
   table: TableInfo;
   tableOpen: boolean;
   cols: ColumnInfo[];
   colsLoading: boolean;
   schemaSearch: string;
-  onToggle: () => void;
-  onContextMenuTable: (e: React.MouseEvent) => void;
-  onBrowse: () => void;
+  // Stable, identity-parameterized callbacks so memo holds across tree re-renders.
+  onToggleTable: (schemaName: string, table: string) => void;
+  onTableContextMenu: (e: React.MouseEvent, schemaName: string, table: string) => void;
+  onBrowse: (schemaName: string, table: string) => void;
   onColumnClick: (colName: string) => void;
   onColumnContextMenu: (e: React.MouseEvent, colName: string) => void;
 }
 
-export function SchemaTableRow({
+// Memoized so toggling/loading one table re-renders only that row, not the whole schema.
+export const SchemaTableRow = memo(function SchemaTableRow({
+  schemaName,
   table,
   tableOpen,
   cols,
   colsLoading,
   schemaSearch,
-  onToggle,
-  onContextMenuTable,
+  onToggleTable,
+  onTableContextMenu,
   onBrowse,
   onColumnClick,
   onColumnContextMenu,
 }: SchemaTableRowProps) {
   const { t } = useTranslation();
 
-  const tableNameMatches = !schemaSearch || table.name.toLowerCase().includes(schemaSearch);
-  const columnMatches =
-    !!schemaSearch && cols.some((col) => columnMatchesSearch(col, schemaSearch));
+  // Memoize column scans - only re-run when cols or search needle change.
+  const { tableNameMatches, columnMatches, displayCols } = useMemo(() => {
+    const nameMatches = !schemaSearch || table.name.toLowerCase().includes(schemaSearch);
+    const colMatches =
+      !!schemaSearch && cols.some((col) => columnMatchesSearch(col, schemaSearch));
+    const visibleCols =
+      !schemaSearch || nameMatches
+        ? cols
+        : cols.filter((col) => columnMatchesSearch(col, schemaSearch));
+    return {
+      tableNameMatches: nameMatches,
+      columnMatches: colMatches,
+      displayCols: visibleCols,
+    };
+  }, [cols, schemaSearch, table.name]);
+
   const isTableExpanded =
     tableOpen || (!!schemaSearch && !tableNameMatches && (columnMatches || colsLoading));
-  const displayCols =
-    !schemaSearch || tableNameMatches
-      ? cols
-      : cols.filter((col) => columnMatchesSearch(col, schemaSearch));
 
   return (
     <div>
@@ -48,8 +62,8 @@ export function SchemaTableRow({
         tabIndex={0}
         data-nav-item
         data-tooltip={t('tooltip.schemaTableRow')}
-        onClick={onToggle}
-        onContextMenu={onContextMenuTable}
+        onClick={() => onToggleTable(schemaName, table.name)}
+        onContextMenu={(e) => onTableContextMenu(e, schemaName, table.name)}
       >
         {isTableExpanded ? (
           <ChevronDown className="icon-sm" />
@@ -64,7 +78,7 @@ export function SchemaTableRow({
           data-tooltip={t('sidebar.browseData')}
           onClick={(e) => {
             e.stopPropagation();
-            onBrowse();
+            onBrowse(schemaName, table.name);
           }}
         >
           <Eye className="icon-xs" />
@@ -115,4 +129,4 @@ export function SchemaTableRow({
       )}
     </div>
   );
-}
+});

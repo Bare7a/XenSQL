@@ -7,6 +7,7 @@ import { refreshSavedQueries } from '@/shared/lib/savedQueriesSync';
 import { appToast } from '@/shared/lib/appToast';
 import { ContextMenu } from '@/shared/components/ContextMenu';
 import { useContextMenu } from '@/shared/hooks/useContextMenu';
+import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue';
 import { useListKeyboardNav } from '@/shared/hooks/useListKeyboardNav';
 import { oneLinePreview } from '@/shared/lib/sqlPreview';
 import { formatRelativeTime, timeBucket, type TimeBucket } from '@/shared/lib/relativeTime';
@@ -142,14 +143,16 @@ export function HistoryPanel({ onOpenQuery }: HistoryPanelProps) {
     [onOpenQuery, saveAsQuery, t]
   );
 
-  const needle = filter.trim().toLowerCase();
-  const filtered = (history ?? []).filter((entry) => {
-    if (!needle) return true;
-    return (
-      (entry.sql ?? '').toLowerCase().includes(needle) ||
-      (entry.error ?? '').toLowerCase().includes(needle)
+  const debouncedFilter = useDebouncedValue(filter, 150);
+  const filtered = useMemo(() => {
+    const needle = debouncedFilter.trim().toLowerCase();
+    if (!needle) return history ?? [];
+    return (history ?? []).filter(
+      (entry) =>
+        (entry.sql ?? '').toLowerCase().includes(needle) ||
+        (entry.error ?? '').toLowerCase().includes(needle)
     );
-  });
+  }, [history, debouncedFilter]);
 
   let lastBucket: TimeBucket | null = null;
 

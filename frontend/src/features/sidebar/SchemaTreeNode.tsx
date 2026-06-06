@@ -4,6 +4,9 @@ import type { ColumnInfo, SchemaInfo, TableInfo } from '@/types';
 import { tableKey } from '@/features/sidebar/hooks/useSchemaTree';
 import { SchemaTableRow } from '@/features/sidebar/SchemaTableRow';
 
+// Stable ref so tables without loaded columns keep equal props (a fresh [] would defeat memo).
+const EMPTY_COLS: ColumnInfo[] = [];
+
 interface SchemaTreeNodeProps {
   connId: string;
   sch: SchemaInfo;
@@ -77,14 +80,15 @@ export function SchemaTreeNode({
               return (
                 <SchemaTableRow
                   key={`${schemaName}-${table.name}`}
+                  schemaName={schemaName}
                   table={table}
                   tableOpen={!!expandedTables[tk]}
-                  cols={tableColumns[tk] ?? []}
+                  cols={tableColumns[tk] ?? EMPTY_COLS}
                   colsLoading={!!loadingColumns[tk]}
                   schemaSearch={schemaSearch}
-                  onToggle={() => onToggleTable(schemaName, table.name)}
-                  onContextMenuTable={(e) => onTableContextMenu(e, schemaName, table.name)}
-                  onBrowse={() => onBrowse(schemaName, table.name)}
+                  onToggleTable={onToggleTable}
+                  onTableContextMenu={onTableContextMenu}
+                  onBrowse={onBrowse}
                   onColumnClick={onColumnClick}
                   onColumnContextMenu={onColumnContextMenu}
                 />
