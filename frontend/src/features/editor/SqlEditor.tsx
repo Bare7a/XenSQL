@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Editor, { Monaco } from '@monaco-editor/react';
 import type { editor } from 'monaco-editor';
 import { createSqlCompletionProvider } from '@/features/editor/lib/createSqlCompletionProvider';
@@ -69,7 +69,8 @@ interface Props {
   onLoadColumns: (schema: string, table: string) => Promise<ColumnInfo[]>;
 }
 
-export function SqlEditor({
+// Memoized so typing in the active tab doesn't re-render the other mounted (hidden) editors.
+export const SqlEditor = memo(function SqlEditor({
   tabId,
   connectionId,
   driver,
@@ -371,4 +372,4 @@ export function SqlEditor({
       )}
     </div>
   );
-}
+});

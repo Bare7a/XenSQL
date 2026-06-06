@@ -294,104 +294,117 @@ export function TableViewPane({ tab, driver, readOnly, isActive, running, onFocu
     });
   };
 
-  const handleSortChange = (col: string) => {
-    const nextDir: TableSortDir =
-      state.orderBy === col && state.orderDir === 'ASC' ? 'DESC' : 'ASC';
-    void fetchPage({
-      offset: 0,
-      replace: true,
-      orderBy: col,
-      orderDir: nextDir,
-      discardPending: true,
-    });
-  };
+  // Wrapped in useCallback so memo(TableViewGrid) holds across parent-only re-renders.
+  const handleSortChange = useCallback(
+    (col: string) => {
+      const nextDir: TableSortDir =
+        state.orderBy === col && state.orderDir === 'ASC' ? 'DESC' : 'ASC';
+      void fetchPage({
+        offset: 0,
+        replace: true,
+        orderBy: col,
+        orderDir: nextDir,
+        discardPending: true,
+      });
+    },
+    [state.orderBy, state.orderDir, fetchPage]
+  );
 
-  const handleLoadMore = () => {
+  const handleLoadMore = useCallback(() => {
     if (running || !state.hasMore || hasPending) return;
     void fetchPage({ offset: state.rows.length, replace: false });
-  };
+  }, [running, state.hasMore, hasPending, state.rows.length, fetchPage]);
 
-  const handleCellEdit = (rowIdx: number, col: string, value: string | null) => {
-    if (readOnly || !state.primaryKeys.length) return;
+  const handleCellEdit = useCallback(
+    (rowIdx: number, col: string, value: string | null) => {
+      if (readOnly || !state.primaryKeys.length) return;
 
-    const colIdx = state.columns.indexOf(col);
-    const origRaw = colIdx >= 0 ? state.rows[rowIdx]?.[colIdx] : undefined;
-    const orig = origRaw == null ? null : String(origRaw);
-    const next = value == null ? null : String(value);
-    
-    const pk = rowPrimaryKey(state.rows[rowIdx], state.columns, state.primaryKeys);
-    const key = primaryKeyKey(pk);
-    if (ambiguousKeys.has(key)) {
-      appToast.error(t('tableView.ambiguousRow'));
-      return;
-    }
-    const edits = { ...state.pending.edits };
-    const rowEdits = { ...(edits[key] ?? {}) };
-    
-    if (next === orig) delete rowEdits[col];
-    else rowEdits[col] = value;
+      const colIdx = state.columns.indexOf(col);
+      const origRaw = colIdx >= 0 ? state.rows[rowIdx]?.[colIdx] : undefined;
+      const orig = origRaw == null ? null : String(origRaw);
+      const next = value == null ? null : String(value);
 
-    if (Object.keys(rowEdits).length === 0) delete edits[key];
-    else edits[key] = rowEdits;
+      const pk = rowPrimaryKey(state.rows[rowIdx], state.columns, state.primaryKeys);
+      const key = primaryKeyKey(pk);
+      if (ambiguousKeys.has(key)) {
+        appToast.error(t('tableView.ambiguousRow'));
+        return;
+      }
+      const edits = { ...state.pending.edits };
+      const rowEdits = { ...(edits[key] ?? {}) };
 
-    commitPending(state.pending, { ...state.pending, edits });
-  };
+      if (next === orig) delete rowEdits[col];
+      else rowEdits[col] = value;
+
+      if (Object.keys(rowEdits).length === 0) delete edits[key];
+      else edits[key] = rowEdits;
+
+      commitPending(state.pending, { ...state.pending, edits });
+    },
+    [readOnly, state.primaryKeys, state.columns, state.rows, state.pending, ambiguousKeys, commitPending, t]
+  );
 
   // Apply a batch of pasted cells as one undoable step. Mirrors handleCellEdit's reconcile (revert
   // detection, ambiguous-key blocking) per cell, then commits the combined result once.
-  const handlePasteCells = (cellEdits: PasteCellEdit[]) => {
-    if (readOnly || !state.primaryKeys.length || cellEdits.length === 0) return;
-    const edits = { ...state.pending.edits };
-    let changed = false;
-    let blockedAmbiguous = false;
+  const handlePasteCells = useCallback(
+    (cellEdits: PasteCellEdit[]) => {
+      if (readOnly || !state.primaryKeys.length || cellEdits.length === 0) return;
+      const edits = { ...state.pending.edits };
+      let changed = false;
+      let blockedAmbiguous = false;
 
-    for (const { rowIdx, col, value } of cellEdits) {
-      const row = state.rows[rowIdx];
-      if (!row) continue;
-      const colIdx = state.columns.indexOf(col);
-      if (colIdx < 0) continue;
-      const key = primaryKeyKey(rowPrimaryKey(row, state.columns, state.primaryKeys));
+      for (const { rowIdx, col, value } of cellEdits) {
+        const row = state.rows[rowIdx];
+        if (!row) continue;
+        const colIdx = state.columns.indexOf(col);
+        if (colIdx < 0) continue;
+        const key = primaryKeyKey(rowPrimaryKey(row, state.columns, state.primaryKeys));
+        if (ambiguousKeys.has(key)) {
+          blockedAmbiguous = true;
+          continue;
+        }
+        const origRaw = row[colIdx];
+        const orig = origRaw == null ? null : String(origRaw);
+        const next = value == null ? null : String(value);
+        const rowEdits = { ...(edits[key] ?? {}) };
+        const hadCol = Object.prototype.hasOwnProperty.call(rowEdits, col);
+        const prevVal = hadCol ? (rowEdits[col] == null ? null : String(rowEdits[col])) : undefined;
+
+        if (next === orig) {
+          if (!hadCol) continue; // already at original - nothing to revert
+          delete rowEdits[col];
+        } else {
+          if (hadCol && prevVal === next) continue; // identical edit already recorded
+          rowEdits[col] = value;
+        }
+        if (Object.keys(rowEdits).length === 0) delete edits[key];
+        else edits[key] = rowEdits;
+        changed = true;
+      }
+
+      if (blockedAmbiguous) appToast.error(t('tableView.ambiguousRow'));
+      if (!changed) return;
+      commitPending(state.pending, { ...state.pending, edits });
+    },
+    [readOnly, state.primaryKeys, state.columns, state.rows, state.pending, ambiguousKeys, commitPending, t]
+  );
+
+  const handleToggleDeleteRow = useCallback(
+    (rowIdx: number) => {
+      if (readOnly || !state.primaryKeys.length) return;
+      const pk = rowPrimaryKey(state.rows[rowIdx], state.columns, state.primaryKeys);
+      const key = primaryKeyKey(pk);
       if (ambiguousKeys.has(key)) {
-        blockedAmbiguous = true;
-        continue;
+        appToast.error(t('tableView.ambiguousRow'));
+        return;
       }
-      const origRaw = row[colIdx];
-      const orig = origRaw == null ? null : String(origRaw);
-      const next = value == null ? null : String(value);
-      const rowEdits = { ...(edits[key] ?? {}) };
-      const hadCol = Object.prototype.hasOwnProperty.call(rowEdits, col);
-      const prevVal = hadCol ? (rowEdits[col] == null ? null : String(rowEdits[col])) : undefined;
-
-      if (next === orig) {
-        if (!hadCol) continue; // already at original - nothing to revert
-        delete rowEdits[col];
-      } else {
-        if (hadCol && prevVal === next) continue; // identical edit already recorded
-        rowEdits[col] = value;
-      }
-      if (Object.keys(rowEdits).length === 0) delete edits[key];
-      else edits[key] = rowEdits;
-      changed = true;
-    }
-
-    if (blockedAmbiguous) appToast.error(t('tableView.ambiguousRow'));
-    if (!changed) return;
-    commitPending(state.pending, { ...state.pending, edits });
-  };
-
-  const handleToggleDeleteRow = (rowIdx: number) => {
-    if (readOnly || !state.primaryKeys.length) return;
-    const pk = rowPrimaryKey(state.rows[rowIdx], state.columns, state.primaryKeys);
-    const key = primaryKeyKey(pk);
-    if (ambiguousKeys.has(key)) {
-      appToast.error(t('tableView.ambiguousRow'));
-      return;
-    }
-    const deletes = new Set(state.pending.deletes);
-    if (deletes.has(key)) deletes.delete(key);
-    else deletes.add(key);
-    commitPending(state.pending, { ...state.pending, deletes: [...deletes] });
-  };
+      const deletes = new Set(state.pending.deletes);
+      if (deletes.has(key)) deletes.delete(key);
+      else deletes.add(key);
+      commitPending(state.pending, { ...state.pending, deletes: [...deletes] });
+    },
+    [readOnly, state.primaryKeys, state.columns, state.rows, state.pending, ambiguousKeys, commitPending, t]
+  );
 
   const handleRefresh = useCallback(() => {
     if (running || applying) return;
@@ -403,7 +416,7 @@ export function TableViewPane({ tab, driver, readOnly, isActive, running, onFocu
     void fetchPage({ offset: 0, replace: true, discardPending: false });
   };
 
-  const handleApply = async () => {
+  const handleApply = useCallback(async () => {
     if (readOnly || !hasPending) return;
     setApplying(true);
     try {
@@ -438,7 +451,9 @@ export function TableViewPane({ tab, driver, readOnly, isActive, running, onFocu
       await fetchPage({ offset: 0, replace: true, filter: state.filter });
       setApplying(false);
     }
-  };
+  }, [readOnly, hasPending, state.pending, state.filter, tab.connectionId, tv.schema, tv.table, clearPending, fetchPage, t]);
+
+  const tableName = useMemo(() => `${tv.schema}.${tv.table}`, [tv.schema, tv.table]);
 
   const handleInsertRow = async (values: Record<string, unknown>) => {
     await api.insertRow(tab.connectionId, tv.schema, tv.table, values);
@@ -488,7 +503,7 @@ export function TableViewPane({ tab, driver, readOnly, isActive, running, onFocu
             rows={state.rows}
             primaryKeys={state.primaryKeys}
             pending={state.pending}
-            tableName={`${tv.schema}.${tv.table}`}
+            tableName={tableName}
             readOnly={readOnly}
             orderBy={state.orderBy}
             orderDir={state.orderDir}

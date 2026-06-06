@@ -1,9 +1,10 @@
-import { memo } from 'react';
+import { memo, useCallback, useMemo } from 'react';
 import { SqlEditor } from '@/features/editor/SqlEditor';
 import { isSavedQueryTabDirty } from '@/features/editor/lib/savedQueryTab';
 import type {
   ColumnInfo,
   ConnectionConfig,
+  DriverType,
   EditorCursorState,
   EditorTab,
   SchemaInfo,
@@ -33,6 +34,105 @@ interface EditorPaneProps {
   onRollbackTxn: (tabId: string) => void;
 }
 
+// Stable ref so a schema-less connection doesn't hand the editor a fresh [] each render.
+const EMPTY_SCHEMAS: SchemaInfo[] = [];
+
+interface EditorPaneTabProps {
+  tab: EditorTab;
+  isActive: boolean;
+  driver: DriverType;
+  readOnly: boolean;
+  isQueryRunning: boolean;
+  schemas: SchemaInfo[];
+  allTables: TableInfo[];
+  txnState?: TxnState;
+  loadColumnsForConnection: EditorPaneProps['loadColumnsForConnection'];
+  onChangeSql: EditorPaneProps['onChangeSql'];
+  onRun: EditorPaneProps['onRun'];
+  onCancel: EditorPaneProps['onCancel'];
+  onSaveQuery: EditorPaneProps['onSaveQuery'];
+  onRenameSavedQuery: EditorPaneProps['onRenameSavedQuery'];
+  onCursorStateChange: EditorPaneProps['onCursorStateChange'];
+  onBeginTxn: EditorPaneProps['onBeginTxn'];
+  onCommitTxn: EditorPaneProps['onCommitTxn'];
+  onRollbackTxn: EditorPaneProps['onRollbackTxn'];
+}
+
+// Memoized per-tab wrapper binding the stable App callbacks to this tab.id, so editing one tab
+// doesn't re-render the others' editors. Inline bindings in the parent map would defeat the memo.
+const EditorPaneTab = memo(function EditorPaneTab({
+  tab,
+  isActive,
+  driver,
+  readOnly,
+  isQueryRunning,
+  schemas,
+  allTables,
+  txnState,
+  loadColumnsForConnection,
+  onChangeSql,
+  onRun,
+  onCancel,
+  onSaveQuery,
+  onRenameSavedQuery,
+  onCursorStateChange,
+  onBeginTxn,
+  onCommitTxn,
+  onRollbackTxn,
+}: EditorPaneTabProps) {
+  const tabId = tab.id;
+  const connectionId = tab.connectionId;
+
+  const onLoadColumns = useMemo(
+    () => loadColumnsForConnection(connectionId),
+    [loadColumnsForConnection, connectionId]
+  );
+
+  const handleChange = useCallback((sql: string) => onChangeSql(tabId, sql), [onChangeSql, tabId]);
+  const handleRun = useCallback((sql: string) => onRun(tabId, sql), [onRun, tabId]);
+  const handleCancel = useCallback(() => onCancel(tabId), [onCancel, tabId]);
+  const handleCursorStateChange = useCallback(
+    (cursor: EditorCursorState) => onCursorStateChange(tabId, cursor),
+    [onCursorStateChange, tabId]
+  );
+  const handleBeginTxn = useCallback(() => onBeginTxn(tabId), [onBeginTxn, tabId]);
+  const handleCommitTxn = useCallback(() => onCommitTxn(tabId), [onCommitTxn, tabId]);
+  const handleRollbackTxn = useCallback(() => onRollbackTxn(tabId), [onRollbackTxn, tabId]);
+
+  const tabDirty = !!tab.savedQueryId && isSavedQueryTabDirty(tab);
+
+  return (
+    <div className={`tab-editor-layer${isActive ? ' tab-layer-active' : ''}`}>
+      <SqlEditor
+        tabId={tabId}
+        isActive={isActive}
+        cursorState={tab.editorCursor}
+        onCursorStateChange={handleCursorStateChange}
+        connectionId={connectionId}
+        driver={driver}
+        sql={tab.sql}
+        color={tab.color}
+        onChange={handleChange}
+        onRun={handleRun}
+        isQueryRunning={isQueryRunning}
+        onCancelQuery={handleCancel}
+        savedQueryId={tab.savedQueryId}
+        savedQueryName={tab.savedQueryId ? tab.title : undefined}
+        onSaveQuery={isActive ? onSaveQuery : undefined}
+        isSavedQueryDirty={tabDirty}
+        onRenameSavedQuery={isActive && tab.savedQueryId ? onRenameSavedQuery : undefined}
+        txnState={txnState}
+        onBeginTxn={readOnly ? undefined : handleBeginTxn}
+        onCommitTxn={handleCommitTxn}
+        onRollbackTxn={handleRollbackTxn}
+        schemas={schemas}
+        allTables={allTables}
+        onLoadColumns={onLoadColumns}
+      />
+    </div>
+  );
+});
+
 // Inactive editors are hidden via CSS (not unmounted) so cursor/undo history survives tab switches.
 export const EditorPane = memo(function EditorPane({
   tabs,
@@ -56,43 +156,29 @@ export const EditorPane = memo(function EditorPane({
   return (
     <div className="editor-upper">
       {tabs.map((tab) => {
-        const isActive = tab.id === activeTabId;
         const conn = connections.find((c) => c.id === tab.connectionId);
-        const tabDirty = !!tab.savedQueryId && isSavedQueryTabDirty(tab);
         return (
-          <div
+          <EditorPaneTab
             key={tab.id}
-            className={`tab-editor-layer${isActive ? ' tab-layer-active' : ''}`}
-          >
-            <SqlEditor
-              tabId={tab.id}
-              isActive={isActive}
-              cursorState={tab.editorCursor}
-              onCursorStateChange={(cursor) => onCursorStateChange(tab.id, cursor)}
-              connectionId={tab.connectionId}
-              driver={conn?.driver ?? 'postgres'}
-              sql={tab.sql}
-              color={tab.color}
-              onChange={(sql) => onChangeSql(tab.id, sql)}
-              onRun={(sql) => onRun(tab.id, sql)}
-              isQueryRunning={runningTabId === tab.id}
-              onCancelQuery={() => onCancel(tab.id)}
-              savedQueryId={tab.savedQueryId}
-              savedQueryName={tab.savedQueryId ? tab.title : undefined}
-              onSaveQuery={isActive ? onSaveQuery : undefined}
-              isSavedQueryDirty={tabDirty}
-              onRenameSavedQuery={
-                isActive && tab.savedQueryId ? onRenameSavedQuery : undefined
-              }
-              txnState={tabTxnStates[tab.id]}
-              onBeginTxn={conn?.readOnly ? undefined : () => onBeginTxn(tab.id)}
-              onCommitTxn={() => onCommitTxn(tab.id)}
-              onRollbackTxn={() => onRollbackTxn(tab.id)}
-              schemas={schemas[tab.connectionId] || []}
-              allTables={tablesForConnection(tab.connectionId)}
-              onLoadColumns={loadColumnsForConnection(tab.connectionId)}
-            />
-          </div>
+            tab={tab}
+            isActive={tab.id === activeTabId}
+            driver={conn?.driver ?? 'postgres'}
+            readOnly={!!conn?.readOnly}
+            isQueryRunning={runningTabId === tab.id}
+            schemas={schemas[tab.connectionId] || EMPTY_SCHEMAS}
+            allTables={tablesForConnection(tab.connectionId)}
+            txnState={tabTxnStates[tab.id]}
+            loadColumnsForConnection={loadColumnsForConnection}
+            onChangeSql={onChangeSql}
+            onRun={onRun}
+            onCancel={onCancel}
+            onSaveQuery={onSaveQuery}
+            onRenameSavedQuery={onRenameSavedQuery}
+            onCursorStateChange={onCursorStateChange}
+            onBeginTxn={onBeginTxn}
+            onCommitTxn={onCommitTxn}
+            onRollbackTxn={onRollbackTxn}
+          />
         );
       })}
     </div>
