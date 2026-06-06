@@ -1,4 +1,4 @@
-import { memo } from 'react';
+import { memo, useCallback } from 'react';
 import { ResultsGrid } from '@/features/results/ResultsGrid';
 import { ResultTabs } from '@/features/results/ResultTabs';
 import { useAppStore } from '@/store/appStore';
@@ -22,6 +22,71 @@ interface ResultsPaneProps {
   ) => void;
 }
 
+// Stable empty-session reference for tabs not yet in tabSession.
+const EMPTY_SESSION: TabSessionState = Object.freeze(emptyTabSession());
+
+interface ResultsPaneTabProps {
+  tabId: string;
+  connectionId: string;
+  isActive: boolean;
+  session: TabSessionState;
+  readOnly: boolean;
+  onRefreshTable?: ResultsPaneProps['onRefreshTable'];
+  onFocusedRowChange: ResultsPaneProps['onFocusedRowChange'];
+}
+
+// Memoized per tab: stable callbacks + inactive tabs skip re-render during streaming.
+const ResultsPaneTab = memo(function ResultsPaneTab({
+  tabId,
+  connectionId,
+  isActive,
+  session,
+  readOnly,
+  onRefreshTable,
+  onFocusedRowChange,
+}: ResultsPaneTabProps) {
+  const dataBrowser = session.dataBrowser;
+
+  const handleSelectResult = useCallback(
+    (index: number) => useAppStore.getState().setActiveResultIndex(tabId, index),
+    [tabId]
+  );
+
+  const handleFocusedRowChange = useCallback(
+    (row: Record<string, unknown> | null) => onFocusedRowChange(tabId, row),
+    [onFocusedRowChange, tabId]
+  );
+
+  const handleRefresh = useCallback(() => {
+    if (dataBrowser && onRefreshTable) {
+      onRefreshTable(connectionId, dataBrowser.schema, dataBrowser.table, tabId);
+    }
+  }, [dataBrowser, onRefreshTable, connectionId, tabId]);
+
+  return (
+    <div className={`tab-results-layer${isActive ? ' tab-layer-active' : ''}`}>
+      <ResultTabs
+        results={session.results}
+        activeIndex={session.activeResultIndex}
+        onSelect={handleSelectResult}
+      />
+      <ResultsGrid
+        // Remount on result-set switch: sets share a streamId, so a key change is what resets
+        // the grid's columns/selection/scroll between them.
+        key={session.activeResultIndex}
+        connectionId={connectionId}
+        result={session.result}
+        error={session.resultError}
+        readOnly={readOnly}
+        tableMode={dataBrowser || undefined}
+        isActive={isActive}
+        onRefresh={dataBrowser && onRefreshTable ? handleRefresh : undefined}
+        onFocusedRowChange={handleFocusedRowChange}
+      />
+    </div>
+  );
+});
+
 // One ResultsGrid per tab keeps per-tab state (focus, scroll, sort, selection) alive across tab switches.
 export const ResultsPane = memo(function ResultsPane({
   tabs,
@@ -34,45 +99,18 @@ export const ResultsPane = memo(function ResultsPane({
   return (
     <>
       {tabs.map((tab) => {
-        const isActive = tab.id === activeTabId;
-        const session = tabSession[tab.id] ?? emptyTabSession();
         const conn = connections.find((c) => c.id === tab.connectionId);
-        const tabReadOnly = !!conn?.readOnly;
-        const tabDataBrowser = session.dataBrowser;
         return (
-          <div
+          <ResultsPaneTab
             key={tab.id}
-            className={`tab-results-layer${isActive ? ' tab-layer-active' : ''}`}
-          >
-            <ResultTabs
-              results={session.results}
-              activeIndex={session.activeResultIndex}
-              onSelect={(index) => useAppStore.getState().setActiveResultIndex(tab.id, index)}
-            />
-            <ResultsGrid
-              // Remount on result-set switch: sets share a streamId, so a key change is what resets
-              // the grid's columns/selection/scroll between them.
-              key={session.activeResultIndex}
-              connectionId={tab.connectionId}
-              result={session.result}
-              error={session.resultError}
-              readOnly={tabReadOnly}
-              tableMode={tabDataBrowser || undefined}
-              isActive={isActive}
-              onRefresh={
-                tabDataBrowser && onRefreshTable
-                  ? () =>
-                      onRefreshTable(
-                        tab.connectionId,
-                        tabDataBrowser.schema,
-                        tabDataBrowser.table,
-                        tab.id
-                      )
-                  : undefined
-              }
-              onFocusedRowChange={(row) => onFocusedRowChange(tab.id, row)}
-            />
-          </div>
+            tabId={tab.id}
+            connectionId={tab.connectionId}
+            isActive={tab.id === activeTabId}
+            session={tabSession[tab.id] ?? EMPTY_SESSION}
+            readOnly={!!conn?.readOnly}
+            onRefreshTable={onRefreshTable}
+            onFocusedRowChange={onFocusedRowChange}
+          />
         );
       })}
     </>

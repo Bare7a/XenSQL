@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { ChevronDown, ChevronRight, Columns3, Eye, Loader2, Table2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { cx } from '@/shared/lib/cx';
@@ -31,15 +32,24 @@ export function SchemaTableRow({
 }: SchemaTableRowProps) {
   const { t } = useTranslation();
 
-  const tableNameMatches = !schemaSearch || table.name.toLowerCase().includes(schemaSearch);
-  const columnMatches =
-    !!schemaSearch && cols.some((col) => columnMatchesSearch(col, schemaSearch));
+  // Memoize column scans - only re-run when cols or search needle change.
+  const { tableNameMatches, columnMatches, displayCols } = useMemo(() => {
+    const nameMatches = !schemaSearch || table.name.toLowerCase().includes(schemaSearch);
+    const colMatches =
+      !!schemaSearch && cols.some((col) => columnMatchesSearch(col, schemaSearch));
+    const visibleCols =
+      !schemaSearch || nameMatches
+        ? cols
+        : cols.filter((col) => columnMatchesSearch(col, schemaSearch));
+    return {
+      tableNameMatches: nameMatches,
+      columnMatches: colMatches,
+      displayCols: visibleCols,
+    };
+  }, [cols, schemaSearch, table.name]);
+
   const isTableExpanded =
     tableOpen || (!!schemaSearch && !tableNameMatches && (columnMatches || colsLoading));
-  const displayCols =
-    !schemaSearch || tableNameMatches
-      ? cols
-      : cols.filter((col) => columnMatchesSearch(col, schemaSearch));
 
   return (
     <div>

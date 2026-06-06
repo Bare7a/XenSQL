@@ -4,6 +4,7 @@ import Editor from '@monaco-editor/react';
 import { Search, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { filterJsonForViewer } from '@/shared/lib/rowJson';
+import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue';
 import { formatBinding, getEffectiveBinding } from '@/shared/lib/shortcuts';
 import { setupMonacoBeforeMount, getMonacoThemeName } from '@/features/editor/lib/monacoTheme';
 import { useAppTheme } from '@/shared/hooks/useAppTheme';
@@ -42,6 +43,8 @@ export function RowJsonViewer({ data, onClose }: Props) {
   const fontSize = useEditorFontSize();
   const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
   const [filter, setFilter] = useState('');
+  // Debounce filter to avoid JSON.stringify/Monaco work per keystroke.
+  const debouncedFilter = useDebouncedValue(filter, 150);
 
   const editorOptions = useMemo(
     () => ({
@@ -62,14 +65,14 @@ export function RowJsonViewer({ data, onClose }: Props) {
 
   const jsonText = useMemo(() => {
     if (!data) return t('jsonViewer.emptySelectRow');
-    const filtered = filterJsonForViewer(data, filter);
+    const filtered = filterJsonForViewer(data, debouncedFilter);
     if (filtered == null) return t('jsonViewer.noMatch');
     try {
       return JSON.stringify(filtered, null, 2);
     } catch {
       return t('jsonViewer.serializeError');
     }
-  }, [data, filter, t]);
+  }, [data, debouncedFilter, t]);
 
   const closeLabel = t('tooltip.closeJsonViewer', {
     shortcut: formatBinding(getEffectiveBinding('toggleJsonPanel')),
