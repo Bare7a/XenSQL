@@ -77,6 +77,8 @@ export function useSchemaTree({
       // Full (re)load: forget prior fetch markers so expanded nodes re-hydrate fresh.
       loadedTablesRef.current.clear();
       loadedColumnsRef.current.clear();
+      setTableColumns({});
+
       try {
         const bundle = await api.loadSchemaData(connId);
         setConnected(connId, true);
