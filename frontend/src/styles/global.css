@@ -2721,6 +2721,17 @@ td.cell-pending-edit {
   background: color-mix(in srgb, var(--accent) 12%, transparent);
 }
 
+.tree-column-fk {
+  flex-shrink: 0;
+  font-size: var(--text-3xs);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--warning);
+  padding: 0 var(--space-4);
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--warning) 12%, transparent);
+}
+
 .sidebar-connections-toolbar {
   display: flex;
   align-items: center;

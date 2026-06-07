@@ -223,6 +223,11 @@ func (s *Session) ListColumns(ctx context.Context, schema, table string) ([]data
 				SELECT 1 FROM pg_catalog.pg_constraint con
 				WHERE con.conrelid = c.oid AND con.contype = 'p'
 				  AND a.attnum = ANY (con.conkey)
+			),
+			EXISTS (
+				SELECT 1 FROM pg_catalog.pg_constraint con
+				WHERE con.conrelid = c.oid AND con.contype = 'f'
+				  AND a.attnum = ANY (con.conkey)
 			)
 		FROM pg_catalog.pg_attribute a
 		JOIN pg_catalog.pg_class c ON a.attrelid = c.oid
@@ -238,9 +243,9 @@ func (s *Session) ListColumns(ctx context.Context, schema, table string) ([]data
 	var cols []database.ColumnInfo
 	for rows.Next() {
 		var name, dtype string
-		var nullable, isPK bool
+		var nullable, isPK, isFK bool
 		var def string
-		if err := rows.Scan(&name, &dtype, &nullable, &def, &isPK); err != nil {
+		if err := rows.Scan(&name, &dtype, &nullable, &def, &isPK, &isFK); err != nil {
 			return nil, err
 		}
 		cols = append(cols, database.ColumnInfo{
@@ -248,6 +253,7 @@ func (s *Session) ListColumns(ctx context.Context, schema, table string) ([]data
 			DataType:   dtype,
 			IsNullable: nullable,
 			IsPrimary:  isPK,
+			IsForeign:  isFK,
 			DefaultVal: def,
 		})
 	}

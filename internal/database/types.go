@@ -37,6 +37,7 @@ type ColumnInfo struct {
 	DataType   string `json:"dataType"`
 	IsNullable bool   `json:"isNullable"`
 	IsPrimary  bool   `json:"isPrimary"`
+	IsForeign  bool   `json:"isForeign"`
 	DefaultVal string `json:"defaultVal,omitempty"`
 }
 

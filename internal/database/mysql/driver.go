@@ -212,10 +212,17 @@ func (s *Session) ListColumns(ctx context.Context, schema, table string) ([]data
 		schema = s.defaultSchema
 	}
 	rows, err := s.db.QueryContext(ctx, `
-		SELECT COLUMN_NAME, DATA_TYPE, IS_NULLABLE, COALESCE(COLUMN_DEFAULT, ''), COLUMN_KEY
-		FROM information_schema.COLUMNS
-		WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ?
-		ORDER BY ORDINAL_POSITION`, schema, table)
+		SELECT c.COLUMN_NAME, c.DATA_TYPE, c.IS_NULLABLE, COALESCE(c.COLUMN_DEFAULT, ''), c.COLUMN_KEY,
+			EXISTS (
+				SELECT 1 FROM information_schema.KEY_COLUMN_USAGE k
+				WHERE k.TABLE_SCHEMA = c.TABLE_SCHEMA
+				  AND k.TABLE_NAME = c.TABLE_NAME
+				  AND k.COLUMN_NAME = c.COLUMN_NAME
+				  AND k.REFERENCED_TABLE_NAME IS NOT NULL
+			)
+		FROM information_schema.COLUMNS c
+		WHERE c.TABLE_SCHEMA = ? AND c.TABLE_NAME = ?
+		ORDER BY c.ORDINAL_POSITION`, schema, table)
 	if err != nil {
 		return nil, err
 	}
@@ -223,7 +230,8 @@ func (s *Session) ListColumns(ctx context.Context, schema, table string) ([]data
 	var cols []database.ColumnInfo
 	for rows.Next() {
 		var name, dtype, nullable, def, colKey string
-		if err := rows.Scan(&name, &dtype, &nullable, &def, &colKey); err != nil {
+		var fk int
+		if err := rows.Scan(&name, &dtype, &nullable, &def, &colKey, &fk); err != nil {
 			return nil, err
 		}
 		cols = append(cols, database.ColumnInfo{
@@ -231,6 +239,7 @@ func (s *Session) ListColumns(ctx context.Context, schema, table string) ([]data
 			DataType:   dtype,
 			IsNullable: strings.EqualFold(nullable, "YES"),
 			IsPrimary:  colKey == "PRI",
+			IsForeign:  fk != 0,
 			DefaultVal: def,
 		})
 	}

@@ -5,6 +5,7 @@ export namespace database {
 	    dataType: string;
 	    isNullable: boolean;
 	    isPrimary: boolean;
+	    isForeign: boolean;
 	    defaultVal?: string;
 	
 	    static createFrom(source: any = {}) {
@@ -17,6 +18,7 @@ export namespace database {
 	        this.dataType = source["dataType"];
 	        this.isNullable = source["isNullable"];
 	        this.isPrimary = source["isPrimary"];
+	        this.isForeign = source["isForeign"];
 	        this.defaultVal = source["defaultVal"];
 	    }
 	}

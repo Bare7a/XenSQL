@@ -132,6 +132,10 @@ func (s *Session) ListTables(ctx context.Context, schema string) ([]database.Tab
 }
 
 func (s *Session) ListColumns(ctx context.Context, schema, table string) ([]database.ColumnInfo, error) {
+	fkCols, err := s.foreignKeyColumns(ctx, table)
+	if err != nil {
+		return nil, err
+	}
 	rows, err := s.db.QueryContext(ctx, fmt.Sprintf("PRAGMA table_info(%s)", database.QuoteIdent(database.DriverSQLite, table)))
 	if err != nil {
 		return nil, err
@@ -152,10 +156,33 @@ func (s *Session) ListColumns(ctx context.Context, schema, table string) ([]data
 			DataType:   ctype,
 			IsNullable: notnull == 0,
 			IsPrimary:  pk > 0,
+			IsForeign:  fkCols[name],
 			DefaultVal: dflt.String,
 		})
 	}
 	return cols, rows.Err()
+}
+
+// foreignKeyColumns returns the set of local column names that participate in a foreign key.
+// PRAGMA table_info doesn't expose foreign keys, so they come from PRAGMA foreign_key_list.
+func (s *Session) foreignKeyColumns(ctx context.Context, table string) (map[string]bool, error) {
+	rows, err := s.db.QueryContext(ctx, fmt.Sprintf("PRAGMA foreign_key_list(%s)", database.QuoteIdent(database.DriverSQLite, table)))
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	fks := make(map[string]bool)
+	for rows.Next() {
+		var id, seq int
+		var refTable, from string
+		var to sql.NullString // null when the FK references the target's primary key implicitly
+		var onUpdate, onDelete, matchType string
+		if err := rows.Scan(&id, &seq, &refTable, &from, &to, &onUpdate, &onDelete, &matchType); err != nil {
+			return nil, err
+		}
+		fks[from] = true
+	}
+	return fks, rows.Err()
 }
 
 func (s *Session) QueryTable(ctx context.Context, req database.TableDataRequest) (*database.QueryResult, error) {

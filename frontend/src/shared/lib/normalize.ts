@@ -35,12 +35,14 @@ export function normalizeColumns(data: unknown): ColumnInfo[] {
     dataType?: string;
     isNullable?: boolean;
     isPrimary?: boolean;
+    isForeign?: boolean;
     defaultVal?: string;
   }>(data).map((c) => ({
     name: String(c?.name ?? ''),
     dataType: String(c?.dataType ?? ''),
     isNullable: Boolean(c?.isNullable),
     isPrimary: Boolean(c?.isPrimary),
+    isForeign: Boolean(c?.isForeign),
     defaultVal: c?.defaultVal,
   }));
 }

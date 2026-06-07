@@ -282,6 +282,9 @@ export function TableViewAddRowDialog({
                           {col.isPrimary && (
                             <span className="table-view-add-row-badge">{t('tableView.addRowDialog.primaryKeyBadge')}</span>
                           )}
+                          {col.isForeign && (
+                            <span className="table-view-add-row-badge">{t('tableView.addRowDialog.foreignKeyBadge')}</span>
+                          )}
                           {requiresInsertValue(col, driver) && (
                             <span className="table-view-add-row-badge table-view-add-row-badge-required">
                               {t('tableView.addRowDialog.requiredBadge')}
