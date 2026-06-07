@@ -19,9 +19,9 @@ const tables: TableInfo[] = [
   { schema: 'public', name: 'orders', type: 'table' },
 ];
 const userColumns: ColumnInfo[] = [
-  { name: 'id', dataType: 'int', isNullable: false, isPrimary: true },
-  { name: 'email', dataType: 'text', isNullable: false, isPrimary: false },
-  { name: 'name', dataType: 'text', isNullable: true, isPrimary: false },
+  { name: 'id', dataType: 'int', isNullable: false, isPrimary: true, isForeign: false },
+  { name: 'email', dataType: 'text', isNullable: false, isPrimary: false, isForeign: false },
+  { name: 'name', dataType: 'text', isNullable: true, isPrimary: false, isForeign: false },
 ];
 
 function makeCtx(driver: DriverType = 'postgres'): CompletionContext {
@@ -142,7 +142,7 @@ describe('inserts respect driver quoting', () => {
   it('quotes a mixed-case column for mysql with backticks', () => {
     const ctx = makeCtx('mysql');
     ctx.columnsByTable['public.users'] = [
-      { name: 'First Name', dataType: 'text', isNullable: true, isPrimary: false },
+      { name: 'First Name', dataType: 'text', isNullable: true, isPrimary: false, isForeign: false },
     ];
     const parsed = parseQueryContext('SELECT * FROM users WHERE ', tables, schemas, 'mysql');
     const items = buildCompletionItems({
@@ -286,11 +286,11 @@ describe('JOIN target tables resolve', () => {
     { schema: 'public', name: 'contracts', type: 'table' },
   ];
   const colsByTable: Record<string, ColumnInfo[]> = {
-    'public.accounts': [{ name: 'id', dataType: 'int', isNullable: false, isPrimary: true }],
+    'public.accounts': [{ name: 'id', dataType: 'int', isNullable: false, isPrimary: true, isForeign: false }],
     'public.contracts': [
-      { name: 'id', dataType: 'int', isNullable: false, isPrimary: true },
-      { name: 'account_id', dataType: 'int', isNullable: false, isPrimary: false },
-      { name: 'amount', dataType: 'numeric', isNullable: true, isPrimary: false },
+      { name: 'id', dataType: 'int', isNullable: false, isPrimary: true, isForeign: false },
+      { name: 'account_id', dataType: 'int', isNullable: false, isPrimary: false, isForeign: false },
+      { name: 'amount', dataType: 'numeric', isNullable: true, isPrimary: false, isForeign: false },
     ],
   };
 
@@ -373,10 +373,10 @@ describe('value context after = offers the joined capital table-ref + column', (
     { schema: 'public', name: 'EBayAccounts', type: 'table' },
   ];
   const cols: Record<string, ColumnInfo[]> = {
-    'public.Users': [{ name: 'id', dataType: 'int', isNullable: false, isPrimary: true }],
+    'public.Users': [{ name: 'id', dataType: 'int', isNullable: false, isPrimary: true, isForeign: false }],
     'public.EBayAccounts': [
-      { name: 'id', dataType: 'int', isNullable: false, isPrimary: true },
-      { name: 'userId', dataType: 'int', isNullable: false, isPrimary: false },
+      { name: 'id', dataType: 'int', isNullable: false, isPrimary: true, isForeign: false },
+      { name: 'userId', dataType: 'int', isNullable: false, isPrimary: false, isForeign: false },
     ],
   };
   const complete = (text: string) => {

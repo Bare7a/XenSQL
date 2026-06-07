@@ -27,6 +27,7 @@ export interface ColumnInfo {
   dataType: string;
   isNullable: boolean;
   isPrimary: boolean;
+  isForeign: boolean;
   defaultVal?: string;
 }
 

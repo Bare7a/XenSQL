@@ -122,6 +122,11 @@ export const SchemaTableRow = memo(function SchemaTableRow({
                     {t('sidebar.pk')}
                   </span>
                 )}
+                {col.isForeign && (
+                  <span className="tree-column-fk" data-tooltip={t('tooltip.foreignKey')}>
+                    {t('sidebar.fk')}
+                  </span>
+                )}
                 <span className="tree-column-type">{col.dataType}</span>
               </div>
             ))}

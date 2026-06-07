@@ -105,9 +105,12 @@ export function rank(tier: 0 | 1 | 2 | 3 | 4 | 5, score: number, label: string):
   return `${tier}${score}_${label.toLowerCase()}`;
 }
 
-// Column hint shown in the suggestion's detail line: type plus a PK / NOT NULL marker.
+// Column hint shown in the suggestion's detail line: type plus PK / FK / NOT NULL markers.
 export function columnDetail(c: ColumnInfo): string {
-  if (c.isPrimary) return `${c.dataType} · PK`;
+  const tags: string[] = [];
+  if (c.isPrimary) tags.push('PK');
+  if (c.isForeign) tags.push('FK');
+  if (tags.length > 0) return `${c.dataType} · ${tags.join(' · ')}`;
   if (!c.isNullable) return `${c.dataType} · not null`;
   return c.dataType;
 }

@@ -63,6 +63,43 @@ func TestSessionPingAndSchemaInfo(t *testing.T) {
 	}
 }
 
+func TestListColumnsMarksForeignKeys(t *testing.T) {
+	s := newTestSession(t)
+	ctx := context.Background()
+
+	if _, err := s.Execute(ctx, `CREATE TABLE authors (id INTEGER PRIMARY KEY, name TEXT)`); err != nil {
+		t.Fatalf("create parent: %v", err)
+	}
+	if _, err := s.Execute(ctx, `CREATE TABLE books (
+		id INTEGER PRIMARY KEY,
+		title TEXT,
+		author_id INTEGER REFERENCES authors(id)
+	)`); err != nil {
+		t.Fatalf("create child: %v", err)
+	}
+
+	cols, err := s.ListColumns(ctx, "main", "books")
+	if err != nil {
+		t.Fatalf("list cols: %v", err)
+	}
+	byName := make(map[string]database.ColumnInfo, len(cols))
+	for _, c := range cols {
+		byName[c.Name] = c
+	}
+	if fk, ok := byName["author_id"]; !ok || !fk.IsForeign {
+		t.Fatalf("author_id should be marked foreign, got %+v", byName["author_id"])
+	}
+	if byName["author_id"].IsPrimary {
+		t.Errorf("author_id should not be marked primary, got %+v", byName["author_id"])
+	}
+	if byName["id"].IsForeign {
+		t.Errorf("id should not be marked foreign, got %+v", byName["id"])
+	}
+	if byName["title"].IsForeign {
+		t.Errorf("title should not be marked foreign, got %+v", byName["title"])
+	}
+}
+
 func TestSessionExecuteAndTableLifecycle(t *testing.T) {
 	s := newTestSession(t)
 	ctx := context.Background()

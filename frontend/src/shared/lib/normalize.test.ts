@@ -48,7 +48,7 @@ describe('normalizeTables', () => {
 describe('normalizeColumns', () => {
   it('preserves boolean flags and optional defaultVal', () => {
     expect(normalizeColumns([{ name: 'id', dataType: 'INT', isPrimary: true, isNullable: false }])).toEqual([
-      { name: 'id', dataType: 'INT', isNullable: false, isPrimary: true, defaultVal: undefined },
+      { name: 'id', dataType: 'INT', isNullable: false, isPrimary: true, isForeign: false, defaultVal: undefined },
     ]);
   });
 });
