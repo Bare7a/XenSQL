@@ -1,19 +1,14 @@
+import { ChevronDown, Plus } from 'lucide-react';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ChevronDown, Plus } from 'lucide-react';
-import { api } from '@/shared/lib/api';
-import { cx } from '@/shared/lib/cx';
-import { basename } from '@/shared/lib/connectionLabel';
 import { ConnectionDialog } from '@/features/connections/ConnectionDialog';
 import { ConnectionsPanel } from '@/features/sidebar/ConnectionsPanel';
+import { api } from '@/shared/lib/api';
+import { basename } from '@/shared/lib/connectionLabel';
+import { cx } from '@/shared/lib/cx';
+import { useConnectedIds, useConnections, useResolvedConnectionId, useStoreActions } from '@/store/selectors';
 import type { ConnectionConfig } from '@/types';
 import { DEFAULT_CONNECTION_COLOR } from '@/types';
-import {
-  useConnectedIds,
-  useConnections,
-  useResolvedConnectionId,
-  useStoreActions,
-} from '@/store/selectors';
 
 interface Props {
   onConnected: (connectionId: string) => void;
@@ -48,9 +43,7 @@ export function ConnectionSwitcher({ onConnected, onOpenConnectionTab }: Props) 
     current && isConnected
       ? current.driver === 'sqlite'
         ? `sqlite · ${basename(current.filePath || '')}`
-        : [current.driver, [current.host, current.database].filter(Boolean).join('/')]
-            .filter(Boolean)
-            .join(' · ')
+        : [current.driver, [current.host, current.database].filter(Boolean).join('/')].filter(Boolean).join(' · ')
       : '';
 
   // Always-mounted OS SQLite-drop listener; pre-fills the new-connection dialog regardless of active sidebar tab.

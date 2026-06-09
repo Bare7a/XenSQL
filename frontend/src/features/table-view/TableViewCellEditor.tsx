@@ -1,4 +1,4 @@
-import type { Dispatch, SetStateAction } from 'react';
+import { type Dispatch, type SetStateAction, useEffect, useRef } from 'react';
 import type { FocusCol } from '@/shared/lib/grid';
 
 interface Props {
@@ -34,15 +34,17 @@ export function TableViewCellEditor({
   focusRow,
   focusElement,
 }: Props) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    inputRef.current?.focus();
+  }, []);
   return (
     <input
+      ref={inputRef}
       className="table-view-cell-input"
-      autoFocus
       defaultValue={defaultValue}
       onBlur={(e) => {
-        (e.target as HTMLInputElement)
-          .closest('td')
-          ?.classList.add('cell-pending-edit');
+        (e.target as HTMLInputElement).closest('td')?.classList.add('cell-pending-edit');
 
         // Blank editor => NULL (no separate empty-string affordance); other whitespace preserved.
         const raw = e.target.value;
@@ -87,12 +89,7 @@ export function TableViewCellEditor({
           setEditing(null);
           return;
         }
-        if (
-          e.key === 'ArrowLeft' ||
-          e.key === 'ArrowRight' ||
-          e.key === 'ArrowUp' ||
-          e.key === 'ArrowDown'
-        ) {
+        if (e.key === 'ArrowLeft' || e.key === 'ArrowRight' || e.key === 'ArrowUp' || e.key === 'ArrowDown') {
           e.stopPropagation();
         }
       }}

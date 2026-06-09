@@ -1,9 +1,9 @@
-import { useCallback, useEffect, useRef, type RefObject } from 'react';
 import type { Monaco } from '@monaco-editor/react';
 import type { editor } from 'monaco-editor';
+import { type RefObject, useCallback, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { getEffectiveBinding, toMonacoKeybinding } from '@/shared/lib/shortcuts';
 import { decreaseEditorFontSize, increaseEditorFontSize } from '@/features/editor/lib/editorFontSize';
+import { getEffectiveBinding, toMonacoKeybinding } from '@/shared/lib/shortcuts';
 
 interface UseEditorActionsArgs {
   editorRef: RefObject<editor.IStandaloneCodeEditor | null>;
@@ -31,7 +31,7 @@ export function useEditorActions({
 
   const bindEditorActions = useCallback(
     (ed: editor.IStandaloneCodeEditor, monaco: Monaco) => {
-      editorActionsRef.current.forEach((d) => d.dispose());
+      for (const d of editorActionsRef.current) d.dispose();
       editorActionsRef.current = [
         ed.addAction({
           id: 'run-selected',
@@ -79,7 +79,7 @@ export function useEditorActions({
         }),
       ];
     },
-    [runQuery, t, onSaveQueryRef, onRenameSavedQueryRef]
+    [runQuery, t, onSaveQueryRef, onRenameSavedQueryRef],
   );
 
   useEffect(() => {

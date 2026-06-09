@@ -29,7 +29,7 @@ env:
 
 jobs:
   frontend:
-    name: Frontend (type-check + Vitest)
+    name: Frontend (Biome + Type Check + Vitest)
     if: github.event_name != 'workflow_dispatch' || inputs.suite == 'all' || inputs.suite == 'frontend'
     runs-on: ubuntu-latest
     defaults:
@@ -48,6 +48,9 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Lint, format & imports (Biome)
+        run: npm run check
 
       - name: Type-check and build
         run: npm run build

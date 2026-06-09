@@ -1,8 +1,9 @@
-import { type CSSProperties, type DragEventHandler } from 'react';
-import { useTranslation } from 'react-i18next';
 import { Edit2, Plug, Trash2, Unplug } from 'lucide-react';
-import { cx } from '@/shared/lib/cx';
+import type { CSSProperties, DragEventHandler } from 'react';
+import { useTranslation } from 'react-i18next';
+import { rowActivateKeyDown } from '@/shared/hooks/useListKeyboardNav';
 import { connectionSubtitle } from '@/shared/lib/connectionLabel';
+import { cx } from '@/shared/lib/cx';
 import type { ConnectionConfig } from '@/types';
 
 interface ConnectionDragProps {
@@ -45,17 +46,14 @@ export function ConnectionItem({
   const { t } = useTranslation();
   return (
     <div
-      className={cx(
-        'connection-item',
-        isSelected && 'active',
-        isDragging && 'dragging',
-        isDropTarget && 'drag-over'
-      )}
+      className={cx('connection-item', isSelected && 'active', isDragging && 'dragging', isDropTarget && 'drag-over')}
       style={{ '--conn-color': conn.color } as CSSProperties}
+      role="button"
       tabIndex={0}
       data-nav-item
       draggable
       onClick={onActivate}
+      onKeyDown={rowActivateKeyDown}
       onContextMenu={onContextMenu}
       {...dragProps}
     >

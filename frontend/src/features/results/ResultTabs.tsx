@@ -1,3 +1,4 @@
+// biome-ignore-all lint/suspicious/noArrayIndexKey: result-set tabs are positional ("Result 1..N"), rebuilt wholesale on each run and never reordered, so the array index is the stable identity.
 import { CircleAlert } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import type { ResultSet } from '@/types';
@@ -35,13 +36,9 @@ export function ResultTabs({ results, activeIndex, onSelect }: Props) {
           >
             <span className="result-tab-text">
               {t('results.resultLabel', { n: i + 1 })}
-              {!rs.error && count != null ? (
-                <span className="result-tab-count">{count.toLocaleString()}</span>
-              ) : null}
+              {!rs.error && count != null ? <span className="result-tab-count">{count.toLocaleString()}</span> : null}
             </span>
-            {rs.error ? (
-              <CircleAlert className="icon-xs" />
-            ) : null}
+            {rs.error ? <CircleAlert className="icon-xs" /> : null}
           </button>
         );
       })}

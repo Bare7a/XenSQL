@@ -5,7 +5,7 @@ import type { EditorTab } from '@/types';
 export function useScrollActiveTabIntoView(
   tabStripRef: React.RefObject<HTMLElement | null>,
   tabs: EditorTab[],
-  activeTabId: string | null
+  activeTabId: string | null,
 ): void {
   useEffect(() => {
     if (!activeTabId || !tabStripRef.current) return;

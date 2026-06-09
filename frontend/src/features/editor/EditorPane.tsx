@@ -1,6 +1,6 @@
 import { memo, useCallback, useMemo } from 'react';
-import { SqlEditor } from '@/features/editor/SqlEditor';
 import { isSavedQueryTabDirty } from '@/features/editor/lib/savedQueryTab';
+import { SqlEditor } from '@/features/editor/SqlEditor';
 import type {
   ColumnInfo,
   ConnectionConfig,
@@ -19,9 +19,7 @@ interface EditorPaneProps {
   runningTabId: string | null;
   schemas: Record<string, SchemaInfo[]>;
   tablesForConnection: (connectionId: string) => TableInfo[];
-  loadColumnsForConnection: (
-    connectionId: string
-  ) => (schema: string, table: string) => Promise<ColumnInfo[]>;
+  loadColumnsForConnection: (connectionId: string) => (schema: string, table: string) => Promise<ColumnInfo[]>;
   onChangeSql: (tabId: string, sql: string) => void;
   onRun: (tabId: string, sql: string) => void;
   onCancel: (tabId: string) => void;
@@ -83,17 +81,14 @@ const EditorPaneTab = memo(function EditorPaneTab({
   const tabId = tab.id;
   const connectionId = tab.connectionId;
 
-  const onLoadColumns = useMemo(
-    () => loadColumnsForConnection(connectionId),
-    [loadColumnsForConnection, connectionId]
-  );
+  const onLoadColumns = useMemo(() => loadColumnsForConnection(connectionId), [loadColumnsForConnection, connectionId]);
 
   const handleChange = useCallback((sql: string) => onChangeSql(tabId, sql), [onChangeSql, tabId]);
   const handleRun = useCallback((sql: string) => onRun(tabId, sql), [onRun, tabId]);
   const handleCancel = useCallback(() => onCancel(tabId), [onCancel, tabId]);
   const handleCursorStateChange = useCallback(
     (cursor: EditorCursorState) => onCursorStateChange(tabId, cursor),
-    [onCursorStateChange, tabId]
+    [onCursorStateChange, tabId],
   );
   const handleBeginTxn = useCallback(() => onBeginTxn(tabId), [onBeginTxn, tabId]);
   const handleCommitTxn = useCallback(() => onCommitTxn(tabId), [onCommitTxn, tabId]);

@@ -18,8 +18,7 @@ export const useFolders = () => useAppStore((s) => s.folders);
 /** Use when a component needs sessions for inactive tabs that stay mounted. */
 export const useTabSessionMap = () => useAppStore((s) => s.tabSession);
 
-export const useActiveTab = () =>
-  useAppStore(useShallow((s) => s.tabs.find((t) => t.id === s.activeTabId)));
+export const useActiveTab = () => useAppStore(useShallow((s) => s.tabs.find((t) => t.id === s.activeTabId)));
 
 export const useActiveTabSession = (): TabSessionState =>
   useAppStore((s) => {
@@ -55,5 +54,5 @@ export const useStoreActions = () =>
       reorderTabs: s.reorderTabs,
       setSidebarView: s.setSidebarView,
       setSelectedConnection: s.setSelectedConnection,
-    }))
+    })),
   );

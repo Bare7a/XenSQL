@@ -1,7 +1,8 @@
-import { loader } from "@monaco-editor/react";
-type Editor = import("monaco-editor").editor.ICodeEditor;
+import { loader } from '@monaco-editor/react';
 
-export type EditAction = "undo" | "redo" | "cut" | "copy" | "paste" | "selectAll";
+type Editor = import('monaco-editor').editor.ICodeEditor;
+
+export type EditAction = 'undo' | 'redo' | 'cut' | 'copy' | 'paste' | 'selectAll';
 
 let lastFocusedTarget: HTMLElement | null = null;
 let initialized = false;
@@ -12,14 +13,14 @@ function isNativeEditable(el: Element | null): el is HTMLInputElement | HTMLText
   if (el instanceof HTMLInputElement) {
     const t = el.type;
     return (
-      t === "text" ||
-      t === "search" ||
-      t === "url" ||
-      t === "tel" ||
-      t === "password" ||
-      t === "email" ||
-      t === "number" ||
-      t === ""
+      t === 'text' ||
+      t === 'search' ||
+      t === 'url' ||
+      t === 'tel' ||
+      t === 'password' ||
+      t === 'email' ||
+      t === 'number' ||
+      t === ''
     );
   }
   if (el instanceof HTMLElement && el.isContentEditable) return true;
@@ -27,14 +28,14 @@ function isNativeEditable(el: Element | null): el is HTMLInputElement | HTMLText
 }
 
 function isInsideMonaco(el: Element | null): boolean {
-  return !!el && !!(el as HTMLElement).closest?.(".monaco-editor");
+  return !!el && !!(el as HTMLElement).closest?.('.monaco-editor');
 }
 
 function ensureInit() {
-  if (initialized || typeof document === "undefined") return;
+  if (initialized || typeof document === 'undefined') return;
   initialized = true;
   document.addEventListener(
-    "focusin",
+    'focusin',
     (e) => {
       const target = e.target as HTMLElement | null;
       if (target && (isNativeEditable(target) || isInsideMonaco(target))) {
@@ -47,21 +48,21 @@ function ensureInit() {
 
 ensureInit();
 
-const MONACO_TRIGGER_IDS: Record<Exclude<EditAction, "paste">, string> = {
-  undo: "undo",
-  redo: "redo",
-  cut: "editor.action.clipboardCutAction",
-  copy: "editor.action.clipboardCopyAction",
-  selectAll: "editor.action.selectAll",
+const MONACO_TRIGGER_IDS: Record<Exclude<EditAction, 'paste'>, string> = {
+  undo: 'undo',
+  redo: 'redo',
+  cut: 'editor.action.clipboardCutAction',
+  copy: 'editor.action.clipboardCopyAction',
+  selectAll: 'editor.action.selectAll',
 };
 
 const EXEC_COMMAND_IDS: Record<EditAction, string> = {
-  undo: "undo",
-  redo: "redo",
-  cut: "cut",
-  copy: "copy",
-  paste: "paste",
-  selectAll: "selectAll",
+  undo: 'undo',
+  redo: 'redo',
+  cut: 'cut',
+  copy: 'copy',
+  paste: 'paste',
+  selectAll: 'selectAll',
 };
 
 async function runOnMonaco(target: HTMLElement, action: EditAction) {
@@ -78,26 +79,26 @@ async function runOnMonaco(target: HTMLElement, action: EditAction) {
   });
   if (!editor) return;
   editor.focus();
-  if (action === "paste") {
+  if (action === 'paste') {
     try {
       const text = await navigator.clipboard.readText();
       if (!text) return;
-      editor.trigger("menu", "paste", { text });
+      editor.trigger('menu', 'paste', { text });
     } catch {
       /* clipboard permissions may deny - silently skip */
     }
     return;
   }
-  editor.trigger("menu", MONACO_TRIGGER_IDS[action], null);
+  editor.trigger('menu', MONACO_TRIGGER_IDS[action], null);
 }
 
 async function runOnNative(target: HTMLElement, action: EditAction) {
   target.focus();
-  if (action === "paste") {
+  if (action === 'paste') {
     try {
       const text = await navigator.clipboard.readText();
       if (!text) return;
-      document.execCommand("insertText", false, text);
+      document.execCommand('insertText', false, text);
     } catch {
       /* ignore */
     }

@@ -1,5 +1,5 @@
-import { STORAGE_KEYS } from '@/shared/lib/storageKeys';
 import { settings } from '@/shared/lib/settingsStore';
+import { STORAGE_KEYS } from '@/shared/lib/storageKeys';
 
 export interface KeyBinding {
   key: string;
@@ -123,8 +123,7 @@ export const APP_SHORTCUTS: ShortcutDef[] = [
 const STORAGE_KEY = STORAGE_KEYS.shortcuts;
 export const SHORTCUTS_CHANGED_EVENT = 'xensql-shortcuts-changed';
 
-const isMac =
-  typeof navigator !== 'undefined' && /Mac|iPhone|iPod|iPad/i.test(navigator.platform);
+const isMac = typeof navigator !== 'undefined' && /Mac|iPhone|iPod|iPad/i.test(navigator.platform);
 
 // Prevents global dispatcher from firing actions while the Shortcuts dialog records a new binding
 let capturingBinding = false;
@@ -193,18 +192,12 @@ export function resetAllShortcutBindings() {
 }
 
 export function bindingKey(binding: KeyBinding): string {
-  return [
-    binding.ctrl ? '1' : '0',
-    binding.shift ? '1' : '0',
-    binding.alt ? '1' : '0',
-    binding.key.toLowerCase(),
-  ].join(':');
+  return [binding.ctrl ? '1' : '0', binding.shift ? '1' : '0', binding.alt ? '1' : '0', binding.key.toLowerCase()].join(
+    ':',
+  );
 }
 
-export function findConflictingShortcut(
-  id: string,
-  binding: KeyBinding
-): ShortcutDef | undefined {
+export function findConflictingShortcut(id: string, binding: KeyBinding): ShortcutDef | undefined {
   const key = bindingKey(binding);
   for (const def of APP_SHORTCUTS) {
     if (def.id === id) continue;
@@ -264,14 +257,7 @@ export function matchesBinding(e: KeyboardEvent, binding: KeyBinding): boolean {
 
 export function bindingFromKeyboardEvent(e: KeyboardEvent): KeyBinding | null {
   if (['Control', 'Shift', 'Alt', 'Meta'].includes(e.key)) return null;
-  const key =
-    e.key === 'Tab'
-      ? 'Tab'
-      : e.key === 'Enter'
-        ? 'Enter'
-        : e.key.length === 1
-          ? e.key.toLowerCase()
-          : e.key;
+  const key = e.key === 'Tab' ? 'Tab' : e.key === 'Enter' ? 'Enter' : e.key.length === 1 ? e.key.toLowerCase() : e.key;
   return {
     key,
     ctrl: e.ctrlKey || e.metaKey,
@@ -280,10 +266,7 @@ export function bindingFromKeyboardEvent(e: KeyboardEvent): KeyBinding | null {
   };
 }
 
-export function toMonacoKeybinding(
-  monaco: typeof import('monaco-editor'),
-  binding: KeyBinding
-): number {
+export function toMonacoKeybinding(monaco: typeof import('monaco-editor'), binding: KeyBinding): number {
   let mod = 0;
   if (binding.ctrl) mod |= monaco.KeyMod.CtrlCmd;
   if (binding.shift) mod |= monaco.KeyMod.Shift;

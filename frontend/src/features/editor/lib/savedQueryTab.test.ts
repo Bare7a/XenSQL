@@ -34,19 +34,15 @@ describe('isSavedQueryTabDirty', () => {
   });
 
   it('false when sql matches the baseline', () => {
-    expect(
-      isSavedQueryTabDirty(
-        tab({ savedQueryId: 'sq-1', sql: 'SELECT 1', savedSqlBaseline: 'SELECT 1' })
-      )
-    ).toBe(false);
+    expect(isSavedQueryTabDirty(tab({ savedQueryId: 'sq-1', sql: 'SELECT 1', savedSqlBaseline: 'SELECT 1' }))).toBe(
+      false,
+    );
   });
 
   it('true when sql diverges from the baseline', () => {
-    expect(
-      isSavedQueryTabDirty(
-        tab({ savedQueryId: 'sq-1', sql: 'SELECT 2', savedSqlBaseline: 'SELECT 1' })
-      )
-    ).toBe(true);
+    expect(isSavedQueryTabDirty(tab({ savedQueryId: 'sq-1', sql: 'SELECT 2', savedSqlBaseline: 'SELECT 1' }))).toBe(
+      true,
+    );
   });
 
   it('treats missing baseline as empty', () => {
@@ -69,9 +65,7 @@ describe('findTabForSavedQuery', () => {
   });
 
   it('does not match a linked-elsewhere tab when title coincidentally matches', () => {
-    const tabs: EditorTab[] = [
-      tab({ id: 'a', savedQueryId: 'other-sq', title: 'Saved A' }),
-    ];
+    const tabs: EditorTab[] = [tab({ id: 'a', savedQueryId: 'other-sq', title: 'Saved A' })];
     expect(findTabForSavedQuery(tabs, saved())).toBeUndefined();
   });
 

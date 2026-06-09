@@ -1,13 +1,13 @@
+import { ClipboardGetText } from '@wails/runtime/runtime';
 import { useEffect, useRef } from 'react';
-import { isEditableTarget, isInsideGrid } from '@/shared/lib/dom';
-import type { CellRange } from '@/shared/lib/gridCellRange';
-import type { CopiedCells } from '@/shared/hooks/useGridCopyExport';
 import {
   computePasteEdits,
-  parseClipboardGrid,
   type PasteCellEdit,
+  parseClipboardGrid,
 } from '@/features/table-view/lib/tableViewClipboard';
-import { ClipboardGetText } from '@wails/runtime/runtime';
+import type { CopiedCells } from '@/shared/hooks/useGridCopyExport';
+import { isEditableTarget, isInsideGrid } from '@/shared/lib/dom';
+import type { CellRange } from '@/shared/lib/gridCellRange';
 
 interface UseTableViewKeyboardActionsOptions {
   isActive: boolean;
@@ -123,13 +123,7 @@ export function useTableViewKeyboardActions({
           const buffer = lastCopyRef.current;
           const cells = buffer && raw === buffer.text ? buffer.cells : parseClipboardGrid(raw);
           if (cells.length === 0) return;
-          const edits = computePasteEdits(
-            cells,
-            pasteAt.row,
-            pasteAt.colPos,
-            rows.length,
-            displayColumns
-          );
+          const edits = computePasteEdits(cells, pasteAt.row, pasteAt.colPos, rows.length, displayColumns);
           if (edits.length === 0) return;
           onPasteCellsRef.current(edits);
         })();

@@ -4,7 +4,7 @@ import { settings } from '@/shared/lib/settingsStore';
 export function startPanelResize(
   e: React.MouseEvent,
   axis: 'x' | 'y',
-  apply: (totalDelta: number) => void
+  apply: (totalDelta: number) => void,
 ): () => void {
   e.preventDefault();
   const start = axis === 'x' ? e.clientX : e.clientY;

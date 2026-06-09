@@ -1,8 +1,9 @@
 import { ChevronDown, ChevronRight, FolderOpen, Loader2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import type { ColumnInfo, SchemaInfo, TableInfo } from '@/types';
 import { tableKey } from '@/features/sidebar/hooks/useSchemaTree';
 import { SchemaTableRow } from '@/features/sidebar/SchemaTableRow';
+import { rowActivateKeyDown } from '@/shared/hooks/useListKeyboardNav';
+import type { ColumnInfo, SchemaInfo, TableInfo } from '@/types';
 
 // Stable ref so tables without loaded columns keep equal props (a fresh [] would defeat memo).
 const EMPTY_COLS: ColumnInfo[] = [];
@@ -48,12 +49,15 @@ export function SchemaTreeNode({
 
   return (
     <div>
-      <div className="tree-item" tabIndex={0} data-nav-item onClick={onToggleSchema}>
-        {schemaExpanded ? (
-          <ChevronDown className="icon-sm" />
-        ) : (
-          <ChevronRight className="icon-sm" />
-        )}
+      <div
+        className="tree-item"
+        role="button"
+        tabIndex={0}
+        data-nav-item
+        onClick={onToggleSchema}
+        onKeyDown={rowActivateKeyDown}
+      >
+        {schemaExpanded ? <ChevronDown className="icon-sm" /> : <ChevronRight className="icon-sm" />}
         <FolderOpen className="icon-sm icon" />
         <span className="flex-1">{sch.name}</span>
         {allTables.length > 0 && (

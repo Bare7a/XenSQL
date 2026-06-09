@@ -3,9 +3,9 @@ import { useTranslation } from 'react-i18next';
 import { Modal } from '@/shared/components/Modal';
 import { api } from '@/shared/lib/api';
 import { appToast } from '@/shared/lib/appToast';
+import { formatError } from '@/shared/lib/normalize';
 import type { ConnectionConfig, DriverType } from '@/types';
 import { DEFAULT_COLORS, DEFAULT_CONNECTION_COLOR } from '@/types';
-import { formatError } from '@/shared/lib/normalize';
 
 interface Props {
   connection?: ConnectionConfig | null;
@@ -44,7 +44,7 @@ export function ConnectionDialog({ connection, onClose, onSaved }: Props) {
       password: '',
       sslMode: 'disable',
       schema: 'public',
-    }
+    },
   );
   const [error, setError] = useState('');
   const [testing, setTesting] = useState(false);
@@ -118,147 +118,162 @@ export function ConnectionDialog({ connection, onClose, onSaved }: Props) {
   };
 
   const defaultPort = form.driver === 'mysql' ? 3306 : 5432;
-  const schemaValue =
-    form.driver === 'mysql' ? form.schema || form.database || '' : form.schema || 'public';
+  const schemaValue = form.driver === 'mysql' ? form.schema || form.database || '' : form.schema || 'public';
 
   return (
     <Modal title={isEdit ? t('connection.editTitle') : t('connection.newTitle')} onClose={onClose} size="md">
-        <div className="modal-body">
-          <div className="form-group">
-            <label>{t('connection.name')}</label>
-            <input value={form.name} onChange={(e) => update({ name: e.target.value })} placeholder={t('connection.namePlaceholder')} />
-          </div>
-          <div className="form-group">
-            <label>{t('connection.driver')}</label>
-            <select value={form.driver} onChange={(e) => handleDriverChange(e.target.value as DriverType)}>
-              <option value="sqlite">{t('connection.sqlite')}</option>
-              <option value="postgres">{t('connection.postgres')}</option>
-              <option value="mysql">{t('connection.mysql')}</option>
-            </select>
-          </div>
-          <div className="form-group form-group-checkbox">
-            <label className="checkbox-label">
-              <input
-                type="checkbox"
-                checked={!!form.readOnly}
-                onChange={(e) => update({ readOnly: e.target.checked })}
+      <div className="modal-body">
+        <div className="form-group">
+          <label htmlFor="conn-name">{t('connection.name')}</label>
+          <input
+            id="conn-name"
+            value={form.name}
+            onChange={(e) => update({ name: e.target.value })}
+            placeholder={t('connection.namePlaceholder')}
+          />
+        </div>
+        <div className="form-group">
+          <label htmlFor="conn-driver">{t('connection.driver')}</label>
+          <select
+            id="conn-driver"
+            value={form.driver}
+            onChange={(e) => handleDriverChange(e.target.value as DriverType)}
+          >
+            <option value="sqlite">{t('connection.sqlite')}</option>
+            <option value="postgres">{t('connection.postgres')}</option>
+            <option value="mysql">{t('connection.mysql')}</option>
+          </select>
+        </div>
+        <div className="form-group form-group-checkbox">
+          <label className="checkbox-label">
+            <input type="checkbox" checked={!!form.readOnly} onChange={(e) => update({ readOnly: e.target.checked })} />
+            <span className="checkbox-text">{t('connection.readOnly')}</span>
+          </label>
+          <p className="form-hint">{t('connection.readOnlyHint')}</p>
+        </div>
+        <div className="form-group">
+          <label htmlFor="conn-color">{t('connection.tabColor')}</label>
+          <div className="color-picker" id="conn-color">
+            {DEFAULT_COLORS.map((c) => (
+              <button
+                key={c}
+                type="button"
+                className={`color-swatch ${form.color === c ? 'selected' : ''}`}
+                style={{ background: c }}
+                onClick={() => update({ color: c })}
               />
-              <span className="checkbox-text">{t('connection.readOnly')}</span>
-            </label>
-            <p className="form-hint">{t('connection.readOnlyHint')}</p>
+            ))}
           </div>
+        </div>
+        {form.driver === 'sqlite' ? (
           <div className="form-group">
-            <label>{t('connection.tabColor')}</label>
-            <div className="color-picker">
-              {DEFAULT_COLORS.map((c) => (
-                <button
-                  key={c}
-                  type="button"
-                  className={`color-swatch ${form.color === c ? 'selected' : ''}`}
-                  style={{ background: c }}
-                  onClick={() => update({ color: c })}
-                />
-              ))}
+            <label htmlFor="conn-file">{t('connection.file')}</label>
+            <div className="form-file-row">
+              <input
+                id="conn-file"
+                value={form.filePath || ''}
+                onChange={(e) => update({ filePath: e.target.value })}
+                placeholder={t('connection.filePlaceholder')}
+              />
+              <button type="button" className="btn" onClick={handlePickFile}>
+                {t('common.browse')}
+              </button>
             </div>
           </div>
-          {form.driver === 'sqlite' ? (
-            <div className="form-group">
-              <label>{t('connection.file')}</label>
-              <div className="form-file-row">
-                <input
-                  value={form.filePath || ''}
-                  onChange={(e) => update({ filePath: e.target.value })}
-                  placeholder={t('connection.filePlaceholder')}
-                />
-                <button type="button" className="btn" onClick={handlePickFile}>
-                  {t('common.browse')}
-                </button>
-              </div>
-            </div>
-          ) : (
-            <>
-              <div className="form-row">
-                <div className="form-group">
-                  <label>{t('connection.host')}</label>
-                  <input value={form.host || ''} onChange={(e) => update({ host: e.target.value })} />
-                </div>
-                <div className="form-group">
-                  <label>{t('connection.port')}</label>
-                  <input
-                    type="number"
-                    value={form.port || defaultPort}
-                    onChange={(e) => update({ port: parseInt(e.target.value, 10) || defaultPort }) }
-                  />
-                </div>
+        ) : (
+          <>
+            <div className="form-row">
+              <div className="form-group">
+                <label htmlFor="conn-host">{t('connection.host')}</label>
+                <input id="conn-host" value={form.host || ''} onChange={(e) => update({ host: e.target.value })} />
               </div>
               <div className="form-group">
-                <label>{t('connection.databaseName')}</label>
+                <label htmlFor="conn-port">{t('connection.port')}</label>
                 <input
-                  value={form.database || ''}
-                  onChange={(e) => update({ database: e.target.value })}
-                  placeholder={
-                    form.driver === 'mysql'
-                      ? t('connection.databasePlaceholderMysql')
-                      : t('connection.databasePlaceholder')
-                  }
-                  required
+                  id="conn-port"
+                  type="number"
+                  value={form.port || defaultPort}
+                  onChange={(e) => update({ port: parseInt(e.target.value, 10) || defaultPort })}
                 />
-                <p className="form-hint">
-                  {form.driver === 'mysql' ? t('connection.databaseHintMysql') : t('connection.databaseHint')}
-                </p>
               </div>
-              <div className="form-row">
-                <div className="form-group">
-                  <label>{t('connection.username')}</label>
-                  <input value={form.username || ''} onChange={(e) => update({ username: e.target.value })} />
-                </div>
-                <div className="form-group">
-                  <label>{t('connection.password')}</label>
-                  <input
-                    type="password"
-                    value={form.password || ''}
-                    onChange={(e) => update({ password: e.target.value })}
-                  />
-                </div>
+            </div>
+            <div className="form-group">
+              <label htmlFor="conn-database">{t('connection.databaseName')}</label>
+              <input
+                id="conn-database"
+                value={form.database || ''}
+                onChange={(e) => update({ database: e.target.value })}
+                placeholder={
+                  form.driver === 'mysql'
+                    ? t('connection.databasePlaceholderMysql')
+                    : t('connection.databasePlaceholder')
+                }
+                required
+              />
+              <p className="form-hint">
+                {form.driver === 'mysql' ? t('connection.databaseHintMysql') : t('connection.databaseHint')}
+              </p>
+            </div>
+            <div className="form-row">
+              <div className="form-group">
+                <label htmlFor="conn-username">{t('connection.username')}</label>
+                <input
+                  id="conn-username"
+                  value={form.username || ''}
+                  onChange={(e) => update({ username: e.target.value })}
+                />
               </div>
-              <div className="form-row">
-                <div className="form-group">
-                  <label>{t('connection.sslMode')}</label>
-                  <select value={form.sslMode || 'disable'} onChange={(e) => update({ sslMode: e.target.value })}>
-                    <option value="disable">{t('connection.sslDisable')}</option>
-                    <option value="require">{t('connection.sslRequire')}</option>
-                    <option value="verify-full">{t('connection.sslVerifyFull')}</option>
-                  </select>
-                </div>
-                <div className="form-group">
-                  <label>
-                    {form.driver === 'mysql' ? t('connection.defaultSchemaMysql') : t('connection.defaultSchema')}
-                  </label>
-                  <input
-                    value={schemaValue}
-                    onChange={(e) => update({ schema: e.target.value })}
-                    placeholder={form.driver === 'mysql' ? form.database || '' : 'public'}
-                  />
-                  {form.driver === 'mysql' && (
-                    <p className="form-hint">{t('connection.defaultSchemaMysqlHint')}</p>
-                  )}
-                </div>
+              <div className="form-group">
+                <label htmlFor="conn-password">{t('connection.password')}</label>
+                <input
+                  id="conn-password"
+                  type="password"
+                  value={form.password || ''}
+                  onChange={(e) => update({ password: e.target.value })}
+                />
               </div>
-            </>
-          )}
-          {error && <div className="form-alert form-alert--error">{error}</div>}
-        </div>
-        <div className="modal-footer">
-          <button type="button" className="btn" onClick={onClose}>
-            {t('common.cancel')}
-          </button>
-          <button type="button" className="btn" onClick={handleTest} disabled={testing || saving}>
-            {testing ? t('common.testing') : t('common.test')}
-          </button>
-          <button type="button" className="btn btn-primary" onClick={handleSave} disabled={saving || testing}>
-            {t('common.save')}
-          </button>
-        </div>
+            </div>
+            <div className="form-row">
+              <div className="form-group">
+                <label htmlFor="conn-ssl-mode">{t('connection.sslMode')}</label>
+                <select
+                  id="conn-ssl-mode"
+                  value={form.sslMode || 'disable'}
+                  onChange={(e) => update({ sslMode: e.target.value })}
+                >
+                  <option value="disable">{t('connection.sslDisable')}</option>
+                  <option value="require">{t('connection.sslRequire')}</option>
+                  <option value="verify-full">{t('connection.sslVerifyFull')}</option>
+                </select>
+              </div>
+              <div className="form-group">
+                <label htmlFor="conn-schema">
+                  {form.driver === 'mysql' ? t('connection.defaultSchemaMysql') : t('connection.defaultSchema')}
+                </label>
+                <input
+                  id="conn-schema"
+                  value={schemaValue}
+                  onChange={(e) => update({ schema: e.target.value })}
+                  placeholder={form.driver === 'mysql' ? form.database || '' : 'public'}
+                />
+                {form.driver === 'mysql' && <p className="form-hint">{t('connection.defaultSchemaMysqlHint')}</p>}
+              </div>
+            </div>
+          </>
+        )}
+        {error && <div className="form-alert form-alert--error">{error}</div>}
+      </div>
+      <div className="modal-footer">
+        <button type="button" className="btn" onClick={onClose}>
+          {t('common.cancel')}
+        </button>
+        <button type="button" className="btn" onClick={handleTest} disabled={testing || saving}>
+          {testing ? t('common.testing') : t('common.test')}
+        </button>
+        <button type="button" className="btn btn-primary" onClick={handleSave} disabled={saving || testing}>
+          {t('common.save')}
+        </button>
+      </div>
     </Modal>
   );
 }

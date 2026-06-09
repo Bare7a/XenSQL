@@ -1,7 +1,7 @@
 import type { Virtualizer } from '@tanstack/react-virtual';
 import { queryElementInContainer } from '@/shared/lib/dom';
-import { findGridCellElement } from '@/shared/lib/gridCellRange';
 import type { FocusCol } from '@/shared/lib/grid';
+import { findGridCellElement } from '@/shared/lib/gridCellRange';
 import { adjustGridCellScrollInWrap } from '@/shared/lib/gridScroll';
 
 export type GridCellFocus = { row: number; colPos: FocusCol };
@@ -11,7 +11,7 @@ export function resolveGridCellFocus(
   row: number | null,
   colPos: FocusCol,
   rowCount: number,
-  colCount: number
+  colCount: number,
 ): GridCellFocus | null {
   if (rowCount === 0 || colCount === 0) return null;
   if (row != null && colPos >= 0 && row < rowCount && colPos < colCount) {
@@ -24,11 +24,9 @@ export function getGridCellElement(
   wrap: HTMLElement | null,
   row: number,
   colPos: FocusCol,
-  cellId: string
+  cellId: string,
 ): HTMLElement | null {
-  return (
-    findGridCellElement(wrap, row, colPos) ?? queryElementInContainer(wrap, cellId)
-  );
+  return findGridCellElement(wrap, row, colPos) ?? queryElementInContainer(wrap, cellId);
 }
 
 interface FocusGridCellDomOptions {
@@ -75,9 +73,6 @@ export function focusGridCellDom({
   requestAnimationFrame(run);
 }
 
-export function scrollVirtualizerToRow(
-  rowVirtualizer: Virtualizer<HTMLDivElement, Element>,
-  row: number
-): void {
+export function scrollVirtualizerToRow(rowVirtualizer: Virtualizer<HTMLDivElement, Element>, row: number): void {
   rowVirtualizer.scrollToIndex(Math.max(0, row - 1), { align: 'start' });
 }

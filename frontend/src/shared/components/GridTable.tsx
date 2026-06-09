@@ -44,6 +44,7 @@ export function GridTable<TCtx>({
   }
 
   return (
+    // biome-ignore lint/a11y/noStaticElementInteractions: grid scroll wrapper; mousedown on empty space (outside any cell) clears the cell selection. Cells themselves are keyboard-focusable.
     <div
       ref={tableWrapRef}
       className={wrapClassName}

@@ -1,8 +1,8 @@
+import { Bookmark, Lock, Plus, Table2, X } from 'lucide-react';
 import { forwardRef, memo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Bookmark, Lock, Plus, Table2, X } from 'lucide-react';
-import { cx } from '@/shared/lib/cx';
 import { isSavedQueryTabDirty } from '@/features/editor/lib/savedQueryTab';
+import { cx } from '@/shared/lib/cx';
 import type { ConnectionConfig, EditorTab } from '@/types';
 
 interface EditorTabBarProps {
@@ -23,8 +23,8 @@ interface EditorTabBarProps {
 }
 
 // ref → scrollable wrapper; App attaches wheel-to-horizontal scroll and active-tab auto-scroll.
-export const EditorTabBar = memo(forwardRef<HTMLDivElement, EditorTabBarProps>(
-  function EditorTabBar(
+export const EditorTabBar = memo(
+  forwardRef<HTMLDivElement, EditorTabBarProps>(function EditorTabBar(
     {
       tabs,
       activeTabId,
@@ -41,12 +41,12 @@ export const EditorTabBar = memo(forwardRef<HTMLDivElement, EditorTabBarProps>(
       onDragOverTab,
       onDragLeaveTab,
     },
-    ref
+    ref,
   ) {
     const { t } = useTranslation();
 
     return (
-      <div ref={ref} className="editor-tabs">
+      <div ref={ref} className="editor-tabs" role="tablist">
         {tabs.map((tab) => {
           const conn = connections.find((c) => c.id === tab.connectionId);
           const tabReadOnly = !!conn?.readOnly;
@@ -55,13 +55,22 @@ export const EditorTabBar = memo(forwardRef<HTMLDivElement, EditorTabBarProps>(
           return (
             <div
               key={tab.id}
+              role="tab"
+              aria-selected={isActive}
+              tabIndex={0}
               draggable
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  onActivate(tab.id);
+                }
+              }}
               className={cx(
                 'editor-tab',
                 isActive && 'active',
                 tabReadOnly && 'read-only-tab',
                 dragTabId === tab.id && 'dragging',
-                dropTabId === tab.id && 'drag-over'
+                dropTabId === tab.id && 'drag-over',
               )}
               style={{ borderTopColor: isActive ? tab.color : 'transparent' }}
               onClick={() => onActivate(tab.id)}
@@ -106,9 +115,7 @@ export const EditorTabBar = memo(forwardRef<HTMLDivElement, EditorTabBarProps>(
               {tab.savedQueryId && (
                 <span
                   className="tab-saved-wrap"
-                  data-tooltip={
-                    tabDirty ? t('tooltip.savedQueryTabDirty') : t('tooltip.savedQueryTab')
-                  }
+                  data-tooltip={tabDirty ? t('tooltip.savedQueryTabDirty') : t('tooltip.savedQueryTab')}
                 >
                   <Bookmark
                     className={cx('icon-2xs', 'tab-saved-icon', tabDirty && 'tab-saved-icon-dirty')}
@@ -152,5 +159,5 @@ export const EditorTabBar = memo(forwardRef<HTMLDivElement, EditorTabBarProps>(
         </button>
       </div>
     );
-  }
-));
+  }),
+);

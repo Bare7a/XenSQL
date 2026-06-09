@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
 import { OnFileDrop, OnFileDropOff } from '@wails/runtime/runtime';
+import { useEffect, useState } from 'react';
 
 const SQLITE_EXTENSIONS = /\.(sqlite3?|db|s3db|sl3)$/i;
 
@@ -15,9 +15,7 @@ export function useFileDropZone(): { fileDragOver: boolean } {
       const filePath = sqlitePaths[0];
       const fileName = filePath.split(/[/\\]/).pop() || '';
       const name = fileName.replace(/\.[^.]+$/, '');
-      window.dispatchEvent(
-        new CustomEvent('xensql:open-sqlite', { detail: { filePath, name } }),
-      );
+      window.dispatchEvent(new CustomEvent('xensql:open-sqlite', { detail: { filePath, name } }));
     }, false);
 
     const onDragOver = (e: DragEvent) => {

@@ -1,8 +1,9 @@
+// biome-ignore-all lint/a11y/noNoninteractiveTabindex: data-grid cells use roving tabindex for keyboard navigation; <td> can be neither a native interactive element nor carry an interactive role without tripping the inverse rule.
 import type { Dispatch, SetStateAction } from 'react';
+import { TableViewCellEditor } from '@/features/table-view/TableViewCellEditor';
 import type { FocusCol } from '@/shared/lib/grid';
 import type { CellRange } from '@/shared/lib/gridCellRange';
 import { gridSelectionHighlightClasses } from '@/shared/lib/gridCellRange';
-import { TableViewCellEditor } from '@/features/table-view/TableViewCellEditor';
 
 interface Props {
   rowIdx: number;
@@ -85,9 +86,7 @@ export function TableViewCell({
         'cell-preview',
         'cell-focusable',
         edited ? 'cell-pending-edit' : '',
-        isFocusedCell && !edited && !hasCellSelection && !hasRowColSelection
-          ? 'cell-focused'
-          : '',
+        isFocusedCell && !edited && !hasCellSelection && !hasRowColSelection ? 'cell-focused' : '',
         gridSelectionHighlightClasses(
           rowIdx,
           colPos,
@@ -95,7 +94,7 @@ export function TableViewCell({
           selectedSortedRows,
           selectedColPositions,
           rowCount,
-          colCount
+          colCount,
         ),
         isEditing ? 'editing' : '',
         deleted ? 'row-pending-delete' : '',

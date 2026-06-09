@@ -4,29 +4,19 @@ import { filterJsonForViewer, rowToJsonObject } from '@/shared/lib/rowJson';
 describe('rowToJsonObject', () => {
   const columns = ['id', 'name', 'note'];
   it('returns the visible subset in displayColumns order', () => {
-    expect(
-      rowToJsonObject(columns, ['note', 'id'], [1, 'alice', 'hi'])
-    ).toEqual({ note: 'hi', id: 1 });
+    expect(rowToJsonObject(columns, ['note', 'id'], [1, 'alice', 'hi'])).toEqual({ note: 'hi', id: 1 });
   });
   it('coerces undefined to null', () => {
-    expect(
-      rowToJsonObject(columns, ['name'], [1, undefined as unknown, ''])
-    ).toEqual({ name: null });
+    expect(rowToJsonObject(columns, ['name'], [1, undefined as unknown, ''])).toEqual({ name: null });
   });
   it('skips display columns missing from the source columns', () => {
-    expect(
-      rowToJsonObject(columns, ['missing', 'id'], [1, 'a', 'b'])
-    ).toEqual({ id: 1 });
+    expect(rowToJsonObject(columns, ['missing', 'id'], [1, 'a', 'b'])).toEqual({ id: 1 });
   });
   it('parses JSON-looking strings into objects', () => {
-    expect(
-      rowToJsonObject(['payload'], ['payload'], ['{"a":1,"b":[2,3]}'])
-    ).toEqual({ payload: { a: 1, b: [2, 3] } });
+    expect(rowToJsonObject(['payload'], ['payload'], ['{"a":1,"b":[2,3]}'])).toEqual({ payload: { a: 1, b: [2, 3] } });
   });
   it('keeps malformed JSON strings as-is', () => {
-    expect(
-      rowToJsonObject(['payload'], ['payload'], ['{not valid json}'])
-    ).toEqual({ payload: '{not valid json}' });
+    expect(rowToJsonObject(['payload'], ['payload'], ['{not valid json}'])).toEqual({ payload: '{not valid json}' });
   });
   it('uses the optional Map lookup when provided (no indexOf)', () => {
     const lookup = new Map([
@@ -34,18 +24,14 @@ describe('rowToJsonObject', () => {
       ['name', 1],
       ['note', 2],
     ]);
-    expect(
-      rowToJsonObject(columns, ['note', 'id'], [1, 'alice', 'hi'], lookup)
-    ).toEqual({ note: 'hi', id: 1 });
+    expect(rowToJsonObject(columns, ['note', 'id'], [1, 'alice', 'hi'], lookup)).toEqual({ note: 'hi', id: 1 });
   });
   it('skips columns missing from the Map lookup', () => {
     const lookup = new Map([
       ['id', 0],
       ['name', 1],
     ]);
-    expect(
-      rowToJsonObject(columns, ['note', 'id'], [1, 'alice', 'hi'], lookup)
-    ).toEqual({ id: 1 });
+    expect(rowToJsonObject(columns, ['note', 'id'], [1, 'alice', 'hi'], lookup)).toEqual({ id: 1 });
   });
 });
 
@@ -61,9 +47,9 @@ describe('filterJsonForViewer', () => {
     expect(filterJsonForViewer({ name: 'alice', age: 30 }, 'lic')).toEqual({ name: 'alice' });
   });
   it('descends into nested objects', () => {
-    expect(
-      filterJsonForViewer({ outer: { inner: 'hit', other: 'no' }, sibling: 'no' }, 'hit')
-    ).toEqual({ outer: { inner: 'hit' } });
+    expect(filterJsonForViewer({ outer: { inner: 'hit', other: 'no' }, sibling: 'no' }, 'hit')).toEqual({
+      outer: { inner: 'hit' },
+    });
   });
   it('returns undefined when nothing matches', () => {
     expect(filterJsonForViewer({ a: 1 }, 'zzz')).toBeUndefined();

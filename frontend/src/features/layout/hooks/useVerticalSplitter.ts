@@ -32,7 +32,7 @@ export function useVerticalSplitter(opts: VerticalSplitterOptions): {
         const delta = startY - ev.clientY;
         const nextPct = Math.min(
           opts.maxPercent,
-          Math.max(opts.minPercent, startPct + (delta / containerHeight) * 100)
+          Math.max(opts.minPercent, startPct + (delta / containerHeight) * 100),
         );
         setPercent(nextPct);
       };
@@ -48,7 +48,7 @@ export function useVerticalSplitter(opts: VerticalSplitterOptions): {
       window.addEventListener('mouseup', onUp);
       cleanupRef.current = cleanup;
     },
-    [percent, opts.containerSelector, opts.minPercent, opts.maxPercent]
+    [percent, opts.containerSelector, opts.minPercent, opts.maxPercent],
   );
 
   return { percent, onMouseDown };

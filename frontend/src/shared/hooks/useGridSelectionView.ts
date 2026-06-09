@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { cellRangeDimensions, type CellRange } from '@/shared/lib/gridCellRange';
+import { type CellRange, cellRangeDimensions } from '@/shared/lib/gridCellRange';
 
 // Stable empty set so consumers can skip work via identity checks on the no-selection path.
 const EMPTY_NUMBER_SET: Set<number> = new Set();

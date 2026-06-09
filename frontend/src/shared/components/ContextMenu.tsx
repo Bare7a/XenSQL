@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
+import { type ReactNode, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useModalEscape } from '@/shared/hooks/useModalEscape';
 import { cx } from '@/shared/lib/cx';
 
@@ -53,31 +53,42 @@ export function ContextMenu({ x, y, items, onClose }: Props) {
     };
   }, []);
 
+  let separatorCount = 0;
   return (
-    <div ref={menuRef} className="context-menu" style={{ left: pos.left, top: pos.top }} onClick={(e) => e.stopPropagation()}>
-      {items.map((item, i) =>
-        item.separator ? (
-          <div key={i} className="context-menu-separator" />
-        ) : (
-          <div
-            key={i}
+    // biome-ignore lint/a11y/useKeyWithClickEvents: the onClick only stops propagation to ancestor handlers; it performs no action. Items are activated via the menuitem buttons and the menu closes on Escape (useModalEscape).
+    <div
+      ref={menuRef}
+      className="context-menu"
+      role="menu"
+      style={{ left: pos.left, top: pos.top }}
+      onClick={(e) => e.stopPropagation()}
+    >
+      {items.map((item) => {
+        if (item.separator) {
+          separatorCount += 1;
+          return <div key={`separator-${separatorCount}`} className="context-menu-separator" />;
+        }
+        return (
+          <button
+            key={item.label}
+            type="button"
+            role="menuitem"
             className={cx(
               'context-menu-item',
               item.disabled && 'context-menu-item--disabled',
-              item.active && 'context-menu-item--active'
+              item.active && 'context-menu-item--active',
             )}
+            disabled={item.disabled}
             onClick={() => {
-              if (!item.disabled) {
-                item.action();
-                onClose();
-              }
+              item.action();
+              onClose();
             }}
           >
             {item.icon != null && <span className="context-menu-item-icon">{item.icon}</span>}
             {item.label}
-          </div>
-        )
-      )}
+          </button>
+        );
+      })}
     </div>
   );
 }

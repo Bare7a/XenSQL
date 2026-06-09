@@ -1,46 +1,46 @@
+import { Database } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Database } from 'lucide-react';
-import { AppTitleBar, type AppMenuAction } from '@/features/layout/AppTitleBar';
-import { AboutDialog } from '@/shared/components/AboutDialog';
-import { ShortcutsDialog } from '@/shared/components/ShortcutsDialog';
-import { Sidebar } from '@/features/sidebar/Sidebar';
-import { RowJsonViewer } from '@/features/results/RowJsonViewer';
-import { AppDialogHost } from '@/shared/components/AppDialogHost';
-import { AppTooltipLayer } from '@/shared/components/AppTooltipLayer';
-import { AppToastLayer } from '@/shared/components/AppToastLayer';
-import { AppStatusBar } from '@/features/layout/AppStatusBar';
-import { EditorPane } from '@/features/editor/EditorPane';
-import { EditorTabBar } from '@/features/editor/EditorTabBar';
-import { ResultsPane } from '@/features/results/ResultsPane';
-import { KeyboardTipsDialog } from '@/shared/components/KeyboardTipsDialog';
-import { RenameQueryDialog } from '@/features/editor/RenameQueryDialog';
-import { UnsavedQueryDialog } from '@/features/editor/UnsavedQueryDialog';
 import { ConnectionPickerMenu } from '@/features/connections/ConnectionPickerMenu';
-import { QuickSearchDialog } from '@/features/layout/QuickSearchDialog';
-import { TableViewPane } from '@/features/table-view/TableViewPane';
-import { useAppInit } from '@/features/layout/hooks/useAppInit';
-import { useHorizontalWheelScroll } from '@/shared/hooks/useHorizontalWheelScroll';
-import { useAppInfo } from '@/features/layout/hooks/useAppInfo';
+import { useConnectionStatus } from '@/features/connections/hooks/useConnectionStatus';
 import { useFileDropZone } from '@/features/connections/hooks/useFileDropZone';
 import { useOpenSqliteEvents } from '@/features/connections/hooks/useOpenSqliteEvents';
-import { useQueryStreamEvents } from '@/features/editor/hooks/useQueryStreamEvents';
+import { EditorPane } from '@/features/editor/EditorPane';
+import { EditorTabBar } from '@/features/editor/EditorTabBar';
 import { useQueryRunner } from '@/features/editor/hooks/useQueryRunner';
-import { useTransactionActions } from '@/features/editor/hooks/useTransactionActions';
+import { useQueryStreamEvents } from '@/features/editor/hooks/useQueryStreamEvents';
 import { useSavedQueryActions } from '@/features/editor/hooks/useSavedQueryActions';
-import { useTabOpener } from '@/features/editor/hooks/useTabOpener';
-import { useGlobalShortcuts } from '@/features/layout/hooks/useGlobalShortcuts';
-import { useFullscreenToggle } from '@/features/layout/hooks/useFullscreenToggle';
-import { usePersistedToggle } from '@/shared/hooks/usePersistedToggle';
-import { usePersistedPanelWidth } from '@/features/layout/hooks/usePersistedPanelWidth';
-import { useVerticalSplitter } from '@/features/layout/hooks/useVerticalSplitter';
-import { useConnectionStatus } from '@/features/connections/hooks/useConnectionStatus';
 import { useSchemaPreloader } from '@/features/editor/hooks/useSchemaPreloader';
 import { useScrollActiveTabIntoView } from '@/features/editor/hooks/useScrollActiveTabIntoView';
-import { api } from '@/shared/lib/api';
+import { useTabOpener } from '@/features/editor/hooks/useTabOpener';
+import { useTransactionActions } from '@/features/editor/hooks/useTransactionActions';
 import { isSavedQueryTabDirty } from '@/features/editor/lib/savedQueryTab';
-import { resetUiZoom, zoomUiIn, zoomUiOut } from '@/shared/lib/uiZoom';
+import { RenameQueryDialog } from '@/features/editor/RenameQueryDialog';
+import { UnsavedQueryDialog } from '@/features/editor/UnsavedQueryDialog';
+import { AppStatusBar } from '@/features/layout/AppStatusBar';
+import { type AppMenuAction, AppTitleBar } from '@/features/layout/AppTitleBar';
+import { useAppInfo } from '@/features/layout/hooks/useAppInfo';
+import { useAppInit } from '@/features/layout/hooks/useAppInit';
+import { useFullscreenToggle } from '@/features/layout/hooks/useFullscreenToggle';
+import { useGlobalShortcuts } from '@/features/layout/hooks/useGlobalShortcuts';
+import { usePersistedPanelWidth } from '@/features/layout/hooks/usePersistedPanelWidth';
+import { useVerticalSplitter } from '@/features/layout/hooks/useVerticalSplitter';
+import { QuickSearchDialog } from '@/features/layout/QuickSearchDialog';
+import { ResultsPane } from '@/features/results/ResultsPane';
+import { RowJsonViewer } from '@/features/results/RowJsonViewer';
+import { Sidebar } from '@/features/sidebar/Sidebar';
+import { TableViewPane } from '@/features/table-view/TableViewPane';
+import { AboutDialog } from '@/shared/components/AboutDialog';
+import { AppDialogHost } from '@/shared/components/AppDialogHost';
+import { AppToastLayer } from '@/shared/components/AppToastLayer';
+import { AppTooltipLayer } from '@/shared/components/AppTooltipLayer';
+import { KeyboardTipsDialog } from '@/shared/components/KeyboardTipsDialog';
+import { ShortcutsDialog } from '@/shared/components/ShortcutsDialog';
+import { useHorizontalWheelScroll } from '@/shared/hooks/useHorizontalWheelScroll';
+import { usePersistedToggle } from '@/shared/hooks/usePersistedToggle';
+import { api } from '@/shared/lib/api';
 import { STORAGE_KEYS } from '@/shared/lib/storageKeys';
+import { resetUiZoom, zoomUiIn, zoomUiOut } from '@/shared/lib/uiZoom';
 import {
   useActiveTab,
   useActiveTabId,
@@ -51,8 +51,8 @@ import {
   useSavedQueries,
   useSchemas,
   useStoreActions,
-  useTabSessionMap,
   useTablesMap,
+  useTabSessionMap,
   useTabs,
 } from '@/store/selectors';
 import type { EditorCursorState, EditorTab, TableInfo, TxnState } from '@/types';
@@ -78,14 +78,7 @@ function App() {
   const schemas = useSchemas();
   const tables = useTablesMap();
   const savedQueries = useSavedQueries();
-  const {
-    updateTab,
-    closeTab,
-    setActiveTab,
-    updateTabSession,
-    setSelectedConnection,
-    reorderTabs,
-  } = useStoreActions();
+  const { updateTab, closeTab, setActiveTab, updateTabSession, setSelectedConnection, reorderTabs } = useStoreActions();
 
   const [dragTabId, setDragTabId] = useState<string | null>(null);
   const [dropTabId, setDropTabId] = useState<string | null>(null);
@@ -98,15 +91,9 @@ function App() {
   const [connPickerOpen, setConnPickerOpen] = useState(false);
 
   const { runQueryForTab, cancelQueryForTab } = useQueryRunner();
-  const { beginTransaction, commitTransaction, rollbackTransaction, cleanupTabTransaction } =
-    useTransactionActions();
-  const {
-    persistTabSavedQuery,
-    handleSaveQuery,
-    openRenameDialog,
-    confirmRenameSavedQuery,
-    openSavedQuery,
-  } = useSavedQueryActions(renameTabId, setRenameTabId);
+  const { beginTransaction, commitTransaction, rollbackTransaction, cleanupTabTransaction } = useTransactionActions();
+  const { persistTabSavedQuery, handleSaveQuery, openRenameDialog, confirmRenameSavedQuery, openSavedQuery } =
+    useSavedQueryActions(renameTabId, setRenameTabId);
   const {
     openQueryTab,
     focusOrOpenConnectionTab,
@@ -158,9 +145,9 @@ function App() {
       Object.fromEntries(
         Object.entries(tabSession)
           .filter(([, s]) => s.txnState)
-          .map(([id, s]) => [id, s.txnState as TxnState])
+          .map(([id, s]) => [id, s.txnState as TxnState]),
       ),
-    [tabSession]
+    [tabSession],
   );
   const activeConn = activeTab ? connectionsById.get(activeTab.connectionId) : undefined;
   const activeResult = activeSession.result;
@@ -175,7 +162,7 @@ function App() {
 
   const { status: connStatus, setStatus: setConnStatus } = useConnectionStatus(
     activeTab?.connectionId,
-    activeTab ? !!connectedIds[activeTab.connectionId] : false
+    activeTab ? !!connectedIds[activeTab.connectionId] : false,
   );
   useQueryStreamEvents(setConnStatus);
 
@@ -187,13 +174,15 @@ function App() {
     for (const key in tables) {
       const sep = key.indexOf(':');
       if (sep < 0) continue;
-      (grouped[key.slice(0, sep)] ||= []).push(...tables[key]);
+      const groupKey = key.slice(0, sep);
+      grouped[groupKey] ||= [];
+      grouped[groupKey].push(...tables[key]);
     }
     return grouped;
   }, [tables]);
   const tablesForConnection = useCallback(
     (connectionId: string) => tablesByConnection[connectionId] ?? EMPTY_TABLES,
-    [tablesByConnection]
+    [tablesByConnection],
   );
 
   const selectTab = useCallback(
@@ -201,7 +190,7 @@ function App() {
       setSelectedConnection(tab.connectionId);
       setActiveTab(tab.id);
     },
-    [setSelectedConnection, setActiveTab]
+    [setSelectedConnection, setActiveTab],
   );
 
   const handleCloseTab = useCallback(
@@ -221,7 +210,7 @@ function App() {
       }
       closeTab(tabId);
     },
-    [tabs, tabSession, closeTab, runningTabId, cleanupTabTransaction]
+    [tabs, tabSession, closeTab, runningTabId, cleanupTabTransaction],
   );
 
   const pendingCloseTab = tabs.find((tab) => tab.id === pendingCloseTabId);
@@ -236,7 +225,7 @@ function App() {
       cache.set(tabId, rowKey);
       updateTabSession(tabId, { focusedRow: row });
     },
-    [updateTabSession]
+    [updateTabSession],
   );
 
   const handleEditorCursorChange = useCallback(
@@ -253,7 +242,7 @@ function App() {
       }
       updateTab(tabId, { editorCursor });
     },
-    [tabs, updateTab]
+    [tabs, updateTab],
   );
 
   const switchEditorTab = useCallback(
@@ -261,13 +250,10 @@ function App() {
       if (tabs.length < 2 || !activeTabId) return;
       const idx = tabs.findIndex((tab) => tab.id === activeTabId);
       if (idx < 0) return;
-      const nextIdx =
-        direction === 'next'
-          ? (idx + 1) % tabs.length
-          : (idx - 1 + tabs.length) % tabs.length;
+      const nextIdx = direction === 'next' ? (idx + 1) % tabs.length : (idx - 1 + tabs.length) % tabs.length;
       setActiveTab(tabs[nextIdx].id);
     },
-    [tabs, activeTabId, setActiveTab]
+    [tabs, activeTabId, setActiveTab],
   );
 
   useScrollActiveTabIntoView(editorTabsRef, tabs, activeTabId);
@@ -299,21 +285,15 @@ function App() {
       if (action === 'closeTab' && activeTabId) handleCloseTab(activeTabId);
       if (action === 'quickSearch') setQuickSearchOpen(true);
     },
-    [handleNewTabShortcut, handleCloseTab, activeTabId]
+    [handleNewTabShortcut, handleCloseTab, activeTabId],
   );
 
-  const handleChangeSql = useCallback(
-    (tabId: string, sql: string) => updateTab(tabId, { sql }),
-    [updateTab]
-  );
+  const handleChangeSql = useCallback((tabId: string, sql: string) => updateTab(tabId, { sql }), [updateTab]);
   const handleRunForTab = useCallback(
     (tabId: string, sql: string) => void runQueryForTab(tabId, sql),
-    [runQueryForTab]
+    [runQueryForTab],
   );
-  const handleSaveQueryWrapped = useCallback(
-    () => void handleSaveQuery(),
-    [handleSaveQuery]
-  );
+  const handleSaveQueryWrapped = useCallback(() => void handleSaveQuery(), [handleSaveQuery]);
   const handleDragEnd = useCallback(() => {
     setDragTabId(null);
     setDropTabId(null);
@@ -322,7 +302,7 @@ function App() {
     (id: string) => {
       if (dropTabId === id) setDropTabId(null);
     },
-    [dropTabId]
+    [dropTabId],
   );
 
   return (
@@ -355,6 +335,7 @@ function App() {
                 onOpenConnectionTab={focusOrOpenConnectionTab}
               />
             </div>
+            {/* biome-ignore lint/a11y/noStaticElementInteractions: pointer-drag panel resize handle; resizing is a mouse affordance and the panels remain fully usable without it. */}
             <div
               className="panel-resize-handle panel-resize-handle-vertical"
               onMouseDown={sidebar.handleResize}
@@ -406,7 +387,7 @@ function App() {
                       onFocusedRowChange={(row) => handleFocusedRowChangeForTab(tab.id, row)}
                     />
                   </div>
-                ) : null
+                ) : null,
               )}
               {activeTab && !activeTab.tableView && (
                 <>
@@ -429,11 +410,9 @@ function App() {
                     onCommitTxn={commitTransaction}
                     onRollbackTxn={rollbackTransaction}
                   />
+                  {/* biome-ignore lint/a11y/noStaticElementInteractions: pointer-drag results splitter; resizing is a mouse affordance and both panes remain fully usable without it. */}
                   <div className="resizer" onMouseDown={resultsSplit.onMouseDown} />
-                  <div
-                    className="results-pane"
-                    style={{ flex: `0 0 ${resultsSplit.percent}%`, minHeight: 0 }}
-                  >
+                  <div className="results-pane" style={{ flex: `0 0 ${resultsSplit.percent}%`, minHeight: 0 }}>
                     <ResultsPane
                       tabs={queryTabs}
                       activeTabId={activeTabId}
@@ -450,16 +429,14 @@ function App() {
 
         {jsonPanelVisible.value && (
           <>
+            {/* biome-ignore lint/a11y/noStaticElementInteractions: pointer-drag panel resize handle; resizing is a mouse affordance and the panels remain fully usable without it. */}
             <div
               className="panel-resize-handle panel-resize-handle-vertical"
               onMouseDown={jsonPanel.handleResize}
               data-tooltip={t('tooltip.resizeJsonPanel')}
             />
             <div className="json-viewer-shell" style={{ width: jsonPanel.width }}>
-              <RowJsonViewer
-                data={activeFocusedRow}
-                onClose={() => jsonPanelVisible.set(false)}
-              />
+              <RowJsonViewer data={activeFocusedRow} onClose={() => jsonPanelVisible.set(false)} />
             </div>
           </>
         )}

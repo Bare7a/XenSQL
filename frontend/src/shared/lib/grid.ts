@@ -31,11 +31,7 @@ export function primaryKeyKey(pk: Record<string, unknown>): string {
   return JSON.stringify(ordered);
 }
 
-export function rowPrimaryKey(
-  row: unknown[],
-  columns: string[],
-  primaryKeys: string[]
-): Record<string, unknown> {
+export function rowPrimaryKey(row: unknown[], columns: string[], primaryKeys: string[]): Record<string, unknown> {
   const pk: Record<string, unknown> = {};
   for (const col of primaryKeys) {
     const idx = columns.indexOf(col);
@@ -51,11 +47,7 @@ export function identityIndices(n: number): number[] {
   return out;
 }
 
-export function computeColWidths(
-  displayColumns: string[],
-  colIndices: number[],
-  sampleRows: unknown[][]
-): string[] {
+export function computeColWidths(displayColumns: string[], colIndices: number[], sampleRows: unknown[][]): string[] {
   return displayColumns.map((header, i) => {
     const ci = colIndices[i];
     let maxLen = header.length + COL_HEADER_ICON_CH;
@@ -78,7 +70,7 @@ export function rowRangeSet(
   fromGlobal: number,
   toGlobal: number,
   keepExisting: boolean,
-  existing: Set<number>
+  existing: Set<number>,
 ): Set<number> {
   const next = keepExisting ? new Set(existing) : new Set<number>();
   if (sortedRowIndices == null) {
@@ -106,7 +98,7 @@ export function columnRangeSet(
   fromCol: string,
   toCol: string,
   keepExisting: boolean,
-  existing: Set<string>
+  existing: Set<string>,
 ): Set<string> {
   const a = displayColumns.indexOf(fromCol);
   const b = displayColumns.indexOf(toCol);
@@ -126,7 +118,7 @@ export function handleGridArrowKey(
   colPos: FocusCol,
   rowCount: number,
   colCount: number,
-  moveRowFocus: (rowIdx: number, colPos: FocusCol, shift: boolean) => void
+  moveRowFocus: (rowIdx: number, colPos: FocusCol, shift: boolean) => void,
 ): boolean {
   switch (e.key) {
     case 'ArrowRight':
@@ -151,10 +143,7 @@ export function handleGridArrowKey(
   return false;
 }
 
-export function exportFormatLabel(
-  t: (key: string) => string,
-  format: ExportFormat
-): string {
+export function exportFormatLabel(t: (key: string) => string, format: ExportFormat): string {
   const keys: Record<ExportFormat, string> = {
     text: 'export.formatText',
     csv: 'export.formatCsv',

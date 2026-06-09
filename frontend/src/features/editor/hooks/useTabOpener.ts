@@ -10,7 +10,7 @@ import {
   useStoreActions,
   useTabs,
 } from '@/store/selectors';
-import { emptyTableViewPending, type EditorTab } from '@/types';
+import { type EditorTab, emptyTableViewPending } from '@/types';
 
 export function useTabOpener(setConnPickerOpen: (open: boolean) => void) {
   const { t } = useTranslation();
@@ -19,14 +19,7 @@ export function useTabOpener(setConnPickerOpen: (open: boolean) => void) {
   const activeTab = useActiveTab();
   const connectedIds = useConnectedIds();
   const selectedConnectionId = useSelectedConnectionId();
-  const {
-    addTab,
-    updateTab,
-    setActiveTab,
-    updateTabSession,
-    setSelectedConnection,
-    setConnected,
-  } = useStoreActions();
+  const { addTab, updateTab, setActiveTab, updateTabSession, setSelectedConnection, setConnected } = useStoreActions();
 
   const openQueryTab = useCallback(
     (connectionId: string, sql?: string, options?: { forceNew?: boolean; title?: string }) => {
@@ -36,33 +29,25 @@ export function useTabOpener(setConnPickerOpen: (open: boolean) => void) {
       const queryPrefix = t('app.queryTabPrefix');
       const existing =
         !options?.forceNew &&
-        tabs.find(
-          (tab) =>
-            tab.connectionId === connectionId &&
-            !tab.savedQueryId &&
-            tab.title.startsWith(queryPrefix)
-        );
+        tabs.find((tab) => tab.connectionId === connectionId && !tab.savedQueryId && tab.title.startsWith(queryPrefix));
       if (existing && sql) {
         updateTab(existing.id, { sql });
         setActiveTab(existing.id);
         return;
       }
-      const tabNum =
-        tabs.filter((tab) => tab.connectionId === connectionId && !tab.savedQueryId).length + 1;
+      const tabNum = tabs.filter((tab) => tab.connectionId === connectionId && !tab.savedQueryId).length + 1;
       const tab: EditorTab = {
         id: newTabId(),
         connectionId,
         title:
           options?.title ||
-          (sql
-            ? t('app.queryTab', { num: tabNum })
-            : t('app.queryTabWithConn', { num: tabNum, conn: conn.name })),
+          (sql ? t('app.queryTab', { num: tabNum }) : t('app.queryTabWithConn', { num: tabNum, conn: conn.name })),
         sql: sql || '',
         color: conn.color,
       };
       addTab(tab);
     },
-    [connections, tabs, addTab, updateTab, setActiveTab, setSelectedConnection, t]
+    [connections, tabs, addTab, updateTab, setActiveTab, setSelectedConnection, t],
   );
 
   // Selecting/connecting a connection should land you in a usable tab: focus an
@@ -72,16 +57,14 @@ export function useTabOpener(setConnPickerOpen: (open: boolean) => void) {
     (connectionId: string) => {
       setSelectedConnection(connectionId);
       if (activeTab?.connectionId === connectionId) return;
-      const existing = tabs.find(
-        (tab) => tab.connectionId === connectionId && !tab.savedQueryId && !tab.tableView
-      );
+      const existing = tabs.find((tab) => tab.connectionId === connectionId && !tab.savedQueryId && !tab.tableView);
       if (existing) {
         setActiveTab(existing.id);
         return;
       }
       openQueryTab(connectionId);
     },
-    [activeTab?.connectionId, tabs, openQueryTab, setActiveTab, setSelectedConnection]
+    [activeTab?.connectionId, tabs, openQueryTab, setActiveTab, setSelectedConnection],
   );
 
   const openTableViewTab = useCallback(
@@ -90,10 +73,7 @@ export function useTabOpener(setConnPickerOpen: (open: boolean) => void) {
       if (!conn) return;
 
       const existing = tabs.find(
-        (tab) =>
-          tab.tableView?.schema === schema &&
-          tab.tableView?.table === table &&
-          tab.connectionId === connId
+        (tab) => tab.tableView?.schema === schema && tab.tableView?.table === table && tab.connectionId === connId,
       );
       if (existing) {
         setSelectedConnection(connId);
@@ -130,7 +110,7 @@ export function useTabOpener(setConnPickerOpen: (open: boolean) => void) {
         resultError: null,
       });
     },
-    [connections, tabs, addTab, setActiveTab, setSelectedConnection, updateTabSession]
+    [connections, tabs, addTab, setActiveTab, setSelectedConnection, updateTabSession],
   );
 
   const openNewTabForConnection = useCallback(
@@ -148,7 +128,7 @@ export function useTabOpener(setConnPickerOpen: (open: boolean) => void) {
       }
       openQueryTab(connId);
     },
-    [connectedIds, setConnected, openQueryTab, setConnPickerOpen, t]
+    [connectedIds, setConnected, openQueryTab, setConnPickerOpen, t],
   );
 
   const requireDatabaseAlert = useCallback(
@@ -157,7 +137,7 @@ export function useTabOpener(setConnPickerOpen: (open: boolean) => void) {
         title: t('dialog.noDatabaseTitle'),
         description: t('dialog.noDatabaseDescription'),
       }),
-    [t]
+    [t],
   );
 
   const handleNewTabButton = useCallback(() => {
@@ -172,7 +152,14 @@ export function useTabOpener(setConnPickerOpen: (open: boolean) => void) {
     const unambiguous = activeTab?.connectionId || selectedConnectionId;
     if (unambiguous) return openNewTabForConnection(unambiguous);
     setConnPickerOpen(true);
-  }, [connections, activeTab?.connectionId, selectedConnectionId, openNewTabForConnection, requireDatabaseAlert, setConnPickerOpen]);
+  }, [
+    connections,
+    activeTab?.connectionId,
+    selectedConnectionId,
+    openNewTabForConnection,
+    requireDatabaseAlert,
+    setConnPickerOpen,
+  ]);
 
   return {
     openQueryTab,

@@ -2364,6 +2364,10 @@ td.cell-pending-edit {
   position: fixed;
   inset: 0;
   z-index: var(--z-popover);
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: default;
 }
 
 .column-picker-panel {
@@ -3323,8 +3327,14 @@ td.cell-pending-edit {
   display: flex;
   align-items: center;
   gap: var(--space-8);
+  width: 100%;
   padding: var(--space-7) var(--space-14);
   font-size: var(--text-sm);
+  font-family: inherit;
+  color: inherit;
+  text-align: left;
+  background: none;
+  border: none;
   cursor: pointer;
 }
 
@@ -3388,7 +3398,7 @@ td.cell-pending-edit {
 }
 
 .app-status-warning::before {
-  content: ' · ';
+  content: " · ";
   color: var(--text-muted);
 }
 
@@ -3666,4 +3676,3 @@ td.cell-pending-edit {
 .data-table td.cell-preview {
   cursor: default;
 }
-

@@ -1,14 +1,6 @@
-import type { DriverType, SchemaInfo, TableInfo } from '@/types';
-import { columnCacheKey, formatSqlIdentifier, unquoteIdent } from '@/features/editor/lib/sqlQuoting';
-import {
-  resolveDotCompletion,
-  resolveQualifierToTable,
-  type ParsedQuery,
-  type QueryTableRef,
-  type TableBinding,
-} from '@/features/editor/lib/sqlQueryParse';
 import {
   clauseBodyStart,
+  type DotCompletion,
   expectsExpression,
   isColumnFilterContext,
   isLimitOffsetContext,
@@ -20,10 +12,20 @@ import {
   sortDirectionAllowed,
   updateSetColumnPrefix,
   valueContextPrefix,
-  type DotCompletion,
 } from '@/features/editor/lib/sqlCompletionContext';
 import {
+  type ParsedQuery,
+  type QueryTableRef,
+  resolveDotCompletion,
+  resolveQualifierToTable,
+  type TableBinding,
+} from '@/features/editor/lib/sqlQueryParse';
+import { columnCacheKey, formatSqlIdentifier, unquoteIdent } from '@/features/editor/lib/sqlQuoting';
+import {
+  type CompletionContext,
+  type CompletionItem,
   columnDetail,
+  keywordsForContext,
   matchScore,
   rank,
   suggestClauseBody,
@@ -35,32 +37,13 @@ import {
   suggestSchemas,
   suggestTables,
   suggestValueItems,
-  keywordsForContext,
-  type CompletionContext,
-  type CompletionItem,
 } from '@/features/editor/lib/sqlSuggestions';
+import type { DriverType, SchemaInfo, TableInfo } from '@/types';
 
-export type { CompletionContext, CompletionItem };
 export {
-  columnCacheKey,
-  formatSqlIdentifier,
-  identifierNeedsQuote,
-  unquoteIdent,
-  ALIAS_STOP_WORDS,
-  QUOTE_FORCING_KEYWORDS,
-} from '@/features/editor/lib/sqlQuoting';
-export {
-  parseQueryContext,
-  parseTableRef,
-  resolveDotCompletion,
-  resolveQualifierToTable,
-  resolveTableName,
-  type ParsedQuery,
-  type QueryTableRef,
-  type TableBinding,
-} from '@/features/editor/lib/sqlQueryParse';
-export {
+  type ClauseBodyKind,
   clauseBodyStart,
+  type DotCompletion,
   expectsExpression,
   isColumnFilterContext,
   isLimitOffsetContext,
@@ -69,15 +52,34 @@ export {
   isValueContext,
   matchTableContext,
   parseDotCompletion,
-  type ClauseBodyKind,
-  type DotCompletion,
   type TableContextMatch,
 } from '@/features/editor/lib/sqlCompletionContext';
 export {
+  type ParsedQuery,
+  parseQueryContext,
+  parseTableRef,
+  type QueryTableRef,
+  resolveDotCompletion,
+  resolveQualifierToTable,
+  resolveTableName,
+  type TableBinding,
+} from '@/features/editor/lib/sqlQueryParse';
+export {
+  ALIAS_STOP_WORDS,
+  columnCacheKey,
+  formatSqlIdentifier,
+  identifierNeedsQuote,
+  QUOTE_FORCING_KEYWORDS,
+  unquoteIdent,
+} from '@/features/editor/lib/sqlQuoting';
+export {
   columnDetail,
-  matchScore,
-  rank,
+  JOIN_KEYWORDS,
   keywordsForContext,
+  matchScore,
+  ORDER_KEYWORDS,
+  rank,
+  SQL_KEYWORDS,
   suggestClauseBody,
   suggestColumnsForTable,
   suggestColumnsFromBindings,
@@ -87,11 +89,9 @@ export {
   suggestSchemas,
   suggestTables,
   suggestValueItems,
-  SQL_KEYWORDS,
-  JOIN_KEYWORDS,
-  ORDER_KEYWORDS,
   VALUE_LITERALS,
 } from '@/features/editor/lib/sqlSuggestions';
+export type { CompletionContext, CompletionItem };
 
 export interface BindingsNeedingColumnsCtx {
   tables: TableInfo[];
@@ -102,7 +102,7 @@ export interface BindingsNeedingColumnsCtx {
 export function bindingsNeedingColumns(
   before: string,
   parsed: ParsedQuery,
-  ctx?: BindingsNeedingColumnsCtx
+  ctx?: BindingsNeedingColumnsCtx,
 ): TableBinding[] {
   const needed: TableBinding[] = [];
   const seen = new Set<string>();
@@ -132,11 +132,7 @@ export function bindingsNeedingColumns(
     return needed;
   }
 
-  if (
-    isUpdateSetColumnContext(before) ||
-    isColumnFilterContext(before) ||
-    isOrderOrGroupContext(before)
-  ) {
+  if (isUpdateSetColumnContext(before) || isColumnFilterContext(before) || isOrderOrGroupContext(before)) {
     for (const ref of parsed.queryTables) add({ schema: ref.schema, table: ref.table });
     return needed;
   }
@@ -169,15 +165,14 @@ export interface BuildCompletionInput {
 
 function schemaTablesFor(ctx: CompletionContext, schemaName: string): TableInfo[] {
   return (
-    ctx.tablesBySchema[schemaName] ||
-    ctx.tables.filter((t) => t.schema.toLowerCase() === schemaName.toLowerCase())
+    ctx.tablesBySchema[schemaName] || ctx.tables.filter((t) => t.schema.toLowerCase() === schemaName.toLowerCase())
   );
 }
 
 function dotCompletionItems(
   ctx: CompletionContext,
   dot: DotCompletion,
-  bindings: Map<string, TableBinding>
+  bindings: Map<string, TableBinding>,
 ): CompletionItem[] | null {
   const tableRef = resolveDotCompletion(dot, bindings, ctx.tables, ctx.schemas, ctx.driver);
   if (tableRef) return suggestColumnsForTable(ctx, tableRef, dot.prefix.toLowerCase());
@@ -195,16 +190,13 @@ function orderGroupItems(
   ctx: CompletionContext,
   before: string,
   queryTables: QueryTableRef[],
-  bindings: Map<string, TableBinding>
+  bindings: Map<string, TableBinding>,
 ): CompletionItem[] {
   const frag = before.match(/[\w"`]*$/)?.[0] ?? '';
   const lcPrefix = unquoteIdent(frag).toLowerCase();
   // Columns/tables only at the start of a sort term (after BY/comma), not after a finished one.
   const items: CompletionItem[] = expectsExpression(before)
-    ? [
-        ...suggestQueryTableRefs(ctx, queryTables, lcPrefix),
-        ...suggestColumnsFromBindings(ctx, bindings, lcPrefix),
-      ]
+    ? [...suggestQueryTableRefs(ctx, queryTables, lcPrefix), ...suggestColumnsFromBindings(ctx, bindings, lcPrefix)]
     : [];
   if (sortDirectionAllowed(before)) {
     for (const kw of ['ASC', 'DESC']) {
@@ -218,8 +210,7 @@ function orderGroupItems(
   if (!expectsExpression(before)) {
     const re = /\b(ORDER|GROUP)\s+BY\b/gi;
     let kind = '';
-    let mm: RegExpExecArray | null;
-    while ((mm = re.exec(before)) !== null) kind = mm[1].toUpperCase();
+    for (let mm = re.exec(before); mm !== null; mm = re.exec(before)) kind = mm[1].toUpperCase();
     const trailing = kind === 'GROUP' ? ['HAVING', 'ORDER BY', 'LIMIT', 'OFFSET'] : ['LIMIT', 'OFFSET'];
     for (const kw of trailing) {
       const score = matchScore(kw, lcPrefix);
@@ -236,7 +227,7 @@ function bareWordItems(
   before: string,
   lcPrefix: string,
   queryTables: QueryTableRef[],
-  bindings: Map<string, TableBinding>
+  bindings: Map<string, TableBinding>,
 ): CompletionItem[] {
   const items: CompletionItem[] = [];
   const inFilter = isColumnFilterContext(before);
@@ -271,7 +262,7 @@ function qualifiedItems(
   ctx: CompletionContext,
   parts: string[],
   lcPrefix: string,
-  bindings: Map<string, TableBinding>
+  bindings: Map<string, TableBinding>,
 ): CompletionItem[] {
   if (parts.length === 2) {
     const qualifier = unquoteIdent(parts[0]);
@@ -373,7 +364,7 @@ function identifierFragmentLength(textBefore: string): number {
 function identifierFragmentRange(
   position: { lineNumber: number; column: number },
   textBefore: string,
-  fallback: { startColumn: number; endColumn: number }
+  fallback: { startColumn: number; endColumn: number },
 ): { startLineNumber: number; endLineNumber: number; startColumn: number; endColumn: number } {
   const fragLen = identifierFragmentLength(textBefore);
   if (fragLen > 0) {
@@ -395,7 +386,7 @@ function identifierFragmentRange(
 export function completionReplaceRange(
   position: { lineNumber: number; column: number },
   textBefore: string,
-  fallback: { startColumn: number; endColumn: number }
+  fallback: { startColumn: number; endColumn: number },
 ): { startLineNumber: number; endLineNumber: number; startColumn: number; endColumn: number } {
   // clauseBodyStart: zero-width insert at caret; suggestClauseBody space-prefixes so it reads cleanly.
   if (clauseBodyStart(textBefore)) {

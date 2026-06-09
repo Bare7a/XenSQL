@@ -1,4 +1,4 @@
-import { useToastStore, type ToastKind } from '@/store/toastStore';
+import { type ToastKind, useToastStore } from '@/store/toastStore';
 
 export type { ToastKind };
 

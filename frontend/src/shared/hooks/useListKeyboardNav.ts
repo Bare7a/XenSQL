@@ -1,4 +1,4 @@
-import { useCallback, type KeyboardEvent } from 'react';
+import { type KeyboardEvent, useCallback } from 'react';
 
 // Spread onKeyDown on a scroll container; rows need tabIndex={0} + data-nav-item. data-nav-delete marks a row's delete control, fired by Delete (not Backspace - too easy to hit by accident).
 export function useListKeyboardNav(): {
@@ -6,9 +6,9 @@ export function useListKeyboardNav(): {
 } {
   const onKeyDown = useCallback((e: KeyboardEvent<HTMLElement>) => {
     const container = e.currentTarget;
-    const items = Array.from(
-      container.querySelectorAll<HTMLElement>('[data-nav-item]')
-    ).filter((el) => el.offsetParent !== null);
+    const items = Array.from(container.querySelectorAll<HTMLElement>('[data-nav-item]')).filter(
+      (el) => el.offsetParent !== null,
+    );
     if (items.length === 0) return;
 
     const active = document.activeElement as HTMLElement | null;
@@ -55,4 +55,14 @@ export function useListKeyboardNav(): {
   }, []);
 
   return { onKeyDown };
+}
+
+// Activates a focusable row (role="button") on Enter/Space by triggering its onClick, and stops
+// propagation so an enclosing useListKeyboardNav container does not also fire Enter (double activation).
+export function rowActivateKeyDown(e: KeyboardEvent<HTMLElement>) {
+  if (e.key === 'Enter' || e.key === ' ') {
+    e.preventDefault();
+    e.stopPropagation();
+    e.currentTarget.click();
+  }
 }

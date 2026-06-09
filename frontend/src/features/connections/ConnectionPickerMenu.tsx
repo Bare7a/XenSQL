@@ -53,12 +53,7 @@ export function ConnectionPickerMenu({ connections, anchorRef, onPick, onClose }
     >
       <div className="conn-picker-header">{t('app.pickConnection')}</div>
       {connections.map((c) => (
-        <button
-          key={c.id}
-          type="button"
-          className="conn-picker-item"
-          onClick={() => onPick(c.id)}
-        >
+        <button key={c.id} type="button" className="conn-picker-item" onClick={() => onPick(c.id)}>
           <span className="connection-dot" style={{ background: c.color }} />
           <span className="conn-picker-name">{c.name}</span>
           <span className="conn-picker-driver">{c.driver}</span>

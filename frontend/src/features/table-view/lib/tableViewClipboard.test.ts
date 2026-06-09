@@ -1,8 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  computePasteEdits,
-  parseClipboardGrid,
-} from '@/features/table-view/lib/tableViewClipboard';
+import { computePasteEdits, parseClipboardGrid } from '@/features/table-view/lib/tableViewClipboard';
 
 describe('parseClipboardGrid', () => {
   it('returns an empty grid for empty text', () => {
@@ -78,15 +75,11 @@ describe('computePasteEdits', () => {
   });
 
   it('writes a single cell for a 1x1 grid', () => {
-    expect(computePasteEdits([['x']], 5, 2, 100, cols)).toEqual([
-      { rowIdx: 5, col: 'C', value: 'x' },
-    ]);
+    expect(computePasteEdits([['x']], 5, 2, 100, cols)).toEqual([{ rowIdx: 5, col: 'C', value: 'x' }]);
   });
 
   it('maps empty fields to NULL', () => {
-    expect(computePasteEdits([['']], 0, 0, 100, cols)).toEqual([
-      { rowIdx: 0, col: 'A', value: null },
-    ]);
+    expect(computePasteEdits([['']], 0, 0, 100, cols)).toEqual([{ rowIdx: 0, col: 'A', value: null }]);
   });
 
   it('drops cells past the last loaded row', () => {

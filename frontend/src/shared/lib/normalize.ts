@@ -1,3 +1,4 @@
+import { t } from '@/i18n';
 import type {
   ColumnInfo,
   ConnectionStatus,
@@ -8,7 +9,6 @@ import type {
   SchemaInfo,
   TableInfo,
 } from '@/types';
-import { t } from '@/i18n';
 
 export function toArray<T>(data: unknown): T[] {
   if (data == null) return [];
@@ -92,12 +92,10 @@ export function normalizeConnectionStatus(data: unknown): ConnectionStatus {
 
 export function normalizeSchemaBundle(data: unknown): SchemaBundle {
   const b = (data ?? {}) as Record<string, unknown>;
-  const loadedTables = toArray<{ schema?: string; tables?: unknown }>(b.loadedTables).map(
-    (block) => ({
-      schema: String(block?.schema ?? ''),
-      tables: normalizeTables(block?.tables),
-    })
-  );
+  const loadedTables = toArray<{ schema?: string; tables?: unknown }>(b.loadedTables).map((block) => ({
+    schema: String(block?.schema ?? ''),
+    tables: normalizeTables(block?.tables),
+  }));
   return {
     status: normalizeConnectionStatus(b.status),
     schemas: normalizeSchemas(b.schemas),

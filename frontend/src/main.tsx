@@ -1,11 +1,11 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import App from '@/App';
+import { initMonaco } from '@/features/editor/lib/monacoSetup';
 import { initI18n } from '@/i18n';
+import { hydrateSettings } from '@/shared/lib/settingsStore';
 import { initTheme } from '@/shared/lib/theme';
 import { initUiZoom } from '@/shared/lib/uiZoom';
-import { initMonaco } from '@/features/editor/lib/monacoSetup';
-import { hydrateSettings } from '@/shared/lib/settingsStore';
 
 // Load settings from Go before init/render so theme/language/zoom are correct on
 // the first paint and read synchronously after.
@@ -23,7 +23,7 @@ async function bootstrap() {
     root.render(
       <React.StrictMode>
         <App />
-      </React.StrictMode>
+      </React.StrictMode>,
     );
   }
 
@@ -40,7 +40,7 @@ function hideLoadingSplash() {
       el.addEventListener('transitionend', () => el.remove(), { once: true });
       // Fallback in case the transition never fires.
       setTimeout(() => el.remove(), 400);
-    })
+    }),
   );
 }
 

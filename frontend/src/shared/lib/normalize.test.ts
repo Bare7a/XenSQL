@@ -27,10 +27,7 @@ describe('toArray', () => {
 
 describe('normalizeSchemas', () => {
   it('keeps only items with names', () => {
-    expect(normalizeSchemas([{ name: 'a' }, { name: '' }, { name: 'b' }])).toEqual([
-      { name: 'a' },
-      { name: 'b' },
-    ]);
+    expect(normalizeSchemas([{ name: 'a' }, { name: '' }, { name: 'b' }])).toEqual([{ name: 'a' }, { name: 'b' }]);
   });
   it('coerces non-string names', () => {
     expect(normalizeSchemas([{ name: 42 }])).toEqual([{ name: '42' }]);
@@ -39,9 +36,7 @@ describe('normalizeSchemas', () => {
 
 describe('normalizeTables', () => {
   it('defaults missing type to "table"', () => {
-    expect(normalizeTables([{ schema: 's', name: 'n' }])).toEqual([
-      { schema: 's', name: 'n', type: 'table' },
-    ]);
+    expect(normalizeTables([{ schema: 's', name: 'n' }])).toEqual([{ schema: 's', name: 'n', type: 'table' }]);
   });
 });
 
@@ -92,19 +87,13 @@ describe('normalizeSchemaBundle', () => {
     const out = normalizeSchemaBundle({
       loadedTables: [{ schema: 'public', tables: [{ name: 'users' }] }],
     });
-    expect(out.loadedTables).toEqual([
-      { schema: 'public', tables: [{ schema: '', name: 'users', type: 'table' }] },
-    ]);
+    expect(out.loadedTables).toEqual([{ schema: 'public', tables: [{ schema: '', name: 'users', type: 'table' }] }]);
   });
 });
 
 describe('normalizeHistory', () => {
   it('coerces numbers and booleans', () => {
-    expect(
-      normalizeHistory([
-        { id: 'x', durationMs: '12', success: 1 },
-      ])
-    ).toEqual([
+    expect(normalizeHistory([{ id: 'x', durationMs: '12', success: 1 }])).toEqual([
       {
         id: 'x',
         connectionId: '',

@@ -7,19 +7,19 @@
     <script>
       // Boot cache: paint the right theme/lang on the first frame, before the
       // bundle loads. Mirrored from the authoritative settings.json on change.
-      (function () {
+      (() => {
         try {
-          var theme = localStorage.getItem('xensql-theme');
+          const theme = localStorage.getItem('xensql-theme');
           if (theme === 'light') {
             document.documentElement.dataset.theme = 'light';
           } else {
             document.documentElement.dataset.theme = 'dark';
           }
-          var lang = localStorage.getItem('xensql-language');
+          const lang = localStorage.getItem('xensql-language');
           if (lang === 'de' || lang === 'en' || lang === 'bg') {
             document.documentElement.lang = lang;
           }
-        } catch (e) {
+        } catch {
           document.documentElement.dataset.theme = 'dark';
         }
       })();

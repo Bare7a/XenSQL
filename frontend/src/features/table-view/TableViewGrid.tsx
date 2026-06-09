@@ -1,35 +1,36 @@
+// biome-ignore-all lint/a11y/noNoninteractiveTabindex: data-grid cells use roving tabindex for keyboard navigation; a <td> can be neither a native interactive element nor carry an interactive role without tripping the inverse rule.
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useGridColumns } from '@/shared/hooks/useGridColumns';
-import { useGridCopyExport, type CopiedCells } from '@/shared/hooks/useGridCopyExport';
-import { useGridClipboardCopy } from '@/shared/hooks/useGridClipboardCopy';
-import { useGridVirtualizer } from '@/shared/hooks/useGridVirtualizer';
-import { useGridSelectionView } from '@/shared/hooks/useGridSelectionView';
-import {
-  rowHeightForZoom,
-  type FocusCol,
-  type SortDirection,
-  handleGridArrowKey,
-  identityIndices,
-  primaryKeyKey,
-  rowPrimaryKey,
-} from '@/shared/lib/grid';
-import { useUiZoom } from '@/shared/hooks/useUiZoom';
-import { rowToJsonObject } from '@/shared/lib/rowJson';
-import { api } from '@/shared/lib/api';
-import { appToast } from '@/shared/lib/appToast';
-import { buildTableViewExportResult } from '@/features/table-view/lib/tableViewExport';
 import { CellViewerModal } from '@/features/results/CellViewerModal';
-import { ExportResultsDialog } from '@/shared/components/ExportResultsDialog';
-import { ContextMenu, type ContextMenuItem } from '@/shared/components/ContextMenu';
-import { GridHeaderRow } from '@/shared/components/GridHeaderRow';
-import { GridTable } from '@/shared/components/GridTable';
-import { GridToolbar } from '@/shared/components/GridToolbar';
-import { useGridCore } from '@/shared/hooks/useGridCore';
 import { useTableViewGridFocus } from '@/features/table-view/hooks/useTableViewGridFocus';
 import { useTableViewKeyboardActions } from '@/features/table-view/hooks/useTableViewKeyboardActions';
 import type { PasteCellEdit } from '@/features/table-view/lib/tableViewClipboard';
+import { buildTableViewExportResult } from '@/features/table-view/lib/tableViewExport';
 import { TableViewCell } from '@/features/table-view/TableViewCell';
+import { ContextMenu, type ContextMenuItem } from '@/shared/components/ContextMenu';
+import { ExportResultsDialog } from '@/shared/components/ExportResultsDialog';
+import { GridHeaderRow } from '@/shared/components/GridHeaderRow';
+import { GridTable } from '@/shared/components/GridTable';
+import { GridToolbar } from '@/shared/components/GridToolbar';
+import { useGridClipboardCopy } from '@/shared/hooks/useGridClipboardCopy';
+import { useGridColumns } from '@/shared/hooks/useGridColumns';
+import { type CopiedCells, useGridCopyExport } from '@/shared/hooks/useGridCopyExport';
+import { useGridCore } from '@/shared/hooks/useGridCore';
+import { useGridSelectionView } from '@/shared/hooks/useGridSelectionView';
+import { useGridVirtualizer } from '@/shared/hooks/useGridVirtualizer';
+import { useUiZoom } from '@/shared/hooks/useUiZoom';
+import { api } from '@/shared/lib/api';
+import { appToast } from '@/shared/lib/appToast';
+import {
+  type FocusCol,
+  handleGridArrowKey,
+  identityIndices,
+  primaryKeyKey,
+  rowHeightForZoom,
+  rowPrimaryKey,
+  type SortDirection,
+} from '@/shared/lib/grid';
+import { rowToJsonObject } from '@/shared/lib/rowJson';
 import type { TableViewPendingState } from '@/types';
 
 export type TableSortDir = SortDirection;
@@ -121,15 +122,7 @@ export const TableViewGrid = memo(function TableViewGrid({
   onFocusedRowIndexChangeRef.current = onFocusedRowIndexChange;
 
   const cols = useGridColumns(columns, rows);
-  const {
-    displayColumns,
-    colIndices,
-    columnIndexByName,
-    colWidths,
-    columnsSized,
-    fitColumns,
-    applyColumnWidth,
-  } = cols;
+  const { displayColumns, colIndices, columnIndexByName, colWidths, columnsSized, fitColumns, applyColumnWidth } = cols;
 
   const rowHeight = rowHeightForZoom(useUiZoom());
   const rowVirtualizer = useGridVirtualizer({
@@ -150,7 +143,7 @@ export const TableViewGrid = memo(function TableViewGrid({
       onFocusedRowChangeRef.current?.(rowToJsonObject(columns, displayColumns, row));
       onFocusedRowIndexChangeRef.current?.(globalIdx);
     },
-    [rows, columns, displayColumns]
+    [rows, columns, displayColumns],
   );
   const publishFocusedRowRef = useRef(publishFocusedRow);
   publishFocusedRowRef.current = publishFocusedRow;
@@ -158,7 +151,7 @@ export const TableViewGrid = memo(function TableViewGrid({
   const getElementId = useCallback(
     (type: 'cell' | 'rownum', rowIdx: number, colIdx: number) =>
       type === 'rownum' ? `tableview-rownum-${rowIdx}` : `tableview-cell-${rowIdx}-${colIdx}`,
-    []
+    [],
   );
 
   const grid = useGridCore({
@@ -224,10 +217,8 @@ export const TableViewGrid = memo(function TableViewGrid({
 
   const exportResult = useMemo(
     () =>
-      columns.length
-        ? buildTableViewExportResult(columns, columnTypes, rows, primaryKeys, pending, tableName)
-        : null,
-    [columns, columnTypes, rows, primaryKeys, pending, tableName]
+      columns.length ? buildTableViewExportResult(columns, columnTypes, rows, primaryKeys, pending, tableName) : null,
+    [columns, columnTypes, rows, primaryKeys, pending, tableName],
   );
 
   const copyExport = useGridCopyExport({
@@ -256,12 +247,7 @@ export const TableViewGrid = memo(function TableViewGrid({
     }
   }, [exportToFile, selectionRef]);
 
-  const {
-    selectionRowsCount,
-    selectionColsCount,
-    selectedSortedRows,
-    selectedColPositions,
-  } = useGridSelectionView({
+  const { selectionRowsCount, selectionColsCount, selectedSortedRows, selectedColPositions } = useGridSelectionView({
     cellRange,
     selectedRows,
     selectedColumns,
@@ -280,10 +266,7 @@ export const TableViewGrid = memo(function TableViewGrid({
     focusRef,
     copy: copySelectionToClipboard,
     shouldCopy: ({ selectedRows: selRows, selectedColumns: selCols, focusedRow, focusedColPos, inGrid }) =>
-      inGrid &&
-      (selRows.size > 0 ||
-        selCols.size > 0 ||
-        (focusedRow != null && focusedColPos >= 0)),
+      inGrid && (selRows.size > 0 || selCols.size > 0 || (focusedRow != null && focusedColPos >= 0)),
   });
 
   useTableViewKeyboardActions({
@@ -359,15 +342,9 @@ export const TableViewGrid = memo(function TableViewGrid({
     return () => el.removeEventListener('scroll', handleScroll);
   }, [handleScroll]);
 
-  const rowPkKey = (rowIdx: number): string =>
-    primaryKeyKey(rowPrimaryKey(rows[rowIdx], columns, primaryKeys));
+  const rowPkKey = (rowIdx: number): string => primaryKeyKey(rowPrimaryKey(rows[rowIdx], columns, primaryKeys));
 
-  const getCellDisplay = (
-    rowIdx: number,
-    colName: string,
-    colIdx: number,
-    pkKey: string
-  ) => {
+  const getCellDisplay = (rowIdx: number, colName: string, colIdx: number, pkKey: string) => {
     const pendingVal = pending.edits[pkKey]?.[colName];
     // rows can shrink under the virtualizer mid-refresh; guard like every other access here.
     const raw = pendingVal !== undefined ? pendingVal : rows[rowIdx]?.[colIdx];
@@ -377,8 +354,7 @@ export const TableViewGrid = memo(function TableViewGrid({
 
   const isRowDeletedByKey = (pkKey: string) => pending.deletes.includes(pkKey);
 
-  const isCellEditedByKey = (pkKey: string, colName: string) =>
-    pending.edits[pkKey]?.[colName] !== undefined;
+  const isCellEditedByKey = (pkKey: string, colName: string) => pending.edits[pkKey]?.[colName] !== undefined;
 
   const isRowDeleted = (rowIdx: number) => isRowDeletedByKey(rowPkKey(rowIdx));
 
@@ -439,7 +415,7 @@ export const TableViewGrid = memo(function TableViewGrid({
     e.preventDefault();
     e.stopPropagation();
     const td = (e.target as HTMLElement).closest('td[data-col-pos]') as HTMLElement | null;
-    const row = td ? Number(td.dataset.row) : focusRef.current.row ?? -1;
+    const row = td ? Number(td.dataset.row) : (focusRef.current.row ?? -1);
     const colPos = td ? Number(td.dataset.colPos) : Math.max(0, focusRef.current.colPos);
     const ci = colIndices[colPos];
     const col = columns[ci];
@@ -465,7 +441,7 @@ export const TableViewGrid = memo(function TableViewGrid({
       {
         label: t('tableView.contextEdit'),
         action: () => openCellViewer(row, colPos),
-        disabled: !canEdit
+        disabled: !canEdit,
       },
       { label: '', action: () => {}, separator: true },
       {
@@ -528,20 +504,12 @@ export const TableViewGrid = memo(function TableViewGrid({
   };
 
   if (!columns.length) {
-    return (
-      <div className="table-view-grid-empty">
-        {loading ? t('tableView.loading') : t('results.noResults')}
-      </div>
-    );
+    return <div className="table-view-grid-empty">{loading ? t('tableView.loading') : t('results.noResults')}</div>;
   }
 
   return (
     <div
-      className={[
-        'table-view-grid',
-        'results-grid',
-        isSelecting ? 'table-view-selecting' : '',
-      ]
+      className={['table-view-grid', 'results-grid', isSelecting ? 'table-view-selecting' : '']
         .filter(Boolean)
         .join(' ')}
     >
@@ -608,9 +576,7 @@ export const TableViewGrid = memo(function TableViewGrid({
             className={[
               'col-rownum',
               ctx.deleted ? 'row-pending-delete' : '',
-              ctx.isFocusedRow && focusedColPos < 0 && !hasCellSelection && !hasRowColSelection
-                ? 'cell-focused'
-                : '',
+              ctx.isFocusedRow && focusedColPos < 0 && !hasCellSelection && !hasRowColSelection ? 'cell-focused' : '',
             ]
               .filter(Boolean)
               .join(' ')}
@@ -629,10 +595,8 @@ export const TableViewGrid = memo(function TableViewGrid({
           const { text, isNull } = getCellDisplay(rowIdx, col, ci, ctx.pkKey);
           const optimisticKey = `${ctx.pkKey}${col}`;
           void editTick;
-          const edited =
-            optimisticEdited.has(optimisticKey) || isCellEditedByKey(ctx.pkKey, col);
-          const isEditing =
-            editing?.row === rowIdx && editing?.col === colPos && !readOnly;
+          const edited = optimisticEdited.has(optimisticKey) || isCellEditedByKey(ctx.pkKey, col);
+          const isEditing = editing?.row === rowIdx && editing?.col === colPos && !readOnly;
           const isFocusedCell = ctx.isFocusedRow && focusedColPos === colPos;
 
           return (

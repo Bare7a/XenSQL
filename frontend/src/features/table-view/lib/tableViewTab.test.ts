@@ -1,16 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import {
-  findTableViewTab,
-  isTableViewOpenInTabs,
-} from '@/features/table-view/lib/tableViewTab';
+import { findTableViewTab, isTableViewOpenInTabs } from '@/features/table-view/lib/tableViewTab';
 import type { EditorTab } from '@/types';
 
-function tableTab(
-  id: string,
-  connectionId: string,
-  schema: string,
-  table: string
-): EditorTab {
+function tableTab(id: string, connectionId: string, schema: string, table: string): EditorTab {
   return {
     id,
     connectionId,
@@ -23,10 +15,7 @@ function tableTab(
 
 describe('findTableViewTab', () => {
   it('finds an exact match by connection + schema + table', () => {
-    const tabs = [
-      tableTab('a', 'c1', 'public', 'users'),
-      tableTab('b', 'c1', 'public', 'orders'),
-    ];
+    const tabs = [tableTab('a', 'c1', 'public', 'users'), tableTab('b', 'c1', 'public', 'orders')];
     expect(findTableViewTab(tabs, 'c1', 'public', 'orders')?.id).toBe('b');
   });
 
@@ -56,14 +45,7 @@ describe('findTableViewTab', () => {
 
 describe('isTableViewOpenInTabs', () => {
   it('true when the same table is already open', () => {
-    expect(
-      isTableViewOpenInTabs(
-        [tableTab('a', 'c1', 'public', 'users')],
-        'c1',
-        'public',
-        'users'
-      )
-    ).toBe(true);
+    expect(isTableViewOpenInTabs([tableTab('a', 'c1', 'public', 'users')], 'c1', 'public', 'users')).toBe(true);
   });
 
   it('false when no matching tab exists', () => {

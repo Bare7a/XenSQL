@@ -22,7 +22,7 @@ export function useTransactionActions() {
         return false;
       }
     },
-    [tabs, updateTabSession]
+    [tabs, updateTabSession],
   );
 
   // Commit and rollback release the pinned connection on the backend whether or not the SQL
@@ -40,7 +40,7 @@ export function useTransactionActions() {
       }
       return ok;
     },
-    [updateTabSession]
+    [updateTabSession],
   );
 
   const rollbackTransaction = useCallback(
@@ -56,7 +56,7 @@ export function useTransactionActions() {
       }
       return ok;
     },
-    [updateTabSession]
+    [updateTabSession],
   );
 
   const cleanupTabTransaction = useCallback(
@@ -68,7 +68,7 @@ export function useTransactionActions() {
         updateTabSession(tabId, { txnState: 'idle' });
       }
     },
-    [updateTabSession]
+    [updateTabSession],
   );
 
   return { beginTransaction, commitTransaction, rollbackTransaction, cleanupTabTransaction };

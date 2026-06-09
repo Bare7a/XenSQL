@@ -122,7 +122,7 @@ export interface EditorTab {
   sql: string;
   color: string;
   savedQueryId?: string;
-  savedSqlBaseline?: string; /** detect unsaved edits */
+  savedSqlBaseline?: string /** detect unsaved edits */;
   editorCursor?: EditorCursorState;
   tableView?: {
     schema: string;
@@ -228,9 +228,37 @@ export interface TableDataRequest {
 
 export const DEFAULT_COLORS = [
   // base (Tailwind 500)
-  '#ef4444', '#f97316', '#f59e0b', '#eab308', '#84cc16', '#22c55e', '#14b8a6', '#06b6d4', '#0ea5e9', '#3b82f6', '#6366f1', '#8b5cf6', '#a855f7', '#ec4899', '#64748b',
+  '#ef4444',
+  '#f97316',
+  '#f59e0b',
+  '#eab308',
+  '#84cc16',
+  '#22c55e',
+  '#14b8a6',
+  '#06b6d4',
+  '#0ea5e9',
+  '#3b82f6',
+  '#6366f1',
+  '#8b5cf6',
+  '#a855f7',
+  '#ec4899',
+  '#64748b',
   // dark (Tailwind 700)
-  '#b91c1c', '#c2410c', '#b45309', '#a16207', '#4d7c0f', '#15803d', '#0f766e', '#0e7490', '#0369a1', '#1d4ed8', '#4338ca', '#6d28d9', '#7e22ce', '#be185d', '#334155',
+  '#b91c1c',
+  '#c2410c',
+  '#b45309',
+  '#a16207',
+  '#4d7c0f',
+  '#15803d',
+  '#0f766e',
+  '#0e7490',
+  '#0369a1',
+  '#1d4ed8',
+  '#4338ca',
+  '#6d28d9',
+  '#7e22ce',
+  '#be185d',
+  '#334155',
 ];
 
 export const DEFAULT_CONNECTION_COLOR = '#3b82f6';

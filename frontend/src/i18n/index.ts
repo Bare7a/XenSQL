@@ -1,10 +1,10 @@
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
-import en from '@/i18n/locales/en.json';
-import de from '@/i18n/locales/de.json';
 import bg from '@/i18n/locales/bg.json';
+import de from '@/i18n/locales/de.json';
+import en from '@/i18n/locales/en.json';
+import { mirrorBootSetting, settings } from '@/shared/lib/settingsStore';
 import { STORAGE_KEYS } from '@/shared/lib/storageKeys';
-import { settings, mirrorBootSetting } from '@/shared/lib/settingsStore';
 
 export const LANGUAGE_STORAGE_KEY = STORAGE_KEYS.language;
 

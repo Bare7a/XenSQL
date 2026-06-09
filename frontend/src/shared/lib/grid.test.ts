@@ -1,11 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  columnRangeSet,
-  computeColWidths,
-  exportFormatLabel,
-  identityIndices,
-  rowRangeSet,
-} from '@/shared/lib/grid';
+import { columnRangeSet, computeColWidths, exportFormatLabel, identityIndices, rowRangeSet } from '@/shared/lib/grid';
 
 describe('identityIndices', () => {
   it('returns [0..n-1]', () => {
@@ -23,7 +17,7 @@ describe('computeColWidths', () => {
       [
         [1, 'alice'],
         [2, 'a-very-long-username-that-overflows'],
-      ]
+      ],
     );
     expect(out[0]).toBe('9ch');
     expect(out[1]).toBe('38ch');
@@ -70,15 +64,11 @@ describe('rowRangeSet (sorted view)', () => {
 
   it('range walks the view positions and emits the globals', () => {
     // sorted=[3,1,4,1,5,9,2,6]; global 1→pos 1, global 5→pos 4; positions 1..4 → globals [1,4,1,5] → set {1,4,5}
-    expect(rowRangeSet(sorted, sorted.length, 1, 5, false, new Set())).toEqual(
-      new Set([1, 4, 5])
-    );
+    expect(rowRangeSet(sorted, sorted.length, 1, 5, false, new Set())).toEqual(new Set([1, 4, 5]));
   });
 
   it('unknown global falls through to just the target', () => {
-    expect(rowRangeSet(sorted, sorted.length, 1, 999, false, new Set())).toEqual(
-      new Set([999])
-    );
+    expect(rowRangeSet(sorted, sorted.length, 1, 999, false, new Set())).toEqual(new Set([999]));
   });
 });
 
@@ -86,27 +76,19 @@ describe('columnRangeSet', () => {
   const cols = ['id', 'name', 'note', 'score'];
 
   it('range between two column names', () => {
-    expect(columnRangeSet(cols, 'name', 'score', false, new Set())).toEqual(
-      new Set(['name', 'note', 'score'])
-    );
+    expect(columnRangeSet(cols, 'name', 'score', false, new Set())).toEqual(new Set(['name', 'note', 'score']));
   });
 
   it('reversed range', () => {
-    expect(columnRangeSet(cols, 'score', 'name', false, new Set())).toEqual(
-      new Set(['name', 'note', 'score'])
-    );
+    expect(columnRangeSet(cols, 'score', 'name', false, new Set())).toEqual(new Set(['name', 'note', 'score']));
   });
 
   it('keeps existing when asked', () => {
-    expect(
-      columnRangeSet(cols, 'id', 'name', true, new Set(['note']))
-    ).toEqual(new Set(['id', 'name', 'note']));
+    expect(columnRangeSet(cols, 'id', 'name', true, new Set(['note']))).toEqual(new Set(['id', 'name', 'note']));
   });
 
   it('unknown column falls through to target', () => {
-    expect(columnRangeSet(cols, 'gone', 'name', false, new Set())).toEqual(
-      new Set(['name'])
-    );
+    expect(columnRangeSet(cols, 'gone', 'name', false, new Set())).toEqual(new Set(['name']));
   });
 });
 

@@ -1,6 +1,6 @@
-import type { QueryResult } from '@/types';
-import { STORAGE_KEYS } from '@/shared/lib/storageKeys';
 import { settings } from '@/shared/lib/settingsStore';
+import { STORAGE_KEYS } from '@/shared/lib/storageKeys';
+import type { QueryResult } from '@/types';
 
 export type ExportFormat = 'csv' | 'json' | 'markdown' | 'sql' | 'text';
 
@@ -65,20 +65,15 @@ export function exportResultToText(result: QueryResult, format: ExportFormat): s
       return JSON.stringify(rows, (_k, val) => (typeof val === 'bigint' ? Number(val) : val), 2);
     }
     case 'csv': {
-      const escape = (cell: string) => {
+      const escapeCsv = (cell: string) => {
         // Mirror Go's encoding/csv: quote on delimiter/quote/newline, leading whitespace, or \. sentinel.
-        const needsQuote =
-          cell === '\\.' || /[",\n\r]/.test(cell) || /^\s/u.test(cell);
+        const needsQuote = cell === '\\.' || /[",\n\r]/.test(cell) || /^\s/u.test(cell);
         if (needsQuote) return `"${cell.replace(/"/g, '""')}"`;
         return cell;
       };
-      const lines = [result.columns.map(escape).join(',')];
+      const lines = [result.columns.map(escapeCsv).join(',')];
       for (const row of result.rows) {
-        lines.push(
-          row
-            .map((v) => (v == null ? '' : escape(defuseCsvFormula(String(v)))))
-            .join(',')
-        );
+        lines.push(row.map((v) => (v == null ? '' : escapeCsv(defuseCsvFormula(String(v))))).join(','));
       }
       return lines.join('\n');
     }
@@ -86,10 +81,7 @@ export function exportResultToText(result: QueryResult, format: ExportFormat): s
       // Escape headers too, not just cells - a column named `a|b` would break the alignment.
       const mdCell = (s: string) => s.replace(/\|/g, '\\|').replace(/\r\n?|\n/g, ' ');
       const sep = result.columns.map(() => '---');
-      const lines = [
-        `| ${result.columns.map(mdCell).join(' | ')} |`,
-        `| ${sep.join(' | ')} |`,
-      ];
+      const lines = [`| ${result.columns.map(mdCell).join(' | ')} |`, `| ${sep.join(' | ')} |`];
       for (const row of result.rows) {
         const cells = row.map((v) => (v == null ? '' : mdCell(String(v))));
         lines.push(`| ${cells.join(' | ')} |`);
@@ -103,29 +95,19 @@ export function exportResultToText(result: QueryResult, format: ExportFormat): s
       const lines: string[] = [];
       for (const row of result.rows) {
         const vals = row.map(sqlLiteral);
-        lines.push(
-          `INSERT INTO ${table} (${quotedCols.join(', ')}) VALUES (${vals.join(', ')});`
-        );
+        lines.push(`INSERT INTO ${table} (${quotedCols.join(', ')}) VALUES (${vals.join(', ')});`);
       }
       return lines.join('\n');
     }
     case 'text': {
-      return result.rows
-        .map((row) =>
-          row.map((v) => (v == null ? '' : String(v))).join('\t')
-        )
-        .join('\n');
+      return result.rows.map((row) => row.map((v) => (v == null ? '' : String(v))).join('\t')).join('\n');
     }
     default:
       return '';
   }
 }
 
-export function buildExport(
-  result: QueryResult,
-  format: ExportFormat,
-  opts: ExportOptions
-): string {
+export function buildExport(result: QueryResult, format: ExportFormat, opts: ExportOptions): string {
   const subset = pickSubset(result, opts);
   return exportResultToText(subset, format);
 }
@@ -172,11 +154,8 @@ export function resolveCopySelection(state: GridCopySelection): ExportOptions {
   const hasCols = selectedColumns.length > 0;
 
   const sortRows = (indices: number[]) =>
-    [...indices].sort(
-      (a, b) => state.sortedRowIndices.indexOf(a) - state.sortedRowIndices.indexOf(b)
-    );
-  const columnsFromSelection = () =>
-    state.displayColumns.filter((c) => selectedColumns.includes(c));
+    [...indices].sort((a, b) => state.sortedRowIndices.indexOf(a) - state.sortedRowIndices.indexOf(b));
+  const columnsFromSelection = () => state.displayColumns.filter((c) => selectedColumns.includes(c));
 
   if (hasCols && !hasRows) {
     return {
@@ -209,7 +188,7 @@ export function formatCellCopyValue(value: unknown): string {
 
 export interface FocusedCellCopyContext {
   focusedRowIdx: number | null;
-  focusedColPos: number; /** -1 = row number column (not a data cell) */
+  focusedColPos: number /** -1 = row number column (not a data cell) */;
   selectedRows: Iterable<number>;
   selectedColumns: Iterable<string>;
 }

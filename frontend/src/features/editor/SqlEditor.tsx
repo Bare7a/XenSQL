@@ -1,22 +1,22 @@
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import Editor, { Monaco } from '@monaco-editor/react';
+import Editor, { type Monaco } from '@monaco-editor/react';
 import type { editor } from 'monaco-editor';
-import { createSqlCompletionProvider } from '@/features/editor/lib/createSqlCompletionProvider';
-import { findStatementAtRunLine } from '@/features/editor/lib/sqlStatements';
-import { setupMonacoBeforeMount, getMonacoThemeName } from '@/features/editor/lib/monacoTheme';
-import { useAppTheme } from '@/shared/hooks/useAppTheme';
-import { useEditorFontSize } from '@/features/editor/hooks/useEditorFontSize';
-import { monacoFontOptions } from '@/features/editor/lib/editorFontSize';
-import { useRunGlyphs } from '@/features/editor/hooks/useRunGlyphs';
-import { useEditorActions } from '@/features/editor/hooks/useEditorActions';
-import { useSidebarInsert } from '@/features/editor/hooks/useSidebarInsert';
-import { useCursorPersistence } from '@/features/editor/hooks/useCursorPersistence';
-import { useEditorContextMenu } from '@/features/editor/hooks/useEditorContextMenu';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { EditorToolbar } from '@/features/editor/EditorToolbar';
+import { useCursorPersistence } from '@/features/editor/hooks/useCursorPersistence';
+import { useEditorActions } from '@/features/editor/hooks/useEditorActions';
+import { useEditorContextMenu } from '@/features/editor/hooks/useEditorContextMenu';
+import { useEditorFontSize } from '@/features/editor/hooks/useEditorFontSize';
+import { useRunGlyphs } from '@/features/editor/hooks/useRunGlyphs';
+import { useSidebarInsert } from '@/features/editor/hooks/useSidebarInsert';
+import { createSqlCompletionProvider } from '@/features/editor/lib/createSqlCompletionProvider';
+import { monacoFontOptions } from '@/features/editor/lib/editorFontSize';
+import { getMonacoThemeName, setupMonacoBeforeMount } from '@/features/editor/lib/monacoTheme';
+import { findStatementAtRunLine } from '@/features/editor/lib/sqlStatements';
 import { subscribeLanguageChanged } from '@/i18n';
+import { ContextMenu } from '@/shared/components/ContextMenu';
+import { useAppTheme } from '@/shared/hooks/useAppTheme';
 import { subscribeShortcutsChanged } from '@/shared/lib/shortcuts';
 import type { ColumnInfo, DriverType, EditorCursorState, SchemaInfo, TableInfo, TxnState } from '@/types';
-import { ContextMenu } from '@/shared/components/ContextMenu';
 
 const STATIC_EDITOR_OPTIONS = {
   fontFamily: 'JetBrains Mono, Consolas, monospace',
@@ -98,10 +98,7 @@ export const SqlEditor = memo(function SqlEditor({
   const appTheme = useAppTheme();
   const monacoTheme = getMonacoThemeName(appTheme);
   const fontSize = useEditorFontSize();
-  const editorOptions = useMemo(
-    () => ({ ...STATIC_EDITOR_OPTIONS, ...monacoFontOptions(fontSize) }),
-    [fontSize]
-  );
+  const editorOptions = useMemo(() => ({ ...STATIC_EDITOR_OPTIONS, ...monacoFontOptions(fontSize) }), [fontSize]);
   const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
   const monacoRef = useRef<Monaco | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -119,7 +116,8 @@ export const SqlEditor = memo(function SqlEditor({
     const grouped: Record<string, TableInfo[]> = {};
     for (const table of allTables) {
       const key = table.schema || defaultKey;
-      (grouped[key] ||= []).push(table);
+      grouped[key] ||= [];
+      grouped[key].push(table);
     }
     return grouped;
   }, [allTables, driver]);
@@ -164,7 +162,8 @@ export const SqlEditor = memo(function SqlEditor({
       if (!ed) return;
       let text: string;
       if (selectedOnly) {
-        const sel = ed.getModel()?.getValueInRange(ed.getSelection()!) || '';
+        const selection = ed.getSelection();
+        const sel = (selection ? ed.getModel()?.getValueInRange(selection) : '') || '';
         if (!sel.trim()) return;
         text = sel;
       } else {
@@ -172,7 +171,7 @@ export const SqlEditor = memo(function SqlEditor({
       }
       if (text.trim()) onRun(text);
     },
-    [onRun, isQueryRunning]
+    [onRun, isQueryRunning],
   );
 
   const runStatement = useCallback((text: string) => {
@@ -181,12 +180,7 @@ export const SqlEditor = memo(function SqlEditor({
     if (trimmed) onRunRef.current(trimmed);
   }, []);
 
-  const { updateRunGlyphs, statementsRef } = useRunGlyphs(
-    editorRef,
-    monacoRef,
-    sql,
-    languageRevision
-  );
+  const { updateRunGlyphs, statementsRef } = useRunGlyphs(editorRef, monacoRef, sql, languageRevision);
 
   const { bindEditorActions } = useEditorActions({
     editorRef,
@@ -217,10 +211,15 @@ export const SqlEditor = memo(function SqlEditor({
     completionProviderRef.current = monaco.languages.registerCompletionItemProvider(
       'sql',
       createSqlCompletionProvider(monaco, ed, () => {
-        const { schemas: s, allTables: at, tablesBySchema: tbs, onLoadColumns: loadCols, driver: drv } =
-          completionCtxRef.current;
+        const {
+          schemas: s,
+          allTables: at,
+          tablesBySchema: tbs,
+          onLoadColumns: loadCols,
+          driver: drv,
+        } = completionCtxRef.current;
         return { schemas: s, allTables: at, tablesBySchema: tbs, onLoadColumns: loadCols, driver: drv };
-      })
+      }),
     );
   }, [isActive]);
 
@@ -345,10 +344,7 @@ export const SqlEditor = memo(function SqlEditor({
         onCommitTxn={onCommitTxn}
         onRollbackTxn={onRollbackTxn}
       />
-      <div
-        ref={containerRef}
-        className={`editor-pane${isQueryRunning ? ' editor-pane-query-running' : ''}`}
-      >
+      <div ref={containerRef} className={`editor-pane${isQueryRunning ? ' editor-pane-query-running' : ''}`}>
         <Editor
           height={editorHeight}
           path={`${tabId}.sql`}
@@ -363,12 +359,7 @@ export const SqlEditor = memo(function SqlEditor({
         />
       </div>
       {contextMenu && (
-        <ContextMenu
-          x={contextMenu.x}
-          y={contextMenu.y}
-          items={contextItems}
-          onClose={() => setContextMenu(null)}
-        />
+        <ContextMenu x={contextMenu.x} y={contextMenu.y} items={contextItems} onClose={() => setContextMenu(null)} />
       )}
     </div>
   );

@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { SavedQuery } from '@/types';
 import { HistoryPanel } from '@/features/sidebar/HistoryPanel';
 import { SavedQueriesPanel } from '@/features/sidebar/SavedQueriesPanel';
-import { readStoredString, writeStoredString, STORAGE_KEYS } from '@/shared/lib/storageKeys';
+import { readStoredString, STORAGE_KEYS, writeStoredString } from '@/shared/lib/storageKeys';
+import type { SavedQuery } from '@/types';
 
 type QueriesMode = 'saved' | 'history';
 
@@ -15,7 +15,7 @@ interface Props {
 export function QueriesPanel({ onOpenQuery, onOpenSavedQuery }: Props) {
   const { t } = useTranslation();
   const [mode, setMode] = useState<QueriesMode>(() =>
-    readStoredString(STORAGE_KEYS.queriesMode, 'saved') === 'history' ? 'history' : 'saved'
+    readStoredString(STORAGE_KEYS.queriesMode, 'saved') === 'history' ? 'history' : 'saved',
   );
   const selectMode = (next: QueriesMode) => {
     setMode(next);
@@ -24,11 +24,7 @@ export function QueriesPanel({ onOpenQuery, onOpenSavedQuery }: Props) {
 
   return (
     <>
-      <div
-        className="sidebar-toggle-group queries-mode"
-        role="group"
-        aria-label={t('sidebar.queries')}
-      >
+      <div className="sidebar-toggle-group queries-mode" role="group" aria-label={t('sidebar.queries')}>
         <button
           type="button"
           className={`btn btn-sm ${mode === 'saved' ? 'active' : ''}`}

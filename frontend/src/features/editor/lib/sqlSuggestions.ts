@@ -1,7 +1,7 @@
-import type { ColumnInfo, DriverType, SchemaInfo, TableInfo } from '@/types';
-import { columnCacheKey, formatSqlIdentifier } from '@/features/editor/lib/sqlQuoting';
+import { type ClauseBodyKind, isValueContext } from '@/features/editor/lib/sqlCompletionContext';
 import type { QueryTableRef, TableBinding } from '@/features/editor/lib/sqlQueryParse';
-import { isValueContext, type ClauseBodyKind } from '@/features/editor/lib/sqlCompletionContext';
+import { columnCacheKey, formatSqlIdentifier } from '@/features/editor/lib/sqlQuoting';
+import type { ColumnInfo, DriverType, SchemaInfo, TableInfo } from '@/types';
 
 export interface CompletionContext {
   schemas: SchemaInfo[];
@@ -24,16 +24,59 @@ export interface CompletionItem {
 }
 
 export const SQL_KEYWORDS = [
-  'SELECT', 'FROM', 'WHERE', 'JOIN', 'LEFT JOIN', 'RIGHT JOIN', 'INNER JOIN',
-  'ON', 'GROUP BY', 'ORDER BY', 'HAVING', 'LIMIT', 'OFFSET', 'INSERT INTO',
-  'VALUES', 'UPDATE', 'SET', 'DELETE', 'CREATE TABLE', 'ALTER TABLE', 'DROP TABLE',
-  'AND', 'OR', 'NOT', 'IN', 'LIKE', 'BETWEEN', 'IS NULL', 'IS NOT NULL',
-  'AS', 'DISTINCT', 'CASE', 'WHEN', 'THEN', 'ELSE', 'END',
-  'UNION', 'UNION ALL', 'EXISTS', 'CAST', 'ASC', 'DESC', 'NULL',
+  'SELECT',
+  'FROM',
+  'WHERE',
+  'JOIN',
+  'LEFT JOIN',
+  'RIGHT JOIN',
+  'INNER JOIN',
+  'ON',
+  'GROUP BY',
+  'ORDER BY',
+  'HAVING',
+  'LIMIT',
+  'OFFSET',
+  'INSERT INTO',
+  'VALUES',
+  'UPDATE',
+  'SET',
+  'DELETE',
+  'CREATE TABLE',
+  'ALTER TABLE',
+  'DROP TABLE',
+  'AND',
+  'OR',
+  'NOT',
+  'IN',
+  'LIKE',
+  'BETWEEN',
+  'IS NULL',
+  'IS NOT NULL',
+  'AS',
+  'DISTINCT',
+  'CASE',
+  'WHEN',
+  'THEN',
+  'ELSE',
+  'END',
+  'UNION',
+  'UNION ALL',
+  'EXISTS',
+  'CAST',
+  'ASC',
+  'DESC',
+  'NULL',
 ];
 
 export const JOIN_KEYWORDS = new Set([
-  'JOIN', 'LEFT JOIN', 'RIGHT JOIN', 'INNER JOIN', 'FULL JOIN', 'CROSS JOIN', 'OUTER JOIN',
+  'JOIN',
+  'LEFT JOIN',
+  'RIGHT JOIN',
+  'INNER JOIN',
+  'FULL JOIN',
+  'CROSS JOIN',
+  'OUTER JOIN',
 ]);
 
 export const ORDER_KEYWORDS = new Set(['ASC', 'DESC', 'ORDER BY']);
@@ -42,7 +85,13 @@ export const VALUE_LITERALS = ['NULL', 'TRUE', 'FALSE', 'DEFAULT'];
 
 // Keywords that can only begin a statement - offered just at the statement start, never mid-query.
 const STATEMENT_STARTERS = new Set([
-  'SELECT', 'INSERT INTO', 'UPDATE', 'DELETE', 'CREATE TABLE', 'ALTER TABLE', 'DROP TABLE',
+  'SELECT',
+  'INSERT INTO',
+  'UPDATE',
+  'DELETE',
+  'CREATE TABLE',
+  'ALTER TABLE',
+  'DROP TABLE',
 ]);
 
 export function keywordsForContext(before: string): string[] {
@@ -76,9 +125,7 @@ export function keywordsForContext(before: string): string[] {
   });
 
   if (inWhere && !isValueContext(before)) {
-    const whereOps = new Set([
-      'AND', 'OR', 'NOT', 'IN', 'LIKE', 'BETWEEN', 'IS NULL', 'IS NOT NULL', 'EXISTS', 'NULL',
-    ]);
+    const whereOps = new Set(['AND', 'OR', 'NOT', 'IN', 'LIKE', 'BETWEEN', 'IS NULL', 'IS NOT NULL', 'EXISTS', 'NULL']);
     allowed = allowed.filter((kw) => whereOps.has(kw) || kw.startsWith('IS '));
   }
 
@@ -117,11 +164,7 @@ export function columnDetail(c: ColumnInfo): string {
 
 // CTE names declared in a leading WITH clause, offered like tables in the FROM/JOIN slot. (We
 // don't know a CTE's columns without parsing its body, so only the name is suggested.)
-export function suggestCteItems(
-  ctes: string[],
-  lcPrefix: string,
-  driver: DriverType
-): CompletionItem[] {
+export function suggestCteItems(ctes: string[], lcPrefix: string, driver: DriverType): CompletionItem[] {
   const items: CompletionItem[] = [];
   const seen = new Set<string>();
   for (const name of ctes) {
@@ -144,11 +187,7 @@ export function suggestCteItems(
   return items;
 }
 
-export function suggestTables(
-  ctx: CompletionContext,
-  lcPrefix: string,
-  schemaFilter?: string
-): CompletionItem[] {
+export function suggestTables(ctx: CompletionContext, lcPrefix: string, schemaFilter?: string): CompletionItem[] {
   const items: CompletionItem[] = [];
   const source = schemaFilter
     ? ctx.tablesBySchema[schemaFilter] ||
@@ -190,7 +229,7 @@ export function suggestSchemas(ctx: CompletionContext, lcPrefix: string): Comple
 export function suggestQueryTableRefs(
   ctx: CompletionContext,
   queryTables: QueryTableRef[],
-  lcPrefix: string
+  lcPrefix: string,
 ): CompletionItem[] {
   const items: CompletionItem[] = [];
   const seenTables = new Set<string>();
@@ -240,7 +279,7 @@ export function suggestQueryTableRefs(
 export function suggestColumnsFromBindings(
   ctx: CompletionContext,
   bindings: Map<string, TableBinding>,
-  lcPrefix: string
+  lcPrefix: string,
 ): CompletionItem[] {
   const items: CompletionItem[] = [];
   const seen = new Set<string>();
@@ -273,7 +312,7 @@ export function suggestValueItems(
   ctx: CompletionContext,
   queryTables: QueryTableRef[],
   bindings: Map<string, TableBinding>,
-  lcPrefix: string
+  lcPrefix: string,
 ): CompletionItem[] {
   const items: CompletionItem[] = [];
   const seenCols = new Set<string>();
@@ -316,7 +355,7 @@ export function suggestValueItems(
 export function suggestColumnsForTable(
   ctx: CompletionContext,
   binding: TableBinding,
-  lcPrefix: string
+  lcPrefix: string,
 ): CompletionItem[] {
   const key = columnCacheKey(binding.schema, binding.table);
   const cols = ctx.columnsByTable[key] || ctx.columns;
@@ -355,7 +394,7 @@ export function suggestClauseBody(
   kind: ClauseBodyKind,
   queryTables: QueryTableRef[],
   bindings: Map<string, TableBinding>,
-  ctes: string[] = []
+  ctes: string[] = [],
 ): CompletionItem[] {
   if (kind === 'table') {
     // CTEs first so they aren't dropped by the 100-item slice when the schema has many tables.

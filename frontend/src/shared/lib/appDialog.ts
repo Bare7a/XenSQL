@@ -1,6 +1,6 @@
-import { formatError } from '@/shared/lib/normalize';
 import { t } from '@/i18n';
-import { useDialogStore, type AlertOptions, type ConfirmOptions, type PromptOptions } from '@/store/dialogStore';
+import { formatError } from '@/shared/lib/normalize';
+import { type AlertOptions, type ConfirmOptions, type PromptOptions, useDialogStore } from '@/store/dialogStore';
 
 export type { AlertOptions, ConfirmOptions, PromptOptions };
 

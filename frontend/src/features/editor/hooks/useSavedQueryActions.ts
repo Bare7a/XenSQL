@@ -1,9 +1,9 @@
 import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
+import { findTabForSavedQuery } from '@/features/editor/lib/savedQueryTab';
 import { api, newTabId } from '@/shared/lib/api';
 import { appError, appPrompt } from '@/shared/lib/appDialog';
 import { refreshSavedQueries } from '@/shared/lib/savedQueriesSync';
-import { findTabForSavedQuery } from '@/features/editor/lib/savedQueryTab';
 import {
   useActiveTab,
   useConnections,
@@ -14,10 +14,7 @@ import {
 } from '@/store/selectors';
 import type { EditorTab, SavedQuery } from '@/types';
 
-export function useSavedQueryActions(
-  renameTabId: string | null,
-  setRenameTabId: (id: string | null) => void
-) {
+export function useSavedQueryActions(renameTabId: string | null, setRenameTabId: (id: string | null) => void) {
   const { t } = useTranslation();
   const connections = useConnections();
   const tabs = useTabs();
@@ -47,7 +44,7 @@ export function useSavedQueryActions(
         return false;
       }
     },
-    [savedQueries, updateTab, t]
+    [savedQueries, updateTab, t],
   );
 
   const handleSaveQuery = useCallback(async () => {
@@ -111,13 +108,12 @@ export function useSavedQueryActions(
         setRenameTabId(null);
       }
     },
-    [renameTabId, tabs, savedQueries, updateTab, setRenameTabId, t]
+    [renameTabId, tabs, savedQueries, updateTab, setRenameTabId, t],
   );
 
   const openSavedQuery = useCallback(
     (saved: SavedQuery) => {
-      const connectionId =
-        saved.connectionId || selectedConnectionId || activeTab?.connectionId || connections[0]?.id;
+      const connectionId = saved.connectionId || selectedConnectionId || activeTab?.connectionId || connections[0]?.id;
       if (!connectionId) return;
       const conn = connections.find((c) => c.id === connectionId);
       if (!conn) return;
@@ -146,7 +142,7 @@ export function useSavedQueryActions(
         savedSqlBaseline: saved.sql,
       });
     },
-    [connections, tabs, selectedConnectionId, activeTab, addTab, updateTab, setActiveTab, setSelectedConnection]
+    [connections, tabs, selectedConnectionId, activeTab, addTab, updateTab, setActiveTab, setSelectedConnection],
   );
 
   return {

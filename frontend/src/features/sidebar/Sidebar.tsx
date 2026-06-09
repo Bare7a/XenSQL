@@ -1,19 +1,15 @@
+import { Bookmark, type LucideIcon, Table2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { Bookmark, Table2, type LucideIcon } from 'lucide-react';
-import type { SavedQuery } from '@/types';
+import { ConnectionSwitcher } from '@/features/sidebar/ConnectionSwitcher';
+import { QueriesPanel } from '@/features/sidebar/QueriesPanel';
+import { SchemaPanel } from '@/features/sidebar/SchemaPanel';
 import { ErrorBoundary } from '@/shared/components/ErrorBoundary';
 import { useAppStore } from '@/store/appStore';
 import { useSelectedConnectionId } from '@/store/selectors';
-import { ConnectionSwitcher } from '@/features/sidebar/ConnectionSwitcher';
-import { SchemaPanel } from '@/features/sidebar/SchemaPanel';
-import { QueriesPanel } from '@/features/sidebar/QueriesPanel';
+import type { SavedQuery } from '@/types';
 
 interface Props {
-  onOpenQuery: (
-    connId: string,
-    sql?: string,
-    options?: { forceNew?: boolean; title?: string }
-  ) => void;
+  onOpenQuery: (connId: string, sql?: string, options?: { forceNew?: boolean; title?: string }) => void;
   onOpenSavedQuery: (saved: SavedQuery) => void;
   onBrowseTable: (connId: string, schema: string, table: string) => void;
   onOpenConnectionTab: (connId: string) => void;
@@ -26,12 +22,7 @@ const VIEWS: ReadonlyArray<[SidebarView, string, LucideIcon]> = [
   ['queries', 'sidebar.queries', Bookmark],
 ];
 
-export function Sidebar({
-  onOpenQuery,
-  onOpenSavedQuery,
-  onBrowseTable,
-  onOpenConnectionTab,
-}: Props) {
+export function Sidebar({ onOpenQuery, onOpenSavedQuery, onBrowseTable, onOpenConnectionTab }: Props) {
   const { t } = useTranslation();
   const sidebarView = useAppStore((s) => s.sidebarView);
   const setSidebarView = useAppStore((s) => s.setSidebarView);
@@ -39,10 +30,7 @@ export function Sidebar({
 
   return (
     <aside className="sidebar">
-      <ConnectionSwitcher
-        onConnected={() => setSidebarView('schema')}
-        onOpenConnectionTab={onOpenConnectionTab}
-      />
+      <ConnectionSwitcher onConnected={() => setSidebarView('schema')} onOpenConnectionTab={onOpenConnectionTab} />
 
       <div className="sidebar-tabs">
         {VIEWS.map(([view, labelKey, Icon]) => (

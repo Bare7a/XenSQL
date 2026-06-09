@@ -1,14 +1,14 @@
-import { type RefObject } from 'react';
 import type { editor } from 'monaco-editor';
-import { format } from 'sql-formatter';
+import type { RefObject } from 'react';
 import { useTranslation } from 'react-i18next';
-import { api } from '@/shared/lib/api';
+import { format } from 'sql-formatter';
 import type { ContextMenuItem } from '@/shared/components/ContextMenu';
+import { api } from '@/shared/lib/api';
 
 export function useEditorContextMenu(
   editorRef: RefObject<editor.IStandaloneCodeEditor | null>,
   sql: string,
-  onChange: (sql: string) => void
+  onChange: (sql: string) => void,
 ): ContextMenuItem[] {
   const { t } = useTranslation();
 
@@ -41,10 +41,13 @@ export function useEditorContextMenu(
         const ed = editorRef.current;
         if (!ed) return;
         ed.focus();
-        navigator.clipboard.readText().then((text) => {
-          if (!text) return;
-          ed.trigger('ctx', 'paste', { text });
-        }).catch(() => {});
+        navigator.clipboard
+          .readText()
+          .then((text) => {
+            if (!text) return;
+            ed.trigger('ctx', 'paste', { text });
+          })
+          .catch(() => {});
       },
     },
     { label: t('editor.contextDelete'), action: editorAction('deleteRight') },

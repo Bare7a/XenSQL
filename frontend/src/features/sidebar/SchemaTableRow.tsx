@@ -1,9 +1,10 @@
-import { memo, useMemo } from 'react';
 import { ChevronDown, ChevronRight, Columns3, Eye, Loader2, Table2 } from 'lucide-react';
+import { memo, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+import { columnMatchesSearch } from '@/features/sidebar/hooks/useSchemaTree';
+import { rowActivateKeyDown } from '@/shared/hooks/useListKeyboardNav';
 import { cx } from '@/shared/lib/cx';
 import type { ColumnInfo, TableInfo } from '@/types';
-import { columnMatchesSearch } from '@/features/sidebar/hooks/useSchemaTree';
 
 interface SchemaTableRowProps {
   schemaName: string;
@@ -39,12 +40,9 @@ export const SchemaTableRow = memo(function SchemaTableRow({
   // Memoize column scans - only re-run when cols or search needle change.
   const { tableNameMatches, columnMatches, displayCols } = useMemo(() => {
     const nameMatches = !schemaSearch || table.name.toLowerCase().includes(schemaSearch);
-    const colMatches =
-      !!schemaSearch && cols.some((col) => columnMatchesSearch(col, schemaSearch));
+    const colMatches = !!schemaSearch && cols.some((col) => columnMatchesSearch(col, schemaSearch));
     const visibleCols =
-      !schemaSearch || nameMatches
-        ? cols
-        : cols.filter((col) => columnMatchesSearch(col, schemaSearch));
+      !schemaSearch || nameMatches ? cols : cols.filter((col) => columnMatchesSearch(col, schemaSearch));
     return {
       tableNameMatches: nameMatches,
       columnMatches: colMatches,
@@ -52,24 +50,21 @@ export const SchemaTableRow = memo(function SchemaTableRow({
     };
   }, [cols, schemaSearch, table.name]);
 
-  const isTableExpanded =
-    tableOpen || (!!schemaSearch && !tableNameMatches && (columnMatches || colsLoading));
+  const isTableExpanded = tableOpen || (!!schemaSearch && !tableNameMatches && (columnMatches || colsLoading));
 
   return (
     <div>
       <div
         className="tree-item tree-item--table"
+        role="button"
         tabIndex={0}
         data-nav-item
         data-tooltip={t('tooltip.schemaTableRow')}
         onClick={() => onToggleTable(schemaName, table.name)}
+        onKeyDown={rowActivateKeyDown}
         onContextMenu={(e) => onTableContextMenu(e, schemaName, table.name)}
       >
-        {isTableExpanded ? (
-          <ChevronDown className="icon-sm" />
-        ) : (
-          <ChevronRight className="icon-sm" />
-        )}
+        {isTableExpanded ? <ChevronDown className="icon-sm" /> : <ChevronRight className="icon-sm" />}
         <Table2 className="icon-sm icon" />
         <span className="flex-1">{table.name}</span>
         <button
@@ -94,9 +89,7 @@ export const SchemaTableRow = memo(function SchemaTableRow({
           )}
           {!colsLoading && displayCols.length === 0 && (
             <div className="tree-item tree-column ui-text-xs text-muted">
-              {schemaSearch && !tableNameMatches
-                ? t('sidebar.searchingColumns')
-                : t('sidebar.noColumnsFound')}
+              {schemaSearch && !tableNameMatches ? t('sidebar.searchingColumns') : t('sidebar.noColumnsFound')}
             </div>
           )}
           {!colsLoading &&
@@ -107,12 +100,14 @@ export const SchemaTableRow = memo(function SchemaTableRow({
                   'tree-item',
                   'tree-column',
                   'tree-column--clickable',
-                  schemaSearch && columnMatchesSearch(col, schemaSearch) && 'tree-column-match'
+                  schemaSearch && columnMatchesSearch(col, schemaSearch) && 'tree-column-match',
                 )}
+                role="button"
                 tabIndex={0}
                 data-nav-item
                 data-tooltip={t('tooltip.schemaColumnRow')}
                 onClick={() => onColumnClick(col.name)}
+                onKeyDown={rowActivateKeyDown}
                 onContextMenu={(e) => onColumnContextMenu(e, col.name)}
               >
                 <Columns3 className="icon-xs icon" />

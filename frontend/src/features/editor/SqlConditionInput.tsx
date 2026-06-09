@@ -1,19 +1,28 @@
-import { useCallback, useEffect, useMemo, useRef } from 'react';
 import Editor, { type Monaco } from '@monaco-editor/react';
 import type { editor, languages, Position } from 'monaco-editor';
-import { cx } from '@/shared/lib/cx';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { getMonacoThemeName, setupMonacoBeforeMount } from '@/features/editor/lib/monacoTheme';
 import { formatSqlIdentifier } from '@/features/editor/lib/sqlCompletion';
 import { matchScore, rank } from '@/features/editor/lib/sqlSuggestions';
-import { setupMonacoBeforeMount, getMonacoThemeName } from '@/features/editor/lib/monacoTheme';
 import { useAppTheme } from '@/shared/hooks/useAppTheme';
 import { useUiZoom } from '@/shared/hooks/useUiZoom';
+import { cx } from '@/shared/lib/cx';
 import type { DriverType } from '@/types';
 
 // Bare WHERE-clause vocabulary only - no FROM/SELECT/JOIN/ORDER.
 const WHERE_KEYWORDS = [
-  'AND', 'OR', 'NOT', 'IN', 'LIKE', 'BETWEEN',
-  'IS NULL', 'IS NOT NULL', 'EXISTS',
-  'NULL', 'TRUE', 'FALSE',
+  'AND',
+  'OR',
+  'NOT',
+  'IN',
+  'LIKE',
+  'BETWEEN',
+  'IS NULL',
+  'IS NOT NULL',
+  'EXISTS',
+  'NULL',
+  'TRUE',
+  'FALSE',
 ] as const;
 
 interface Props {
@@ -205,10 +214,7 @@ export function SqlConditionInput({
     };
   }, []);
 
-  const options = useMemo(
-    () => ({ ...STATIC_OPTIONS, ...sizingOptions(uiZoomPx), ariaLabel }),
-    [uiZoomPx, ariaLabel]
-  );
+  const options = useMemo(() => ({ ...STATIC_OPTIONS, ...sizingOptions(uiZoomPx), ariaLabel }), [uiZoomPx, ariaLabel]);
 
   const showPlaceholder = !value && !!placeholder;
 

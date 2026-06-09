@@ -38,11 +38,9 @@ export function useResultsFocusPublish({
       }
       const row = result.rows[globalIdx];
       if (!row) return;
-      onFocusedRowChangeRef.current?.(
-        rowToJsonObject(columns, visibleColumns, row, columnIndexByName)
-      );
+      onFocusedRowChangeRef.current?.(rowToJsonObject(columns, visibleColumns, row, columnIndexByName));
     },
-    [result, columns, visibleColumns, columnIndexByName]
+    [result, columns, visibleColumns, columnIndexByName],
   );
   publishRef.current = publishFocusedRow;
 

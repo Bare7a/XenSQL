@@ -1,11 +1,6 @@
 import { useEffect } from 'react';
-import {
-  getEffectiveBinding,
-  isCapturingBinding,
-  matchesBinding,
-  type ShortcutDef,
-} from '@/shared/lib/shortcuts';
 import { isEditableTarget, isInsideGrid } from '@/shared/lib/dom';
+import { getEffectiveBinding, isCapturingBinding, matchesBinding, type ShortcutDef } from '@/shared/lib/shortcuts';
 
 export type GlobalShortcutHandlers = {
   [shortcutId in ShortcutDef['id']]?: () => void;

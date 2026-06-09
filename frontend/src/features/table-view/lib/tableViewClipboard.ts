@@ -89,7 +89,7 @@ export function computePasteEdits(
   anchorRow: number,
   anchorColPos: number,
   rowCount: number,
-  displayColumns: string[]
+  displayColumns: string[],
 ): PasteCellEdit[] {
   const edits: PasteCellEdit[] = [];
   for (let dr = 0; dr < grid.length; dr++) {

@@ -3,11 +3,11 @@ import type { editor, languages } from 'monaco-editor';
 import {
   bindingsNeedingColumns,
   buildCompletionItems,
+  type CompletionContext,
+  type CompletionItem,
   columnCacheKey,
   completionReplaceRange,
   parseQueryContext,
-  type CompletionContext,
-  type CompletionItem,
 } from '@/features/editor/lib/sqlCompletion';
 import { currentStatementRange, parseSqlStatements } from '@/features/editor/lib/sqlStatements';
 import type { ColumnInfo, DriverType, SchemaInfo, TableInfo } from '@/types';
@@ -20,7 +20,7 @@ function toMonacoCompletion(
     endLineNumber: number;
     startColumn: number;
     endColumn: number;
-  }
+  },
 ): languages.CompletionItem {
   const Kind = monaco.languages.CompletionItemKind;
   const kind =
@@ -53,7 +53,7 @@ export interface CompletionProviderCtx {
 export function createSqlCompletionProvider(
   monaco: Monaco,
   ed: editor.IStandaloneCodeEditor,
-  getCtx: () => CompletionProviderCtx
+  getCtx: () => CompletionProviderCtx,
 ): languages.CompletionItemProvider {
   return {
     triggerCharacters: ['.', ' ', ',', '='],
@@ -70,17 +70,12 @@ export function createSqlCompletionProvider(
       const { start: statementStart, end: statementEnd } = currentStatementRange(
         parseSqlStatements(text),
         offset,
-        text.length
+        text.length,
       );
       const textBefore = text.slice(statementStart, offset);
 
       // Parse only the current statement; loadCols is cached per connection.
-      const parsed = parseQueryContext(
-        text.slice(statementStart, statementEnd),
-        allTables,
-        schemas,
-        driver
-      );
+      const parsed = parseQueryContext(text.slice(statementStart, statementEnd), allTables, schemas, driver);
       const columnsByTable: Record<string, ColumnInfo[]> = {};
       for (const ref of bindingsNeedingColumns(textBefore, parsed, {
         tables: allTables,

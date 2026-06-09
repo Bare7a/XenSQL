@@ -31,9 +31,7 @@ export function ResultsGridEmpty({ error, result }: ResultsGridEmptyProps) {
           </span>
         )}
       </div>
-      <div className="empty-state">
-        {result?.message || t('results.runQueryHint')}
-      </div>
+      <div className="empty-state">{result?.message || t('results.runQueryHint')}</div>
     </div>
   );
 }

@@ -32,7 +32,6 @@ export function RenameQueryDialog({ initialName, description, onConfirm, onClose
             onKeyDown={(e) => {
               if (e.key === 'Enter') submit();
             }}
-            autoFocus
           />
         </div>
       </div>

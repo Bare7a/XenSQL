@@ -1,24 +1,16 @@
+import { ChevronDown, ChevronRight, Database, Folder, FolderPlus, Plus } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  ChevronDown,
-  ChevronRight,
-  Database,
-  Folder,
-  FolderPlus,
-  Plus,
-} from 'lucide-react';
-import { api } from '@/shared/lib/api';
-import { cx } from '@/shared/lib/cx';
-import { appConfirm, appError } from '@/shared/lib/appDialog';
-import { ContextMenu, type ContextMenuItem } from '@/shared/components/ContextMenu';
-import { useContextMenu } from '@/shared/hooks/useContextMenu';
-import { useListKeyboardNav } from '@/shared/hooks/useListKeyboardNav';
-import { readStoredJson, writeStoredJson, STORAGE_KEYS } from '@/shared/lib/storageKeys';
-import type { ConnectionConfig } from '@/types';
 import { ConnectionItem } from '@/features/sidebar/ConnectionItem';
 import { useConnectionDnD } from '@/features/sidebar/hooks/useConnectionDnD';
 import { useFolderActions } from '@/features/sidebar/hooks/useFolderActions';
+import { ContextMenu, type ContextMenuItem } from '@/shared/components/ContextMenu';
+import { useContextMenu } from '@/shared/hooks/useContextMenu';
+import { rowActivateKeyDown, useListKeyboardNav } from '@/shared/hooks/useListKeyboardNav';
+import { api } from '@/shared/lib/api';
+import { appConfirm, appError } from '@/shared/lib/appDialog';
+import { cx } from '@/shared/lib/cx';
+import { readStoredJson, STORAGE_KEYS, writeStoredJson } from '@/shared/lib/storageKeys';
 import {
   useConnectedIds,
   useConnections,
@@ -26,6 +18,7 @@ import {
   useSelectedConnectionId,
   useStoreActions,
 } from '@/store/selectors';
+import type { ConnectionConfig } from '@/types';
 
 interface ConnectionsPanelProps {
   onConnected: (connectionId: string) => void;
@@ -35,27 +28,16 @@ interface ConnectionsPanelProps {
   onRequestClose: () => void;
 }
 
-export function ConnectionsPanel({
-  onConnected,
-  onOpenTab,
-  onNew,
-  onEdit,
-  onRequestClose,
-}: ConnectionsPanelProps) {
+export function ConnectionsPanel({ onConnected, onOpenTab, onNew, onEdit, onRequestClose }: ConnectionsPanelProps) {
   const { t } = useTranslation();
   const connections = useConnections();
   const folders = useFolders();
   const connectedIds = useConnectedIds();
   const selectedConnectionId = useSelectedConnectionId();
-  const {
-    setConnections,
-    setConnected,
-    setSelectedConnection,
-    reorderConnections,
-  } = useStoreActions();
+  const { setConnections, setConnected, setSelectedConnection, reorderConnections } = useStoreActions();
 
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>(() =>
-    readStoredJson(STORAGE_KEYS.foldersCollapsed, {})
+    readStoredJson(STORAGE_KEYS.foldersCollapsed, {}),
   );
   const { menu, openMenu, closeMenu } = useContextMenu();
 
@@ -71,11 +53,12 @@ export function ConnectionsPanel({
     }
   }, [setConnections, t]);
 
-  const { moveToFolder, createFolder, renameFolder, deleteFolder } =
-    useFolderActions(refreshConnections);
+  const { moveToFolder, createFolder, renameFolder, deleteFolder } = useFolderActions(refreshConnections);
 
-  const { dragConnId, dropConnId, dropFolderId, connectionDragProps, folderDropProps } =
-    useConnectionDnD({ reorderConnections, moveToFolder });
+  const { dragConnId, dropConnId, dropFolderId, connectionDragProps, folderDropProps } = useConnectionDnD({
+    reorderConnections,
+    moveToFolder,
+  });
 
   const handleConnect = useCallback(
     async (c: ConnectionConfig) => {
@@ -89,7 +72,7 @@ export function ConnectionsPanel({
         void appError(err, t('errors.couldNotConnect'));
       }
     },
-    [onConnected, onOpenTab, setConnected, setSelectedConnection, t]
+    [onConnected, onOpenTab, setConnected, setSelectedConnection, t],
   );
 
   const handleDisconnect = (id: string) => {
@@ -132,8 +115,7 @@ export function ConnectionsPanel({
         { label: t('common.edit'), action: () => onEdit(c) },
         {
           label: t('sidebar.duplicate'),
-          action: () =>
-            onEdit({ ...c, id: '', name: t('sidebar.duplicateSuffix', { name: c.name }) }),
+          action: () => onEdit({ ...c, id: '', name: t('sidebar.duplicateSuffix', { name: c.name }) }),
         },
       ];
       if (folders.length > 0) {
@@ -154,11 +136,11 @@ export function ConnectionsPanel({
       }
       items.push(
         { label: '', action: () => {}, separator: true },
-        { label: t('common.delete'), action: () => void handleDelete(c.id) }
+        { label: t('common.delete'), action: () => void handleDelete(c.id) },
       );
       openMenu(e, items);
     },
-    [connectedIds, folders, handleConnect, onEdit, moveToFolder, openMenu, t]
+    [connectedIds, folders, handleConnect, onEdit, moveToFolder, openMenu, t],
   );
 
   const renderConnection = (c: ConnectionConfig) => (
@@ -189,11 +171,7 @@ export function ConnectionsPanel({
   return (
     <>
       <div className="sidebar-connections-toolbar">
-        <button
-          type="button"
-          className="btn btn-sm btn-block"
-          onClick={onNew}
-        >
+        <button type="button" className="btn btn-sm btn-block" onClick={onNew}>
           <Plus className="icon-xs" /> {t('sidebar.newConnection')}
         </button>
         <button
@@ -212,6 +190,7 @@ export function ConnectionsPanel({
           <p>{t('sidebar.noConnectionsYet')}</p>
         </div>
       ) : (
+        /* biome-ignore lint/a11y/noStaticElementInteractions: keyboard-navigation container (arrow/Home/End roving focus over its focusable rows via useListKeyboardNav); not itself an interactive control. */
         <div className="connection-list" onKeyDown={onKeyDown}>
           {ungrouped.map(renderConnection)}
 
@@ -219,13 +198,13 @@ export function ConnectionsPanel({
             const isCollapsed = collapsed[f.id];
             const conns = connections.filter((c) => c.folderId === f.id);
             return (
-              <div
-                key={f.id}
-                className={cx('connection-folder', dropFolderId === f.id && 'drag-over')}
-              >
+              <div key={f.id} className={cx('connection-folder', dropFolderId === f.id && 'drag-over')}>
                 <div
                   className="connection-folder-header"
+                  role="button"
+                  tabIndex={0}
                   onClick={() => setCollapsed((m) => ({ ...m, [f.id]: !m[f.id] }))}
+                  onKeyDown={rowActivateKeyDown}
                   onContextMenu={(e) =>
                     openMenu(e, [
                       { label: t('sidebar.renameFolder'), action: () => void renameFolder(f.id, f.name) },
@@ -234,11 +213,7 @@ export function ConnectionsPanel({
                   }
                   {...folderDropProps(f)}
                 >
-                  {isCollapsed ? (
-                    <ChevronRight className="icon-sm" />
-                  ) : (
-                    <ChevronDown className="icon-sm" />
-                  )}
+                  {isCollapsed ? <ChevronRight className="icon-sm" /> : <ChevronDown className="icon-sm" />}
                   <Folder className="icon-sm icon" />
                   <span className="flex-1">{f.name}</span>
                   <span className="ui-text-2xs text-muted">{conns.length}</span>
@@ -246,9 +221,7 @@ export function ConnectionsPanel({
                 {!isCollapsed && (
                   <div className="connection-folder-body">
                     {conns.length === 0 ? (
-                      <div className="connection-folder-empty ui-text-xs text-muted">
-                        {t('sidebar.folderEmpty')}
-                      </div>
+                      <div className="connection-folder-empty ui-text-xs text-muted">{t('sidebar.folderEmpty')}</div>
                     ) : (
                       conns.map(renderConnection)
                     )}
@@ -260,9 +233,7 @@ export function ConnectionsPanel({
         </div>
       )}
 
-      {menu && (
-        <ContextMenu x={menu.x} y={menu.y} items={menu.items} onClose={closeMenu} />
-      )}
+      {menu && <ContextMenu x={menu.x} y={menu.y} items={menu.items} onClose={closeMenu} />}
     </>
   );
 }

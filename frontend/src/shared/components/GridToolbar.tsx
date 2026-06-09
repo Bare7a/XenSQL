@@ -1,5 +1,5 @@
-import { useTranslation } from 'react-i18next';
 import { ClipboardCopy, Columns3, Download } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { appError } from '@/shared/lib/appDialog';
 import { EXPORT_FORMATS, type ExportFormat } from '@/shared/lib/exportResult';
 import { exportFormatLabel } from '@/shared/lib/grid';
@@ -59,12 +59,7 @@ export function GridToolbar({
       </span>
 
       <div className="results-header-actions">
-        <button
-          type="button"
-          className="btn btn-sm"
-          onClick={onFitColumns}
-          data-tooltip={t('tooltip.fitColumns')}
-        >
+        <button type="button" className="btn btn-sm" onClick={onFitColumns} data-tooltip={t('tooltip.fitColumns')}>
           <Columns3 className="icon-xs" /> {t('results.fitColumns')}
         </button>
 
