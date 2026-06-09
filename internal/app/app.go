@@ -127,7 +127,7 @@ type AppInfo struct {
 func (a *App) GetAppInfo() AppInfo {
 	return AppInfo{
 		Name:        "XenSQL",
-		Version:     "1.1.1",
+		Version:     "1.1.2",
 		Author:      "Bare7a",
 		Email:       "bare7a@gmail.com",
 		Repository:  "https://github.com/Bare7a/XenSQL",
