@@ -19,6 +19,7 @@ We welcome all kinds of contributions - bug reports, feature ideas, documentatio
 ## ⚙️ Development Setup
 
 ### Requirements
+
 - Go 1.26+
 - [Wails v2](https://wails.io/docs/gettingstarted/installation)
 - Node.js 24+
@@ -36,3 +37,24 @@ cd ..
 
 # Run in dev mode
 wails dev
+```
+
+---
+
+## 🧪 Testing
+
+Before opening a PR, run the tests. See **[test/TESTING.md](../test/TESTING.md)** for full details.
+
+```bash
+# Frontend tests (React/TypeScript, Vitest)
+cd frontend && npm test && cd ..
+
+# Fast Go unit tests (embedded SQLite, no servers needed)
+make test
+
+# End-to-end tests against real PostgreSQL, MySQL and MariaDB
+# (spins up the docker-compose.yml stack, runs the suite, tears it down)
+make e2e-all
+```
+
+CI runs all three suites on every pull request.

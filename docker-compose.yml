@@ -1,0 +1,71 @@
+# Database servers for the XenSQL E2E suite (see test/e2e and `make e2e`).
+#
+# Ports are intentionally non-default so this stack never collides with a local
+# Postgres/MySQL you might already be running:
+#
+#   PostgreSQL -> 55432
+#   MySQL      -> 33306
+#   MariaDB    -> 33307
+#
+# The Go E2E tests read these same defaults from the environment, so once the
+# stack is healthy you can just run `make e2e`.
+#
+#   docker compose up -d        # or: podman compose up -d
+#   make e2e
+#   docker compose down -v
+#
+# Works with Docker Compose v2 and Podman. Healthchecks gate readiness so the
+# suite (and `docker compose up --wait`) only start once each server accepts
+# connections.
+
+name: xensql-e2e
+
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: xensql_test
+    ports:
+      - "55432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d xensql_test"]
+      interval: 3s
+      timeout: 5s
+      retries: 20
+    tmpfs:
+      # Keep the data in RAM: faster, and nothing to clean up between runs.
+      - /var/lib/postgresql/data
+
+  mysql:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: xensql_test
+    ports:
+      - "33306:3306"
+    command:
+      - --default-authentication-plugin=mysql_native_password
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-proot"]
+      interval: 3s
+      timeout: 5s
+      retries: 30
+    tmpfs:
+      - /var/lib/mysql
+
+  mariadb:
+    image: mariadb:11
+    environment:
+      MARIADB_ROOT_PASSWORD: root
+      MARIADB_DATABASE: xensql_test
+    ports:
+      - "33307:3306"
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 3s
+      timeout: 5s
+      retries: 30
+    tmpfs:
+      - /var/lib/mysql

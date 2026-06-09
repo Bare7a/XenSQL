@@ -1,3 +1,30 @@
+export namespace app {
+	
+	export class AppInfo {
+	    name: string;
+	    version: string;
+	    author: string;
+	    email: string;
+	    repository: string;
+	    description: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new AppInfo(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.name = source["name"];
+	        this.version = source["version"];
+	        this.author = source["author"];
+	        this.email = source["email"];
+	        this.repository = source["repository"];
+	        this.description = source["description"];
+	    }
+	}
+
+}
+
 export namespace database {
 	
 	export class ColumnInfo {
@@ -308,33 +335,6 @@ export namespace database {
 	        this.orderBy = source["orderBy"];
 	        this.orderDir = source["orderDir"];
 	        this.filter = source["filter"];
-	    }
-	}
-
-}
-
-export namespace main {
-	
-	export class AppInfo {
-	    name: string;
-	    version: string;
-	    author: string;
-	    email: string;
-	    repository: string;
-	    description: string;
-	
-	    static createFrom(source: any = {}) {
-	        return new AppInfo(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.name = source["name"];
-	        this.version = source["version"];
-	        this.author = source["author"];
-	        this.email = source["email"];
-	        this.repository = source["repository"];
-	        this.description = source["description"];
 	    }
 	}
 

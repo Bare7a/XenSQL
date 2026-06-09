@@ -10,6 +10,7 @@ import (
 	"github.com/wailsapp/wails/v2/pkg/options/assetserver"
 	"github.com/wailsapp/wails/v2/pkg/options/windows"
 
+	"xensql/internal/app"
 	"xensql/internal/paths"
 )
 
@@ -17,13 +18,13 @@ import (
 var assets embed.FS
 
 func main() {
-	app := NewApp()
+	application := app.NewApp()
 	if _, err := paths.EnsureDataDir(); err != nil {
 		println("Warning: data directory:", err.Error())
 	}
 
-	if f := findSQLiteArg(os.Args[1:]); f != "" {
-		app.setPendingFile(f)
+	if f := app.FindSQLiteArg(os.Args[1:]); f != "" {
+		application.SetPendingFile(f)
 	}
 
 	appOpts := &options.App{
@@ -43,16 +44,16 @@ func main() {
 		SingleInstanceLock: &options.SingleInstanceLock{
 			UniqueId: "xensql-b7a-single-instance-lock",
 			OnSecondInstanceLaunch: func(data options.SecondInstanceData) {
-				if f := findSQLiteArg(data.Args); f != "" {
-					app.emitOpenSQLite(f)
+				if f := app.FindSQLiteArg(data.Args); f != "" {
+					application.EmitOpenSQLite(f)
 				}
 			},
 		},
 		BackgroundColour: &options.RGBA{R: 15, G: 17, B: 23, A: 1},
-		OnStartup:        app.startup,
-		OnShutdown:       app.shutdown,
+		OnStartup:        application.Startup,
+		OnShutdown:       application.Shutdown,
 		Bind: []interface{}{
-			app,
+			application,
 		},
 	}
 	if runtime.GOOS == "windows" {

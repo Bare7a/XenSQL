@@ -1,4 +1,4 @@
-package main
+package app
 
 import (
 	"context"
@@ -39,7 +39,7 @@ func NewApp() *App {
 	}
 }
 
-func (a *App) startup(ctx context.Context) {
+func (a *App) Startup(ctx context.Context) {
 	a.ctx = ctx
 	configDir, err := paths.EnsureDataDir()
 	if err != nil {
@@ -71,7 +71,7 @@ func (a *App) requireStore() (*storage.Store, error) {
 	return a.store, nil
 }
 
-func (a *App) shutdown(ctx context.Context) {
+func (a *App) Shutdown(ctx context.Context) {
 	// Cancel in-flight queries so goroutines unwind before sessions close.
 	if a.queries != nil {
 		a.queries.CancelAll()

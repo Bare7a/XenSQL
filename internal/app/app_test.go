@@ -1,4 +1,4 @@
-package main
+package app
 
 import (
 	"context"
@@ -40,19 +40,19 @@ func TestFindSQLiteArgPicksExistingFile(t *testing.T) {
 		t.Fatal(err)
 	}
 	args := []string{"--flag", "missing.db", existing, "ignored.txt"}
-	if got := findSQLiteArg(args); got != existing {
+	if got := FindSQLiteArg(args); got != existing {
 		t.Fatalf("expected %q, got %q", existing, got)
 	}
 }
 
 func TestFindSQLiteArgIgnoresMissingFiles(t *testing.T) {
-	if got := findSQLiteArg([]string{"--flag", "missing.db"}); got != "" {
+	if got := FindSQLiteArg([]string{"--flag", "missing.db"}); got != "" {
 		t.Fatalf("expected empty for missing file, got %q", got)
 	}
 }
 
 func TestFindSQLiteArgEmpty(t *testing.T) {
-	if got := findSQLiteArg(nil); got != "" {
+	if got := FindSQLiteArg(nil); got != "" {
 		t.Fatalf("expected empty for nil args, got %q", got)
 	}
 }
