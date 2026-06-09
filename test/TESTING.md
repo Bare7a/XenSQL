@@ -27,7 +27,7 @@ npm run test:watch # watch mode
 No setup - these use embedded SQLite and run in seconds:
 
 ```bash
-make test          # go test ./...
+make test          # go test ./internal/...
 ```
 
 ---

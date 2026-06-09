@@ -14,10 +14,10 @@ on:
           - unit
           - e2e
 
-  # push:
-  #   branches: [master]
+  push:
+    branches: [master]
 
-  # pull_request:
+  pull_request:
 
 permissions:
   contents: read
@@ -75,6 +75,9 @@ jobs:
 
       - name: Run unit tests
         run: make test BUILD_TAGS=$BUILD_TAGS
+
+      - name: Verify all packages compile
+        run: make build-check BUILD_TAGS=$BUILD_TAGS
 
   e2e:
     name: E2E tests (PostgreSQL, MySQL, MariaDB)

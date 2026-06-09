@@ -19,11 +19,17 @@ COMPOSE ?= docker compose
 # webview tag, matching the release workflow: make test BUILD_TAGS=webkit2_41
 BUILD_TAGS ?=
 
-.PHONY: test e2e e2e-up e2e-down e2e-logs e2e-all
+.PHONY: test build-check e2e e2e-up e2e-down e2e-logs e2e-all
 
 # Fast unit tests - no database servers required.
 test:
-	go test -tags "$(BUILD_TAGS)" ./...
+	go test -tags "$(BUILD_TAGS)" ./internal/...
+
+# Compile every package, including the Wails entry point. Stubs frontend/dist so the
+# //go:embed resolves without a full frontend build (real assets come from `wails build`).
+build-check:
+	@mkdir -p frontend/dist && touch frontend/dist/.gitkeep
+	go build -tags "$(BUILD_TAGS)" ./...
 
 # Bring up the database stack and block until every server is healthy.
 e2e-up:
