@@ -1,8 +1,6 @@
 ## 📝 What changed?
 
-(1–3 sentences max)
-
-Fixes # (issue)
+<!-- (1–3 sentences max) -->
 
 ---
 
@@ -48,4 +46,4 @@ Fixes # (issue)
 
 ## 📌 Notes
 
-(optional)
+<!-- (optional) -->
