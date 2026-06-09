@@ -60,7 +60,7 @@ import {
   CommitTransaction,
   RollbackTransaction,
   CleanupTabTransaction,
-} from '@wails/go/main/App';
+} from '@wails/go/app/App';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const cast = <T>(p: Promise<unknown>): Promise<T> => p as Promise<T>;

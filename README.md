@@ -310,14 +310,17 @@ build/bin/xensql.exe
 # 🧱 Project Structure
 
 ```text
-├── app*.go                # Wails API bindings (connections, query, history, settings)
-├── main.go
+├── main.go                # Wails entry point (embeds frontend/dist)
+├── docker-compose.yml     # PostgreSQL / MySQL / MariaDB for the E2E suite
+├── Makefile               # test / e2e targets
 ├── internal/
+│   ├── app/               # Wails App API bindings + tests (connections, query, history, …)
 │   ├── database/          # Driver interface + SQLite / PostgreSQL / MySQL
 │   ├── storage/           # JSON persistence (incl. settings.json)
 │   ├── paths/             # Portable data directory
 │   └── service/           # SQL format, export helpers
-└── frontend/              # React + TypeScript + Monaco
+├── frontend/              # React + TypeScript + Monaco (Vitest tests)
+└── test/                  # TESTING.md - how to run all suites
 ```
 
 ---

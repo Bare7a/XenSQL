@@ -1,4 +1,4 @@
-package main
+package app
 
 import (
 	"fmt"
@@ -17,7 +17,7 @@ func isSQLiteFile(path string) bool {
 	return sqliteExts[strings.ToLower(filepath.Ext(path))]
 }
 
-func findSQLiteArg(args []string) string {
+func FindSQLiteArg(args []string) string {
 	for _, arg := range args {
 		if isSQLiteFile(arg) {
 			if _, err := os.Stat(arg); err == nil {
@@ -28,7 +28,7 @@ func findSQLiteArg(args []string) string {
 	return ""
 }
 
-func (a *App) emitOpenSQLite(filePath string) {
+func (a *App) EmitOpenSQLite(filePath string) {
 	if filePath == "" {
 		return
 	}
@@ -59,7 +59,7 @@ func (a *App) GetPendingFile() map[string]string {
 	return map[string]string{"filePath": path, "name": name}
 }
 
-func (a *App) setPendingFile(path string) {
+func (a *App) SetPendingFile(path string) {
 	a.pendingMu.Lock()
 	a.pendingFile = path
 	a.pendingMu.Unlock()
