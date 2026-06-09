@@ -1,14 +1,10 @@
 import { useCallback, useState } from 'react';
-import {
-  readStoredBool,
-  writeStoredBool,
-  type StorageKey,
-} from '@/shared/lib/storageKeys';
+import { readStoredBool, type StorageKey, writeStoredBool } from '@/shared/lib/storageKeys';
 
 // Boolean toggle persisted to the settings store (e.g. sidebar/JSON-panel visibility); survives reload.
 export function usePersistedToggle(
   key: StorageKey,
-  defaultValue: boolean
+  defaultValue: boolean,
 ): {
   value: boolean;
   toggle: () => void;
@@ -29,7 +25,7 @@ export function usePersistedToggle(
       setValue(next);
       writeStoredBool(key, next);
     },
-    [key]
+    [key],
   );
 
   return { value, toggle, set };

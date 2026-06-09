@@ -2,13 +2,13 @@ import { describe, expect, it } from 'vitest';
 import {
   bindingsNeedingColumns,
   buildCompletionItems,
+  type CompletionContext,
   clauseBodyStart,
   columnCacheKey,
   completionReplaceRange,
   identifierNeedsQuote,
   isOrderOrGroupContext,
   parseQueryContext,
-  type CompletionContext,
 } from '@/features/editor/lib/sqlCompletion';
 import { currentStatementStart, parseSqlStatements } from '@/features/editor/lib/sqlStatements';
 import type { ColumnInfo, DriverType, SchemaInfo, TableInfo } from '@/types';
@@ -43,8 +43,7 @@ function complete(text: string, driver: DriverType = 'postgres') {
 const labelsOf = (text: string, driver?: DriverType) => complete(text, driver).map((i) => i.label);
 const columnLabels = (text: string, driver?: DriverType) =>
   labelsOf(text, driver).filter((l) => ['id', 'email', 'name'].includes(l));
-const insertFor = (text: string, label: string) =>
-  complete(text).find((i) => i.label === label)?.insertText;
+const insertFor = (text: string, label: string) => complete(text).find((i) => i.label === label)?.insertText;
 
 const ALL_COLS = ['id', 'email', 'name'];
 
@@ -109,17 +108,11 @@ describe('ORDER BY / GROUP BY suggest columns', () => {
 
   it('offers ASC / DESC only after a column in ORDER BY', () => {
     // At the start of the clause, a column is expected - not a direction.
-    expect(labelsOf('SELECT * FROM users ORDER BY ')).not.toEqual(
-      expect.arrayContaining(['ASC', 'DESC'])
-    );
+    expect(labelsOf('SELECT * FROM users ORDER BY ')).not.toEqual(expect.arrayContaining(['ASC', 'DESC']));
     // Once a column is present, the direction keywords appear.
-    expect(labelsOf('SELECT * FROM users ORDER BY name ')).toEqual(
-      expect.arrayContaining(['ASC', 'DESC'])
-    );
+    expect(labelsOf('SELECT * FROM users ORDER BY name ')).toEqual(expect.arrayContaining(['ASC', 'DESC']));
     // GROUP BY never takes a sort direction.
-    expect(labelsOf('SELECT * FROM users GROUP BY name ')).not.toEqual(
-      expect.arrayContaining(['ASC', 'DESC'])
-    );
+    expect(labelsOf('SELECT * FROM users GROUP BY name ')).not.toEqual(expect.arrayContaining(['ASC', 'DESC']));
   });
 
   it('filters by a partially typed column', () => {
@@ -127,9 +120,7 @@ describe('ORDER BY / GROUP BY suggest columns', () => {
   });
 
   it('resolves an alias qualifier (alias.<col>) inside ORDER BY', () => {
-    expect(columnLabels('SELECT * FROM users "U" ORDER BY U.')).toEqual(
-      expect.arrayContaining(ALL_COLS)
-    );
+    expect(columnLabels('SELECT * FROM users "U" ORDER BY U.')).toEqual(expect.arrayContaining(ALL_COLS));
   });
 
   it('stops once a terminating clause follows the BY list', () => {
@@ -161,9 +152,7 @@ describe('existing contexts are unchanged', () => {
   });
 
   it('suggests value columns after a comparison operator', () => {
-    expect(columnLabels('SELECT * FROM users WHERE id = ')).toEqual(
-      expect.arrayContaining(ALL_COLS)
-    );
+    expect(columnLabels('SELECT * FROM users WHERE id = ')).toEqual(expect.arrayContaining(ALL_COLS));
     expect(clauseBodyStart('SELECT * FROM users WHERE id =')).toBeNull();
   });
 
@@ -172,9 +161,7 @@ describe('existing contexts are unchanged', () => {
   });
 
   it('resolves dotted alias columns in WHERE', () => {
-    expect(columnLabels('SELECT * FROM users AS "Users" WHERE "Users".')).toEqual(
-      expect.arrayContaining(ALL_COLS)
-    );
+    expect(columnLabels('SELECT * FROM users AS "Users" WHERE "Users".')).toEqual(expect.arrayContaining(ALL_COLS));
   });
 
   it('still offers the keyword list mid-statement', () => {
@@ -202,8 +189,7 @@ describe('capital/quoted table works in WHERE (range + filterText)', () => {
       parsed: parseQueryContext(text, capTables, schemas, 'postgres'),
     });
   // clauseBodyStart space-prefixes the insert, so match on the trimmed value.
-  const userRef = (text: string) =>
-    capItems(text).find((i) => i.kind === 'class' && i.insertText.trim() === '"Users"');
+  const userRef = (text: string) => capItems(text).find((i) => i.kind === 'class' && i.insertText.trim() === '"Users"');
 
   // The substring completionReplaceRange would overwrite for a single-line statement.
   const replaced = (text: string) => {
@@ -255,14 +241,12 @@ describe('statement-scoped completion still suggests tables (editor wiring)', ()
   });
 
   it('suggests tables in a second statement after a terminated one', () => {
-    expect(scopedLabels('SELECT 1;\nSELECT * FROM ')).toEqual(
-      expect.arrayContaining(['users', 'orders'])
-    );
+    expect(scopedLabels('SELECT 1;\nSELECT * FROM ')).toEqual(expect.arrayContaining(['users', 'orders']));
   });
 });
 
 describe('schema-qualified table completion', () => {
-  it('lists a schema\'s tables right after the dot (FROM public.)', () => {
+  it("lists a schema's tables right after the dot (FROM public.)", () => {
     // Regression: a dangling `schema.` registered a bogus table binding and returned an empty list.
     expect(labelsOf('SELECT * FROM public.')).toEqual(expect.arrayContaining(['users', 'orders']));
   });
@@ -317,12 +301,7 @@ describe('JOIN target tables resolve', () => {
   }
 
   it('parses both tables in FROM a JOIN b', () => {
-    const parsed = parseQueryContext(
-      'SELECT * FROM accounts JOIN contracts ON ',
-      joinTables,
-      schemas,
-      'postgres'
-    );
+    const parsed = parseQueryContext('SELECT * FROM accounts JOIN contracts ON ', joinTables, schemas, 'postgres');
     expect(parsed.queryTables.map((t) => t.table)).toEqual(['accounts', 'contracts']);
   });
 
@@ -332,35 +311,22 @@ describe('JOIN target tables resolve', () => {
   });
 
   it('resolves contracts. in the ON clause without an = operator', () => {
-    expect(appComplete('SELECT * FROM accounts JOIN contracts ON contracts.')).toEqual([
-      'id',
-      'account_id',
-      'amount',
-    ]);
+    expect(appComplete('SELECT * FROM accounts JOIN contracts ON contracts.')).toEqual(['id', 'account_id', 'amount']);
   });
 
   it('resolves an aliased joined table (c.)', () => {
-    expect(appComplete('SELECT * FROM accounts a JOIN contracts c ON c.')).toEqual([
-      'id',
-      'account_id',
-      'amount',
-    ]);
+    expect(appComplete('SELECT * FROM accounts a JOIN contracts c ON c.')).toEqual(['id', 'account_id', 'amount']);
   });
 
   it('keeps a quoted reserved-word alias working (AS "join")', () => {
-    const parsed = parseQueryContext(
-      'SELECT * FROM accounts AS "join" WHERE ',
-      joinTables,
-      schemas,
-      'postgres'
-    );
+    const parsed = parseQueryContext('SELECT * FROM accounts AS "join" WHERE ', joinTables, schemas, 'postgres');
     expect(parsed.queryTables.map((t) => t.table)).toEqual(['accounts']);
   });
 
   it('offers the in-scope table-refs after a comparison operator (= <value>)', () => {
     // The RHS of `=` is often another qualified column, so the tables must be offered too.
     expect(appComplete('SELECT * FROM accounts JOIN contracts ON accounts.id = ')).toEqual(
-      expect.arrayContaining(['accounts', 'contracts'])
+      expect.arrayContaining(['accounts', 'contracts']),
     );
   });
 });
@@ -434,9 +400,7 @@ describe('LIMIT / OFFSET clause suggestions', () => {
 
   it('does not leak columns/tables/clause keywords into the LIMIT tail', () => {
     for (const sql of ['SELECT * FROM users LIMIT ', 'SELECT * FROM users LIMIT 100 ']) {
-      expect(labelsOf(sql)).not.toEqual(
-        expect.arrayContaining(['users', 'id', 'email', 'WHERE', 'JOIN'])
-      );
+      expect(labelsOf(sql)).not.toEqual(expect.arrayContaining(['users', 'id', 'email', 'WHERE', 'JOIN']));
     }
   });
 
@@ -446,9 +410,7 @@ describe('LIMIT / OFFSET clause suggestions', () => {
   });
 
   it('leaves the ORDER BY tail (ASC/DESC + columns) unchanged', () => {
-    expect(labelsOf('SELECT * FROM users ORDER BY id ')).toEqual(
-      expect.arrayContaining(['ASC', 'DESC'])
-    );
+    expect(labelsOf('SELECT * FROM users ORDER BY id ')).toEqual(expect.arrayContaining(['ASC', 'DESC']));
   });
 });
 
@@ -463,9 +425,7 @@ describe('snippet suggestions are gone', () => {
   ]) {
     it(`offers no snippet items for ${JSON.stringify(sql)}`, () => {
       const labels = labelsOf(sql);
-      const snippetLike = labels.filter(
-        (l) => l.includes('(…)') || l.includes('… ON') || l.startsWith('FROM …')
-      );
+      const snippetLike = labels.filter((l) => l.includes('(…)') || l.includes('… ON') || l.startsWith('FROM …'));
       expect(snippetLike).toEqual([]);
     });
   }
@@ -476,15 +436,9 @@ describe('snippet suggestions are gone', () => {
 describe('column/table suggestions only follow an identifier-expecting token', () => {
   it('offers columns right after a trigger token', () => {
     expect(columnLabels('SELECT * FROM users WHERE ')).toEqual(expect.arrayContaining(ALL_COLS));
-    expect(columnLabels('SELECT * FROM users WHERE id = 1 AND ')).toEqual(
-      expect.arrayContaining(ALL_COLS)
-    );
-    expect(columnLabels('SELECT * FROM users WHERE id = 1 OR ')).toEqual(
-      expect.arrayContaining(ALL_COLS)
-    );
-    expect(columnLabels('SELECT * FROM users WHERE id >= ')).toEqual(
-      expect.arrayContaining(ALL_COLS)
-    );
+    expect(columnLabels('SELECT * FROM users WHERE id = 1 AND ')).toEqual(expect.arrayContaining(ALL_COLS));
+    expect(columnLabels('SELECT * FROM users WHERE id = 1 OR ')).toEqual(expect.arrayContaining(ALL_COLS));
+    expect(columnLabels('SELECT * FROM users WHERE id >= ')).toEqual(expect.arrayContaining(ALL_COLS));
     expect(columnLabels('SELECT * FROM users ORDER BY ')).toEqual(expect.arrayContaining(ALL_COLS));
   });
 
@@ -501,9 +455,7 @@ describe('column/table suggestions only follow an identifier-expecting token', (
   });
 
   it('still offers operators (not columns) after a completed column in WHERE', () => {
-    expect(labelsOf('SELECT * FROM users WHERE id ')).toEqual(
-      expect.arrayContaining(['AND', 'OR'])
-    );
+    expect(labelsOf('SELECT * FROM users WHERE id ')).toEqual(expect.arrayContaining(['AND', 'OR']));
   });
 
   it('offers ASC/DESC + trailing clauses after a sort column, no second direction after DESC', () => {
@@ -530,9 +482,7 @@ describe('comma-joined FROM tables (FROM a, b)', () => {
   });
 
   it('suggests both comma-joined tables as refs in WHERE', () => {
-    expect(labelsOf('SELECT * FROM users, orders WHERE ')).toEqual(
-      expect.arrayContaining(['users', 'orders'])
-    );
+    expect(labelsOf('SELECT * FROM users, orders WHERE ')).toEqual(expect.arrayContaining(['users', 'orders']));
   });
 
   it('still parses FROM a JOIN b without duplicating a', () => {
@@ -552,7 +502,7 @@ describe('CTE names from a leading WITH', () => {
       'WITH a AS (SELECT 1), b AS (SELECT 2) SELECT * FROM ',
       tables,
       schemas,
-      'postgres'
+      'postgres',
     );
     expect(parsed.ctes).toEqual(['a', 'b']);
   });
@@ -563,9 +513,7 @@ describe('CTE names from a leading WITH', () => {
   });
 
   it('suggests the CTE name in the FROM slot (with and without a prefix)', () => {
-    expect(labelsOf('WITH recent AS (SELECT 1) SELECT * FROM ')).toEqual(
-      expect.arrayContaining(['recent'])
-    );
+    expect(labelsOf('WITH recent AS (SELECT 1) SELECT * FROM ')).toEqual(expect.arrayContaining(['recent']));
     expect(labelsOf('WITH recent AS (SELECT 1) SELECT * FROM rec')).toContain('recent');
   });
 

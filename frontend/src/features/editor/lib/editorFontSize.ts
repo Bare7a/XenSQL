@@ -1,5 +1,5 @@
-import { STORAGE_KEYS } from '@/shared/lib/storageKeys';
 import { settings } from '@/shared/lib/settingsStore';
+import { STORAGE_KEYS } from '@/shared/lib/storageKeys';
 
 export const DEFAULT_EDITOR_FONT_SIZE = 13;
 export const MIN_EDITOR_FONT_SIZE = 10;

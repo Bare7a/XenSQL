@@ -4,15 +4,15 @@ import { api } from '@/shared/lib/api';
 import { appError } from '@/shared/lib/appDialog';
 import { appToast } from '@/shared/lib/appToast';
 import {
-  EXPORT_FORMATS,
   buildExport,
+  EXPORT_FORMATS,
+  type ExportFormat,
+  type ExportOptions,
   formatCellCopyValue,
   readStoredExportFormat,
   resolveCopySelection,
   shouldCopySingleCell,
   storeExportFormat,
-  type ExportFormat,
-  type ExportOptions,
 } from '@/shared/lib/exportResult';
 import { identityIndices } from '@/shared/lib/grid';
 import type { QueryResult } from '@/types';
@@ -85,15 +85,8 @@ export function useGridCopyExport(inputs: CopyExportInputs): GridCopyExport {
 
   const copyToClipboard = useCallback(
     async (allowSingleCell: boolean) => {
-      const {
-        result,
-        displayColumns,
-        columnIndexByName,
-        sortedRowIndices,
-        sortedRowCount,
-        selectionRef,
-        focusRef,
-      } = inputsRef.current;
+      const { result, displayColumns, columnIndexByName, sortedRowIndices, sortedRowCount, selectionRef, focusRef } =
+        inputsRef.current;
       if (!result) return;
       const { rows, cols } = selectionRef.current;
       const { row: focusedRow, colPos } = focusRef.current;
@@ -107,9 +100,10 @@ export function useGridCopyExport(inputs: CopyExportInputs): GridCopyExport {
           selectedColumns: cols,
         })
       ) {
+        if (focusedRow == null) return;
         const col = displayColumns[colPos];
         const ci = columnIndexByName.get(col) ?? -1;
-        const cell = result.rows[focusedRow!][ci];
+        const cell = result.rows[focusedRow][ci];
         const text = formatCellCopyValue(cell);
         await api.copyToClipboard(text);
         inputsRef.current.onCopied?.({ text, cells: [[cell == null ? null : String(cell)]] });
@@ -121,7 +115,7 @@ export function useGridCopyExport(inputs: CopyExportInputs): GridCopyExport {
         selectedRows: rows,
         selectedColumns: cols,
         displayColumns,
-          // Materialize identity indices here (rare copy path), not on every result swap.
+        // Materialize identity indices here (rare copy path), not on every result swap.
         sortedRowIndices: sortedRowIndices ?? identityIndices(sortedRowCount),
       });
       const text = buildExport(result, copyFormat, opts);
@@ -129,17 +123,11 @@ export function useGridCopyExport(inputs: CopyExportInputs): GridCopyExport {
       inputsRef.current.onCopied?.({ text, cells: selectionCells(result, opts) });
       appToast.success(t('toast.copiedClipboard'));
     },
-    [copyFormat, t]
+    [copyFormat, t],
   );
 
   const exportToFile = useCallback(async () => {
-    const {
-      result,
-      displayColumns,
-      sortedRowIndices,
-      sortedRowCount,
-      selectionRef,
-    } = inputsRef.current;
+    const { result, displayColumns, sortedRowIndices, sortedRowCount, selectionRef } = inputsRef.current;
     if (!result) return;
     const { rows, cols } = selectionRef.current;
     const opts = resolveCopySelection({
@@ -149,16 +137,15 @@ export function useGridCopyExport(inputs: CopyExportInputs): GridCopyExport {
       sortedRowIndices: sortedRowIndices ?? identityIndices(sortedRowCount),
     });
     const text = buildExport(result, copyFormat, opts);
-    const meta = EXPORT_FORMATS.find((f) => f.id === copyFormat)!;
+    const meta = EXPORT_FORMATS.find((f) => f.id === copyFormat);
+    if (!meta) return;
 
     setExportBusy(true);
     try {
       const path = await api.pickExportSavePath(meta.ext);
       if (!path) return;
       await api.saveTextFile(path, text);
-      appToast.success(
-        t('toast.savedFile', { fileName: path.split(/[/\\]/).pop() ?? path })
-      );
+      appToast.success(t('toast.savedFile', { fileName: path.split(/[/\\]/).pop() ?? path }));
     } catch (e) {
       void appError(e, t('errors.exportFailed'));
     } finally {

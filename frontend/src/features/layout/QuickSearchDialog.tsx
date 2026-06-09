@@ -151,12 +151,12 @@ export function QuickSearchDialog({
   if (!open) return null;
 
   return (
-    <div className="modal-overlay quick-search-overlay" onMouseDown={onClose}>
+    // biome-ignore lint/a11y/noStaticElementInteractions: backdrop click-to-dismiss is a redundant convenience; the dialog closes via Escape (handled in onKeyDown below).
+    <div className="modal-overlay quick-search-overlay" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
       <div
         className="modal quick-search-dialog"
         role="dialog"
         aria-label={t('quickSearch.title')}
-        onMouseDown={(e) => e.stopPropagation()}
         onKeyDown={(e) => {
           if (e.key === 'Escape') {
             e.preventDefault();
@@ -225,4 +225,3 @@ export function QuickSearchDialog({
     </div>
   );
 }
-

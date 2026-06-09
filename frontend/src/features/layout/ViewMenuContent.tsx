@@ -1,20 +1,8 @@
+import { WindowFullscreen, WindowIsFullscreen, WindowUnfullscreen } from '@wails/runtime/runtime';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { WindowFullscreen, WindowIsFullscreen, WindowUnfullscreen } from '@wails/runtime/runtime';
 import {
-  applyTheme,
-  getEffectiveTheme,
-  subscribeThemeChanged,
-  type AppTheme,
-} from '@/shared/lib/theme';
-import {
-  changeLanguage,
-  getEffectiveLanguage,
-  subscribeLanguageChanged,
-  SUPPORTED_LANGUAGES,
-  type AppLanguage,
-} from '@/i18n';
-import {
+  DEFAULT_EDITOR_FONT_SIZE,
   decreaseEditorFontSize,
   getEffectiveEditorFontSize,
   increaseEditorFontSize,
@@ -22,8 +10,17 @@ import {
   MIN_EDITOR_FONT_SIZE,
   resetEditorFontSize,
   subscribeEditorFontSizeChanged,
-  DEFAULT_EDITOR_FONT_SIZE,
 } from '@/features/editor/lib/editorFontSize';
+import { MenuStepperRow } from '@/features/layout/MenuStepperRow';
+import {
+  type AppLanguage,
+  changeLanguage,
+  getEffectiveLanguage,
+  SUPPORTED_LANGUAGES,
+  subscribeLanguageChanged,
+} from '@/i18n';
+import { formatBinding, getEffectiveBinding } from '@/shared/lib/shortcuts';
+import { type AppTheme, applyTheme, getEffectiveTheme, subscribeThemeChanged } from '@/shared/lib/theme';
 import {
   DEFAULT_UI_ZOOM_PX,
   getEffectiveUiZoomPx,
@@ -34,8 +31,6 @@ import {
   zoomUiIn,
   zoomUiOut,
 } from '@/shared/lib/uiZoom';
-import { formatBinding, getEffectiveBinding } from '@/shared/lib/shortcuts';
-import { MenuStepperRow } from '@/features/layout/MenuStepperRow';
 
 const THEME_LABELS: Record<AppTheme, string> = {
   dark: 'theme.dark',
@@ -142,7 +137,7 @@ export function ViewMenuContent({
       />
 
       {/* ── Language ── */}
-      <div className="app-title-bar-dropdown-separator" role="separator" />
+      <div className="app-title-bar-dropdown-separator" />
       <div className="menu-section-header">{t('viewSections.language')}</div>
       {SUPPORTED_LANGUAGES.map((item) => (
         <button
@@ -159,7 +154,7 @@ export function ViewMenuContent({
       ))}
 
       {/* ── Window ── */}
-      <div className="app-title-bar-dropdown-separator" role="separator" />
+      <div className="app-title-bar-dropdown-separator" />
       <div className="menu-section-header">{t('viewSections.window')}</div>
       <div className="menu-window-spacer" />
       <button
@@ -170,9 +165,7 @@ export function ViewMenuContent({
         onClick={onToggleSidebar}
       >
         <span className="menu-check-label">{t('menu.toggleSidebar')}</span>
-        <span className="menu-check-shortcut">
-          {formatBinding(getEffectiveBinding('toggleSidebar'))}
-        </span>
+        <span className="menu-check-shortcut">{formatBinding(getEffectiveBinding('toggleSidebar'))}</span>
         {sidebarOpen && <span className="menu-check-icon">✓</span>}
       </button>
       <button
@@ -183,9 +176,7 @@ export function ViewMenuContent({
         onClick={onToggleJsonPanel}
       >
         <span className="menu-check-label">{t('menu.toggleJsonPanel')}</span>
-        <span className="menu-check-shortcut">
-          {formatBinding(getEffectiveBinding('toggleJsonPanel'))}
-        </span>
+        <span className="menu-check-shortcut">{formatBinding(getEffectiveBinding('toggleJsonPanel'))}</span>
         {jsonPanelOpen && <span className="menu-check-icon">✓</span>}
       </button>
       <button
@@ -196,9 +187,7 @@ export function ViewMenuContent({
         onClick={() => void handleToggleFullscreen()}
       >
         <span className="menu-check-label">{t('menu.toggleFullscreen')}</span>
-        <span className="menu-check-shortcut">
-          {formatBinding(getEffectiveBinding('toggleFullscreen'))}
-        </span>
+        <span className="menu-check-shortcut">{formatBinding(getEffectiveBinding('toggleFullscreen'))}</span>
         {isFullscreen && <span className="menu-check-icon">✓</span>}
       </button>
     </>

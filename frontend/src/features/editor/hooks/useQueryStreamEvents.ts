@@ -1,6 +1,6 @@
+import { EventsOn } from '@wails/runtime/runtime';
 import { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { EventsOn } from '@wails/runtime/runtime';
 import { api } from '@/shared/lib/api';
 import { useAppStore } from '@/store/appStore';
 import type {
@@ -14,9 +14,7 @@ import type {
 // Wails query:stream:* events for one run (streamId): meta starts a result set, rows are rAF-coalesced
 // into it, result finalises that set, and done terminates the run. A run can carry several result sets
 // (multiple statements, or a stored procedure returning more than one), each tagged with resultIndex.
-export function useQueryStreamEvents(
-  onConnectionStatusChange: (status: ConnectionStatus | null) => void
-): void {
+export function useQueryStreamEvents(onConnectionStatusChange: (status: ConnectionStatus | null) => void): void {
   const { t } = useTranslation();
   // Refs so a language change doesn't re-run the effect and tear down the Wails listeners.
   const tRef = useRef(t);
@@ -83,11 +81,7 @@ export function useQueryStreamEvents(
       flushNow();
       const { tabId, streamId, resultIndex, result, statement, error } = payload;
       const cancelled = !!error && /cancel/i.test(error);
-      const displayError = error
-        ? cancelled
-          ? tRef.current('dialog.queryCancelled')
-          : error
-        : null;
+      const displayError = error ? (cancelled ? tRef.current('dialog.queryCancelled') : error) : null;
       const store = useAppStore.getState();
       store.finalizeResultSet(tabId, streamId, resultIndex, result ?? null, statement ?? null, displayError);
       // Inside an open transaction, a failed statement flips it to 'error' (only commit/rollback
@@ -108,11 +102,7 @@ export function useQueryStreamEvents(
 
       const { tabId, streamId, connectionId, resultCount, error } = payload;
       const cancelled = !!error && /cancel/i.test(error);
-      const displayError = error
-        ? cancelled
-          ? tRef.current('dialog.queryCancelled')
-          : error
-        : null;
+      const displayError = error ? (cancelled ? tRef.current('dialog.queryCancelled') : error) : null;
       const store = useAppStore.getState();
       store.finishRun(tabId, streamId, resultCount, displayError, {
         connectionId,

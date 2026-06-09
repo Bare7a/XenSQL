@@ -97,8 +97,5 @@ export function AppTooltipLayer() {
     };
   }, []);
 
-  return createPortal(
-    <div ref={tipRef} className="app-tooltip" role="tooltip" hidden />,
-    document.body
-  );
+  return createPortal(<div ref={tipRef} className="app-tooltip" role="tooltip" hidden />, document.body);
 }

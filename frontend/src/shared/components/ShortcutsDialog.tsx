@@ -9,13 +9,13 @@ import {
   getEffectiveBinding,
   getShortcutCategory,
   getShortcutLabel,
+  type KeyBinding,
   resetAllShortcutBindings,
   resetShortcutBinding,
+  type ShortcutDef,
   setCapturingBinding,
   setShortcutBinding,
   subscribeShortcutsChanged,
-  type KeyBinding,
-  type ShortcutDef,
 } from '@/shared/lib/shortcuts';
 
 interface Props {
@@ -51,7 +51,7 @@ export function ShortcutsDialog({ onClose }: Props) {
       setRecordingId(null);
       setError(null);
     },
-    [t]
+    [t],
   );
 
   useEffect(() => {
@@ -79,86 +79,73 @@ export function ShortcutsDialog({ onClose }: Props) {
   }, [recordingId, applyBinding]);
 
   return (
-    <Modal
-      title={t('shortcuts.title')}
-      onClose={onClose}
-      size="md"
-      scrollBody
-      escapeEnabled={!recordingId}
-    >
-        <div className="modal-body">
-          <p className="modal-description">{t('shortcuts.intro')}</p>
-          {recordingId && (
-            <p className="shortcuts-recording" role="status">
-              {t('shortcuts.recording', { label: getShortcutLabel(recordingId) })}
-            </p>
-          )}
-          {error && (
-            <p className="form-alert form-alert--error" role="alert">
-              {error}
-            </p>
-          )}
-          {[...grouped.entries()].map(([category, items]) => (
-            <section key={category} className="shortcuts-section">
-              <h3 className="shortcuts-section-title">
-                {getShortcutCategory(category as ShortcutDef['category'])}
-              </h3>
-              <table className="shortcuts-table">
-                <tbody>
-                  {items.map((def) => {
-                    const binding = getEffectiveBinding(def.id);
-                    const isDefault =
-                      formatBinding(binding) === formatBinding(def.defaultBinding);
-                    return (
-                      <tr key={def.id}>
-                        <td className="shortcuts-label">{getShortcutLabel(def.id)}</td>
-                        <td className="shortcuts-actions">
-                          {!isDefault && (
-                            <button
-                              type="button"
-                              className="btn btn-sm"
-                              onClick={() => resetShortcutBinding(def.id)}
-                            >
-                              {t('shortcuts.reset')}
-                            </button>
-                          )}
-                        </td>
-                        <td className="shortcuts-keys">
-                          <button
-                            type="button"
-                            className={`shortcuts-key-btn${recordingId === def.id ? ' recording' : ''}`}
-                            onClick={() => {
-                              setRecordingId(def.id);
-                              setError(null);
-                            }}
-                          >
-                            {formatBinding(binding)}
+    <Modal title={t('shortcuts.title')} onClose={onClose} size="md" scrollBody escapeEnabled={!recordingId}>
+      <div className="modal-body">
+        <p className="modal-description">{t('shortcuts.intro')}</p>
+        {recordingId && (
+          <p className="shortcuts-recording" role="status">
+            {t('shortcuts.recording', { label: getShortcutLabel(recordingId) })}
+          </p>
+        )}
+        {error && (
+          <p className="form-alert form-alert--error" role="alert">
+            {error}
+          </p>
+        )}
+        {[...grouped.entries()].map(([category, items]) => (
+          <section key={category} className="shortcuts-section">
+            <h3 className="shortcuts-section-title">{getShortcutCategory(category as ShortcutDef['category'])}</h3>
+            <table className="shortcuts-table">
+              <tbody>
+                {items.map((def) => {
+                  const binding = getEffectiveBinding(def.id);
+                  const isDefault = formatBinding(binding) === formatBinding(def.defaultBinding);
+                  return (
+                    <tr key={def.id}>
+                      <td className="shortcuts-label">{getShortcutLabel(def.id)}</td>
+                      <td className="shortcuts-actions">
+                        {!isDefault && (
+                          <button type="button" className="btn btn-sm" onClick={() => resetShortcutBinding(def.id)}>
+                            {t('shortcuts.reset')}
                           </button>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </section>
-          ))}
-          <p className="shortcuts-note">{t('shortcuts.note')}</p>
-        </div>
-        <div className="modal-footer">
-          <button
-            type="button"
-            className="btn"
-            onClick={() => {
-              resetAllShortcutBindings();
-              setError(null);
-            }}
-          >
-            {t('shortcuts.resetAll')}
-          </button>
-          <button type="button" className="btn btn-primary" onClick={onClose}>
-            {t('common.close')}
-          </button>
-        </div>
+                        )}
+                      </td>
+                      <td className="shortcuts-keys">
+                        <button
+                          type="button"
+                          className={`shortcuts-key-btn${recordingId === def.id ? ' recording' : ''}`}
+                          onClick={() => {
+                            setRecordingId(def.id);
+                            setError(null);
+                          }}
+                        >
+                          {formatBinding(binding)}
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </section>
+        ))}
+        <p className="shortcuts-note">{t('shortcuts.note')}</p>
+      </div>
+      <div className="modal-footer">
+        <button
+          type="button"
+          className="btn"
+          onClick={() => {
+            resetAllShortcutBindings();
+            setError(null);
+          }}
+        >
+          {t('shortcuts.resetAll')}
+        </button>
+        <button type="button" className="btn btn-primary" onClick={onClose}>
+          {t('common.close')}
+        </button>
+      </div>
     </Modal>
   );
 }

@@ -2,8 +2,9 @@
 // registers every language service (TypeScript/CSS/HTML/JSON), which makes the bundler emit
 // all their (large) workers regardless of the getWorker guard below. We register only the
 // languages the app actually uses.
-import * as monaco from 'monaco-editor/esm/vs/editor/editor.api';
+
 import { loader } from '@monaco-editor/react';
+import * as monaco from 'monaco-editor/esm/vs/editor/editor.api';
 // JSON language service (needs a worker) - used by the row/cell JSON viewers.
 import 'monaco-editor/esm/vs/language/json/monaco.contribution';
 // Syntax-highlighting-only languages (no worker): SQL editor/filter + cell viewer (xml/html).

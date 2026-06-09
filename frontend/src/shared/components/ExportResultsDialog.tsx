@@ -1,16 +1,12 @@
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Modal } from '@/shared/components/Modal';
-import {
-  buildExport,
-  EXPORT_FORMATS,
-  type ExportFormat,
-} from '@/shared/lib/exportResult';
-import type { QueryResult } from '@/types';
-import { appToast } from '@/shared/lib/appToast';
-import { appError } from '@/shared/lib/appDialog';
 import { api } from '@/shared/lib/api';
+import { appError } from '@/shared/lib/appDialog';
+import { appToast } from '@/shared/lib/appToast';
+import { buildExport, EXPORT_FORMATS, type ExportFormat } from '@/shared/lib/exportResult';
 import { exportFormatLabel } from '@/shared/lib/grid';
+import type { QueryResult } from '@/types';
 
 interface Props {
   result: QueryResult;
@@ -38,8 +34,7 @@ export function ExportResultsDialog({
   const { t } = useTranslation();
   const hasRows = selectedRowIndices.length > 0;
   const hasCols = selectedColumns.length > 0;
-  const defaultRowScope: 'all' | 'selected' =
-    hasCols && !hasRows ? 'all' : hasRows ? 'selected' : 'all';
+  const defaultRowScope: 'all' | 'selected' = hasCols && !hasRows ? 'all' : hasRows ? 'selected' : 'all';
   const defaultColScope: 'visible' | 'all' | 'selected' =
     hasRows && !hasCols ? 'visible' : hasCols ? 'selected' : 'visible';
 
@@ -53,9 +48,7 @@ export function ExportResultsDialog({
   const exportOptions = useMemo(() => {
     const rowIndices =
       rowScope === 'selected' && canExportSelectedRows
-        ? [...selectedRowIndices].sort(
-            (a, b) => sortedRowIndices.indexOf(a) - sortedRowIndices.indexOf(b)
-          )
+        ? [...selectedRowIndices].sort((a, b) => sortedRowIndices.indexOf(a) - sortedRowIndices.indexOf(b))
         : [...sortedRowIndices];
 
     let columns: string[];
@@ -100,7 +93,8 @@ export function ExportResultsDialog({
     setBusy(true);
     try {
       const text = runExport();
-      const meta = EXPORT_FORMATS.find((f) => f.id === format)!;
+      const meta = EXPORT_FORMATS.find((f) => f.id === format);
+      if (!meta) return;
       const path = await api.pickExportSavePath(meta.ext);
       if (!path) return;
       await api.saveTextFile(path, text);
@@ -116,88 +110,85 @@ export function ExportResultsDialog({
 
   return (
     <Modal title={t('export.title')} onClose={onClose} size="sm">
-        <div className="modal-body">
-          <div className="form-group">
-            <label>{t('export.format')}</label>
-            <select
-              value={format}
-              onChange={(e) => onFormatChange(e.target.value as ExportFormat)}
+      <div className="modal-body">
+        <div className="form-group">
+          <label htmlFor="export-format">{t('export.format')}</label>
+          <select id="export-format" value={format} onChange={(e) => onFormatChange(e.target.value as ExportFormat)}>
+            {EXPORT_FORMATS.map((f) => (
+              <option key={f.id} value={f.id}>
+                {exportFormatLabel(t, f.id)}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="form-group">
+          <label htmlFor="export-rows-group">{t('export.rows')}</label>
+          <div className="sidebar-toggle-group" id="export-rows-group" role="group" aria-label={t('export.rows')}>
+            <button
+              type="button"
+              className={`btn btn-sm ${rowScope === 'all' ? 'active' : ''}`}
+              onClick={() => setRowScope('all')}
             >
-              {EXPORT_FORMATS.map((f) => (
-                <option key={f.id} value={f.id}>
-                  {exportFormatLabel(t, f.id)}
-                </option>
-              ))}
-            </select>
+              {t('export.rowsAll', { count: sortedRowIndices.length })}
+            </button>
+            <button
+              type="button"
+              className={`btn btn-sm ${rowScope === 'selected' ? 'active' : ''}`}
+              onClick={() => setRowScope('selected')}
+              disabled={!canExportSelectedRows}
+              data-tooltip={canExportSelectedRows ? undefined : t('tooltip.exportSelectRows')}
+            >
+              {t('export.rowsSelected', { count: selectedRowIndices.length })}
+            </button>
           </div>
-          <div className="form-group">
-            <label>{t('export.rows')}</label>
-            <div className="sidebar-toggle-group" role="group" aria-label={t('export.rows')}>
-              <button
-                type="button"
-                className={`btn btn-sm ${rowScope === 'all' ? 'active' : ''}`}
-                onClick={() => setRowScope('all')}
-              >
-                {t('export.rowsAll', { count: sortedRowIndices.length })}
-              </button>
-              <button
-                type="button"
-                className={`btn btn-sm ${rowScope === 'selected' ? 'active' : ''}`}
-                onClick={() => setRowScope('selected')}
-                disabled={!canExportSelectedRows}
-                data-tooltip={canExportSelectedRows ? undefined : t('tooltip.exportSelectRows')}
-              >
-                {t('export.rowsSelected', { count: selectedRowIndices.length })}
-              </button>
-            </div>
-          </div>
-          <div className="form-group">
-            <label>{t('export.columns')}</label>
-            <div className="sidebar-toggle-group" role="group" aria-label={t('export.columns')}>
-              <button
-                type="button"
-                className={`btn btn-sm ${colScope === 'all' ? 'active' : ''}`}
-                onClick={() => setColScope('all')}
-              >
-                {t('export.colsAll', { count: allColumns.length })}
-              </button>
-              <button
-                type="button"
-                className={`btn btn-sm ${colScope === 'visible' ? 'active' : ''}`}
-                onClick={() => setColScope('visible')}
-              >
-                {t('export.colsVisible', { count: visibleColumns.length })}
-              </button>
-              <button
-                type="button"
-                className={`btn btn-sm ${colScope === 'selected' ? 'active' : ''}`}
-                onClick={() => setColScope('selected')}
-                disabled={!canExportSelectedCols}
-                data-tooltip={canExportSelectedCols ? undefined : t('tooltip.exportSelectCols')}
-              >
-                {t('export.colsSelected', { count: selectedColumns.length })}
-              </button>
-            </div>
-          </div>
-          <p className="export-results-summary">
-            {t('export.summary', {
-              rows: exportOptions.rowIndices.length,
-              cols: exportOptions.columns.length,
-              format: exportFormatLabel(t, format),
-            })}
-          </p>
         </div>
-        <div className="modal-footer">
-          <button type="button" className="btn" onClick={onClose} disabled={busy}>
-            {t('common.cancel')}
-          </button>
-          <button type="button" className="btn" onClick={() => void copy()} disabled={busy}>
-            {t('export.copyToClipboard')}
-          </button>
-          <button type="button" className="btn btn-primary" onClick={() => void saveFile()} disabled={busy}>
-            {t('export.saveToFile')}
-          </button>
+        <div className="form-group">
+          <label htmlFor="export-cols-group">{t('export.columns')}</label>
+          <div className="sidebar-toggle-group" id="export-cols-group" role="group" aria-label={t('export.columns')}>
+            <button
+              type="button"
+              className={`btn btn-sm ${colScope === 'all' ? 'active' : ''}`}
+              onClick={() => setColScope('all')}
+            >
+              {t('export.colsAll', { count: allColumns.length })}
+            </button>
+            <button
+              type="button"
+              className={`btn btn-sm ${colScope === 'visible' ? 'active' : ''}`}
+              onClick={() => setColScope('visible')}
+            >
+              {t('export.colsVisible', { count: visibleColumns.length })}
+            </button>
+            <button
+              type="button"
+              className={`btn btn-sm ${colScope === 'selected' ? 'active' : ''}`}
+              onClick={() => setColScope('selected')}
+              disabled={!canExportSelectedCols}
+              data-tooltip={canExportSelectedCols ? undefined : t('tooltip.exportSelectCols')}
+            >
+              {t('export.colsSelected', { count: selectedColumns.length })}
+            </button>
+          </div>
         </div>
+        <p className="export-results-summary">
+          {t('export.summary', {
+            rows: exportOptions.rowIndices.length,
+            cols: exportOptions.columns.length,
+            format: exportFormatLabel(t, format),
+          })}
+        </p>
+      </div>
+      <div className="modal-footer">
+        <button type="button" className="btn" onClick={onClose} disabled={busy}>
+          {t('common.cancel')}
+        </button>
+        <button type="button" className="btn" onClick={() => void copy()} disabled={busy}>
+          {t('export.copyToClipboard')}
+        </button>
+        <button type="button" className="btn btn-primary" onClick={() => void saveFile()} disabled={busy}>
+          {t('export.saveToFile')}
+        </button>
+      </div>
     </Modal>
   );
 }

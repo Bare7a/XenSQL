@@ -1,5 +1,5 @@
-import { useEffect, useId, useRef, type ReactNode } from 'react';
 import { X } from 'lucide-react';
+import { type ReactNode, useEffect, useId, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useModalEscape } from '@/shared/hooks/useModalEscape';
 
@@ -51,7 +51,7 @@ export function Modal({
   const dialogRef = useRef<HTMLDivElement>(null);
   // Capture the trigger at first render, before children mount / autoFocus moves focus inward.
   const restoreFocusRef = useRef<HTMLElement | null>(
-    typeof document !== 'undefined' ? (document.activeElement as HTMLElement | null) : null
+    typeof document !== 'undefined' ? (document.activeElement as HTMLElement | null) : null,
   );
 
   useEffect(() => {
@@ -72,7 +72,7 @@ export function Modal({
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key !== 'Tab' || !dialog) return;
       const focusables = Array.from(dialog.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR)).filter(
-        (el) => el.offsetParent !== null || el === document.activeElement
+        (el) => el.offsetParent !== null || el === document.activeElement,
       );
       if (focusables.length === 0) {
         e.preventDefault();
@@ -106,7 +106,9 @@ export function Modal({
     .join(' ');
 
   return (
-    <div className="modal-overlay" onMouseDown={onClose}>
+    // biome-ignore lint/a11y/noStaticElementInteractions: backdrop click-to-dismiss is a redundant convenience; the dialog is keyboard-dismissable via Escape (useModalEscape) and the close button.
+    <div className="modal-overlay" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
+      {/* biome-ignore lint/a11y/useAriaPropsSupportedByRole: role is always 'dialog' or 'alertdialog', both of which support aria-labelledby/aria-describedby; biome cannot resolve the dynamic role prop statically. */}
       <div
         ref={dialogRef}
         className={classes}
@@ -114,7 +116,6 @@ export function Modal({
         tabIndex={-1}
         aria-labelledby={titleId}
         aria-describedby={ariaDescribedById}
-        onMouseDown={(e) => e.stopPropagation()}
       >
         <div className="modal-header">
           <div className="modal-header-title" id={titleId}>
@@ -122,13 +123,7 @@ export function Modal({
             {headerExtra}
           </div>
           {showClose && (
-            <button
-              type="button"
-              className="modal-close"
-              onClick={onClose}
-              aria-label={label}
-              data-tooltip={label}
-            >
+            <button type="button" className="modal-close" onClick={onClose} aria-label={label} data-tooltip={label}>
               <X className="icon-md" />
             </button>
           )}

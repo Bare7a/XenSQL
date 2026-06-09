@@ -1,31 +1,20 @@
+import { Filter, Minus, Plus, RefreshCw, Search } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Filter, Minus, Plus, RefreshCw, Search } from 'lucide-react';
+import { SqlConditionInput } from '@/features/editor/SqlConditionInput';
+import type { PasteCellEdit } from '@/features/table-view/lib/tableViewClipboard';
+import { mergeTablePage, primaryKeyKey, rowPrimaryKey, TABLE_PAGE_SIZE } from '@/features/table-view/lib/tableViewRows';
+import { TableViewAddRowDialog } from '@/features/table-view/TableViewAddRowDialog';
+import { type TableSortDir, TableViewGrid } from '@/features/table-view/TableViewGrid';
+import { ErrorState } from '@/shared/components/ErrorState';
 import { api } from '@/shared/lib/api';
 import { appError } from '@/shared/lib/appDialog';
 import { appToast } from '@/shared/lib/appToast';
-import { TableViewAddRowDialog } from '@/features/table-view/TableViewAddRowDialog';
-import { TableViewGrid, type TableSortDir } from '@/features/table-view/TableViewGrid';
-import {
-  TABLE_PAGE_SIZE,
-  mergeTablePage,
-  primaryKeyKey,
-  rowPrimaryKey,
-} from '@/features/table-view/lib/tableViewRows';
-import type { PasteCellEdit } from '@/features/table-view/lib/tableViewClipboard';
-import { SqlConditionInput } from '@/features/editor/SqlConditionInput';
-import { ErrorState } from '@/shared/components/ErrorState';
 import { useAppStore } from '@/store/appStore';
-import type {
-  DriverType,
-  EditorTab,
-  TableViewPendingState,
-  TableViewSessionState,
-} from '@/types';
+import type { DriverType, EditorTab, TableViewPendingState, TableViewSessionState } from '@/types';
 import { emptyTableViewPending } from '@/types';
 
-const sameStrings = (a: string[], b: string[]) =>
-  a.length === b.length && a.every((v, i) => v === b[i]);
+const sameStrings = (a: string[], b: string[]) => a.length === b.length && a.every((v, i) => v === b[i]);
 
 // Cap each direction so a long editing session can't grow the snapshot stacks without bound.
 const HISTORY_LIMIT = 100;
@@ -57,6 +46,7 @@ function emptyTableViewState(schema: string, table: string): TableViewSessionSta
 
 export function TableViewPane({ tab, driver, readOnly, isActive, running, onFocusedRowChange }: Props) {
   const { t } = useTranslation();
+  // biome-ignore lint/style/noNonNullAssertion: TableViewPane is only rendered for table-view tabs, so tab.tableView is guaranteed present.
   const tv = tab.tableView!;
   const session = useAppStore((s) => s.tabSession[tab.id]?.tableViewState);
   const result = useAppStore((s) => s.tabSession[tab.id]?.result);
@@ -74,10 +64,7 @@ export function TableViewPane({ tab, driver, readOnly, isActive, running, onFocu
 
   const onFocusedRowChangeRef = useRef(onFocusedRowChange);
   onFocusedRowChangeRef.current = onFocusedRowChange;
-  const notifyFocusedRow = useCallback(
-    (row: Record<string, unknown> | null) => onFocusedRowChangeRef.current(row),
-    []
-  );
+  const notifyFocusedRow = useCallback((row: Record<string, unknown> | null) => onFocusedRowChangeRef.current(row), []);
 
   const state = session ?? emptyTableViewState(tv.schema, tv.table);
 
@@ -90,7 +77,7 @@ export function TableViewPane({ tab, driver, readOnly, isActive, running, onFocu
         dataBrowser: { schema: tv.schema, table: tv.table },
       });
     },
-    [tab.id, tv.schema, tv.table, updateTabSession]
+    [tab.id, tv.schema, tv.table, updateTabSession],
   );
 
   // Undo/redo stacks of whole pending snapshots. They live in refs (no re-render needed) and, because
@@ -100,9 +87,8 @@ export function TableViewPane({ tab, driver, readOnly, isActive, running, onFocu
 
   const readPending = useCallback(
     (): TableViewPendingState =>
-      useAppStore.getState().tabSession[tab.id]?.tableViewState?.pending ??
-      emptyTableViewPending(),
-    [tab.id]
+      useAppStore.getState().tabSession[tab.id]?.tableViewState?.pending ?? emptyTableViewPending(),
+    [tab.id],
   );
 
   const clearPending = useCallback(() => {
@@ -122,19 +108,19 @@ export function TableViewPane({ tab, driver, readOnly, isActive, running, onFocu
       redoStackRef.current = [];
       persistState({ pending: next });
     },
-    [persistState]
+    [persistState],
   );
 
   const undo = useCallback(() => {
-    if (undoStackRef.current.length === 0) return;
-    const prev = undoStackRef.current.pop()!;
+    const prev = undoStackRef.current.pop();
+    if (prev === undefined) return;
     redoStackRef.current.push(readPending());
     persistState({ pending: prev });
   }, [readPending, persistState]);
 
   const redo = useCallback(() => {
-    if (redoStackRef.current.length === 0) return;
-    const next = redoStackRef.current.pop()!;
+    const next = redoStackRef.current.pop();
+    if (next === undefined) return;
     undoStackRef.current.push(readPending());
     persistState({ pending: next });
   }, [readPending, persistState]);
@@ -142,9 +128,7 @@ export function TableViewPane({ tab, driver, readOnly, isActive, running, onFocu
   // Deleted rows' pending edits are discarded in handleApply - exclude them from editCount.
   const deleteCount = state.pending.deletes.length;
   const deleteSet = new Set(state.pending.deletes);
-  const editCount = Object.keys(state.pending.edits).filter(
-    (key) => !deleteSet.has(key)
-  ).length;
+  const editCount = Object.keys(state.pending.edits).filter((key) => !deleteSet.has(key)).length;
   const hasPending = editCount > 0 || deleteCount > 0;
 
   // PK values mapping to more than one loaded row (view / non-unique PK); editing by such a key would
@@ -162,16 +146,14 @@ export function TableViewPane({ tab, driver, readOnly, isActive, running, onFocu
   }, [state.rows, state.columns, state.primaryKeys]);
 
   const fetchPage = useCallback(
-    async (
-      opts: {
-        offset: number;
-        replace: boolean;
-        filter?: string;
-        orderBy?: string | null;
-        orderDir?: TableSortDir;
-        discardPending?: boolean;
-      }
-    ) => {
+    async (opts: {
+      offset: number;
+      replace: boolean;
+      filter?: string;
+      orderBy?: string | null;
+      orderDir?: TableSortDir;
+      discardPending?: boolean;
+    }) => {
       const filter = opts.filter ?? state.filter;
       const orderBy = opts.orderBy !== undefined ? opts.orderBy : state.orderBy;
       const orderDir = opts.orderDir ?? state.orderDir;
@@ -214,7 +196,7 @@ export function TableViewPane({ tab, driver, readOnly, isActive, running, onFocu
       clearPending,
       setRunningTab,
       updateTabSession,
-    ]
+    ],
   );
 
   useEffect(() => {
@@ -239,11 +221,7 @@ export function TableViewPane({ tab, driver, readOnly, isActive, running, onFocu
     const streamId = result.streamId ?? null;
 
     if (result.streaming) {
-      if (
-        loadMetaRef.current.replace &&
-        streamId != null &&
-        seenStreamStartRef.current !== streamId
-      ) {
+      if (loadMetaRef.current.replace && streamId != null && seenStreamStartRef.current !== streamId) {
         seenStreamStartRef.current = streamId;
         const store = useAppStore.getState();
         const current = store.tabSession[tab.id]?.tableViewState;
@@ -273,9 +251,7 @@ export function TableViewPane({ tab, driver, readOnly, isActive, running, onFocu
         ...current,
         rows: merged,
         columns: sameStrings(current.columns, result.columns) ? current.columns : result.columns,
-        columnTypes: sameStrings(current.columnTypes, result.columnTypes)
-          ? current.columnTypes
-          : result.columnTypes,
+        columnTypes: sameStrings(current.columnTypes, result.columnTypes) ? current.columnTypes : result.columnTypes,
         primaryKeys: sameStrings(current.primaryKeys, resultPks) ? current.primaryKeys : resultPks,
         hasMore: result.rows.length >= TABLE_PAGE_SIZE,
       },
@@ -297,8 +273,7 @@ export function TableViewPane({ tab, driver, readOnly, isActive, running, onFocu
   // Wrapped in useCallback so memo(TableViewGrid) holds across parent-only re-renders.
   const handleSortChange = useCallback(
     (col: string) => {
-      const nextDir: TableSortDir =
-        state.orderBy === col && state.orderDir === 'ASC' ? 'DESC' : 'ASC';
+      const nextDir: TableSortDir = state.orderBy === col && state.orderDir === 'ASC' ? 'DESC' : 'ASC';
       void fetchPage({
         offset: 0,
         replace: true,
@@ -307,7 +282,7 @@ export function TableViewPane({ tab, driver, readOnly, isActive, running, onFocu
         discardPending: true,
       });
     },
-    [state.orderBy, state.orderDir, fetchPage]
+    [state.orderBy, state.orderDir, fetchPage],
   );
 
   const handleLoadMore = useCallback(() => {
@@ -341,7 +316,7 @@ export function TableViewPane({ tab, driver, readOnly, isActive, running, onFocu
 
       commitPending(state.pending, { ...state.pending, edits });
     },
-    [readOnly, state.primaryKeys, state.columns, state.rows, state.pending, ambiguousKeys, commitPending, t]
+    [readOnly, state.primaryKeys, state.columns, state.rows, state.pending, ambiguousKeys, commitPending, t],
   );
 
   // Apply a batch of pasted cells as one undoable step. Mirrors handleCellEdit's reconcile (revert
@@ -367,7 +342,7 @@ export function TableViewPane({ tab, driver, readOnly, isActive, running, onFocu
         const orig = origRaw == null ? null : String(origRaw);
         const next = value == null ? null : String(value);
         const rowEdits = { ...(edits[key] ?? {}) };
-        const hadCol = Object.prototype.hasOwnProperty.call(rowEdits, col);
+        const hadCol = rowEdits.hasOwnProperty(col);
         const prevVal = hadCol ? (rowEdits[col] == null ? null : String(rowEdits[col])) : undefined;
 
         if (next === orig) {
@@ -386,7 +361,7 @@ export function TableViewPane({ tab, driver, readOnly, isActive, running, onFocu
       if (!changed) return;
       commitPending(state.pending, { ...state.pending, edits });
     },
-    [readOnly, state.primaryKeys, state.columns, state.rows, state.pending, ambiguousKeys, commitPending, t]
+    [readOnly, state.primaryKeys, state.columns, state.rows, state.pending, ambiguousKeys, commitPending, t],
   );
 
   const handleToggleDeleteRow = useCallback(
@@ -403,7 +378,7 @@ export function TableViewPane({ tab, driver, readOnly, isActive, running, onFocu
       else deletes.add(key);
       commitPending(state.pending, { ...state.pending, deletes: [...deletes] });
     },
-    [readOnly, state.primaryKeys, state.columns, state.rows, state.pending, ambiguousKeys, commitPending, t]
+    [readOnly, state.primaryKeys, state.columns, state.rows, state.pending, ambiguousKeys, commitPending, t],
   );
 
   const handleRefresh = useCallback(() => {
@@ -421,9 +396,7 @@ export function TableViewPane({ tab, driver, readOnly, isActive, running, onFocu
     setApplying(true);
     try {
       if (state.pending.deletes.length) {
-        const primaryKeys = state.pending.deletes.map(
-          (key) => JSON.parse(key) as Record<string, unknown>
-        );
+        const primaryKeys = state.pending.deletes.map((key) => JSON.parse(key) as Record<string, unknown>);
         await api.deleteRows(tab.connectionId, {
           schema: tv.schema,
           table: tv.table,
@@ -451,7 +424,18 @@ export function TableViewPane({ tab, driver, readOnly, isActive, running, onFocu
       await fetchPage({ offset: 0, replace: true, filter: state.filter });
       setApplying(false);
     }
-  }, [readOnly, hasPending, state.pending, state.filter, tab.connectionId, tv.schema, tv.table, clearPending, fetchPage, t]);
+  }, [
+    readOnly,
+    hasPending,
+    state.pending,
+    state.filter,
+    tab.connectionId,
+    tv.schema,
+    tv.table,
+    clearPending,
+    fetchPage,
+    t,
+  ]);
 
   const tableName = useMemo(() => `${tv.schema}.${tv.table}`, [tv.schema, tv.table]);
 

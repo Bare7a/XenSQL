@@ -11,15 +11,7 @@ interface Props {
   onOpenChange: (open: boolean) => void;
 }
 
-export function ColumnPicker({
-  columns,
-  hidden,
-  onToggle,
-  onShowAll,
-  onHideAll,
-  open,
-  onOpenChange,
-}: Props) {
+export function ColumnPicker({ columns, hidden, onToggle, onShowAll, onHideAll, open, onOpenChange }: Props) {
   const { t } = useTranslation();
   const visibleCount = columns.length - hidden.size;
 
@@ -35,7 +27,12 @@ export function ColumnPicker({
       </button>
       {open && (
         <>
-          <div className="column-picker-backdrop" onClick={() => onOpenChange(false)} />
+          <button
+            type="button"
+            className="column-picker-backdrop"
+            aria-label={t('common.close')}
+            onClick={() => onOpenChange(false)}
+          />
           <div className="column-picker-panel">
             <div className="column-picker-actions">
               <button type="button" className="btn btn-sm" onClick={onShowAll}>
@@ -51,11 +48,7 @@ export function ColumnPicker({
                 return (
                   <li key={col}>
                     <label className="column-picker-item">
-                      <input
-                        type="checkbox"
-                        checked={isVisible}
-                        onChange={() => onToggle(col)}
-                      />
+                      <input type="checkbox" checked={isVisible} onChange={() => onToggle(col)} />
                       <span>{col}</span>
                     </label>
                   </li>

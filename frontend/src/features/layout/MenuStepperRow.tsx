@@ -34,9 +34,33 @@ export function MenuStepperRow({
       <span className="menu-stepper-value" aria-live="polite">
         {value}
       </span>
-      <button type="button" className="menu-stepper-btn" disabled={decrementDisabled} onClick={onDecrement} aria-label={decrementLabel}>−</button>
-      <button type="button" className="menu-stepper-btn" disabled={incrementDisabled} onClick={onIncrement} aria-label={incrementLabel}>+</button>
-      <button type="button" className="menu-stepper-btn menu-stepper-btn-reset" disabled={resetDisabled} onClick={onReset} aria-label={resetLabel}>{t('uiZoom.reset')}</button>
+      <button
+        type="button"
+        className="menu-stepper-btn"
+        disabled={decrementDisabled}
+        onClick={onDecrement}
+        aria-label={decrementLabel}
+      >
+        −
+      </button>
+      <button
+        type="button"
+        className="menu-stepper-btn"
+        disabled={incrementDisabled}
+        onClick={onIncrement}
+        aria-label={incrementLabel}
+      >
+        +
+      </button>
+      <button
+        type="button"
+        className="menu-stepper-btn menu-stepper-btn-reset"
+        disabled={resetDisabled}
+        onClick={onReset}
+        aria-label={resetLabel}
+      >
+        {t('uiZoom.reset')}
+      </button>
     </div>
   );
 }

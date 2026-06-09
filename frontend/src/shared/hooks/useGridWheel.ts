@@ -1,4 +1,4 @@
-import { useEffect, type RefObject } from 'react';
+import { type RefObject, useEffect } from 'react';
 
 // Horizontal scroll takes priority when both axes overflow, except for dominant-deltaY vertical gestures; Shift+wheel always scrolls sideways.
 export function useGridWheel(ref: RefObject<HTMLElement | null>) {
@@ -14,17 +14,12 @@ export function useGridWheel(ref: RefObject<HTMLElement | null>) {
       const absX = Math.abs(e.deltaX);
       const absY = Math.abs(e.deltaY);
 
-      const wantsVertical =
-        canScrollV && !e.shiftKey && absY > absX && (absX === 0 || absY > absX * 1.5);
+      const wantsVertical = canScrollV && !e.shiftKey && absY > absX && (absX === 0 || absY > absX * 1.5);
 
       if (wantsVertical) return;
 
       if (canScrollH) {
-        const delta = e.shiftKey
-          ? e.deltaY || e.deltaX
-          : absX > 0
-            ? e.deltaX
-            : e.deltaY;
+        const delta = e.shiftKey ? e.deltaY || e.deltaX : absX > 0 ? e.deltaX : e.deltaY;
         if (delta === 0) return;
         const max = el.scrollWidth - el.clientWidth;
         const next = Math.max(0, Math.min(max, el.scrollLeft + delta));

@@ -1,26 +1,26 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Editor from '@monaco-editor/react';
-import type { editor } from 'monaco-editor';
 import { AlignLeft, Ban, ChevronsDownUp, ChevronsUpDown, Copy, Minimize2 } from 'lucide-react';
+import type { editor } from 'monaco-editor';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { api } from '@/shared/lib/api';
+import { useEditorFontSize } from '@/features/editor/hooks/useEditorFontSize';
+import { monacoFontOptions } from '@/features/editor/lib/editorFontSize';
+import { getMonacoThemeName, setupMonacoBeforeMount } from '@/features/editor/lib/monacoTheme';
 import {
   applyContentFormat,
+  type ContentKind,
   dropdownKind,
   initialContent,
   isStructuredKind,
   kindLabelKey,
   monacoLanguageForKind,
   SELECTABLE_KINDS,
-  type ContentKind,
 } from '@/features/results/lib/cellContentFormat';
-import { appToast } from '@/shared/lib/appToast';
-import { setupMonacoBeforeMount, getMonacoThemeName } from '@/features/editor/lib/monacoTheme';
-import { useAppTheme } from '@/shared/hooks/useAppTheme';
-import { useEditorFontSize } from '@/features/editor/hooks/useEditorFontSize';
-import { monacoFontOptions } from '@/features/editor/lib/editorFontSize';
 import { Modal } from '@/shared/components/Modal';
+import { useAppTheme } from '@/shared/hooks/useAppTheme';
 import { useMeasuredHeight } from '@/shared/hooks/useMeasuredHeight';
+import { api } from '@/shared/lib/api';
+import { appToast } from '@/shared/lib/appToast';
 
 interface Props {
   column: string;
@@ -79,7 +79,7 @@ export function CellViewerModal({ column, value, isNull, onClose, onSave, onSetN
       bracketPairColorization: { enabled: structured },
       guides: structured ? { indentation: true, bracketPairs: true } : { indentation: true },
     }),
-    [structured, readOnly, isNull, fontSize]
+    [structured, readOnly, isNull, fontSize],
   );
 
   useEffect(() => {
@@ -121,9 +121,7 @@ export function CellViewerModal({ column, value, isNull, onClose, onSave, onSetN
       editorRef.current?.setValue(text);
       if (onSave) setEditMode(true);
     } catch {
-      setFormatError(
-        mode === 'beautify' ? t('cellViewer.beautifyError') : t('cellViewer.minifyError')
-      );
+      setFormatError(mode === 'beautify' ? t('cellViewer.beautifyError') : t('cellViewer.minifyError'));
     }
   };
 
@@ -164,115 +162,115 @@ export function CellViewerModal({ column, value, isNull, onClose, onSave, onSetN
         )
       }
     >
-        <div ref={bodyRef} className="modal-body cell-viewer-body">
-          <div className="cell-viewer-monaco">
-            <Editor
-              height={editorHeight}
-              language={monacoLanguage}
-              theme={monacoTheme}
-              value={content}
-              loading={<div className="monaco-editor-placeholder" aria-hidden />}
-              onChange={(v) => {
-                const next = v ?? '';
-                setContent(next);
-                if (onSave) setEditMode(true);
-                setFormatError(null);
-              }}
-              beforeMount={setupMonacoBeforeMount}
-              onMount={handleEditorMount}
-              options={editorOptions}
-            />
-          </div>
+      <div ref={bodyRef} className="modal-body cell-viewer-body">
+        <div className="cell-viewer-monaco">
+          <Editor
+            height={editorHeight}
+            language={monacoLanguage}
+            theme={monacoTheme}
+            value={content}
+            loading={<div className="monaco-editor-placeholder" aria-hidden />}
+            onChange={(v) => {
+              const next = v ?? '';
+              setContent(next);
+              if (onSave) setEditMode(true);
+              setFormatError(null);
+            }}
+            beforeMount={setupMonacoBeforeMount}
+            onMount={handleEditorMount}
+            options={editorOptions}
+          />
         </div>
-        {formatError && <p className="form-alert form-alert--error">{formatError}</p>}
-        <div className="modal-footer cell-viewer-footer">
-          <div className="cell-viewer-footer-left">
-            {!isNull && (
-              <select
-                className="cell-viewer-kind-select"
-                value={selectedKind}
-                onChange={(e) => changeKind(e.target.value as ContentKind)}
-                aria-label={t('cellViewer.kindLabel')}
-                data-tooltip={t('tooltip.cellViewerKind')}
+      </div>
+      {formatError && <p className="form-alert form-alert--error">{formatError}</p>}
+      <div className="modal-footer cell-viewer-footer">
+        <div className="cell-viewer-footer-left">
+          {!isNull && (
+            <select
+              className="cell-viewer-kind-select"
+              value={selectedKind}
+              onChange={(e) => changeKind(e.target.value as ContentKind)}
+              aria-label={t('cellViewer.kindLabel')}
+              data-tooltip={t('tooltip.cellViewerKind')}
+            >
+              {SELECTABLE_KINDS.map((k) => (
+                <option key={k} value={k}>
+                  {kindLabel(k)}
+                </option>
+              ))}
+            </select>
+          )}
+          {structured && (
+            <>
+              <button
+                type="button"
+                className="btn btn-sm"
+                onClick={() => runFoldAction('editor.foldAll')}
+                data-tooltip={t('tooltip.collapseFolds')}
               >
-                {SELECTABLE_KINDS.map((k) => (
-                  <option key={k} value={k}>
-                    {kindLabel(k)}
-                  </option>
-                ))}
-              </select>
-            )}
-            {structured && (
-              <>
-                <button
-                  type="button"
-                  className="btn btn-sm"
-                  onClick={() => runFoldAction('editor.foldAll')}
-                  data-tooltip={t('tooltip.collapseFolds')}
-                >
-                  <ChevronsUpDown className="icon-xs" /> {t('cellViewer.foldAll')}
-                </button>
-                <button
-                  type="button"
-                  className="btn btn-sm"
-                  onClick={() => runFoldAction('editor.unfoldAll')}
-                  data-tooltip={t('tooltip.expandFolds')}
-                >
-                  <ChevronsDownUp className="icon-xs" /> {t('cellViewer.unfoldAll')}
-                </button>
-                <button
-                  type="button"
-                  className="btn btn-sm"
-                  onClick={() => applyFormat('beautify')}
-                  data-tooltip={t('tooltip.prettify')}
-                >
-                  <AlignLeft className="icon-xs" /> {t('cellViewer.beautify')}
-                </button>
-                <button
-                  type="button"
-                  className="btn btn-sm"
-                  onClick={() => applyFormat('minify')}
-                  data-tooltip={t('tooltip.minify')}
-                >
-                  <Minimize2 className="icon-xs" /> {t('cellViewer.minify')}
-                </button>
-              </>
-            )}
-            <button type="button" className="btn btn-sm" onClick={() => void copy()}>
-              <Copy className="icon-xs" /> {t('common.copy')}
-            </button>
-          </div>
-          <div className="cell-viewer-footer-right">
-            {onSetNull && !isNull && (
-              <button type="button" className="btn btn-sm btn-danger" onClick={onSetNull}>
-                <Ban className="icon-xs" /> {t('cellViewer.setNull')}
+                <ChevronsUpDown className="icon-xs" /> {t('cellViewer.foldAll')}
               </button>
-            )}
-            {canEdit && editMode ? (
-              <>
-                <button type="button" className="btn btn-sm" onClick={onClose}>
-                  {t('common.cancel')}
-                </button>
-                <button type="button" className="btn btn-primary btn-sm" onClick={handleSave}>
-                  {t('common.save')}
-                </button>
-              </>
-            ) : canEdit ? (
-              <>
-                <button type="button" className="btn btn-sm" onClick={onClose}>
-                  {t('common.close')}
-                </button>
-                <button type="button" className="btn btn-primary btn-sm" onClick={() => setEditMode(true)}>
-                  {t('cellViewer.editValue')}
-                </button>
-              </>
-            ) : (
-              <button type="button" className="btn btn-primary btn-sm" onClick={onClose}>
+              <button
+                type="button"
+                className="btn btn-sm"
+                onClick={() => runFoldAction('editor.unfoldAll')}
+                data-tooltip={t('tooltip.expandFolds')}
+              >
+                <ChevronsDownUp className="icon-xs" /> {t('cellViewer.unfoldAll')}
+              </button>
+              <button
+                type="button"
+                className="btn btn-sm"
+                onClick={() => applyFormat('beautify')}
+                data-tooltip={t('tooltip.prettify')}
+              >
+                <AlignLeft className="icon-xs" /> {t('cellViewer.beautify')}
+              </button>
+              <button
+                type="button"
+                className="btn btn-sm"
+                onClick={() => applyFormat('minify')}
+                data-tooltip={t('tooltip.minify')}
+              >
+                <Minimize2 className="icon-xs" /> {t('cellViewer.minify')}
+              </button>
+            </>
+          )}
+          <button type="button" className="btn btn-sm" onClick={() => void copy()}>
+            <Copy className="icon-xs" /> {t('common.copy')}
+          </button>
+        </div>
+        <div className="cell-viewer-footer-right">
+          {onSetNull && !isNull && (
+            <button type="button" className="btn btn-sm btn-danger" onClick={onSetNull}>
+              <Ban className="icon-xs" /> {t('cellViewer.setNull')}
+            </button>
+          )}
+          {canEdit && editMode ? (
+            <>
+              <button type="button" className="btn btn-sm" onClick={onClose}>
+                {t('common.cancel')}
+              </button>
+              <button type="button" className="btn btn-primary btn-sm" onClick={handleSave}>
+                {t('common.save')}
+              </button>
+            </>
+          ) : canEdit ? (
+            <>
+              <button type="button" className="btn btn-sm" onClick={onClose}>
                 {t('common.close')}
               </button>
-            )}
-          </div>
+              <button type="button" className="btn btn-primary btn-sm" onClick={() => setEditMode(true)}>
+                {t('cellViewer.editValue')}
+              </button>
+            </>
+          ) : (
+            <button type="button" className="btn btn-primary btn-sm" onClick={onClose}>
+              {t('common.close')}
+            </button>
+          )}
         </div>
+      </div>
     </Modal>
   );
 }

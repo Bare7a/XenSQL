@@ -6,11 +6,9 @@ import type { ColumnInfo, EditorTab } from '@/types';
 // Preloads schema for each open tab's connection so autocomplete works before the schema browser is opened.
 export function useSchemaPreloader(
   tabs: EditorTab[],
-  connectionCount: number
+  connectionCount: number,
 ): {
-  loadColumnsForConnection: (
-    connectionId: string
-  ) => (schema: string, table: string) => Promise<ColumnInfo[]>;
+  loadColumnsForConnection: (connectionId: string) => (schema: string, table: string) => Promise<ColumnInfo[]>;
 } {
   // Session-lifetime column cache keyed by `${connId}:${schema}.${table}`.
   const columnsCacheRef = useRef<Record<string, ColumnInfo[]>>({});
@@ -53,7 +51,7 @@ export function useSchemaPreloader(
         if (cols.length) columnsCacheRef.current[key] = cols;
         return cols;
       },
-    []
+    [],
   );
 
   return { loadColumnsForConnection };

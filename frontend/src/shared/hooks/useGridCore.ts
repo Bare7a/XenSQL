@@ -1,20 +1,16 @@
 import { useCallback, useRef, useState } from 'react';
+import { useColumnResize } from '@/shared/hooks/useColumnResize';
+import { useGridGlobalKeys } from '@/shared/hooks/useGridGlobalKeys';
+import { queryElementInContainer } from '@/shared/lib/dom';
+import { columnRangeSet, type FocusCol, rowRangeSet } from '@/shared/lib/grid';
 import {
-  columnRangeSet,
-  rowRangeSet,
-  type FocusCol,
-} from '@/shared/lib/grid';
-import {
+  type CellCoord,
+  type CellRange,
   findDataCellAtPoint,
   fullColsCellRange,
   fullRowsCellRange,
   normalizeCellRange,
-  type CellCoord,
-  type CellRange,
 } from '@/shared/lib/gridCellRange';
-import { useColumnResize } from '@/shared/hooks/useColumnResize';
-import { useGridGlobalKeys } from '@/shared/hooks/useGridGlobalKeys';
-import { queryElementInContainer } from '@/shared/lib/dom';
 import { adjustGridCellScrollInWrap } from '@/shared/lib/gridScroll';
 
 export interface RowIndexMap {
@@ -113,7 +109,7 @@ export function useGridCore({
       });
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [colIndices, getElementId, scrollToRow, tableWrapRef]
+    [colIndices, getElementId, scrollToRow, tableWrapRef],
   );
 
   const applyRowModeCellRange = useCallback((range: CellRange, rowsToSelect: Set<number>) => {
@@ -152,7 +148,7 @@ export function useGridCore({
       setSelectedRows(nextRows);
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [displayColumns]
+    [displayColumns],
   );
 
   const selectAllCells = useCallback(() => {
@@ -171,10 +167,7 @@ export function useGridCore({
     const fr = focusRef.current.row;
     const fc = focusRef.current.colPos;
     const fDisplay = fr != null && fc >= 0 ? sortedOf(fr) : -1;
-    return (
-      existingAnchor ??
-      (fDisplay >= 0 && fc >= 0 ? { row: fDisplay, col: fc } : fallback)
-    );
+    return existingAnchor ?? (fDisplay >= 0 && fc >= 0 ? { row: fDisplay, col: fc } : fallback);
   };
 
   const handleCellMouseDown = (displayIdx: number, colPos: number, e: React.MouseEvent) => {
@@ -199,10 +192,9 @@ export function useGridCore({
     if (gi != null) focusRow(gi as number, colPos);
     // preventScroll: an accidental viewport jump would break drag hit-testing.
     const colIdx = colIndices[colPos];
-    queryElementInContainer(
-      tableWrapRef.current,
-      getElementId('cell', (gi ?? displayIdx) as number, colIdx)
-    )?.focus({ preventScroll: true });
+    queryElementInContainer(tableWrapRef.current, getElementId('cell', (gi ?? displayIdx) as number, colIdx))?.focus({
+      preventScroll: true,
+    });
 
     selectingRef.current = true;
     setIsSelecting(true);
@@ -231,8 +223,7 @@ export function useGridCore({
     const shift = e.shiftKey;
     const fr = focusRef.current.row;
     if (fr != null) setFocusedColPos(colPos);
-    const singleSelectedCol =
-      selectedColumns.size === 1 ? Array.from(selectedColumns)[0] : null;
+    const singleSelectedCol = selectedColumns.size === 1 ? Array.from(selectedColumns)[0] : null;
     const anchor = singleSelectedCol ?? columnAnchorRef.current ?? col;
 
     if (shift) {
@@ -279,8 +270,7 @@ export function useGridCore({
     const shift = e.shiftKey;
     const displayIdx = sortedOf(globalIdx);
     const fr = focusRef.current.row;
-    const anchor =
-      rowAnchorRef.current ?? (fr != null && sortedOf(fr) >= 0 ? fr : globalIdx);
+    const anchor = rowAnchorRef.current ?? (fr != null && sortedOf(fr) >= 0 ? fr : globalIdx);
 
     if (shift) {
       const next = rowRangeSet(sortedIndices, rowCount, anchor, globalIdx, ctrl, selectedRows);
@@ -319,21 +309,13 @@ export function useGridCore({
     }
 
     if (displayIdx >= 0) {
-      applyRowModeCellRange(
-        fullRowsCellRange(displayIdx, displayIdx, colIndices.length),
-        new Set([globalIdx])
-      );
+      applyRowModeCellRange(fullRowsCellRange(displayIdx, displayIdx, colIndices.length), new Set([globalIdx]));
     }
     rowAnchorRef.current = globalIdx;
     focusRow(globalIdx, -1);
   };
 
-  const handleCellClick = (
-    displayIdx: number,
-    globalIdx: number,
-    colPos: number,
-    e: React.MouseEvent
-  ) => {
+  const handleCellClick = (displayIdx: number, globalIdx: number, colPos: number, e: React.MouseEvent) => {
     e.stopPropagation();
     if (shiftMouseDownAppliedRef.current) {
       shiftMouseDownAppliedRef.current = false;

@@ -1,7 +1,7 @@
-import { useEffect } from 'react';
 import { useVirtualizer } from '@tanstack/react-virtual';
-import { OVERSCAN } from '@/shared/lib/grid';
+import { useEffect } from 'react';
 import { useGridWheel } from '@/shared/hooks/useGridWheel';
+import { OVERSCAN } from '@/shared/lib/grid';
 
 interface UseGridVirtualizerOptions {
   rowCount: number;

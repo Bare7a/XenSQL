@@ -28,7 +28,7 @@ export function useFolderActions(refreshConnections: () => Promise<void>) {
         void appError(err, t('errors.generic'));
       }
     },
-    [connections, refreshConnections, t]
+    [connections, refreshConnections, t],
   );
 
   const createFolder = useCallback(async () => {
@@ -63,7 +63,7 @@ export function useFolderActions(refreshConnections: () => Promise<void>) {
         void appError(err, t('errors.generic'));
       }
     },
-    [refreshFolders, t]
+    [refreshFolders, t],
   );
 
   const deleteFolder = useCallback(
@@ -83,7 +83,7 @@ export function useFolderActions(refreshConnections: () => Promise<void>) {
         void appError(err, t('errors.generic'));
       }
     },
-    [refreshFolders, refreshConnections, t]
+    [refreshFolders, refreshConnections, t],
   );
 
   return { refreshFolders, moveToFolder, createFolder, renameFolder, deleteFolder };

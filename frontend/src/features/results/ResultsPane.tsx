@@ -2,24 +2,16 @@ import { memo, useCallback } from 'react';
 import { ResultsGrid } from '@/features/results/ResultsGrid';
 import { ResultTabs } from '@/features/results/ResultTabs';
 import { useAppStore } from '@/store/appStore';
-import { emptyTabSession } from '@/types';
 import type { ConnectionConfig, EditorTab, TabSessionState } from '@/types';
+import { emptyTabSession } from '@/types';
 
 interface ResultsPaneProps {
   tabs: EditorTab[];
   activeTabId: string | null;
   connections: ConnectionConfig[];
   tabSession: Record<string, TabSessionState>;
-  onRefreshTable?: (
-    connectionId: string,
-    schema: string,
-    table: string,
-    tabId: string
-  ) => void;
-  onFocusedRowChange: (
-    tabId: string,
-    row: Record<string, unknown> | null
-  ) => void;
+  onRefreshTable?: (connectionId: string, schema: string, table: string, tabId: string) => void;
+  onFocusedRowChange: (tabId: string, row: Record<string, unknown> | null) => void;
 }
 
 // Stable empty-session reference for tabs not yet in tabSession.
@@ -49,12 +41,12 @@ const ResultsPaneTab = memo(function ResultsPaneTab({
 
   const handleSelectResult = useCallback(
     (index: number) => useAppStore.getState().setActiveResultIndex(tabId, index),
-    [tabId]
+    [tabId],
   );
 
   const handleFocusedRowChange = useCallback(
     (row: Record<string, unknown> | null) => onFocusedRowChange(tabId, row),
-    [onFocusedRowChange, tabId]
+    [onFocusedRowChange, tabId],
   );
 
   const handleRefresh = useCallback(() => {
@@ -65,11 +57,7 @@ const ResultsPaneTab = memo(function ResultsPaneTab({
 
   return (
     <div className={`tab-results-layer${isActive ? ' tab-layer-active' : ''}`}>
-      <ResultTabs
-        results={session.results}
-        activeIndex={session.activeResultIndex}
-        onSelect={handleSelectResult}
-      />
+      <ResultTabs results={session.results} activeIndex={session.activeResultIndex} onSelect={handleSelectResult} />
       <ResultsGrid
         // Remount on result-set switch: sets share a streamId, so a key change is what resets
         // the grid's columns/selection/scroll between them.

@@ -2,23 +2,18 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '@/shared/lib/api';
 import { formatError } from '@/shared/lib/normalize';
-import { readStoredJson, writeStoredJson, STORAGE_KEYS } from '@/shared/lib/storageKeys';
+import { readStoredJson, STORAGE_KEYS, writeStoredJson } from '@/shared/lib/storageKeys';
+import { useSchemas, useStoreActions, useTablesMap } from '@/store/selectors';
 import type { ColumnInfo, SchemaInfo } from '@/types';
-import { useStoreActions, useTablesMap, useSchemas } from '@/store/selectors';
 
-export const tableKey = (connectionId: string, schema: string, table: string) =>
-  `${connectionId}:${schema}:${table}`;
+export const tableKey = (connectionId: string, schema: string, table: string) => `${connectionId}:${schema}:${table}`;
 
 export function columnMatchesSearch(col: ColumnInfo, needle: string): boolean {
   const hay = `${col.name} ${col.dataType}`.toLowerCase();
   return hay.includes(needle);
 }
 
-export function tableMatchesSearch(
-  tableName: string,
-  cols: ColumnInfo[] | undefined,
-  needle: string
-): boolean {
+export function tableMatchesSearch(tableName: string, cols: ColumnInfo[] | undefined, needle: string): boolean {
   if (tableName.toLowerCase().includes(needle)) return true;
   if (!cols?.length) return false;
   return cols.some((col) => columnMatchesSearch(col, needle));
@@ -31,22 +26,17 @@ interface SchemaTreeArgs {
   schemaSearch: string;
 }
 
-export function useSchemaTree({
-  connId,
-  connConnected,
-  schemaList,
-  schemaSearch,
-}: SchemaTreeArgs) {
+export function useSchemaTree({ connId, connConnected, schemaList, schemaSearch }: SchemaTreeArgs) {
   const { t } = useTranslation();
   const tables = useTablesMap();
   const schemas = useSchemas();
   const { setConnected, setSchemas, setSelectedConnection, setTables } = useStoreActions();
 
   const [expandedSchemas, setExpandedSchemas] = useState<Record<string, boolean>>(() =>
-    readStoredJson(STORAGE_KEYS.schemaExpanded, {})
+    readStoredJson(STORAGE_KEYS.schemaExpanded, {}),
   );
   const [expandedTables, setExpandedTables] = useState<Record<string, boolean>>(() =>
-    readStoredJson(STORAGE_KEYS.schemaTablesExpanded, {})
+    readStoredJson(STORAGE_KEYS.schemaTablesExpanded, {}),
   );
   const [loadingSchema, setLoadingSchema] = useState(false);
   const [loadingTables, setLoadingTables] = useState<Record<string, boolean>>({});
@@ -61,10 +51,7 @@ export function useSchemaTree({
 
   // Persist tree expansion across tab switches / relaunch; empty restored nodes are hydrated below.
   useEffect(() => writeStoredJson(STORAGE_KEYS.schemaExpanded, expandedSchemas), [expandedSchemas]);
-  useEffect(
-    () => writeStoredJson(STORAGE_KEYS.schemaTablesExpanded, expandedTables),
-    [expandedTables]
-  );
+  useEffect(() => writeStoredJson(STORAGE_KEYS.schemaTablesExpanded, expandedTables), [expandedTables]);
 
   const loadSchema = useCallback(
     async (connId: string) => {
@@ -98,7 +85,7 @@ export function useSchemaTree({
         setLoadingSchema(false);
       }
     },
-    [setConnected, setSchemas, setSelectedConnection, setTables, t]
+    [setConnected, setSchemas, setSelectedConnection, setTables, t],
   );
 
   const loadTables = useCallback(
@@ -124,7 +111,7 @@ export function useSchemaTree({
         setLoadingTables((prev) => ({ ...prev, [key]: false }));
       }
     },
-    [tables, setConnected, setTables]
+    [tables, setConnected, setTables],
   );
 
   // Short-circuit dedupes both "already loaded" and "in-flight" - search effect calls this in a tight loop.
@@ -151,7 +138,7 @@ export function useSchemaTree({
         setLoadingColumns((prev) => ({ ...prev, [key]: false }));
       }
     },
-    [tableColumns, loadingColumns, setConnected]
+    [tableColumns, loadingColumns, setConnected],
   );
 
   const toggleTableColumns = useCallback(
@@ -164,7 +151,7 @@ export function useSchemaTree({
       setExpandedTables((prev) => ({ ...prev, [key]: true }));
       await fetchTableColumns(connectionId, schema, table);
     },
-    [expandedTables, fetchTableColumns]
+    [expandedTables, fetchTableColumns],
   );
 
   // Load schema once per connection, then reuse the store cache so tab switches don't re-fetch.

@@ -5,7 +5,7 @@ import type { ConnectionStatus } from '@/types';
 // Fetches ConnectionStatus when live, clears otherwise; exposes setter so query:stream:done can refresh it.
 export function useConnectionStatus(
   connectionId: string | undefined,
-  isConnected: boolean
+  isConnected: boolean,
 ): {
   status: ConnectionStatus | null;
   setStatus: (status: ConnectionStatus | null) => void;

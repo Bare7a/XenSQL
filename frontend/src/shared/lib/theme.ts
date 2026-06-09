@@ -1,5 +1,5 @@
+import { mirrorBootSetting, settings } from '@/shared/lib/settingsStore';
 import { STORAGE_KEYS } from '@/shared/lib/storageKeys';
-import { settings, mirrorBootSetting } from '@/shared/lib/settingsStore';
 
 export type AppTheme = 'dark' | 'light';
 

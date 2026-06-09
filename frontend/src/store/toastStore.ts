@@ -46,7 +46,7 @@ export const useToastStore = create<ToastState>((set, get) => ({
       setTimeout(() => {
         timers.delete(id);
         get().dismiss(id);
-      }, durationMs)
+      }, durationMs),
     );
   },
 

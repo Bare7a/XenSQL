@@ -10,8 +10,8 @@ import type {
   ResultSet,
   SavedQuery,
   SchemaInfo,
-  TabSessionState,
   TableInfo,
+  TabSessionState,
 } from '@/types';
 import { emptyTabSession } from '@/types';
 
@@ -91,15 +91,10 @@ interface AppState {
       columnTypes: string[];
       schemaName?: string;
       tableName?: string;
-    }
+    },
   ) => void;
   /** Appends streamed rows to one result set; drops events from a superseded run. */
-  appendResultRows: (
-    tabId: string,
-    streamId: string,
-    resultIndex: number,
-    rows: unknown[][]
-  ) => void;
+  appendResultRows: (tabId: string, streamId: string, resultIndex: number, rows: unknown[][]) => void;
   /** Finalizes one result set (result event) with summary metadata or a per-statement error. */
   finalizeResultSet: (
     tabId: string,
@@ -107,7 +102,7 @@ interface AppState {
     resultIndex: number,
     result: QueryResult | null,
     statement: string | null,
-    error: string | null
+    error: string | null,
   ) => void;
   /** Terminates a run (done event): clears the running indicator and surfaces a batch-level error. */
   finishRun: (
@@ -115,7 +110,7 @@ interface AppState {
     streamId: string,
     resultCount: number,
     error: string | null,
-    opts?: { connectionId?: string; markConnected?: boolean }
+    opts?: { connectionId?: string; markConnected?: boolean },
   ) => void;
   setActiveResultIndex: (tabId: string, index: number) => void;
   getTabSession: (id: string) => TabSessionState;
@@ -164,10 +159,8 @@ export const useAppStore = create<AppState>((set, get) => ({
     else delete next[id];
     set({ connectedIds: next });
   },
-  setSchemas: (connId, schemas) =>
-    set((s) => ({ schemas: { ...s.schemas, [connId]: schemas } })),
-  setTables: (key, tables) =>
-    set((s) => ({ tables: { ...s.tables, [key]: tables } })),
+  setSchemas: (connId, schemas) => set((s) => ({ schemas: { ...s.schemas, [connId]: schemas } })),
+  setTables: (key, tables) => set((s) => ({ tables: { ...s.tables, [key]: tables } })),
   setTabs: (tabs) => set({ tabs }),
   setActiveTab: (activeTabId) => set({ activeTabId }),
   addTab: (tab) => {
@@ -200,8 +193,8 @@ export const useAppStore = create<AppState>((set, get) => ({
       // clear) is the displayed result, so reflect it as a single result set to keep the
       // multi-result state consistent. The streaming actions manage results[] themselves.
       if ('result' in patch || 'resultError' in patch) {
-        const r = 'result' in patch ? patch.result ?? null : next.result;
-        const e = 'resultError' in patch ? patch.resultError ?? null : next.resultError;
+        const r = 'result' in patch ? (patch.result ?? null) : next.result;
+        const e = 'resultError' in patch ? (patch.resultError ?? null) : next.resultError;
         next.activeResultIndex = 0;
         if (e != null) {
           next.results = [{ result: null, error: e }];
@@ -350,8 +343,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   getTabSession: (id) => get().tabSession[id] ?? emptyTabSession(),
   setRunningTab: (runningTabId) => set({ runningTabId }),
   setHistory: (history) => set({ history: Array.isArray(history) ? history : [] }),
-  setSavedQueries: (savedQueries) =>
-    set({ savedQueries: Array.isArray(savedQueries) ? savedQueries : [] }),
+  setSavedQueries: (savedQueries) => set({ savedQueries: Array.isArray(savedQueries) ? savedQueries : [] }),
   reorderTabs: (fromId, toId) => {
     if (fromId === toId) return;
     const tabs = [...get().tabs];

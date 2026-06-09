@@ -34,13 +34,7 @@ function skipBlockComment(text: string, i: number, end: number): number {
 }
 
 // doubleEscape: '' / "" are embedded quotes (SQL convention); backticks don't double-escape.
-function skipQuoted(
-  text: string,
-  i: number,
-  quote: string,
-  doubleEscape: boolean,
-  end: number
-): number {
+function skipQuoted(text: string, i: number, quote: string, doubleEscape: boolean, end: number): number {
   i++;
   while (i < end) {
     if (text[i] === quote) {
@@ -160,18 +154,12 @@ export function parseSqlStatements(sql: string): SqlStatement[] {
   return statements;
 }
 
-export function findStatementAtRunLine(
-  statements: SqlStatement[],
-  line: number
-): SqlStatement | undefined {
+export function findStatementAtRunLine(statements: SqlStatement[], line: number): SqlStatement | undefined {
   return statements.find((s) => s.runLine === line);
 }
 
 // The statement whose [start, end) range contains offset (cursor), if any.
-export function findStatementAtOffset(
-  statements: SqlStatement[],
-  offset: number
-): SqlStatement | undefined {
+export function findStatementAtOffset(statements: SqlStatement[], offset: number): SqlStatement | undefined {
   return statements.find((s) => offset >= s.start && offset < s.end);
 }
 
@@ -197,7 +185,7 @@ export function currentStatementStart(statements: SqlStatement[], offset: number
 export function currentStatementRange(
   statements: SqlStatement[],
   offset: number,
-  textLength: number
+  textLength: number,
 ): { start: number; end: number } {
   const start = currentStatementStart(statements, offset);
   const containing = findStatementAtOffset(statements, offset);

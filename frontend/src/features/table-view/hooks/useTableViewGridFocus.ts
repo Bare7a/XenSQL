@@ -1,11 +1,12 @@
-import { useCallback, useEffect, useLayoutEffect, useRef } from 'react';
 import type { Virtualizer } from '@tanstack/react-virtual';
+import { useCallback, useEffect, useLayoutEffect, useRef } from 'react';
 import type { FocusCol } from '@/shared/lib/grid';
+import { findGridCellElement } from '@/shared/lib/gridCellRange';
 import {
   focusGridCellDom,
+  type GridCellFocus,
   resolveGridCellFocus,
   scrollVirtualizerToRow,
-  type GridCellFocus,
 } from '@/shared/lib/gridFocus';
 import {
   applyScrollSnapshot,
@@ -13,7 +14,6 @@ import {
   restoreScrollSnapshot,
   type ScrollSnapshot,
 } from '@/shared/lib/gridScroll';
-import { findGridCellElement } from '@/shared/lib/gridCellRange';
 
 interface UseTableViewGridFocusOptions {
   loading: boolean;
@@ -65,14 +65,8 @@ export function useTableViewGridFocus({
   const scrollSnapshotRef = useRef<ScrollSnapshot | null>(null);
 
   const currentFocusTarget = useCallback(
-    () =>
-      resolveGridCellFocus(
-        focusRef.current.row,
-        focusRef.current.colPos,
-        rowsLength,
-        colCount
-      ),
-    [focusRef, rowsLength, colCount]
+    () => resolveGridCellFocus(focusRef.current.row, focusRef.current.colPos, rowsLength, colCount),
+    [focusRef, rowsLength, colCount],
   );
 
   const focusCell = useCallback(
@@ -86,15 +80,11 @@ export function useTableViewGridFocus({
         cellId: getElementId('cell', row, colIdx),
         scrollRow,
         rowHeight,
-        scrollToRow: scrollRow
-          ? () => scrollVirtualizerToRow(rowVirtualizer, row)
-          : undefined,
-        onFirstAttempt: scrollRow
-          ? undefined
-          : () => restoreScrollSnapshot(scrollSnapshotRef, wrap),
+        scrollToRow: scrollRow ? () => scrollVirtualizerToRow(rowVirtualizer, row) : undefined,
+        onFirstAttempt: scrollRow ? undefined : () => restoreScrollSnapshot(scrollSnapshotRef, wrap),
       });
     },
-    [tableWrapRef, colIndices, getElementId, rowHeight, rowVirtualizer]
+    [tableWrapRef, colIndices, getElementId, rowHeight, rowVirtualizer],
   );
 
   const syncFocusRow = useCallback(
@@ -103,7 +93,7 @@ export function useTableViewGridFocus({
         focusRow(target.row, target.colPos);
       }
     },
-    [focusedRowIdx, focusedColPos, focusRow]
+    [focusedRowIdx, focusedColPos, focusRow],
   );
 
   useEffect(() => {
@@ -140,9 +130,7 @@ export function useTableViewGridFocus({
     if (loadingEnded) {
       const saved = restoreFocusRef.current ?? lastHighlightedRef.current;
       restoreFocusRef.current = null;
-      const target = saved
-        ? resolveGridCellFocus(saved.row, saved.colPos, rowsLength, colCount)
-        : null;
+      const target = saved ? resolveGridCellFocus(saved.row, saved.colPos, rowsLength, colCount) : null;
       if (target) {
         syncFocusRow(target);
         if (isActive) pendingDomFocusRef.current = true;
@@ -197,17 +185,7 @@ export function useTableViewGridFocus({
     if (!target) return;
     pendingDomFocusRef.current = false;
     focusCell(target.row, target.colPos, false);
-  }, [
-    isActive,
-    loading,
-    editing,
-    rowsLength,
-    colCount,
-    focusedRowIdx,
-    focusedColPos,
-    focusCell,
-    currentFocusTarget,
-  ]);
+  }, [isActive, loading, editing, rowsLength, colCount, focusedRowIdx, focusedColPos, focusCell, currentFocusTarget]);
 
   useEffect(() => {
     if (loading || editing != null || rowsLength === 0) return;

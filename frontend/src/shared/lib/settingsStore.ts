@@ -2,7 +2,7 @@
 // in the portable settings.json (not the non-relocatable WebView localStorage);
 // Go calls are async, so we hydrate a cache at startup and write through to Go.
 
-import { GetSettings, SetSetting, DeleteSetting } from '@wails/go/app/App';
+import { DeleteSetting, GetSettings, SetSetting } from '@wails/go/app/App';
 
 let cache = new Map<string, string>();
 

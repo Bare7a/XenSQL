@@ -1,19 +1,13 @@
+import { Quit, WindowMinimise, WindowToggleMaximise } from '@wails/runtime/runtime';
+import { Minus, Square, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Minus, Square, X } from 'lucide-react';
 import xensqlIcon from '@/assets/images/xensql-icon.png';
-import { Quit, WindowMinimise, WindowToggleMaximise } from '@wails/runtime/runtime';
-import { formatBinding, getEffectiveBinding, type KeyBinding } from '@/shared/lib/shortcuts';
-import { runEditAction, type EditAction } from '@/features/layout/lib/editActions';
+import { type EditAction, runEditAction } from '@/features/layout/lib/editActions';
 import { ViewMenuContent } from '@/features/layout/ViewMenuContent';
+import { formatBinding, getEffectiveBinding, type KeyBinding } from '@/shared/lib/shortcuts';
 
-export type AppMenuAction =
-  | 'about'
-  | 'shortcuts'
-  | 'tips'
-  | 'newTab'
-  | 'closeTab'
-  | 'quickSearch';
+export type AppMenuAction = 'about' | 'shortcuts' | 'tips' | 'newTab' | 'closeTab' | 'quickSearch';
 
 const HELP_ITEMS: { id: AppMenuAction; labelKey: string }[] = [
   { id: 'tips', labelKey: 'menu.keyboardTips' },
@@ -23,25 +17,23 @@ const HELP_ITEMS: { id: AppMenuAction; labelKey: string }[] = [
 
 type FileMenuRow =
   | { id: AppMenuAction | 'exit'; labelKey: string; bindingId?: string }
-  | { separator: true };
+  | { separator: true; id: string };
 
 const FILE_MENU_ROWS: FileMenuRow[] = [
   { id: 'newTab', labelKey: 'menu.newTab', bindingId: 'newTab' },
   { id: 'closeTab', labelKey: 'menu.closeTab', bindingId: 'closeTab' },
-  { separator: true },
+  { separator: true, id: 'file-sep-1' },
   { id: 'quickSearch', labelKey: 'menu.quickSearch', bindingId: 'quickSearch' },
-  { separator: true },
+  { separator: true, id: 'file-sep-2' },
   { id: 'exit', labelKey: 'menu.exit' },
 ];
 
-type EditMenuRow =
-  | { id: EditAction; labelKey: string; binding: KeyBinding }
-  | { separator: true };
+type EditMenuRow = { id: EditAction; labelKey: string; binding: KeyBinding } | { separator: true; id: string };
 
 const EDIT_MENU_ROWS: EditMenuRow[] = [
   { id: 'undo', labelKey: 'editor.contextUndo', binding: { key: 'z', ctrl: true } },
   { id: 'redo', labelKey: 'editor.contextRedo', binding: { key: 'z', ctrl: true, shift: true } },
-  { separator: true },
+  { separator: true, id: 'edit-sep-1' },
   { id: 'cut', labelKey: 'editor.contextCut', binding: { key: 'x', ctrl: true } },
   { id: 'copy', labelKey: 'editor.contextCopy', binding: { key: 'c', ctrl: true } },
   { id: 'paste', labelKey: 'editor.contextPaste', binding: { key: 'v', ctrl: true } },
@@ -115,17 +107,14 @@ export function AppTitleBar({ onAction, sidebarOpen, onToggleSidebar, jsonPanelO
   };
 
   return (
-    <div
-      ref={barRef}
-      className="app-title-bar app-title-bar-drag"
-      onDoubleClick={onTitleBarDoubleClick}
-    >
+    // biome-ignore lint/a11y/noStaticElementInteractions: OS-style window title bar; double-click-to-maximize mirrors native window chrome and is also available via the window-control buttons.
+    <div ref={barRef} className="app-title-bar app-title-bar-drag" onDoubleClick={onTitleBarDoubleClick}>
       <div className="app-title-bar-left">
         <img src={xensqlIcon} alt="XenSQL" className="app-title-bar-logo" />
         <TitleBarMenu label={t('menu.file')} open={openMenu === 'file'} onToggle={() => toggleMenu('file')}>
-          {FILE_MENU_ROWS.map((row, i) =>
+          {FILE_MENU_ROWS.map((row) =>
             'separator' in row ? (
-              <div key={`sep-${i}`} className="app-title-bar-dropdown-separator" role="separator" />
+              <div key={row.id} className="app-title-bar-dropdown-separator" />
             ) : (
               <button
                 key={row.id}
@@ -143,18 +132,16 @@ export function AppTitleBar({ onAction, sidebarOpen, onToggleSidebar, jsonPanelO
               >
                 <span className="menu-check-label">{t(row.labelKey)}</span>
                 {row.bindingId && (
-                  <span className="menu-check-shortcut">
-                    {formatBinding(getEffectiveBinding(row.bindingId))}
-                  </span>
+                  <span className="menu-check-shortcut">{formatBinding(getEffectiveBinding(row.bindingId))}</span>
                 )}
               </button>
-            )
+            ),
           )}
         </TitleBarMenu>
         <TitleBarMenu label={t('menu.edit')} open={openMenu === 'edit'} onToggle={() => toggleMenu('edit')}>
-          {EDIT_MENU_ROWS.map((row, i) =>
+          {EDIT_MENU_ROWS.map((row) =>
             'separator' in row ? (
-              <div key={`sep-${i}`} className="app-title-bar-dropdown-separator" role="separator" />
+              <div key={row.id} className="app-title-bar-dropdown-separator" />
             ) : (
               <button
                 key={row.id}
@@ -170,7 +157,7 @@ export function AppTitleBar({ onAction, sidebarOpen, onToggleSidebar, jsonPanelO
                 <span className="menu-check-label">{t(row.labelKey)}</span>
                 <span className="menu-check-shortcut">{formatBinding(row.binding)}</span>
               </button>
-            )
+            ),
           )}
         </TitleBarMenu>
         <TitleBarMenu label={t('menu.view')} open={openMenu === 'view'} onToggle={() => toggleMenu('view')}>

@@ -6,10 +6,7 @@ export const GRID_KEYBOARD_SUPPRESS_SELECTOR = '.monaco-editor, .modal-overlay';
 const GRID_SELECTOR = '.results-grid, .table-view-grid';
 
 /** Resolve by id within a container - avoids duplicate ids across mounted tab layers. */
-export function queryElementInContainer(
-  container: HTMLElement | null | undefined,
-  id: string
-): HTMLElement | null {
+export function queryElementInContainer(container: HTMLElement | null | undefined, id: string): HTMLElement | null {
   if (!container) return null;
   return container.querySelector<HTMLElement>(`#${CSS.escape(id)}`);
 }
@@ -25,7 +22,7 @@ export function isInsideGrid(
   target: EventTarget | null,
   active: Element | null,
   wrap?: HTMLElement | null,
-  gridSelector: string = GRID_SELECTOR
+  gridSelector: string = GRID_SELECTOR,
 ): boolean {
   const node = target as Element | null;
   if (node?.closest?.(GRID_KEYBOARD_SUPPRESS_SELECTOR) != null) return false;

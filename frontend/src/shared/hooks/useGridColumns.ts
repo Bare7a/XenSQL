@@ -1,9 +1,5 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import {
-  COL_WIDTH_DEBOUNCE_MS,
-  SAMPLE_ROWS,
-  computeColWidths,
-} from '@/shared/lib/grid';
+import { COL_WIDTH_DEBOUNCE_MS, computeColWidths, SAMPLE_ROWS } from '@/shared/lib/grid';
 
 // Streaming delivers meta with empty rows before the first batch; wait this long before falling back to header-only widths for genuinely-empty results.
 const EMPTY_RESULT_FALLBACK_MS = 500;
@@ -25,19 +21,13 @@ export interface GridColumnsView {
   applyColumnWidth: (colPos: number, widthPx: number) => void;
 }
 
-export function useGridColumns(
-  columns: string[],
-  sortedRows: unknown[][]
-): GridColumnsView {
+export function useGridColumns(columns: string[], sortedRows: unknown[][]): GridColumnsView {
   const [hiddenColumns, setHiddenColumns] = useState<Set<string>>(new Set());
   const [colWidths, setColWidths] = useState<string[]>([]);
   // Columns the user drag-resized - preserved across re-samples so streaming doesn't snap them back.
   const userSizedRef = useRef<Set<number>>(new Set());
 
-  const displayColumns = useMemo(
-    () => columns.filter((c) => !hiddenColumns.has(c)),
-    [columns, hiddenColumns]
-  );
+  const displayColumns = useMemo(() => columns.filter((c) => !hiddenColumns.has(c)), [columns, hiddenColumns]);
 
   const columnIndexByName = useMemo(() => {
     const m = new Map<string, number>();
@@ -47,31 +37,33 @@ export function useGridColumns(
 
   const colIndices = useMemo(
     () => displayColumns.map((c) => columnIndexByName.get(c) ?? -1),
-    [displayColumns, columnIndexByName]
+    [displayColumns, columnIndexByName],
   );
 
-  const widthsEqual = (a: string[], b: string[]) =>
-    a.length === b.length && a.every((w, i) => w === b[i]);
+  const widthsEqual = (a: string[], b: string[]) => a.length === b.length && a.every((w, i) => w === b[i]);
 
   // State (not ref) so flipping it triggers a re-render that lets `columnsSized` switch on without an extra dep.
   const [sizedFor, setSizedFor] = useState<string[] | null>(null);
 
-  const computeAndSetWidths = useCallback((preserveUserSized = false) => {
-    if (!displayColumns.length || !colIndices.length) {
-      setSizedFor(null);
-      setColWidths((prev) => (prev.length === 0 ? prev : []));
-      return;
-    }
-    const sample = sortedRows.slice(0, SAMPLE_ROWS);
-    const next = computeColWidths(displayColumns, colIndices, sample);
-    setSizedFor(displayColumns);
-    setColWidths((prev) => {
-      const merged = preserveUserSized
-        ? next.map((w, i) => (userSizedRef.current.has(i) && prev[i] != null ? prev[i] : w))
-        : next;
-      return widthsEqual(prev, merged) ? prev : merged;
-    });
-  }, [displayColumns, colIndices, sortedRows]);
+  const computeAndSetWidths = useCallback(
+    (preserveUserSized = false) => {
+      if (!displayColumns.length || !colIndices.length) {
+        setSizedFor(null);
+        setColWidths((prev) => (prev.length === 0 ? prev : []));
+        return;
+      }
+      const sample = sortedRows.slice(0, SAMPLE_ROWS);
+      const next = computeColWidths(displayColumns, colIndices, sample);
+      setSizedFor(displayColumns);
+      setColWidths((prev) => {
+        const merged = preserveUserSized
+          ? next.map((w, i) => (userSizedRef.current.has(i) && prev[i] != null ? prev[i] : w))
+          : next;
+        return widthsEqual(prev, merged) ? prev : merged;
+      });
+    },
+    [displayColumns, colIndices, sortedRows],
+  );
 
   // Stable ref avoids re-firing width computation mid-stream when identity changes on every row update.
   const computeAndSetWidthsRef = useRef(computeAndSetWidths);
@@ -108,9 +100,7 @@ export function useGridColumns(
   }, [sortedRows.length, displayColumns, sizedFor]);
 
   const columnsSized =
-    displayColumns.length > 0 &&
-    colWidths.length === displayColumns.length &&
-    sizedFor === displayColumns;
+    displayColumns.length > 0 && colWidths.length === displayColumns.length && sizedFor === displayColumns;
 
   const fitColumns = useCallback(() => {
     userSizedRef.current.clear();

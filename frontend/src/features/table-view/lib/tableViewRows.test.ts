@@ -1,10 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  TABLE_PAGE_SIZE,
-  mergeTablePage,
-  primaryKeyKey,
-  rowPrimaryKey,
-} from '@/features/table-view/lib/tableViewRows';
+import { mergeTablePage, primaryKeyKey, rowPrimaryKey, TABLE_PAGE_SIZE } from '@/features/table-view/lib/tableViewRows';
 
 describe('TABLE_PAGE_SIZE', () => {
   it('is positive', () => {
@@ -38,15 +33,11 @@ describe('rowPrimaryKey', () => {
   });
 
   it('skips PK names that are not in the columns list', () => {
-    expect(
-      rowPrimaryKey([1, 'a'], ['id', 'name'], ['id', 'unknown'])
-    ).toEqual({ id: 1 });
+    expect(rowPrimaryKey([1, 'a'], ['id', 'name'], ['id', 'unknown'])).toEqual({ id: 1 });
   });
 
   it('supports composite primary keys, preserving the PK order', () => {
-    expect(
-      rowPrimaryKey([1, 'a', 2], ['x', 'y', 'z'], ['z', 'x'])
-    ).toEqual({ z: 2, x: 1 });
+    expect(rowPrimaryKey([1, 'a', 2], ['x', 'y', 'z'], ['z', 'x'])).toEqual({ z: 2, x: 1 });
   });
 });
 
@@ -56,12 +47,7 @@ describe('mergeTablePage', () => {
   });
 
   it('appends to previous rows when replace=false', () => {
-    expect(mergeTablePage([[1], [2]], [[3], [4]], false)).toEqual([
-      [1],
-      [2],
-      [3],
-      [4],
-    ]);
+    expect(mergeTablePage([[1], [2]], [[3], [4]], false)).toEqual([[1], [2], [3], [4]]);
   });
 
   it('does not mutate the previous array', () => {

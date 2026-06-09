@@ -6,11 +6,7 @@ interface Props {
   selectedColumns: Set<string>;
   sortedColumn: string | null;
   sortDirection: 'ASC' | 'DESC';
-  onHeaderClick: (
-    col: string,
-    colPos: number,
-    e: React.MouseEvent<HTMLTableCellElement>
-  ) => void;
+  onHeaderClick: (col: string, colPos: number, e: React.MouseEvent<HTMLTableCellElement>) => void;
   onSortToggle: (col: string) => void;
   onStartResize: (e: React.MouseEvent, colPos: number) => void;
 }
@@ -64,10 +60,8 @@ export function GridHeaderRow({
             >
               {sortedColumn === col ? (sortDirection === 'ASC' ? '▴' : '▾') : '▴▾'}
             </button>
-            <div
-              className="col-resize-handle"
-              onMouseDown={(e) => onStartResize(e, colPos)}
-            />
+            {/* biome-ignore lint/a11y/noStaticElementInteractions: pointer-drag column resize handle; resizing is a mouse affordance and columns remain readable without it. */}
+            <div className="col-resize-handle" onMouseDown={(e) => onStartResize(e, colPos)} />
           </th>
         ))}
       </tr>

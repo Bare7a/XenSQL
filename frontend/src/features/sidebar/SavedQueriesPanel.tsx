@@ -1,17 +1,16 @@
+import { ArrowDownAZ, CalendarPlus, Clock, Edit2, Pin, PinOff, Search, Trash2 } from 'lucide-react';
 import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ArrowDownAZ, CalendarPlus, Clock, Edit2, Pin, PinOff, Search, Trash2 } from 'lucide-react';
+import { RenameQueryDialog } from '@/features/editor/RenameQueryDialog';
+import { ContextMenu } from '@/shared/components/ContextMenu';
+import { useContextMenu } from '@/shared/hooks/useContextMenu';
+import { rowActivateKeyDown, useListKeyboardNav } from '@/shared/hooks/useListKeyboardNav';
+import { usePinnedQueries } from '@/shared/hooks/usePinnedQueries';
 import { api } from '@/shared/lib/api';
 import { appConfirm, appError } from '@/shared/lib/appDialog';
 import { refreshSavedQueries } from '@/shared/lib/savedQueriesSync';
-import { ContextMenu } from '@/shared/components/ContextMenu';
-import { useContextMenu } from '@/shared/hooks/useContextMenu';
-import { useListKeyboardNav } from '@/shared/hooks/useListKeyboardNav';
-import { usePinnedQueries } from '@/shared/hooks/usePinnedQueries';
 import { oneLinePreview } from '@/shared/lib/sqlPreview';
-import { readStoredString, writeStoredString, STORAGE_KEYS } from '@/shared/lib/storageKeys';
-import { RenameQueryDialog } from '@/features/editor/RenameQueryDialog';
-import type { SavedQuery } from '@/types';
+import { readStoredString, STORAGE_KEYS, writeStoredString } from '@/shared/lib/storageKeys';
 import {
   useActiveTab,
   useConnections,
@@ -20,6 +19,7 @@ import {
   useStoreActions,
   useTabs,
 } from '@/store/selectors';
+import type { SavedQuery } from '@/types';
 
 type SortKey = 'name' | 'createdAt' | 'updatedAt';
 const SORT_KEYS: readonly SortKey[] = ['name', 'updatedAt', 'createdAt'];
@@ -56,10 +56,7 @@ export function SavedQueriesPanel({ onOpenSavedQuery }: SavedQueriesPanelProps) 
 
   const { onKeyDown } = useListKeyboardNav();
 
-  const connectionById = useMemo(
-    () => new Map(connections.map((c) => [c.id, c])),
-    [connections]
-  );
+  const connectionById = useMemo(() => new Map(connections.map((c) => [c.id, c])), [connections]);
 
   const resolvedConnId = useResolvedConnectionId();
 
@@ -171,7 +168,7 @@ export function SavedQueriesPanel({ onOpenSavedQuery }: SavedQueriesPanelProps) 
         void appError(err, t('errors.generic'));
       }
     },
-    [t]
+    [t],
   );
 
   const openRowMenu = useCallback(
@@ -189,7 +186,7 @@ export function SavedQueriesPanel({ onOpenSavedQuery }: SavedQueriesPanelProps) 
         { label: t('common.delete'), action: () => void deleteSaved(item.id) },
       ]);
     },
-    [onOpenSavedQuery, isPinned, togglePin, duplicate, t]
+    [onOpenSavedQuery, isPinned, togglePin, duplicate, t],
   );
 
   const openSortMenu = useCallback(
@@ -212,10 +209,10 @@ export function SavedQueriesPanel({ onOpenSavedQuery }: SavedQueriesPanelProps) 
           icon: sortIconFor(key),
           active: sort === key,
           action: () => changeSort(key),
-        }))
+        })),
       );
     },
-    [sort, changeSort, t]
+    [sort, changeSort, t],
   );
 
   const sortLabel =
@@ -282,6 +279,7 @@ export function SavedQueriesPanel({ onOpenSavedQuery }: SavedQueriesPanelProps) 
           </p>
         </div>
       ) : (
+        /* biome-ignore lint/a11y/noStaticElementInteractions: keyboard-navigation container (arrow/Home/End roving focus over its focusable rows via useListKeyboardNav); not itself an interactive control. */
         <div className="sidebar-list" onKeyDown={onKeyDown}>
           {displayed.map((item, i) => {
             const conn = item.connectionId ? connectionById.get(item.connectionId) : undefined;
@@ -292,9 +290,11 @@ export function SavedQueriesPanel({ onOpenSavedQuery }: SavedQueriesPanelProps) 
               <div
                 key={item.id || `saved-${i}`}
                 className="tree-item history-item"
+                role="button"
                 tabIndex={0}
                 data-nav-item
                 onClick={() => onOpenSavedQuery(item)}
+                onKeyDown={rowActivateKeyDown}
                 onContextMenu={(e) => openRowMenu(e, item)}
               >
                 <div className="flex-1">
@@ -302,12 +302,8 @@ export function SavedQueriesPanel({ onOpenSavedQuery }: SavedQueriesPanelProps) 
                     {pinnedNow && <Pin className="sidebar-pin-icon" aria-hidden />}
                     {item.name}
                   </span>
-                  {conn && scope === 'all' && (
-                    <span className="sidebar-entry-sub">{conn.name}</span>
-                  )}
-                  <span className="sidebar-entry-sql sidebar-entry-sql--spaced">
-                    {oneLinePreview(item.sql)}
-                  </span>
+                  {conn && scope === 'all' && <span className="sidebar-entry-sub">{conn.name}</span>}
+                  <span className="sidebar-entry-sql sidebar-entry-sql--spaced">{oneLinePreview(item.sql)}</span>
                 </div>
                 <span className="history-item-actions">
                   <button
@@ -348,9 +344,7 @@ export function SavedQueriesPanel({ onOpenSavedQuery }: SavedQueriesPanelProps) 
         </div>
       )}
 
-      {menu && (
-        <ContextMenu x={menu.x} y={menu.y} items={menu.items} onClose={closeMenu} />
-      )}
+      {menu && <ContextMenu x={menu.x} y={menu.y} items={menu.items} onClose={closeMenu} />}
 
       {renameTarget && (
         <RenameQueryDialog

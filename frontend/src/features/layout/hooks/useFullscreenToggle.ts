@@ -1,9 +1,5 @@
+import { WindowFullscreen, WindowIsFullscreen, WindowUnfullscreen } from '@wails/runtime/runtime';
 import { useCallback } from 'react';
-import {
-  WindowFullscreen,
-  WindowIsFullscreen,
-  WindowUnfullscreen,
-} from '@wails/runtime/runtime';
 
 export function useFullscreenToggle(): () => Promise<void> {
   return useCallback(async () => {

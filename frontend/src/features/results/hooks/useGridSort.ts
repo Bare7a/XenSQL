@@ -1,5 +1,5 @@
-import { useCallback, useMemo, useState } from "react";
-import type { SortDirection } from "@/shared/lib/grid";
+import { useCallback, useMemo, useState } from 'react';
+import type { SortDirection } from '@/shared/lib/grid';
 
 export type { SortDirection };
 
@@ -23,7 +23,7 @@ interface SortState {
   dir: SortDirection;
 }
 
-const INITIAL_SORT: SortState = { col: null, dir: "ASC" };
+const INITIAL_SORT: SortState = { col: null, dir: 'ASC' };
 
 // One cached collator: building it per comparison (what String.localeCompare with an options object
 // effectively does) is ~100x slower over a large sort.
@@ -31,14 +31,14 @@ const naturalCollator = new Intl.Collator(undefined, { numeric: true });
 
 // localeCompare(numeric) ignores the minus sign, so compare numbers/booleans by value directly.
 export function compareCellValues(av: unknown, bv: unknown): number {
-  if (typeof av === "number" && typeof bv === "number") {
+  if (typeof av === 'number' && typeof bv === 'number') {
     // NaN isn't ordered by </>; sort it to the end (like nulls) instead of comparing equal to everything.
     const aNan = Number.isNaN(av);
     const bNan = Number.isNaN(bv);
     if (aNan || bNan) return aNan && bNan ? 0 : aNan ? 1 : -1;
     return av < bv ? -1 : av > bv ? 1 : 0;
   }
-  if (typeof av === "boolean" && typeof bv === "boolean") {
+  if (typeof av === 'boolean' && typeof bv === 'boolean') {
     return av === bv ? 0 : av ? 1 : -1;
   }
   return naturalCollator.compare(String(av), String(bv));
@@ -49,7 +49,7 @@ export function useGridSort(rows: unknown[][], columns: string[]): GridSortView 
   const [{ col: sortCol, dir: sortDir }, setSort] = useState<SortState>(INITIAL_SORT);
 
   const handleColumnSort = useCallback((col: string) => {
-    setSort((prev) => (prev.col === col ? { col, dir: prev.dir === "ASC" ? "DESC" : "ASC" } : { col, dir: "ASC" }));
+    setSort((prev) => (prev.col === col ? { col, dir: prev.dir === 'ASC' ? 'DESC' : 'ASC' } : { col, dir: 'ASC' }));
   }, []);
 
   const resetSort = useCallback(() => {
@@ -73,13 +73,13 @@ export function useGridSort(rows: unknown[][], columns: string[]): GridSortView 
     const order = new Array<number>(n);
     for (let i = 0; i < n; i++) order[i] = i;
     // null/NaN always sort last (not flipped by direction); everything else flips with dirMul.
-    const dirMul = sortDir === "ASC" ? 1 : -1;
+    const dirMul = sortDir === 'ASC' ? 1 : -1;
 
     // Fast path: a purely numeric column skips string conversion and collation entirely.
     let numericOnly = true;
     for (let i = 0; i < n; i++) {
       const v = rows[i][colIdx];
-      if (v != null && typeof v !== "number") {
+      if (v != null && typeof v !== 'number') {
         numericOnly = false;
         break;
       }

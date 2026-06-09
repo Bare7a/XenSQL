@@ -1,11 +1,8 @@
 import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { api } from '@/shared/lib/api';
 import { useTransactionActions } from '@/features/editor/hooks/useTransactionActions';
-import {
-  detectTransactionControl,
-  type TxnControlAction,
-} from '@/features/editor/lib/transactionControl';
+import { detectTransactionControl, type TxnControlAction } from '@/features/editor/lib/transactionControl';
+import { api } from '@/shared/lib/api';
 import { useStoreActions, useTabs } from '@/store/selectors';
 import type { QueryResult } from '@/types';
 
@@ -51,11 +48,7 @@ export function useQueryRunner() {
       const txnControl = detectTransactionControl(sql);
       if (txnControl) {
         const dispatch =
-          txnControl === 'begin'
-            ? beginTransaction
-            : txnControl === 'commit'
-              ? commitTransaction
-              : rollbackTransaction;
+          txnControl === 'begin' ? beginTransaction : txnControl === 'commit' ? commitTransaction : rollbackTransaction;
         const ok = await dispatch(tabId);
         if (ok) {
           updateTabSession(tabId, {
@@ -77,7 +70,7 @@ export function useQueryRunner() {
         setRunningTab(null);
       }
     },
-    [tabs, setRunningTab, updateTabSession, beginTransaction, commitTransaction, rollbackTransaction, t]
+    [tabs, setRunningTab, updateTabSession, beginTransaction, commitTransaction, rollbackTransaction, t],
   );
 
   const cancelQueryForTab = useCallback(
@@ -86,7 +79,7 @@ export function useQueryRunner() {
       if (!tab) return;
       void api.cancelQuery(tab.connectionId);
     },
-    [tabs]
+    [tabs],
   );
 
   return { runQueryForTab, cancelQueryForTab };

@@ -1,9 +1,5 @@
 import { useEffect, useRef } from 'react';
-import {
-  GRID_KEYBOARD_SUPPRESS_SELECTOR,
-  isEditableTarget,
-  isInsideGrid,
-} from '@/shared/lib/dom';
+import { GRID_KEYBOARD_SUPPRESS_SELECTOR, isEditableTarget, isInsideGrid } from '@/shared/lib/dom';
 
 interface UseGridGlobalKeysOptions {
   tableWrapRef: React.RefObject<HTMLDivElement | null>;

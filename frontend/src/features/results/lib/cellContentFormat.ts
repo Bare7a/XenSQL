@@ -123,7 +123,7 @@ export function initialContent(raw: string, isNull: boolean): { text: string; ki
 export function applyContentFormat(
   content: string,
   kind: ContentKind,
-  mode: 'beautify' | 'minify'
+  mode: 'beautify' | 'minify',
 ): { text: string; kind: ContentKind } {
   const formatKind = (k: ContentKind) => {
     if (k === 'json') {

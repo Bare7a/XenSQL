@@ -4,21 +4,13 @@ export function findTableViewTab(
   tabs: EditorTab[],
   connectionId: string,
   schema: string,
-  table: string
+  table: string,
 ): EditorTab | undefined {
   return tabs.find(
-    (t) =>
-      t.tableView?.schema === schema &&
-      t.tableView?.table === table &&
-      t.connectionId === connectionId
+    (t) => t.tableView?.schema === schema && t.tableView?.table === table && t.connectionId === connectionId,
   );
 }
 
-export function isTableViewOpenInTabs(
-  tabs: EditorTab[],
-  connectionId: string,
-  schema: string,
-  table: string
-): boolean {
+export function isTableViewOpenInTabs(tabs: EditorTab[], connectionId: string, schema: string, table: string): boolean {
   return findTableViewTab(tabs, connectionId, schema, table) != null;
 }

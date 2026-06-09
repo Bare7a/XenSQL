@@ -1,23 +1,18 @@
+import { Loader2, Plug, RefreshCw, Search } from 'lucide-react';
 import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Loader2, Plug, RefreshCw, Search } from 'lucide-react';
-import { api } from '@/shared/lib/api';
-import { cx } from '@/shared/lib/cx';
-import { formatError } from '@/shared/lib/normalize';
-import { insertSqlIntoEditor } from '@/shared/lib/insertSql';
-import { appToast } from '@/shared/lib/appToast';
+import { buildQualifiedTable } from '@/features/editor/lib/sqlIdentifiers';
+import { tableKey, tableMatchesSearch, useSchemaTree } from '@/features/sidebar/hooks/useSchemaTree';
+import { SchemaTreeNode } from '@/features/sidebar/SchemaTreeNode';
 import { ContextMenu } from '@/shared/components/ContextMenu';
 import { useContextMenu } from '@/shared/hooks/useContextMenu';
 import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue';
 import { useListKeyboardNav } from '@/shared/hooks/useListKeyboardNav';
-import { buildQualifiedTable } from '@/features/editor/lib/sqlIdentifiers';
-import type { TableInfo } from '@/types';
-import {
-  tableKey,
-  tableMatchesSearch,
-  useSchemaTree,
-} from '@/features/sidebar/hooks/useSchemaTree';
-import { SchemaTreeNode } from '@/features/sidebar/SchemaTreeNode';
+import { api } from '@/shared/lib/api';
+import { appToast } from '@/shared/lib/appToast';
+import { cx } from '@/shared/lib/cx';
+import { insertSqlIntoEditor } from '@/shared/lib/insertSql';
+import { formatError } from '@/shared/lib/normalize';
 import {
   useConnectedIds,
   useConnections,
@@ -25,22 +20,15 @@ import {
   useSchemas,
   useStoreActions,
 } from '@/store/selectors';
+import type { TableInfo } from '@/types';
 
 interface SchemaPanelProps {
-  onOpenQuery: (
-    connId: string,
-    sql?: string,
-    options?: { forceNew?: boolean; title?: string }
-  ) => void;
+  onOpenQuery: (connId: string, sql?: string, options?: { forceNew?: boolean; title?: string }) => void;
   onBrowseTable: (connId: string, schema: string, table: string) => void;
   onOpenConnectionTab: (connId: string) => void;
 }
 
-export function SchemaPanel({
-  onOpenQuery,
-  onBrowseTable,
-  onOpenConnectionTab,
-}: SchemaPanelProps) {
+export function SchemaPanel({ onOpenQuery, onBrowseTable, onOpenConnectionTab }: SchemaPanelProps) {
   const { t } = useTranslation();
   const connections = useConnections();
   const connectedIds = useConnectedIds();
@@ -55,7 +43,7 @@ export function SchemaPanel({
 
   const connConnected = !!(connId && connectedIds[connId]);
   const schemaDriver = connections.find((c) => c.id === connId)?.driver ?? 'postgres';
-  const schemaList = connId ? schemas[connId] ?? [] : [];
+  const schemaList = connId ? (schemas[connId] ?? []) : [];
   const debouncedSearch = useDebouncedValue(tableSearch, 200);
   const schemaSearch = debouncedSearch.trim().toLowerCase();
 
@@ -84,7 +72,7 @@ export function SchemaPanel({
         /* clipboard unavailable */
       }
     },
-    [t]
+    [t],
   );
 
   const openTableMenu = useCallback(
@@ -116,7 +104,7 @@ export function SchemaPanel({
         { label: t('sidebar.copyQualifiedName'), action: () => void copyText(qualified) },
       ]);
     },
-    [connId, schemaDriver, onBrowseTable, onOpenQuery, copyText, openMenu, t]
+    [connId, schemaDriver, onBrowseTable, onOpenQuery, copyText, openMenu, t],
   );
 
   const openColumnMenu = useCallback(
@@ -126,7 +114,7 @@ export function SchemaPanel({
         { label: t('sidebar.copyName'), action: () => void copyText(colName) },
       ]);
     },
-    [copyText, openMenu, t]
+    [copyText, openMenu, t],
   );
 
   // Stable callbacks so memo(SchemaTableRow) holds across tree re-renders.
@@ -134,13 +122,13 @@ export function SchemaPanel({
     (schemaName: string, table: string) => {
       if (connId) void toggleTableColumns(connId, schemaName, table);
     },
-    [connId, toggleTableColumns]
+    [connId, toggleTableColumns],
   );
   const handleBrowseTableRow = useCallback(
     (schemaName: string, table: string) => {
       if (connId) onBrowseTable(connId, schemaName, table);
     },
-    [connId, onBrowseTable]
+    [connId, onBrowseTable],
   );
   const handleColumnClick = useCallback((colName: string) => insertSqlIntoEditor(colName), []);
 
@@ -171,7 +159,7 @@ export function SchemaPanel({
     !schemaSearch ||
     schemaList.some((sch) => {
       const key = `${connId}:${sch.name}`;
-      const v = visibleTablesByKey ? visibleTablesByKey[key] ?? [] : tables[key] || [];
+      const v = visibleTablesByKey ? (visibleTablesByKey[key] ?? []) : tables[key] || [];
       return v.length > 0 || loadingTables[key];
     });
 
@@ -200,9 +188,7 @@ export function SchemaPanel({
         </button>
       </div>
 
-      {schemaError && (
-        <div className="ui-text-xs sidebar-error-banner text-danger">{schemaError}</div>
-      )}
+      {schemaError && <div className="ui-text-xs sidebar-error-banner text-danger">{schemaError}</div>}
 
       {loadingSchema && (
         <div className="tree-item text-muted">
@@ -241,6 +227,7 @@ export function SchemaPanel({
       )}
 
       {!loadingSchema && connId && connConnected && schemaList.length > 0 && (
+        /* biome-ignore lint/a11y/noStaticElementInteractions: keyboard-navigation container (arrow/Home/End roving focus over its focusable rows via useListKeyboardNav); not itself an interactive control. */
         <div className="schema-tree" onKeyDown={onKeyDown}>
           {schemaSearch && !anyVisible && (
             <div className="empty-state sidebar-empty-compact">
@@ -252,7 +239,7 @@ export function SchemaPanel({
             const key = `${connId}:${sch.name}`;
             const isOpen = expandedSchemas[key];
             const allTables = tables[key] || [];
-            const visibleTables = visibleTablesByKey ? visibleTablesByKey[key] ?? [] : allTables;
+            const visibleTables = visibleTablesByKey ? (visibleTablesByKey[key] ?? []) : allTables;
             const tablesLoading = loadingTables[key];
             if (schemaSearch && visibleTables.length === 0 && !tablesLoading) return null;
             const schemaExpanded = schemaSearch ? true : isOpen;
@@ -285,9 +272,7 @@ export function SchemaPanel({
         </div>
       )}
 
-      {menu && (
-        <ContextMenu x={menu.x} y={menu.y} items={menu.items} onClose={closeMenu} />
-      )}
+      {menu && <ContextMenu x={menu.x} y={menu.y} items={menu.items} onClose={closeMenu} />}
     </>
   );
 }

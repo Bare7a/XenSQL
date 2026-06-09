@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { getEffectiveTheme, subscribeThemeChanged, type AppTheme } from '@/shared/lib/theme';
+import { type AppTheme, getEffectiveTheme, subscribeThemeChanged } from '@/shared/lib/theme';
 
 export function useAppTheme(): AppTheme {
   const [theme, setTheme] = useState<AppTheme>(() => getEffectiveTheme());

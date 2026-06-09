@@ -1,36 +1,31 @@
+// biome-ignore-all lint/a11y/noNoninteractiveTabindex: data-grid cells use roving tabindex for keyboard navigation; a <td> can be neither a native interactive element nor carry an interactive role without tripping the inverse rule.
+import { Trash2 } from 'lucide-react';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Trash2 } from 'lucide-react';
-import { api } from '@/shared/lib/api';
-import { cx } from '@/shared/lib/cx';
-import { appConfirm, appError } from '@/shared/lib/appDialog';
-import { shouldCopySingleCell } from '@/shared/lib/exportResult';
-import {
-  rowHeightForZoom,
-  type FocusCol,
-  handleGridArrowKey,
-  identityIndices,
-  rowPrimaryKey,
-} from '@/shared/lib/grid';
-import { useUiZoom } from '@/shared/hooks/useUiZoom';
-import { useGridVirtualizer } from '@/shared/hooks/useGridVirtualizer';
-import { useGridSelectionView } from '@/shared/hooks/useGridSelectionView';
+import { CellViewerModal } from '@/features/results/CellViewerModal';
 import { useGridSort } from '@/features/results/hooks/useGridSort';
 import { useResultsFocusPublish } from '@/features/results/hooks/useResultsFocusPublish';
-import { useGridColumns } from '@/shared/hooks/useGridColumns';
-import { useGridCopyExport } from '@/shared/hooks/useGridCopyExport';
-import { useGridClipboardCopy } from '@/shared/hooks/useGridClipboardCopy';
-import { useGridCore } from '@/shared/hooks/useGridCore';
-import type { QueryResult } from '@/types';
-import { CellViewerModal } from '@/features/results/CellViewerModal';
-import { ExportResultsDialog } from '@/shared/components/ExportResultsDialog';
-import { ContextMenu, type ContextMenuItem } from '@/shared/components/ContextMenu';
 import { ResultsGridEmpty } from '@/features/results/ResultsGridEmpty';
-import { GridToolbar } from '@/shared/components/GridToolbar';
+import { ColumnPicker } from '@/shared/components/ColumnPicker';
+import { ContextMenu, type ContextMenuItem } from '@/shared/components/ContextMenu';
+import { ExportResultsDialog } from '@/shared/components/ExportResultsDialog';
 import { GridHeaderRow } from '@/shared/components/GridHeaderRow';
 import { GridTable } from '@/shared/components/GridTable';
-import { ColumnPicker } from '@/shared/components/ColumnPicker';
+import { GridToolbar } from '@/shared/components/GridToolbar';
+import { useGridClipboardCopy } from '@/shared/hooks/useGridClipboardCopy';
+import { useGridColumns } from '@/shared/hooks/useGridColumns';
+import { useGridCopyExport } from '@/shared/hooks/useGridCopyExport';
+import { useGridCore } from '@/shared/hooks/useGridCore';
+import { useGridSelectionView } from '@/shared/hooks/useGridSelectionView';
+import { useGridVirtualizer } from '@/shared/hooks/useGridVirtualizer';
+import { useUiZoom } from '@/shared/hooks/useUiZoom';
+import { api } from '@/shared/lib/api';
+import { appConfirm, appError } from '@/shared/lib/appDialog';
+import { cx } from '@/shared/lib/cx';
+import { shouldCopySingleCell } from '@/shared/lib/exportResult';
+import { type FocusCol, handleGridArrowKey, identityIndices, rowHeightForZoom, rowPrimaryKey } from '@/shared/lib/grid';
 import { gridSelectionHighlightClasses } from '@/shared/lib/gridCellRange';
+import type { QueryResult } from '@/types';
 
 const EMPTY_COLUMNS: string[] = [];
 const EMPTY_ROWS: unknown[][] = [];
@@ -110,10 +105,7 @@ function ResultsGridImpl({
     tableWrapRef,
   });
 
-  const visibleColumns = useMemo(
-    () => columns.filter((c) => !hiddenColumns.has(c)),
-    [columns, hiddenColumns]
-  );
+  const visibleColumns = useMemo(() => columns.filter((c) => !hiddenColumns.has(c)), [columns, hiddenColumns]);
 
   const publishFocusedRowRef = useRef<(globalIdx: number | null) => void>(() => {});
 
@@ -226,7 +218,7 @@ function ResultsGridImpl({
       clearSelection();
       return true;
     },
-    [clearSelection, selectionRef]
+    [clearSelection, selectionRef],
   );
 
   useGridClipboardCopy({
@@ -252,12 +244,7 @@ function ResultsGridImpl({
     },
   });
 
-  const {
-    selectionRowsCount,
-    selectionColsCount,
-    selectedSortedRows,
-    selectedColPositions,
-  } = useGridSelectionView({
+  const { selectionRowsCount, selectionColsCount, selectedSortedRows, selectedColPositions } = useGridSelectionView({
     cellRange,
     selectedRows,
     selectedColumns,
@@ -367,14 +354,12 @@ function ResultsGridImpl({
     const { row, colPos } = focusRef.current;
     const hasSel = selRows.size > 0 || selCols.size > 0;
     const canViewCell = row != null && colPos >= 0;
-    const canDelete =
-      !readOnly && !!tableMode && (result?.primaryKeys?.length ?? 0) > 0 && selRows.size > 0;
+    const canDelete = !readOnly && !!tableMode && (result?.primaryKeys?.length ?? 0) > 0 && selRows.size > 0;
 
     const items: ContextMenuItem[] = [
       {
         label: t('common.copy'),
-        action: () =>
-          void copySelectionToClipboard().catch((e) => void appError(e, t('errors.copyFailed'))),
+        action: () => void copySelectionToClipboard().catch((e) => void appError(e, t('errors.copyFailed'))),
       },
       { label: t('results.contextExportAs'), action: () => setExportOpen(true) },
       { label: '', action: () => {}, separator: true },
@@ -393,7 +378,7 @@ function ResultsGridImpl({
     return items;
   };
 
-  const tableCanDelete = !readOnly && !!tableMode && pks.length > 0 ? selectedRows.size : 0;
+  const tableCanDelete = !readOnly && tableMode && pks.length > 0 ? selectedRows.size : 0;
 
   return (
     <div
@@ -420,11 +405,7 @@ function ResultsGridImpl({
         }
         extraRight={
           tableCanDelete > 0 ? (
-            <button
-              type="button"
-              className="btn btn-sm btn-danger"
-              onClick={() => void deleteSelected()}
-            >
+            <button type="button" className="btn btn-sm btn-danger" onClick={() => void deleteSelected()}>
               <Trash2 className="icon-xs" /> {t('results.deleteRows', { count: tableCanDelete })}
             </button>
           ) : undefined
@@ -470,17 +451,12 @@ function ResultsGridImpl({
           return { globalIdx, isFocusedRow: focusedRowIdx === globalIdx };
         }}
         getRowKey={(_sortedIdx, ctx) => ctx.globalIdx}
-        getRowClassName={(_sortedIdx, ctx) =>
-          ctx.isFocusedRow && !hasSelection ? 'row-focused' : undefined
-        }
+        getRowClassName={(_sortedIdx, ctx) => (ctx.isFocusedRow && !hasSelection ? 'row-focused' : undefined)}
         renderRowNum={(sortedIdx, ctx) => (
           <td
             id={`result-rownum-${ctx.globalIdx}`}
             tabIndex={0}
-            className={[
-              'col-rownum',
-              ctx.isFocusedRow && focusedColPos < 0 && !hasSelection ? 'cell-focused' : '',
-            ]
+            className={['col-rownum', ctx.isFocusedRow && focusedColPos < 0 && !hasSelection ? 'cell-focused' : '']
               .filter(Boolean)
               .join(' ')}
             data-tooltip={t('tooltip.resultsRowGutter')}
@@ -514,7 +490,7 @@ function ResultsGridImpl({
                   selectedSortedRows,
                   selectedColPositions,
                   sortedRows.length,
-                  colIndices.length
+                  colIndices.length,
                 ),
               ]
                 .filter(Boolean)
@@ -540,8 +516,7 @@ function ResultsGridImpl({
           onClose={() => setCellViewer(null)}
           onSave={
             !readOnly && tableMode && pks.length > 0 && !cellViewer.isNull
-              ? (newValue) =>
-                  void saveCellValue(cellViewer.globalRowIdx, cellViewer.column, newValue)
+              ? (newValue) => void saveCellValue(cellViewer.globalRowIdx, cellViewer.column, newValue)
               : undefined
           }
         />

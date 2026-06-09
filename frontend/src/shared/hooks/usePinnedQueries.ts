@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from 'react';
-import { readStoredJson, writeStoredJson, STORAGE_KEYS } from '@/shared/lib/storageKeys';
+import { readStoredJson, STORAGE_KEYS, writeStoredJson } from '@/shared/lib/storageKeys';
 
 // Persisted client-side only - the SavedQuery backend has no pin field.
 export function usePinnedQueries(): {
@@ -7,9 +7,7 @@ export function usePinnedQueries(): {
   isPinned: (id: string) => boolean;
   toggle: (id: string) => void;
 } {
-  const [ids, setIds] = useState<string[]>(() =>
-    readStoredJson<string[]>(STORAGE_KEYS.pinnedQueries, [])
-  );
+  const [ids, setIds] = useState<string[]>(() => readStoredJson<string[]>(STORAGE_KEYS.pinnedQueries, []));
 
   const toggle = useCallback((id: string) => {
     setIds((prev) => {

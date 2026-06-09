@@ -60,7 +60,7 @@ export function initialFieldMode(col: ColumnInfo, driver: DriverType): InsertRow
 
 export function createInitialFieldStates(
   columns: ColumnInfo[],
-  driver: DriverType
+  driver: DriverType,
 ): Record<string, InsertRowFieldState> {
   const states: Record<string, InsertRowFieldState> = {};
   for (const col of columns) {
@@ -76,16 +76,12 @@ export function formatDefaultHint(col: ColumnInfo, driver: DriverType, maxLen = 
   return d.length > maxLen ? `${d.slice(0, maxLen)}…` : d;
 }
 
-export type InsertRowValidationCode =
-  | 'required'
-  | 'notNullable'
-  | 'emptyInsert'
-  | null;
+export type InsertRowValidationCode = 'required' | 'notNullable' | 'emptyInsert' | null;
 
 export function validateInsertRowFields(
   columns: ColumnInfo[],
   states: Record<string, InsertRowFieldState>,
-  driver: DriverType
+  driver: DriverType,
 ): InsertRowValidationCode {
   let included = 0;
   for (const col of columns) {
@@ -117,7 +113,7 @@ export function validateInsertRowFields(
 export function buildInsertRowPayload(
   columns: ColumnInfo[],
   states: Record<string, InsertRowFieldState>,
-  driver: DriverType
+  driver: DriverType,
 ): Record<string, unknown> {
   const values: Record<string, unknown> = {};
   for (const col of columns) {

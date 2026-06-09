@@ -45,17 +45,13 @@ describe('parseSqlStatements', () => {
   });
 
   it('respects PostgreSQL dollar-quoted strings', () => {
-    const out = parseSqlStatements(
-      `DO $$ BEGIN PERFORM 1; END $$;\nSELECT 1`
-    );
+    const out = parseSqlStatements(`DO $$ BEGIN PERFORM 1; END $$;\nSELECT 1`);
     expect(out).toHaveLength(2);
     expect(out[0].text.startsWith('DO $$')).toBe(true);
   });
 
   it('respects tagged dollar quotes', () => {
-    const out = parseSqlStatements(
-      `DO $tag$ ; ; ; $tag$;\nSELECT 1`
-    );
+    const out = parseSqlStatements(`DO $tag$ ; ; ; $tag$;\nSELECT 1`);
     expect(out).toHaveLength(2);
   });
 
@@ -67,11 +63,7 @@ describe('parseSqlStatements', () => {
   it('keeps lone semicolons but drops whitespace-only chunks', () => {
     // Bare `;` trims to ";" and is kept; whitespace-only chunks trim to empty and are dropped.
     expect(parseSqlStatements('   \n   ')).toHaveLength(0);
-    expect(parseSqlStatements('SELECT 1;;\nSELECT 2').map((s) => s.text)).toEqual([
-      'SELECT 1;',
-      ';',
-      'SELECT 2',
-    ]);
+    expect(parseSqlStatements('SELECT 1;;\nSELECT 2').map((s) => s.text)).toEqual(['SELECT 1;', ';', 'SELECT 2']);
   });
 
   it('keeps a trailing statement without semicolon', () => {

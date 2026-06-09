@@ -1,22 +1,18 @@
+import { BookmarkPlus, Search, Trash2 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { BookmarkPlus, Search, Trash2 } from 'lucide-react';
-import { api } from '@/shared/lib/api';
-import { appAlert, appConfirm, appError, appPrompt } from '@/shared/lib/appDialog';
-import { refreshSavedQueries } from '@/shared/lib/savedQueriesSync';
-import { appToast } from '@/shared/lib/appToast';
 import { ContextMenu } from '@/shared/components/ContextMenu';
 import { useContextMenu } from '@/shared/hooks/useContextMenu';
 import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue';
-import { useListKeyboardNav } from '@/shared/hooks/useListKeyboardNav';
+import { rowActivateKeyDown, useListKeyboardNav } from '@/shared/hooks/useListKeyboardNav';
+import { api } from '@/shared/lib/api';
+import { appAlert, appConfirm, appError, appPrompt } from '@/shared/lib/appDialog';
+import { appToast } from '@/shared/lib/appToast';
+import { formatRelativeTime, type TimeBucket, timeBucket } from '@/shared/lib/relativeTime';
+import { refreshSavedQueries } from '@/shared/lib/savedQueriesSync';
 import { oneLinePreview } from '@/shared/lib/sqlPreview';
-import { formatRelativeTime, timeBucket, type TimeBucket } from '@/shared/lib/relativeTime';
-import {
-  useConnections,
-  useResolvedConnectionId,
-  useStoreActions,
-} from '@/store/selectors';
 import { useAppStore } from '@/store/appStore';
+import { useConnections, useResolvedConnectionId, useStoreActions } from '@/store/selectors';
 
 interface HistoryPanelProps {
   onOpenQuery: (connId: string, sql?: string) => void;
@@ -43,10 +39,7 @@ export function HistoryPanel({ onOpenQuery }: HistoryPanelProps) {
 
   const { onKeyDown } = useListKeyboardNav();
 
-  const connectionById = useMemo(
-    () => new Map(connections.map((c) => [c.id, c])),
-    [connections]
-  );
+  const connectionById = useMemo(() => new Map(connections.map((c) => [c.id, c])), [connections]);
 
   const loadHistory = useCallback(
     async (connId?: string, scopeOverride?: 'all' | 'connection') => {
@@ -60,7 +53,7 @@ export function HistoryPanel({ onOpenQuery }: HistoryPanelProps) {
         setHistory([]);
       }
     },
-    [scope, setHistory, t]
+    [scope, setHistory, t],
   );
 
   useEffect(() => {
@@ -98,7 +91,7 @@ export function HistoryPanel({ onOpenQuery }: HistoryPanelProps) {
         void appError(err, t('errors.saveQueryFailed'));
       }
     },
-    [t]
+    [t],
   );
 
   const clearAllHistory = async () => {
@@ -140,7 +133,7 @@ export function HistoryPanel({ onOpenQuery }: HistoryPanelProps) {
         { label: t('common.delete'), action: () => void deleteHistoryEntry(id) },
       ]);
     },
-    [onOpenQuery, saveAsQuery, t]
+    [onOpenQuery, saveAsQuery, t],
   );
 
   const debouncedFilter = useDebouncedValue(filter, 150);
@@ -148,9 +141,7 @@ export function HistoryPanel({ onOpenQuery }: HistoryPanelProps) {
     const needle = debouncedFilter.trim().toLowerCase();
     if (!needle) return history ?? [];
     return (history ?? []).filter(
-      (entry) =>
-        (entry.sql ?? '').toLowerCase().includes(needle) ||
-        (entry.error ?? '').toLowerCase().includes(needle)
+      (entry) => (entry.sql ?? '').toLowerCase().includes(needle) || (entry.error ?? '').toLowerCase().includes(needle),
     );
   }, [history, debouncedFilter]);
 
@@ -212,6 +203,7 @@ export function HistoryPanel({ onOpenQuery }: HistoryPanelProps) {
           <p>{t('sidebar.noMatches')}</p>
         </div>
       ) : (
+        /* biome-ignore lint/a11y/noStaticElementInteractions: keyboard-navigation container (arrow/Home/End roving focus over its focusable rows via useListKeyboardNav); not itself an interactive control. */
         <div className="sidebar-list" onKeyDown={onKeyDown}>
           {filtered.map((entry, idx) => {
             const conn = connectionById.get(entry.connectionId);
@@ -220,24 +212,20 @@ export function HistoryPanel({ onOpenQuery }: HistoryPanelProps) {
             lastBucket = bucket;
             return (
               <div key={entry.id || `history-${idx}`}>
-                {showHeader && (
-                  <div className="sidebar-group-header">{t(BUCKET_LABEL[bucket])}</div>
-                )}
+                {showHeader && <div className="sidebar-group-header">{t(BUCKET_LABEL[bucket])}</div>}
                 <div
                   className="tree-item history-item"
+                  role="button"
                   tabIndex={0}
                   data-nav-item
                   onClick={() => onOpenQuery(entry.connectionId, entry.sql)}
-                  onContextMenu={(e) =>
-                    openRowMenu(e, entry.connectionId, entry.sql ?? '', entry.id)
-                  }
+                  onKeyDown={rowActivateKeyDown}
+                  onContextMenu={(e) => openRowMenu(e, entry.connectionId, entry.sql ?? '', entry.id)}
                 >
                   <div className="flex-1">
                     <span
                       className={`sidebar-entry-meta${entry.success ? ' sidebar-entry-meta--success' : ' sidebar-entry-meta--danger'}`}
-                      data-tooltip={
-                        entry.executedAt ? new Date(entry.executedAt).toLocaleString() : undefined
-                      }
+                      data-tooltip={entry.executedAt ? new Date(entry.executedAt).toLocaleString() : undefined}
                     >
                       {entry.executedAt ? formatRelativeTime(entry.executedAt, i18n.language) : ''}
                       {' · '}
@@ -246,9 +234,7 @@ export function HistoryPanel({ onOpenQuery }: HistoryPanelProps) {
                     </span>
                     <span className="sidebar-entry-sql">{oneLinePreview(entry.sql)}</span>
                     {!entry.success && entry.error && (
-                      <span className="sidebar-entry-error">
-                        {oneLinePreview(entry.error, 100)}
-                      </span>
+                      <span className="sidebar-entry-error">{oneLinePreview(entry.error, 100)}</span>
                     )}
                   </div>
                   <span className="history-item-actions">
@@ -280,9 +266,7 @@ export function HistoryPanel({ onOpenQuery }: HistoryPanelProps) {
         </div>
       )}
 
-      {menu && (
-        <ContextMenu x={menu.x} y={menu.y} items={menu.items} onClose={closeMenu} />
-      )}
+      {menu && <ContextMenu x={menu.x} y={menu.y} items={menu.items} onClose={closeMenu} />}
     </>
   );
 }

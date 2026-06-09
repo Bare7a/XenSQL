@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { STORAGE_KEYS, readStoredBool, writeStoredBool } from '@/shared/lib/storageKeys';
-import { settings, resetSettingsForTests } from '@/shared/lib/settingsStore';
+import { resetSettingsForTests, settings } from '@/shared/lib/settingsStore';
+import { readStoredBool, STORAGE_KEYS, writeStoredBool } from '@/shared/lib/storageKeys';
 
 // No Wails bindings in the node test env; settingsStore swallows the Go calls, so
 // its in-memory cache is the full surface under test.

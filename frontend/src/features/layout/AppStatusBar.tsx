@@ -1,6 +1,6 @@
+import { CircleAlert, Lock } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { CircleAlert, Lock } from 'lucide-react';
 import { cx } from '@/shared/lib/cx';
 import { tooltipProps } from '@/shared/lib/tooltip';
 import type { ConnectionConfig, ConnectionStatus, EditorTab, QueryResult } from '@/types';
@@ -85,14 +85,18 @@ export function AppStatusBar({
               style={{ background: connectedIds[activeConn.id] ? 'var(--success)' : activeConn.color }}
               aria-hidden
             />
-            <span className="status-bar-conn-label" data-tooltip={sessionText}>{activeConn.name} ({activeConn.driver})</span>
+            <span className="status-bar-conn-label" data-tooltip={sessionText}>
+              {activeConn.name} ({activeConn.driver})
+            </span>
             {activeReadOnly && (
               <span className="read-only-badge" data-tooltip={t('tooltip.readOnlyConnection')}>
                 <Lock className="icon-2xs" strokeWidth={2.25} />
                 {t('app.readOnly')}
               </span>
             )}
-            {activeTab && !connectedIds[activeTab.connectionId] && (<span className="app-status-warning">{t('app.statusNotConnected')}</span>)}
+            {activeTab && !connectedIds[activeTab.connectionId] && (
+              <span className="app-status-warning">{t('app.statusNotConnected')}</span>
+            )}
           </>
         ) : (
           <span className="status-bar-conn-label">{t('app.statusNoConnection')}</span>
@@ -104,7 +108,7 @@ export function AppStatusBar({
         aria-live="polite"
         {...tooltipProps(showingError ? activeResultError : undefined)}
       >
-        {showingError && (<CircleAlert className="icon-xs status-bar-status-icon" aria-hidden />)}
+        {showingError && <CircleAlert className="icon-xs status-bar-status-icon" aria-hidden />}
         <span className="status-bar-status-text">{rightSideText}</span>
       </div>
     </div>

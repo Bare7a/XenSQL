@@ -1,12 +1,12 @@
-import { useEffect, type RefObject } from 'react';
 import type { editor } from 'monaco-editor';
+import { type RefObject, useEffect } from 'react';
 import type { EditorCursorState } from '@/types';
 
 export function useCursorPersistence(
   editorRef: RefObject<editor.IStandaloneCodeEditor | null>,
   cursorStateRef: RefObject<EditorCursorState | undefined>,
   isActive: boolean,
-  tabId: string
+  tabId: string,
 ) {
   useEffect(() => {
     if (!isActive) return;

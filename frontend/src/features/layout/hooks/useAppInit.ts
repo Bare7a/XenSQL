@@ -9,8 +9,7 @@ function normalizeRestoredTabs(tabs: EditorTab[]): EditorTab[] {
   return tabs.map((t) => ({
     ...t,
     sql: t.tableView ? '' : t.sql,
-    savedSqlBaseline:
-      t.savedQueryId && t.savedSqlBaseline === undefined ? t.sql : t.savedSqlBaseline,
+    savedSqlBaseline: t.savedQueryId && t.savedSqlBaseline === undefined ? t.sql : t.savedSqlBaseline,
   }));
 }
 

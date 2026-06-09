@@ -24,7 +24,7 @@ export function useColumnResize(applyColumnWidth: (colPos: number, width: number
       window.addEventListener('mousemove', onMove);
       window.addEventListener('mouseup', onUp);
     },
-    [applyColumnWidth]
+    [applyColumnWidth],
   );
 
   return { resizingRef, startColResize };

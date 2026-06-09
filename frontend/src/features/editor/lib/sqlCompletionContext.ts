@@ -3,8 +3,7 @@ import { unquoteIdent } from '@/features/editor/lib/sqlQuoting';
 const TABLE_SOURCE_RE =
   /\b(?:FROM|(?:(?:LEFT|RIGHT|FULL|INNER|CROSS|NATURAL)\s+)*JOIN|INSERT\s+INTO|UPDATE|DELETE\s+FROM)\s+/gi;
 
-const STOPS_TABLE_CONTEXT =
-  /\b(WHERE|ON|SET|GROUP|ORDER|HAVING|LIMIT|OFFSET|UNION|RETURNING|VALUES|SELECT)\b/i;
+const STOPS_TABLE_CONTEXT = /\b(WHERE|ON|SET|GROUP|ORDER|HAVING|LIMIT|OFFSET|UNION|RETURNING|VALUES|SELECT)\b/i;
 
 export interface DotCompletion {
   segments: string[];
@@ -12,9 +11,7 @@ export interface DotCompletion {
 }
 
 const IDENT_OR_QUOTED = `(?:"[^"]+")|(?:'[^']+')|(?:\`[^\`]+\`)|[a-zA-Z_][\\w]*`;
-const TRIPLE_DOT_RE = new RegExp(
-  `(${IDENT_OR_QUOTED})\\s*\\.\\s*(${IDENT_OR_QUOTED})\\s*\\.\\s*([\\w"\`]*)$`
-);
+const TRIPLE_DOT_RE = new RegExp(`(${IDENT_OR_QUOTED})\\s*\\.\\s*(${IDENT_OR_QUOTED})\\s*\\.\\s*([\\w"\`]*)$`);
 const SINGLE_DOT_RE = new RegExp(`(${IDENT_OR_QUOTED})\\s*\\.\\s*([\\w"\`]*)$`);
 
 export function parseDotCompletion(before: string): DotCompletion | null {
@@ -34,9 +31,8 @@ export interface TableContextMatch {
 
 export function matchTableContext(before: string): TableContextMatch | null {
   let lastEnd = -1;
-  let m: RegExpExecArray | null;
   TABLE_SOURCE_RE.lastIndex = 0;
-  while ((m = TABLE_SOURCE_RE.exec(before)) !== null) {
+  for (let m = TABLE_SOURCE_RE.exec(before); m !== null; m = TABLE_SOURCE_RE.exec(before)) {
     lastEnd = m.index + m[0].length;
   }
   if (lastEnd < 0) return null;
@@ -94,8 +90,7 @@ export function isOrderOrGroupContext(before: string): boolean {
 
   const re = /\b(?:ORDER|GROUP)\s+BY\b/gi;
   let bodyStart = -1;
-  let m: RegExpExecArray | null;
-  while ((m = re.exec(before)) !== null) bodyStart = m.index + m[0].length;
+  for (let m = re.exec(before); m !== null; m = re.exec(before)) bodyStart = m.index + m[0].length;
   if (bodyStart < 0) return false;
 
   const tail = before.slice(bodyStart);
@@ -108,8 +103,7 @@ export function isOrderOrGroupContext(before: string): boolean {
 export function isLimitOffsetContext(before: string): boolean {
   const re = /\b(?:LIMIT|OFFSET)\b/gi;
   let lastEnd = -1;
-  let m: RegExpExecArray | null;
-  while ((m = re.exec(before)) !== null) lastEnd = m.index + m[0].length;
+  for (let m = re.exec(before); m !== null; m = re.exec(before)) lastEnd = m.index + m[0].length;
   if (lastEnd < 0) return false;
   const tail = before.slice(lastEnd);
   if (!/^\s/.test(tail)) return false; // caret still on the keyword, not in its argument
@@ -119,8 +113,24 @@ export function isLimitOffsetContext(before: string): boolean {
 
 // Words after which a column/table/expression is the natural next token.
 const EXPRESSION_LEAD_WORDS = new Set([
-  'from', 'join', 'on', 'where', 'and', 'or', 'not', 'having', 'by', 'set', 'select',
-  'in', 'like', 'between', 'distinct', 'when', 'then', 'else',
+  'from',
+  'join',
+  'on',
+  'where',
+  'and',
+  'or',
+  'not',
+  'having',
+  'by',
+  'set',
+  'select',
+  'in',
+  'like',
+  'between',
+  'distinct',
+  'when',
+  'then',
+  'else',
 ]);
 
 // Whether the token before the caret expects an identifier/expression next - a clause keyword
@@ -180,8 +190,7 @@ export function sortDirectionAllowed(before: string): boolean {
   const re = /\b(ORDER|GROUP)\s+BY\b/gi;
   let kind = '';
   let bodyStart = -1;
-  let m: RegExpExecArray | null;
-  while ((m = re.exec(before)) !== null) {
+  for (let m = re.exec(before); m !== null; m = re.exec(before)) {
     kind = m[1].toUpperCase();
     bodyStart = m.index + m[0].length;
   }

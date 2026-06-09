@@ -151,7 +151,7 @@ describe('exportResultToText - sql', () => {
     expect(out).toContain('VALUES (1,');
     expect(out).toContain(', NULL);');
   });
-  it("doubles single quotes inside string values", () => {
+  it('doubles single quotes inside string values', () => {
     const r: QueryResult = {
       columns: ['name'],
       columnTypes: ['text'],
@@ -322,7 +322,7 @@ describe('shouldCopySingleCell', () => {
         focusedColPos: 1,
         selectedRows: [],
         selectedColumns: [],
-      })
+      }),
     ).toBe(true);
   });
 
@@ -333,7 +333,7 @@ describe('shouldCopySingleCell', () => {
         focusedColPos: 1,
         selectedRows: [0],
         selectedColumns: [],
-      })
+      }),
     ).toBe(false);
   });
 
@@ -344,7 +344,7 @@ describe('shouldCopySingleCell', () => {
         focusedColPos: 1,
         selectedRows: [],
         selectedColumns: ['id'],
-      })
+      }),
     ).toBe(false);
   });
 
@@ -355,7 +355,7 @@ describe('shouldCopySingleCell', () => {
         focusedColPos: -1,
         selectedRows: [],
         selectedColumns: [],
-      })
+      }),
     ).toBe(false);
   });
 
@@ -366,7 +366,7 @@ describe('shouldCopySingleCell', () => {
         focusedColPos: 0,
         selectedRows: [],
         selectedColumns: [],
-      })
+      }),
     ).toBe(false);
   });
 });

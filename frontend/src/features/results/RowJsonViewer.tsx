@@ -1,15 +1,15 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
-import type { editor } from 'monaco-editor';
 import Editor from '@monaco-editor/react';
 import { Search, X } from 'lucide-react';
+import type { editor } from 'monaco-editor';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { filterJsonForViewer } from '@/shared/lib/rowJson';
-import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue';
-import { formatBinding, getEffectiveBinding } from '@/shared/lib/shortcuts';
-import { setupMonacoBeforeMount, getMonacoThemeName } from '@/features/editor/lib/monacoTheme';
-import { useAppTheme } from '@/shared/hooks/useAppTheme';
 import { useEditorFontSize } from '@/features/editor/hooks/useEditorFontSize';
 import { monacoFontOptions } from '@/features/editor/lib/editorFontSize';
+import { getMonacoThemeName, setupMonacoBeforeMount } from '@/features/editor/lib/monacoTheme';
+import { useAppTheme } from '@/shared/hooks/useAppTheme';
+import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue';
+import { filterJsonForViewer } from '@/shared/lib/rowJson';
+import { formatBinding, getEffectiveBinding } from '@/shared/lib/shortcuts';
 
 interface Props {
   data: Record<string, unknown> | null;
@@ -51,7 +51,7 @@ export function RowJsonViewer({ data, onClose }: Props) {
       ...EDITOR_OPTS_BASE,
       ...monacoFontOptions(fontSize),
     }),
-    [fontSize]
+    [fontSize],
   );
 
   useEffect(() => {

@@ -1,7 +1,7 @@
 // html root font-size zoom; Monaco editor font size is independent.
 
-import { STORAGE_KEYS } from '@/shared/lib/storageKeys';
 import { settings } from '@/shared/lib/settingsStore';
+import { STORAGE_KEYS } from '@/shared/lib/storageKeys';
 
 export const DEFAULT_UI_ZOOM_PX = 13;
 export const MIN_UI_ZOOM_PX = 10;

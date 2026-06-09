@@ -15,9 +15,7 @@ export function usePersistedPanelWidth(opts: PersistedPanelWidthOptions): {
   width: number;
   handleResize: (e: React.MouseEvent) => void;
 } {
-  const [width, setWidth] = useState(() =>
-    readStoredWidth(opts.storageKey, opts.defaultWidth, opts.min, opts.max)
-  );
+  const [width, setWidth] = useState(() => readStoredWidth(opts.storageKey, opts.defaultWidth, opts.min, opts.max));
 
   // End an in-progress drag if the component unmounts mid-resize.
   const cleanupRef = useRef<(() => void) | null>(null);
@@ -33,7 +31,7 @@ export function usePersistedPanelWidth(opts: PersistedPanelWidthOptions): {
         storeWidth(opts.storageKey, next);
       });
     },
-    [width, opts.storageKey, opts.min, opts.max, opts.edge]
+    [width, opts.storageKey, opts.min, opts.max, opts.edge],
   );
 
   return { width, handleResize };

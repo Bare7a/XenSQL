@@ -1,21 +1,21 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { api } from '@/shared/lib/api';
-import { formatError } from '@/shared/lib/normalize';
-import { Modal } from '@/shared/components/Modal';
 import {
   buildInsertRowPayload,
   canUseDefaultMode,
   canUseNullMode,
   createInitialFieldStates,
   formatDefaultHint,
-  isInsertInputHidden,
-  requiresInsertValue,
-  validateInsertRowFields,
   type InsertRowFieldMode,
   type InsertRowFieldState,
   type InsertRowValidationCode,
+  isInsertInputHidden,
+  requiresInsertValue,
+  validateInsertRowFields,
 } from '@/features/table-view/lib/insertRowForm';
+import { Modal } from '@/shared/components/Modal';
+import { api } from '@/shared/lib/api';
+import { formatError } from '@/shared/lib/normalize';
 import type { ColumnInfo, DriverType } from '@/types';
 
 interface Props {
@@ -120,9 +120,7 @@ function FieldModePicker({
 
       {state.mode === 'default' && defaultHint && (
         <p className="table-view-add-row-context-hint">
-          <span className="table-view-add-row-default-label">
-            {t('tableView.addRowDialog.defaultExpression')}
-          </span>
+          <span className="table-view-add-row-default-label">{t('tableView.addRowDialog.defaultExpression')}</span>
           <code className="table-view-add-row-default-expr">{defaultHint}</code>
         </p>
       )}
@@ -149,14 +147,7 @@ function FieldModePicker({
   );
 }
 
-export function TableViewAddRowDialog({
-  connectionId,
-  driver,
-  schema,
-  table,
-  onClose,
-  onConfirm,
-}: Props) {
+export function TableViewAddRowDialog({ connectionId, driver, schema, table, onClose, onConfirm }: Props) {
   const { t } = useTranslation();
 
   const [columns, setColumns] = useState<ColumnInfo[]>([]);
@@ -210,23 +201,20 @@ export function TableViewAddRowDialog({
     setValidationCode(null);
   }, []);
 
-  const setFieldMode = useCallback(
-    (name: string, mode: InsertRowFieldMode, value?: string) => {
-      setFields((prev) => {
-        const cur = prev[name];
-        if (!cur) return prev;
-        return {
-          ...prev,
-          [name]: {
-            mode,
-            value: mode === 'value' ? (value ?? cur.value) : '',
-          },
-        };
-      });
-      setValidationCode(null);
-    },
-    []
-  );
+  const setFieldMode = useCallback((name: string, mode: InsertRowFieldMode, value?: string) => {
+    setFields((prev) => {
+      const cur = prev[name];
+      if (!cur) return prev;
+      return {
+        ...prev,
+        [name]: {
+          mode,
+          value: mode === 'value' ? (value ?? cur.value) : '',
+        },
+      };
+    });
+    setValidationCode(null);
+  }, []);
 
   const submit = async () => {
     const code = validateInsertRowFields(columns, fields, driver);
@@ -248,80 +236,75 @@ export function TableViewAddRowDialog({
   };
 
   return (
-    <Modal
-      title={t('tableView.addRowDialog.title', { table })}
-      onClose={onClose}
-      size="md"
-      scrollBody
-    >
-        <div className="modal-body">
-          {loading ? (
-            <p className="table-view-add-row-status">{t('tableView.addRowDialog.loading')}</p>
-          ) : loadError && columns.length === 0 ? (
-            <p className="form-alert form-alert--error">{loadError}</p>
-          ) : (
-            <>
-              <p className="modal-description">{t('tableView.addRowDialog.description')}</p>
-              {submitError && <p className="form-alert form-alert--error">{submitError}</p>}
-              {validationCode && (
-                <p className="form-alert form-alert--error">{validationMessage(validationCode)}</p>
-              )}
-              <div className="table-view-add-row-fields">
-                {columns.map((col) => {
-                  const state = fields[col.name];
-                  if (!state) return null;
+    <Modal title={t('tableView.addRowDialog.title', { table })} onClose={onClose} size="md" scrollBody>
+      <div className="modal-body">
+        {loading ? (
+          <p className="table-view-add-row-status">{t('tableView.addRowDialog.loading')}</p>
+        ) : loadError && columns.length === 0 ? (
+          <p className="form-alert form-alert--error">{loadError}</p>
+        ) : (
+          <>
+            <p className="modal-description">{t('tableView.addRowDialog.description')}</p>
+            {submitError && <p className="form-alert form-alert--error">{submitError}</p>}
+            {validationCode && <p className="form-alert form-alert--error">{validationMessage(validationCode)}</p>}
+            <div className="table-view-add-row-fields">
+              {columns.map((col) => {
+                const state = fields[col.name];
+                if (!state) return null;
 
-                  return (
-                    <div key={col.name} className="table-view-add-row-field">
-                      <div className="table-view-add-row-field-head">
-                        <span className="table-view-add-row-label">
-                          {col.name}
-                          <span className="table-view-add-row-type">{col.dataType}</span>
-                        </span>
-                        <div className="table-view-add-row-badges">
-                          {col.isPrimary && (
-                            <span className="table-view-add-row-badge">{t('tableView.addRowDialog.primaryKeyBadge')}</span>
-                          )}
-                          {col.isForeign && (
-                            <span className="table-view-add-row-badge">{t('tableView.addRowDialog.foreignKeyBadge')}</span>
-                          )}
-                          {requiresInsertValue(col, driver) && (
-                            <span className="table-view-add-row-badge table-view-add-row-badge-required">
-                              {t('tableView.addRowDialog.requiredBadge')}
-                            </span>
-                          )}
-                        </div>
+                return (
+                  <div key={col.name} className="table-view-add-row-field">
+                    <div className="table-view-add-row-field-head">
+                      <span className="table-view-add-row-label">
+                        {col.name}
+                        <span className="table-view-add-row-type">{col.dataType}</span>
+                      </span>
+                      <div className="table-view-add-row-badges">
+                        {col.isPrimary && (
+                          <span className="table-view-add-row-badge">
+                            {t('tableView.addRowDialog.primaryKeyBadge')}
+                          </span>
+                        )}
+                        {col.isForeign && (
+                          <span className="table-view-add-row-badge">
+                            {t('tableView.addRowDialog.foreignKeyBadge')}
+                          </span>
+                        )}
+                        {requiresInsertValue(col, driver) && (
+                          <span className="table-view-add-row-badge table-view-add-row-badge-required">
+                            {t('tableView.addRowDialog.requiredBadge')}
+                          </span>
+                        )}
                       </div>
-                      <FieldModePicker
-                        col={col}
-                        driver={driver}
-                        state={state}
-                        saving={saving}
-                        onModeChange={(mode) => setFieldMode(col.name, mode)}
-                        onValueChange={(value) =>
-                          updateField(col.name, { mode: 'value', value })
-                        }
-                      />
                     </div>
-                  );
-                })}
-              </div>
-            </>
-          )}
-        </div>
-        <div className="modal-footer">
-          <button type="button" className="btn" onClick={onClose} disabled={saving}>
-            {t('common.cancel')}
-          </button>
-          <button
-            type="button"
-            className="btn btn-primary"
-            onClick={() => void submit()}
-            disabled={loading || saving || columns.length === 0}
-          >
-            {t('tableView.addRowDialog.submit')}
-          </button>
-        </div>
+                    <FieldModePicker
+                      col={col}
+                      driver={driver}
+                      state={state}
+                      saving={saving}
+                      onModeChange={(mode) => setFieldMode(col.name, mode)}
+                      onValueChange={(value) => updateField(col.name, { mode: 'value', value })}
+                    />
+                  </div>
+                );
+              })}
+            </div>
+          </>
+        )}
+      </div>
+      <div className="modal-footer">
+        <button type="button" className="btn" onClick={onClose} disabled={saving}>
+          {t('common.cancel')}
+        </button>
+        <button
+          type="button"
+          className="btn btn-primary"
+          onClick={() => void submit()}
+          disabled={loading || saving || columns.length === 0}
+        >
+          {t('tableView.addRowDialog.submit')}
+        </button>
+      </div>
     </Modal>
   );
 }

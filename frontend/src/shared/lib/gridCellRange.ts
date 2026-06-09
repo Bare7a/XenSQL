@@ -54,12 +54,7 @@ export function cellRangeEdgeClasses(row: number, col: number, range: CellRange 
   return classes.join(' ');
 }
 
-export function selectedRowsEdgeClasses(
-  row: number,
-  col: number,
-  selectedRows: Set<number>,
-  colCount: number
-): string {
+export function selectedRowsEdgeClasses(row: number, col: number, selectedRows: Set<number>, colCount: number): string {
   if (!selectedRows.has(row)) return '';
   const classes = ['cell-range-selected'];
   if (!selectedRows.has(row - 1)) classes.push('cell-range-edge-top');
@@ -69,12 +64,7 @@ export function selectedRowsEdgeClasses(
   return classes.join(' ');
 }
 
-export function selectedColsEdgeClasses(
-  row: number,
-  col: number,
-  selectedCols: Set<number>,
-  rowCount: number
-): string {
+export function selectedColsEdgeClasses(row: number, col: number, selectedCols: Set<number>, rowCount: number): string {
   if (!selectedCols.has(col)) return '';
   const classes = ['cell-range-selected'];
   if (row === 0) classes.push('cell-range-edge-top');
@@ -91,7 +81,7 @@ export function gridSelectionHighlightClasses(
   selectedRows: Set<number>,
   selectedCols: Set<number>,
   rowCount: number,
-  colCount: number
+  colCount: number,
 ): string {
   if (cellRange) return cellRangeEdgeClasses(row, col, cellRange);
   if (selectedRows.size > 0) return selectedRowsEdgeClasses(row, col, selectedRows, colCount);
@@ -107,11 +97,7 @@ export function cellRangeDimensions(range: CellRange | null): { rows: number; co
   };
 }
 
-export function findDataCellAtPoint(
-  root: HTMLElement | null,
-  clientX: number,
-  clientY: number
-): CellCoord | null {
+export function findDataCellAtPoint(root: HTMLElement | null, clientX: number, clientY: number): CellCoord | null {
   if (!root) return null;
   const el = document.elementFromPoint(clientX, clientY);
   const td = el?.closest('td[data-row][data-col-pos]') as HTMLElement | null;
@@ -122,13 +108,7 @@ export function findDataCellAtPoint(
   return { row, col };
 }
 
-export function findGridCellElement(
-  root: HTMLElement | null,
-  row: number,
-  colPos: number
-): HTMLElement | null {
+export function findGridCellElement(root: HTMLElement | null, row: number, colPos: number): HTMLElement | null {
   if (!root || colPos < 0) return null;
-  return root.querySelector<HTMLElement>(
-    `td.cell-focusable[data-row="${row}"][data-col-pos="${colPos}"]`
-  );
+  return root.querySelector<HTMLElement>(`td.cell-focusable[data-row="${row}"][data-col-pos="${colPos}"]`);
 }

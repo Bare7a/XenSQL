@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useDialogStore } from '@/store/dialogStore';
 import { Modal } from '@/shared/components/Modal';
+import { useDialogStore } from '@/store/dialogStore';
 
 export function AppDialogHost() {
   const { t } = useTranslation();
@@ -35,7 +35,7 @@ export function AppDialogHost() {
           {opts.detail && <pre className="modal-detail">{opts.detail}</pre>}
         </div>
         <div className="modal-footer">
-          <button type="button" className="btn btn-primary" autoFocus onClick={() => current.resolve()}>
+          <button type="button" className="btn btn-primary" onClick={() => current.resolve()}>
             {opts.confirmLabel ?? t('common.ok')}
           </button>
         </div>
@@ -69,7 +69,6 @@ export function AppDialogHost() {
           <button
             type="button"
             className={`btn ${opts.danger ? 'btn-danger' : 'btn-primary'}`}
-            autoFocus
             onClick={() => current.resolve(true)}
           >
             {opts.confirmLabel ?? t('common.confirm')}
@@ -109,7 +108,6 @@ export function AppDialogHost() {
             onKeyDown={(e) => {
               if (e.key === 'Enter') submitPrompt();
             }}
-            autoFocus
           />
         </div>
       </div>
@@ -117,12 +115,7 @@ export function AppDialogHost() {
         <button type="button" className="btn" onClick={() => current.resolve(null)}>
           {opts.cancelLabel ?? t('common.cancel')}
         </button>
-        <button
-          type="button"
-          className="btn btn-primary"
-          onClick={submitPrompt}
-          disabled={!promptValue.trim()}
-        >
+        <button type="button" className="btn btn-primary" onClick={submitPrompt} disabled={!promptValue.trim()}>
           {opts.confirmLabel ?? t('common.ok')}
         </button>
       </div>
