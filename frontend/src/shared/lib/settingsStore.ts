@@ -2,7 +2,7 @@
 // in the portable settings.json (not the non-relocatable WebView localStorage);
 // Go calls are async, so we hydrate a cache at startup and write through to Go.
 
-import { DeleteSetting, GetSettings, SetSetting } from '@wails/go/app/App';
+import { DeleteSetting, GetSettings, SetSetting } from '@bindings/xensql/internal/app/app';
 
 let cache = new Map<string, string>();
 
@@ -10,7 +10,9 @@ let cache = new Map<string, string>();
 export async function hydrateSettings(): Promise<void> {
   try {
     const loaded = await GetSettings();
-    cache = new Map(Object.entries(loaded ?? {}));
+    // Go returns map[string]string; the v3 binding types values as optional, so
+    // narrow back to string (values are always present in practice).
+    cache = new Map(Object.entries((loaded ?? {}) as Record<string, string>));
   } catch {
     cache = new Map();
   }

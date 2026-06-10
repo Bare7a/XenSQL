@@ -1,4 +1,4 @@
-import { ClipboardGetText } from '@wails/runtime/runtime';
+import { Clipboard } from '@wailsio/runtime';
 import { useEffect, useRef } from 'react';
 import {
   computePasteEdits,
@@ -63,7 +63,7 @@ export function useTableViewKeyboardActions({
 
     const readClipboardText = async (): Promise<string> => {
       try {
-        return await ClipboardGetText();
+        return await Clipboard.Text();
       } catch {
         return navigator.clipboard.readText();
       }

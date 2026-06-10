@@ -41,7 +41,7 @@ import {
   SaveTextFile,
   TestConnection,
   UpdateRow,
-} from '@wails/go/app/App';
+} from '@bindings/xensql/internal/app/app';
 import {
   normalizeColumns,
   normalizeHistory,

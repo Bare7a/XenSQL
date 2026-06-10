@@ -1,4 +1,4 @@
-import { OnFileDrop, OnFileDropOff } from '@wails/runtime/runtime';
+import { Events } from '@wailsio/runtime';
 import { useEffect, useState } from 'react';
 
 const SQLITE_EXTENSIONS = /\.(sqlite3?|db|s3db|sl3)$/i;
@@ -8,15 +8,16 @@ export function useFileDropZone(): { fileDragOver: boolean } {
   const [fileDragOver, setFileDragOver] = useState(false);
 
   useEffect(() => {
-    OnFileDrop((_x, _y, paths) => {
+    const unsubDrop = Events.On('files-dropped', (e) => {
       setFileDragOver(false);
+      const paths = (e.data as string[]) ?? [];
       const sqlitePaths = paths.filter((p) => SQLITE_EXTENSIONS.test(p));
       if (sqlitePaths.length === 0) return;
       const filePath = sqlitePaths[0];
       const fileName = filePath.split(/[/\\]/).pop() || '';
       const name = fileName.replace(/\.[^.]+$/, '');
       window.dispatchEvent(new CustomEvent('xensql:open-sqlite', { detail: { filePath, name } }));
-    }, false);
+    });
 
     const onDragOver = (e: DragEvent) => {
       if (e.dataTransfer?.types.includes('Files')) {
@@ -37,7 +38,7 @@ export function useFileDropZone(): { fileDragOver: boolean } {
     window.addEventListener('drop', onDrop);
 
     return () => {
-      OnFileDropOff();
+      unsubDrop();
       window.removeEventListener('dragover', onDragOver);
       window.removeEventListener('dragleave', onDragLeave);
       window.removeEventListener('drop', onDrop);

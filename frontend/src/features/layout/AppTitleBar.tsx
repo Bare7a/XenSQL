@@ -1,4 +1,4 @@
-import { Quit, WindowMinimise, WindowToggleMaximise } from '@wails/runtime/runtime';
+import { Application, Window } from '@wailsio/runtime';
 import { Minus, Square, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -89,7 +89,7 @@ export function AppTitleBar({ onAction, sidebarOpen, onToggleSidebar, jsonPanelO
 
   const onTitleBarDoubleClick = (e: React.MouseEvent) => {
     if ((e.target as HTMLElement).closest('button')) return;
-    WindowToggleMaximise();
+    Window.ToggleMaximise();
   };
 
   useEffect(() => {
@@ -124,7 +124,7 @@ export function AppTitleBar({ onAction, sidebarOpen, onToggleSidebar, jsonPanelO
                 onClick={() => {
                   setOpenMenu(null);
                   if (row.id === 'exit') {
-                    Quit();
+                    Application.Quit();
                   } else {
                     onAction(row.id);
                   }
@@ -192,7 +192,7 @@ export function AppTitleBar({ onAction, sidebarOpen, onToggleSidebar, jsonPanelO
           className="app-title-bar-winbtn"
           data-tooltip={t('window.minimize')}
           aria-label={t('window.minimize')}
-          onClick={() => WindowMinimise()}
+          onClick={() => Window.Minimise()}
         >
           <Minus className="icon-sm" strokeWidth={2} />
         </button>
@@ -201,7 +201,7 @@ export function AppTitleBar({ onAction, sidebarOpen, onToggleSidebar, jsonPanelO
           className="app-title-bar-winbtn"
           data-tooltip={t('window.maximize')}
           aria-label={t('window.maximize')}
-          onClick={() => WindowToggleMaximise()}
+          onClick={() => Window.ToggleMaximise()}
         >
           <Square className="icon-xs" strokeWidth={2} />
         </button>
@@ -210,7 +210,7 @@ export function AppTitleBar({ onAction, sidebarOpen, onToggleSidebar, jsonPanelO
           className="app-title-bar-winbtn app-title-bar-winbtn-close"
           data-tooltip={t('window.close')}
           aria-label={t('window.close')}
-          onClick={() => Quit()}
+          onClick={() => Application.Quit()}
         >
           <X className="icon-sm" strokeWidth={2} />
         </button>

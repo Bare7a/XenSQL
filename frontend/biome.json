@@ -28,6 +28,6 @@
     }
   },
   "files": {
-    "includes": ["**", "!wailsjs", "!dist"]
+    "includes": ["**", "!bindings", "!dist"]
   }
 }

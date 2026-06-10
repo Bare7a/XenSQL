@@ -15,8 +15,8 @@
 
 COMPOSE ?= docker compose
 
-# Extra build tags. On Linux, building the (Wails-linked) main package needs the
-# webview tag, matching the release workflow: make test BUILD_TAGS=webkit2_41
+# Extra build tags (usually none). Wails v3 links WebKitGTK 4.1 on Linux without a
+# build tag - just install the dev libraries (libgtk-3-dev libwebkit2gtk-4.1-dev).
 BUILD_TAGS ?=
 
 .PHONY: test build-check e2e e2e-up e2e-down e2e-logs e2e-all
@@ -25,11 +25,13 @@ BUILD_TAGS ?=
 test:
 	go test -tags "$(BUILD_TAGS)" ./internal/...
 
-# Compile every package, including the Wails entry point. Stubs frontend/dist so the
-# //go:embed resolves without a full frontend build (real assets come from `wails build`).
+# Compile the app: the Wails entry point (.) and the internal packages. Stubs
+# frontend/dist so the //go:embed resolves without a full frontend build (real
+# assets come from `wails3 task build`). build/ios and build/android hold mobile
+# entry points that only compile under their own targets, so they're excluded here.
 build-check:
 	@mkdir -p frontend/dist && touch frontend/dist/.gitkeep
-	go build -tags "$(BUILD_TAGS)" ./...
+	go build -tags "$(BUILD_TAGS)" . ./internal/...
 
 # Bring up the database stack and block until every server is healthy.
 e2e-up:

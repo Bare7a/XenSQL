@@ -1,8 +1,6 @@
 package app
 
 import (
-	"github.com/wailsapp/wails/v2/pkg/runtime"
-
 	"xensql/internal/database"
 	"xensql/internal/storage"
 )
@@ -210,7 +208,7 @@ func (a *App) DeleteFolder(id string) {
 		return
 	}
 	if err := store.DeleteFolder(id); err != nil {
-		runtime.LogErrorf(a.ctx, "delete folder %s: %v", id, err)
+		a.logErrorf("delete folder %s: %v", id, err)
 	}
 }
 

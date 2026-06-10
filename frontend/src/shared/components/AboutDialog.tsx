@@ -1,4 +1,4 @@
-import { BrowserOpenURL } from '@wails/runtime/runtime';
+import { Browser } from '@wailsio/runtime';
 import { useTranslation } from 'react-i18next';
 import { Modal } from '@/shared/components/Modal';
 import type { AppInfo } from '@/shared/lib/appInfo';
@@ -13,7 +13,7 @@ export function AboutDialog({ info, onClose }: Props) {
 
   const openRepo = () => {
     try {
-      BrowserOpenURL(info.repository);
+      Browser.OpenURL(info.repository);
     } catch {
       window.open(info.repository, '_blank', 'noopener,noreferrer');
     }
