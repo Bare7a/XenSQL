@@ -69,11 +69,13 @@ func (a *App) ServiceStartup(ctx context.Context, _ application.ServiceOptions) 
 	return nil
 }
 
-// emit relays an event to the frontend. Guarded so unit tests (which build App
-// without a running application) never dereference a nil app.
 func (a *App) emit(name string, data any) {
-	if a.app != nil {
-		a.app.Event.Emit(name, data)
+	if a.app == nil {
+		return
+	}
+	event := &application.CustomEvent{Name: name, Data: data}
+	for _, w := range a.app.Window.GetAll() {
+		w.DispatchWailsEvent(event)
 	}
 }
 

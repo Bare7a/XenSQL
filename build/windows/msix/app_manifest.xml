@@ -11,7 +11,7 @@
     Name="com.bare7a.xensql"
     Publisher="CN=Bare7a"
     Version="1.1.2.0" 
-    ProcessorArchitecture="arm64" />
+    ProcessorArchitecture="x64" />
   
   <Properties>
     <DisplayName>XenSQL</DisplayName>
