@@ -309,7 +309,7 @@ bin/XenSQL(.exe)        # bin/XenSQL.app on macOS
 ```text
 ├── main.go                # Wails entry point (embeds frontend/dist)
 ├── docker-compose.yml     # PostgreSQL / MySQL / MariaDB for the E2E suite
-├── Makefile               # test / e2e targets
+├── Taskfile.yml           # dev tasks: build / test / e2e (run via `task` or `wails3 task`)
 ├── internal/
 │   ├── app/               # Wails App API bindings + tests (connections, query, history, …)
 │   ├── database/          # Driver interface + SQLite / PostgreSQL / MySQL

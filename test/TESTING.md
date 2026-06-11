@@ -5,8 +5,13 @@ XenSQL has three test layers:
 | Layer        | Command                       |   Needs servers?    | What it covers                                                                          |
 | ------------ | ----------------------------- | :-----------------: | --------------------------------------------------------------------------------------- |
 | **Frontend** | `cd frontend && npm test`     |         No          | React/TS logic - hooks, stores, grid, export, formatting (Vitest)                       |
-| **Go unit**  | `make test`                   |         No          | Pure logic + the full app surface against embedded **SQLite**                           |
-| **E2E**      | `make e2e-all`                | Yes (Docker/Podman) | The same Wails API the UI calls, against real **PostgreSQL**, **MySQL** and **MariaDB** |
+| **Go unit**  | `task test`                   |         No          | Pure logic + the full app surface against embedded **SQLite**                           |
+| **E2E**      | `task e2e:all`                | Yes (Docker/Podman) | The same Wails API the UI calls, against real **PostgreSQL**, **MySQL** and **MariaDB** |
+
+> **On Linux**, both Go suites compile the native Wails layer, so they need the
+> GTK4 + WebKitGTK 6.0 dev libraries:
+> `sudo apt install libgtk-4-dev libwebkitgtk-6.0-dev`. 
+> No native libraries are needed on macOS or Windows.
 
 ---
 
@@ -27,7 +32,7 @@ npm run test:watch # watch mode
 No setup - these use embedded SQLite and run in seconds:
 
 ```bash
-make test          # go test ./internal/...
+task test          # go test ./internal/...
 ```
 
 ---
@@ -49,21 +54,21 @@ export, …) against real database servers started from
 One shot - bring the stack up, run the suite, tear it down:
 
 ```bash
-make e2e-all
+task e2e:all
 ```
 
 Or keep the servers running between iterations:
 
 ```bash
-make e2e-up        # start postgres + mysql + mariadb, wait until healthy
-make e2e           # run the suite (repeat as you edit tests)
-make e2e-down      # stop and remove volumes
+task e2e:up        # start postgres + mysql + mariadb, wait until healthy
+task e2e           # run the suite (repeat as you edit tests)
+task e2e:down      # stop and remove volumes
 ```
 
 Using Podman? Point the compose command at it:
 
 ```bash
-make e2e-all COMPOSE="podman compose"
+task e2e:all COMPOSE="podman compose"
 ```
 
 ### What the stack looks like

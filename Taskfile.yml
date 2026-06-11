@@ -5,6 +5,7 @@ vars:
   BIN_DIR: "bin"
   PACKAGE_MANAGER: '{{.PACKAGE_MANAGER | default "npm"}}'
   VITE_PORT: '{{.WAILS_VITE_PORT | default 9245}}'
+  COMPOSE: '{{.COMPOSE | default "docker compose"}}'
 
 includes:
   common: ./build/Taskfile.yml
@@ -59,3 +60,46 @@ tasks:
     summary: Builds and runs the Docker image
     cmds:
       - task: common:run:docker
+
+  test:
+    summary: Runs the Go unit tests (embedded SQLite, no database servers needed)
+    cmds:
+      - go test ./internal/...
+
+  build:check:
+    summary: Compiles the app and every internal package without a full frontend build
+    cmds:
+      # Stub the embedded frontend so the //go:embed in main.go resolves; the real
+      # assets come from `wails3 task build`.
+      - mkdir -p frontend/dist
+      - touch frontend/dist/.gitkeep
+      - go build . ./internal/...
+
+  e2e:
+    summary: Runs the E2E suite against an already-running database stack (see e2e:up)
+    cmds:
+      - go test -tags e2e -count=1 -run TestE2E -v ./internal/app/
+
+  e2e:up:
+    summary: Brings the database stack up and blocks until every server is healthy
+    cmds:
+      - "{{.COMPOSE}} up -d --wait"
+
+  e2e:down:
+    summary: Tears the database stack down and discards its volumes
+    cmds:
+      - "{{.COMPOSE}} down -v"
+
+  e2e:logs:
+    summary: Prints the database stack logs
+    cmds:
+      - "{{.COMPOSE}} logs --no-color"
+
+  e2e:all:
+    summary: One-shot E2E - bring the stack up, run the suite, then always tear it down
+    cmds:
+      # defer registers first so teardown runs even if the suite (or startup) fails;
+      # the task still exits non-zero when the suite fails.
+      - defer: { task: e2e:down }
+      - task: e2e:up
+      - task: e2e

@@ -21,14 +21,15 @@ We welcome all kinds of contributions - bug reports, feature ideas, documentatio
 ### Requirements
 
 - Go 1.26+
-- [Wails v2](https://wails.io/docs/gettingstarted/installation)
+- [Wails v3](https://v3.wails.io/) CLI (`wails3`)
 - Node.js 24+
+- On Linux: `libgtk-4-dev libwebkitgtk-6.0-dev` (GTK4 + WebKitGTK 6.0)
 
 ### Setup Commands
 
 ```bash
-# Install Wails CLI
-go install github.com/wailsapp/wails/v2/cmd/wails@latest
+# Install the Wails v3 CLI (bundles the Task runner used below)
+go install github.com/wailsapp/wails/v3/cmd/wails3@latest
 
 # Frontend dependencies
 cd frontend
@@ -36,7 +37,7 @@ npm install
 cd ..
 
 # Run in dev mode
-wails dev
+wails3 task dev
 ```
 
 ---
@@ -50,11 +51,11 @@ Before opening a PR, run the tests. See **[test/TESTING.md](../test/TESTING.md)*
 cd frontend && npm test && cd ..
 
 # Fast Go unit tests (embedded SQLite, no servers needed)
-make test
+task test
 
 # End-to-end tests against real PostgreSQL, MySQL and MariaDB
 # (spins up the docker-compose.yml stack, runs the suite, tears it down)
-make e2e-all
+task e2e:all
 ```
 
 CI runs all three suites on every pull request.

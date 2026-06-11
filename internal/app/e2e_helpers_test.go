@@ -7,15 +7,15 @@
 // servers. They are gated behind the `e2e` build tag so the default `go test`
 // (which only has embedded SQLite) never tries to reach a server.
 //
-// Bring the servers up with `make e2e-up` (see docker-compose.yml), then run
-// `make e2e`. Connection details are read from the environment with defaults
+// Bring the servers up with `task e2e:up` (see docker-compose.yml), then run
+// `task e2e`. Connection details are read from the environment with defaults
 // that match the compose file, so you can point the suite at any server:
 //
 //	XENSQL_E2E_PG_HOST / _PORT / _USER / _PASSWORD / _DB
 //	XENSQL_E2E_MYSQL_HOST / _PORT / _USER / _PASSWORD / _DB
 //	XENSQL_E2E_MARIADB_HOST / _PORT / _USER / _PASSWORD / _DB
 //
-// An engine that is not reachable is skipped (with a pointer to `make e2e-up`)
+// An engine that is not reachable is skipped (with a pointer to `task e2e:up`)
 // rather than failing, so a partial local stack still runs the engines you have.
 package app
 
@@ -204,7 +204,7 @@ func probeReachable(e engine) error {
 func requireEngine(t *testing.T, a *App, e engine) string {
 	t.Helper()
 	if err := reachable(e); err != nil {
-		t.Skipf("%s not reachable (%v) - bring the stack up with `make e2e-up`", e.name, err)
+		t.Skipf("%s not reachable (%v) - bring the stack up with `task e2e:up`", e.name, err)
 	}
 	saved, err := a.SaveConnection(e.config())
 	if err != nil {

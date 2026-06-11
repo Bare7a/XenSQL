@@ -15,7 +15,7 @@ func TestE2ETestConnection(t *testing.T) {
 		e := e
 		t.Run(e.name, func(t *testing.T) {
 			if err := reachable(e); err != nil {
-				t.Skipf("%s not reachable (%v) - bring the stack up with `make e2e-up`", e.name, err)
+				t.Skipf("%s not reachable (%v) - bring the stack up with `task e2e:up`", e.name, err)
 			}
 			a := appForTest(t)
 
@@ -45,7 +45,7 @@ func TestE2EConnectDisconnect(t *testing.T) {
 		e := e
 		t.Run(e.name, func(t *testing.T) {
 			if err := reachable(e); err != nil {
-				t.Skipf("%s not reachable (%v) - bring the stack up with `make e2e-up`", e.name, err)
+				t.Skipf("%s not reachable (%v) - bring the stack up with `task e2e:up`", e.name, err)
 			}
 			a := appForTest(t)
 			saved, err := a.SaveConnection(e.config())

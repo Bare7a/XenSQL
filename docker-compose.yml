@@ -1,4 +1,4 @@
-# Database servers for the XenSQL E2E suite (see test/e2e and `make e2e`).
+# Database servers for the XenSQL E2E suite (see test/e2e and `task e2e`).
 #
 # Ports are intentionally non-default so this stack never collides with a local
 # Postgres/MySQL you might already be running:
@@ -8,11 +8,11 @@
 #   MariaDB    -> 33307
 #
 # The Go E2E tests read these same defaults from the environment, so once the
-# stack is healthy you can just run `make e2e`.
+# stack is healthy you can just run `task e2e`.
 #
-#   docker compose up -d        # or: podman compose up -d
-#   make e2e
-#   docker compose down -v
+#   task e2e:up                 # docker compose up -d --wait (or: COMPOSE="podman compose")
+#   task e2e
+#   task e2e:down
 #
 # Works with Docker Compose v2 and Podman. Healthchecks gate readiness so the
 # suite (and `docker compose up --wait`) only start once each server accepts
