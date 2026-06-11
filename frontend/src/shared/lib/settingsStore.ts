@@ -10,8 +10,6 @@ let cache = new Map<string, string>();
 export async function hydrateSettings(): Promise<void> {
   try {
     const loaded = await GetSettings();
-    // Go returns map[string]string; the v3 binding types values as optional, so
-    // narrow back to string (values are always present in practice).
     cache = new Map(Object.entries((loaded ?? {}) as Record<string, string>));
   } catch {
     cache = new Map();
