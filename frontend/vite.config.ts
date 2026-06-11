@@ -1,8 +1,8 @@
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import react from '@vitejs/plugin-react';
+import wails from '@wailsio/runtime/plugins/vite';
 import { defineConfig } from 'vite';
-import wails from "@wailsio/runtime/plugins/vite";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
