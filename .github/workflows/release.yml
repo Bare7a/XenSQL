@@ -16,7 +16,6 @@ permissions:
 
 env:
   NODE_OPTIONS: '--max-old-space-size=4096'
-  WAILS3_VERSION: v3.0.0-alpha.98
 
 jobs:
   build:
@@ -72,7 +71,7 @@ jobs:
       - name: Install Wails3 CLI
         shell: bash
         run: |
-          go install github.com/wailsapp/wails/v3/cmd/wails3@${WAILS3_VERSION}
+          go install github.com/wailsapp/wails/v3/cmd/wails3@latest
           echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
 
       - name: Build (Linux / Windows)
