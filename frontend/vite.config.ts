@@ -2,11 +2,12 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
+import wails from "@wailsio/runtime/plugins/vite";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [wails('./bindings'), react()],
   resolve: {
     alias: {
       // `@/` resolves to src/ - mirrors the tsconfig paths entry so editor,
