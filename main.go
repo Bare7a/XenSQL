@@ -68,13 +68,13 @@ func main() {
 		Title:            "XenSQL",
 		Width:            1400,
 		Height:           900,
-		MinWidth:         1024,
+		MinWidth:         800,
 		MinHeight:        600,
 		Frameless:        true,
 		EnableFileDrop:   true,
 		BackgroundColour: application.NewRGB(15, 17, 23),
 		URL:              "/",
-		Windows:          application.WindowsWindow{Theme: application.Dark},
+		StartState:       application.WindowStateMaximised,
 	})
 
 	// The webview can't see OS file paths (browser security), so the drop is handled
