@@ -79,7 +79,6 @@ func (a *App) emit(name string, data any) {
 	}
 }
 
-// logErrorf logs at error level through the app logger when one is available.
 func (a *App) logErrorf(format string, args ...any) {
 	if a.app != nil {
 		a.app.Logger.Error(fmt.Sprintf(format, args...))
@@ -93,7 +92,6 @@ func (a *App) requireStore() (*storage.Store, error) {
 	return a.store, nil
 }
 
-// ServiceShutdown is the v3 service lifecycle hook (OnShutdown in v2).
 func (a *App) ServiceShutdown() error {
 	// Cancel in-flight queries so goroutines unwind before sessions close.
 	if a.queries != nil {
