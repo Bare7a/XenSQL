@@ -64,17 +64,28 @@ func main() {
 		},
 	})
 
+	var screenW int
+	var screenH int
+	screen := wailsApp.Screen.GetPrimary()
+	if screen != nil {
+		screenW = screen.Size.Width * 80 / 100
+		screenH = screen.Size.Height * 80 / 100
+	} else {
+		screenW = 1280
+		screenH = 720
+	}
+
 	window = wailsApp.Window.NewWithOptions(application.WebviewWindowOptions{
-		Title:            "XenSQL",
-		Width:            1400,
-		Height:           900,
-		MinWidth:         800,
-		MinHeight:        600,
-		Frameless:        true,
-		EnableFileDrop:   true,
-		BackgroundColour: application.NewRGB(15, 17, 23),
-		URL:              "/",
-		StartState:       application.WindowStateMaximised,
+		Title:          "XenSQL",
+		Width:          screenW,
+		Height:         screenH,
+		MinWidth:       800,
+		MinHeight:      600,
+		Frameless:      true,
+		EnableFileDrop: true,
+		URL:            "/",
+		StartState:     application.WindowStateMaximised,
+		BackgroundType: application.BackgroundTypeTranslucent,
 	})
 
 	// The webview can't see OS file paths (browser security), so the drop is handled
