@@ -33,8 +33,6 @@ func main() {
 		svc.SetPendingFile(f)
 	}
 
-	// Declared before application.New so the single-instance callback (registered in
-	// Options) can restore/focus the window once it has been created below.
 	var window *application.WebviewWindow
 
 	wailsApp := application.New(application.Options{
@@ -88,8 +86,6 @@ func main() {
 		BackgroundType: application.BackgroundTypeTranslucent,
 	})
 
-	// The webview can't see OS file paths (browser security), so the drop is handled
-	// here and the paths are relayed to the frontend, which filters for SQLite files.
 	window.OnWindowEvent(events.Common.WindowFilesDropped, func(e *application.WindowEvent) {
 		wailsApp.Event.Emit("files-dropped", e.Context().DroppedFiles())
 	})

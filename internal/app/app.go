@@ -40,8 +40,6 @@ func NewApp() *App {
 	}
 }
 
-// ServiceStartup is the v3 service lifecycle hook (OnStartup in v2). The ctx lives
-// for the application's lifetime and is the parent context for query cancellation.
 func (a *App) ServiceStartup(ctx context.Context, _ application.ServiceOptions) error {
 	a.ctx = ctx
 	a.app = application.Get()
