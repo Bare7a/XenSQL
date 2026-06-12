@@ -1,7 +1,7 @@
 # ⚡ XenSQL
 
 ![Go](https://img.shields.io/badge/Go-1.26+-00ADD8?style=for-the-badge&logo=go)
-![Wails](https://img.shields.io/badge/Wails-v2-4B275F?style=for-the-badge)
+![Wails](https://img.shields.io/badge/Wails-v3--alpha-4B275F?style=for-the-badge)
 ![License](https://img.shields.io/badge/license-GPL--3.0-blue?style=for-the-badge)
 ![Status](https://img.shields.io/badge/status-active-success?style=for-the-badge)
 
@@ -23,13 +23,13 @@ Prefer to build it yourself? See **Installation & Development** below.
 ## 🚀 Try it in seconds
 
 ```bash
-wails build
+wails3 task build
 ```
 
 Or during development:
 
 ```bash
-wails dev
+wails3 dev
 ```
 
 ---
@@ -256,13 +256,13 @@ If the app lives in a read-only location (e.g. `/Applications` or a system path)
 - **Linux** → `~/.config/XenSQL-data`
 - **Windows** → `%AppData%\XenSQL-data`
 
-Override the location with `XENSQL_DATA_DIR`. During `wails dev` it's `./XenSQL-data` in the project root.
+Override the location with `XENSQL_DATA_DIR`. During `wails3 dev` it's `./XenSQL-data` in the project root.
 
 ---
 
 # 🖥️ Built with Wails
 
-XenSQL uses **[Wails](https://wails.io/)**, which embeds a web UI into a native desktop app.
+XenSQL uses **[Wails v3](https://v3.wails.io/)**, which embeds a web UI into a native desktop app.
 
 - Go runs backend logic
 - UI runs in the OS-native webview:
@@ -278,31 +278,28 @@ XenSQL uses **[Wails](https://wails.io/)**, which embeds a web UI into a native 
 ## Requirements
 
 - Go 1.26+
-- [Wails v2](https://wails.io/docs/gettingstarted/installation) CLI
+- [Wails v3](https://v3.wails.io/) CLI (`wails3`)
 - Node.js 24.16+
 
 ## Dev setup
 
 ```bash
-go install github.com/wailsapp/wails/v2/cmd/wails@latest
+go install github.com/wailsapp/wails/v3/cmd/wails3@latest
 
-cd frontend
-npm install
-
-cd ..
-wails dev
+# wails3 dev installs frontend deps, generates bindings, and launches the app
+wails3 dev
 ```
 
 ## Build
 
 ```bash
-wails build
+wails3 task build       # or: wails3 task package  (platform bundle/installer)
 ```
 
 Output:
 
 ```text
-build/bin/xensql.exe
+bin/XenSQL(.exe)        # bin/XenSQL.app on macOS
 ```
 
 ---
@@ -312,7 +309,7 @@ build/bin/xensql.exe
 ```text
 ├── main.go                # Wails entry point (embeds frontend/dist)
 ├── docker-compose.yml     # PostgreSQL / MySQL / MariaDB for the E2E suite
-├── Makefile               # test / e2e targets
+├── Taskfile.yml           # dev tasks: build / test / e2e (run via `task` or `wails3 task`)
 ├── internal/
 │   ├── app/               # Wails App API bindings + tests (connections, query, history, …)
 │   ├── database/          # Driver interface + SQLite / PostgreSQL / MySQL
@@ -330,7 +327,7 @@ build/bin/xensql.exe
 | Layer      | Technology                                                                  |
 | ---------- | --------------------------------------------------------------------------- |
 | Backend    | [Go](https://go.dev/)                                                       |
-| Desktop    | [Wails v2](https://wails.io/)                                               |
+| Desktop    | [Wails v3](https://v3.wails.io/)                                            |
 | UI         | [React](https://react.dev/) + [TypeScript](https://www.typescriptlang.org/) |
 | Editor     | [Monaco Editor](https://microsoft.github.io/monaco-editor/)                 |
 | PostgreSQL | [pgx](https://github.com/jackc/pgx)                                         |

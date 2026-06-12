@@ -1,4 +1,4 @@
-import { EventsOn } from '@wails/runtime/runtime';
+import { Events } from '@wailsio/runtime';
 import { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '@/shared/lib/api';
@@ -50,7 +50,8 @@ export function useQueryStreamEvents(onConnectionStatusChange: (status: Connecti
       flushBuffers();
     };
 
-    const unsubMeta = EventsOn('query:stream:meta', (payload: QueryStreamMetaPayload) => {
+    const unsubMeta = Events.On('query:stream:meta', (e) => {
+      const payload = e.data as QueryStreamMetaPayload;
       const { tabId, streamId, resultIndex, columns, columnTypes, schemaName, tableName } = payload;
       // Each result set restarts the tab's row buffer.
       buffers.set(tabId, { streamId, resultIndex, rows: [] });
@@ -64,7 +65,8 @@ export function useQueryStreamEvents(onConnectionStatusChange: (status: Connecti
       });
     });
 
-    const unsubRows = EventsOn('query:stream:rows', (payload: QueryStreamRowsPayload) => {
+    const unsubRows = Events.On('query:stream:rows', (e) => {
+      const payload = e.data as QueryStreamRowsPayload;
       const { tabId, streamId, resultIndex, rows } = payload;
       let buf = buffers.get(tabId);
       if (!buf || buf.streamId !== streamId || buf.resultIndex !== resultIndex) {
@@ -76,7 +78,8 @@ export function useQueryStreamEvents(onConnectionStatusChange: (status: Connecti
       scheduleFlush();
     });
 
-    const unsubResult = EventsOn('query:stream:result', (payload: QueryStreamResultPayload) => {
+    const unsubResult = Events.On('query:stream:result', (e) => {
+      const payload = e.data as QueryStreamResultPayload;
       // Flush buffered rows before finalise so the row count can't snap ahead of visible rows.
       flushNow();
       const { tabId, streamId, resultIndex, result, statement, error } = payload;
@@ -96,7 +99,8 @@ export function useQueryStreamEvents(onConnectionStatusChange: (status: Connecti
       }
     });
 
-    const unsubDone = EventsOn('query:stream:done', (payload: QueryStreamDonePayload) => {
+    const unsubDone = Events.On('query:stream:done', (e) => {
+      const payload = e.data as QueryStreamDonePayload;
       flushNow();
       buffers.delete(payload.tabId);
 

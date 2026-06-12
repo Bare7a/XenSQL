@@ -1,4 +1,4 @@
-import { WindowFullscreen, WindowIsFullscreen, WindowUnfullscreen } from '@wails/runtime/runtime';
+import { Window } from '@wailsio/runtime';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -60,7 +60,7 @@ export function ViewMenuContent({
   const [isFullscreen, setIsFullscreen] = useState(false);
 
   useEffect(() => {
-    void WindowIsFullscreen().then(setIsFullscreen);
+    void Window.IsFullscreen().then(setIsFullscreen);
   }, []);
 
   useEffect(() => subscribeThemeChanged(setTheme), []);
@@ -79,12 +79,12 @@ export function ViewMenuContent({
   };
 
   const handleToggleFullscreen = async () => {
-    const isFs = await WindowIsFullscreen();
+    const isFs = await Window.IsFullscreen();
     if (isFs) {
-      WindowUnfullscreen();
+      Window.UnFullscreen();
       setIsFullscreen(false);
     } else {
-      WindowFullscreen();
+      Window.Fullscreen();
       setIsFullscreen(true);
     }
     onCloseMenu();

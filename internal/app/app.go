@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/wailsapp/wails/v2/pkg/runtime"
+	"github.com/wailsapp/wails/v3/pkg/application"
 
 	"xensql/internal/database"
 	_ "xensql/internal/database/mysql"
@@ -18,6 +18,7 @@ import (
 
 type App struct {
 	ctx          context.Context
+	app          *application.App
 	pool         *database.Pool
 	queries      *database.QueryRegistry
 	txns         *database.TxnManager
@@ -39,28 +40,46 @@ func NewApp() *App {
 	}
 }
 
-func (a *App) Startup(ctx context.Context) {
+func (a *App) ServiceStartup(ctx context.Context, _ application.ServiceOptions) error {
 	a.ctx = ctx
+	a.app = application.Get()
 	configDir, err := paths.EnsureDataDir()
 	if err != nil {
-		runtime.LogErrorf(ctx, "data dir: %v", err)
+		a.logErrorf("data dir: %v", err)
 		configDir = paths.DataDir()
 	}
 	a.store, err = storage.NewStore(configDir)
 	if err != nil {
-		runtime.LogErrorf(ctx, "store init: %v", err)
+		a.logErrorf("store init: %v", err)
 	}
 	if a.history, err = storage.NewHistoryStore(configDir); err != nil {
-		runtime.LogErrorf(ctx, "history store: %v", err)
+		a.logErrorf("history store: %v", err)
 	}
 	if a.savedQueries, err = storage.NewSavedQueriesStore(configDir); err != nil {
-		runtime.LogErrorf(ctx, "saved queries store: %v", err)
+		a.logErrorf("saved queries store: %v", err)
 	}
 	if a.session, err = storage.NewSessionStore(configDir); err != nil {
-		runtime.LogErrorf(ctx, "session store: %v", err)
+		a.logErrorf("session store: %v", err)
 	}
 	if a.settings, err = storage.NewSettingsStore(configDir); err != nil {
-		runtime.LogErrorf(ctx, "settings store: %v", err)
+		a.logErrorf("settings store: %v", err)
+	}
+	return nil
+}
+
+func (a *App) emit(name string, data any) {
+	if a.app == nil {
+		return
+	}
+	event := &application.CustomEvent{Name: name, Data: data}
+	for _, w := range a.app.Window.GetAll() {
+		w.DispatchWailsEvent(event)
+	}
+}
+
+func (a *App) logErrorf(format string, args ...any) {
+	if a.app != nil {
+		a.app.Logger.Error(fmt.Sprintf(format, args...))
 	}
 }
 
@@ -71,7 +90,7 @@ func (a *App) requireStore() (*storage.Store, error) {
 	return a.store, nil
 }
 
-func (a *App) Shutdown(ctx context.Context) {
+func (a *App) ServiceShutdown() error {
 	// Cancel in-flight queries so goroutines unwind before sessions close.
 	if a.queries != nil {
 		a.queries.CancelAll()
@@ -80,6 +99,7 @@ func (a *App) Shutdown(ctx context.Context) {
 		a.txns.RollbackAll()
 	}
 	a.pool.CloseAll()
+	return nil
 }
 
 func (a *App) GetDataDir() string {
@@ -104,7 +124,9 @@ func (a *App) ExportResult(result database.QueryResult, format string) (string, 
 }
 
 func (a *App) CopyToClipboard(text string) {
-	runtime.ClipboardSetText(a.ctx, text)
+	if a.app != nil {
+		a.app.Clipboard.SetText(text)
+	}
 }
 
 func errNotFound(what string) error {

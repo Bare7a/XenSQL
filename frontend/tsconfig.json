@@ -17,8 +17,8 @@
     "noFallthroughCasesInSwitch": true,
     "paths": {
       "@/*": ["./src/*"],
-      "@wails/*": ["./wailsjs/*"]
+      "@bindings/*": ["./bindings/*"]
     }
   },
-  "include": ["src"]
+  "include": ["src", "bindings"]
 }

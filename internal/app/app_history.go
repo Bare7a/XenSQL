@@ -3,8 +3,6 @@ package app
 import (
 	"fmt"
 
-	"github.com/wailsapp/wails/v2/pkg/runtime"
-
 	"xensql/internal/database"
 	"xensql/internal/storage"
 )
@@ -25,7 +23,7 @@ func (a *App) recordHistory(connectionID, sql string, result *database.QueryResu
 		entry.DurationMs = result.DurationMs
 	}
 	if _, err := a.history.Add(entry); err != nil {
-		runtime.LogErrorf(a.ctx, "history save: %v", err)
+		a.logErrorf("history save: %v", err)
 	}
 }
 

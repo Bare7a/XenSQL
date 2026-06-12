@@ -66,33 +66,29 @@ jobs:
         if: matrix.build.platform == 'linux/amd64'
         run: |
           sudo apt-get update
-          sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.1-dev libglib2.0-dev pkg-config gcc
+          sudo apt-get install -y libgtk-4-dev libwebkitgtk-6.0-dev libglib2.0-dev pkg-config gcc
 
-      - name: Install Wails CLI
-        run: go install github.com/wailsapp/wails/v2/cmd/wails@latest
-
-      - name: Install frontend dependencies
-        working-directory: ./frontend
-        run: npm ci
-
-      - name: Build with Wails
+      - name: Install Wails3 CLI
         shell: bash
         run: |
-          TAGS=""
-          if [ "${{ matrix.build.platform }}" = "linux/amd64" ]; then
-            TAGS="-tags webkit2_41"
-          fi
-          wails build -platform ${{ matrix.build.platform }} -clean $TAGS
+          go install github.com/wailsapp/wails/v3/cmd/wails3@latest
+          echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
+
+      - name: Build (Linux / Windows)
+        if: matrix.build.platform != 'darwin/universal'
+        run: wails3 task build
+
+      - name: Build & package universal .app (macOS)
+        if: matrix.build.platform == 'darwin/universal'
+        run: wails3 task darwin:package:universal
 
       - name: Package macOS (.dmg)
         if: matrix.build.platform == 'darwin/universal'
         shell: bash
         run: |
           set -e
-
-          APP_PATH="build/bin/XenSQL.app"
-          DMG_PATH="build/bin/XenSQL.dmg"
-
+          APP_PATH="bin/XenSQL.app"
+          DMG_PATH="bin/XenSQL.dmg"
           hdiutil create -volname "XenSQL" -srcfolder "$APP_PATH" -ov -format UDZO "$DMG_PATH"
           rm -rf "$APP_PATH"
 
@@ -100,7 +96,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: XenSQL-${{ matrix.build.os }}
-          path: build/bin/*
+          path: bin/*
           if-no-files-found: error
 
   release:

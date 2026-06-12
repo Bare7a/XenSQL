@@ -1,4 +1,8 @@
-build/bin
+bin/
+.task/
+build/linux/appimage/build
+build/windows/nsis/MicrosoftEdgeWebview2Setup.exe
+
 node_modules
 frontend/dist
 XenSQL-data/

@@ -5,8 +5,6 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-
-	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
 var sqliteExts = map[string]bool{
@@ -37,7 +35,7 @@ func (a *App) EmitOpenSQLite(filePath string) {
 	if ext != "" {
 		name = name[:len(name)-len(ext)]
 	}
-	runtime.EventsEmit(a.ctx, "open-sqlite", map[string]string{
+	a.emit("open-sqlite", map[string]string{
 		"filePath": filePath,
 		"name":     name,
 	})
@@ -66,28 +64,23 @@ func (a *App) SetPendingFile(path string) {
 }
 
 func (a *App) PickSQLiteFile() (string, error) {
-	return runtime.OpenFileDialog(a.ctx, runtime.OpenDialogOptions{
-		Title: "Select SQLite database",
-		Filters: []runtime.FileFilter{
-			{DisplayName: "SQLite Database", Pattern: "*.db;*.sqlite;*.sqlite3"},
-			{DisplayName: "All Files", Pattern: "*.*"},
-		},
-	})
+	return a.app.Dialog.OpenFile().
+		SetTitle("Select SQLite database").
+		CanChooseFiles(true).
+		AddFilter("SQLite Database", "*.db;*.sqlite;*.sqlite3").
+		AddFilter("All Files", "*.*").
+		PromptForSingleSelection()
 }
 
 func (a *App) PickExportSavePath(ext string) (string, error) {
 	if ext == "" {
 		ext = "txt"
 	}
-	pattern := "*." + ext
-	return runtime.SaveFileDialog(a.ctx, runtime.SaveDialogOptions{
-		Title:           "Save export",
-		DefaultFilename: "export." + ext,
-		Filters: []runtime.FileFilter{
-			{DisplayName: strings.ToUpper(ext) + " files", Pattern: pattern},
-			{DisplayName: "All Files", Pattern: "*.*"},
-		},
-	})
+	return a.app.Dialog.SaveFile().
+		SetFilename("export." + ext).
+		AddFilter(strings.ToUpper(ext)+" files", "*."+ext).
+		AddFilter("All Files", "*.*").
+		PromptForSingleSelection()
 }
 
 func (a *App) SaveTextFile(path, content string) error {

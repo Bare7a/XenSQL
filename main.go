@@ -3,12 +3,9 @@ package main
 import (
 	"embed"
 	"os"
-	"runtime"
 
-	"github.com/wailsapp/wails/v2"
-	"github.com/wailsapp/wails/v2/pkg/options"
-	"github.com/wailsapp/wails/v2/pkg/options/assetserver"
-	"github.com/wailsapp/wails/v2/pkg/options/windows"
+	"github.com/wailsapp/wails/v3/pkg/application"
+	"github.com/wailsapp/wails/v3/pkg/events"
 
 	"xensql/internal/app"
 	"xensql/internal/paths"
@@ -17,54 +14,83 @@ import (
 //go:embed all:frontend/dist
 var assets embed.FS
 
+// singleInstanceKey encrypts the IPC payload the OS hands a second instance back
+// to the first. It only needs to be stable across builds of this app, not secret.
+var singleInstanceKey = [32]byte{
+	0x78, 0x65, 0x6e, 0x73, 0x71, 0x6c, 0x2d, 0x62,
+	0x37, 0x61, 0x2d, 0x73, 0x69, 0x6e, 0x67, 0x6c,
+	0x65, 0x2d, 0x69, 0x6e, 0x73, 0x74, 0x61, 0x6e,
+	0x63, 0x65, 0x2d, 0x6b, 0x65, 0x79, 0x21, 0x00,
+}
+
 func main() {
-	application := app.NewApp()
+	svc := app.NewApp()
 	if _, err := paths.EnsureDataDir(); err != nil {
 		println("Warning: data directory:", err.Error())
 	}
 
 	if f := app.FindSQLiteArg(os.Args[1:]); f != "" {
-		application.SetPendingFile(f)
+		svc.SetPendingFile(f)
 	}
 
-	appOpts := &options.App{
-		Title:     "XenSQL",
-		Width:     1400,
-		Height:    900,
-		MinWidth:  1024,
-		MinHeight: 600,
-		AssetServer: &assetserver.Options{
-			Assets: assets,
+	var window *application.WebviewWindow
+
+	wailsApp := application.New(application.Options{
+		Name:        "XenSQL",
+		Description: "A fast, native SQL client built with Go and Wails.",
+		Services: []application.Service{
+			application.NewService(svc),
 		},
-		Frameless: true,
-		DragAndDrop: &options.DragAndDrop{
-			// DisableWebViewDrop=true kills in-page drag-drop on macOS; keep false and let JS preventDefault handle file-URL navigation.
-			EnableFileDrop: true,
+		Assets: application.AssetOptions{
+			Handler: application.AssetFileServerFS(assets),
 		},
-		SingleInstanceLock: &options.SingleInstanceLock{
-			UniqueId: "xensql-b7a-single-instance-lock",
-			OnSecondInstanceLaunch: func(data options.SecondInstanceData) {
+		SingleInstance: &application.SingleInstanceOptions{
+			UniqueID:      "xensql-b7a-single-instance-lock",
+			EncryptionKey: singleInstanceKey,
+			OnSecondInstanceLaunch: func(data application.SecondInstanceData) {
 				if f := app.FindSQLiteArg(data.Args); f != "" {
-					application.EmitOpenSQLite(f)
+					svc.EmitOpenSQLite(f)
+				}
+				if window != nil {
+					window.Restore()
+					window.Focus()
 				}
 			},
 		},
-		BackgroundColour: &options.RGBA{R: 15, G: 17, B: 23, A: 1},
-		OnStartup:        application.Startup,
-		OnShutdown:       application.Shutdown,
-		Bind: []interface{}{
-			application,
+		Mac: application.MacOptions{
+			ApplicationShouldTerminateAfterLastWindowClosed: true,
 		},
-	}
-	if runtime.GOOS == "windows" {
-		// Dark theme for WebView2's native scrollbars/menus. Its user data stays at
-		// the %APPDATA% default - only disposable cache now that prefs are portable.
-		appOpts.Windows = &windows.Options{Theme: windows.Dark}
+	})
+
+	var screenW int
+	var screenH int
+	screen := wailsApp.Screen.GetPrimary()
+	if screen != nil {
+		screenW = screen.Size.Width * 80 / 100
+		screenH = screen.Size.Height * 80 / 100
+	} else {
+		screenW = 1280
+		screenH = 720
 	}
 
-	err := wails.Run(appOpts)
+	window = wailsApp.Window.NewWithOptions(application.WebviewWindowOptions{
+		Title:          "XenSQL",
+		Width:          screenW,
+		Height:         screenH,
+		MinWidth:       800,
+		MinHeight:      600,
+		Frameless:      true,
+		EnableFileDrop: true,
+		URL:            "/",
+		StartState:     application.WindowStateMaximised,
+		BackgroundType: application.BackgroundTypeTranslucent,
+	})
 
-	if err != nil {
+	window.OnWindowEvent(events.Common.WindowFilesDropped, func(e *application.WindowEvent) {
+		wailsApp.Event.Emit("files-dropped", e.Context().DroppedFiles())
+	})
+
+	if err := wailsApp.Run(); err != nil {
 		println("Error:", err.Error())
 	}
 }

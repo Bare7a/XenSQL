@@ -8,7 +8,10 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, 'src'),
-      '@wails': path.resolve(__dirname, 'wailsjs'),
+      '@bindings': path.resolve(__dirname, 'bindings'),
+      // The real runtime touches `window` at import; swap in a no-op stub so the
+      // node-environment logic tests can load the generated bindings.
+      '@wailsio/runtime': path.resolve(__dirname, 'src/test/wailsioRuntimeStub.ts'),
     },
   },
   test: {

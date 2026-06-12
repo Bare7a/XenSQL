@@ -5,8 +5,6 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/wailsapp/wails/v2/pkg/runtime"
-
 	"xensql/internal/database"
 )
 
@@ -76,7 +74,7 @@ type QueryStreamDoneEvent struct {
 const queryStreamBatchSize = 5000
 
 func (a *App) emitStreamMeta(tabID, streamID, connectionID string, resultIndex int, columns, columnTypes []string, schemaName, tableName string) {
-	runtime.EventsEmit(a.ctx, "query:stream:meta", QueryStreamMetaEvent{
+	a.emit("query:stream:meta", QueryStreamMetaEvent{
 		TabID:        tabID,
 		StreamID:     streamID,
 		ConnectionID: connectionID,
@@ -89,7 +87,7 @@ func (a *App) emitStreamMeta(tabID, streamID, connectionID string, resultIndex i
 }
 
 func (a *App) emitStreamRows(tabID, streamID string, resultIndex int, rows [][]interface{}) {
-	runtime.EventsEmit(a.ctx, "query:stream:rows", QueryStreamRowsEvent{
+	a.emit("query:stream:rows", QueryStreamRowsEvent{
 		TabID:       tabID,
 		StreamID:    streamID,
 		ResultIndex: resultIndex,
@@ -109,7 +107,7 @@ func (a *App) emitStreamResult(tabID, streamID, connectionID string, resultIndex
 	if err != nil {
 		payload.Error = err.Error()
 	}
-	runtime.EventsEmit(a.ctx, "query:stream:result", payload)
+	a.emit("query:stream:result", payload)
 }
 
 func (a *App) emitStreamDone(tabID, streamID, connectionID string, resultCount int, err error) {
@@ -122,7 +120,7 @@ func (a *App) emitStreamDone(tabID, streamID, connectionID string, resultCount i
 	if err != nil {
 		payload.Error = err.Error()
 	}
-	runtime.EventsEmit(a.ctx, "query:stream:done", payload)
+	a.emit("query:stream:done", payload)
 }
 
 func (a *App) ExecuteQuery(connectionID, sql string) (*database.QueryResult, error) {

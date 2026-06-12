@@ -342,7 +342,7 @@ export function TableViewPane({ tab, driver, readOnly, isActive, running, onFocu
         const orig = origRaw == null ? null : String(origRaw);
         const next = value == null ? null : String(value);
         const rowEdits = { ...(edits[key] ?? {}) };
-        const hadCol = rowEdits.hasOwnProperty(col);
+        const hadCol = Reflect.has(rowEdits, col);
         const prevVal = hadCol ? (rowEdits[col] == null ? null : String(rowEdits[col])) : undefined;
 
         if (next === orig) {
