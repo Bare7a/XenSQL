@@ -5,5 +5,6 @@ export {
     ConnectionFolder,
     EditorSession,
     EditorTab,
+    SettingsStore,
     TableViewRef
 } from "./models.js";

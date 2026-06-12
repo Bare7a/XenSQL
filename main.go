@@ -9,6 +9,7 @@ import (
 
 	"xensql/internal/app"
 	"xensql/internal/paths"
+	"xensql/internal/windowstate"
 )
 
 //go:embed all:frontend/dist
@@ -25,9 +26,14 @@ var singleInstanceKey = [32]byte{
 
 func main() {
 	svc := app.NewApp()
-	if _, err := paths.EnsureDataDir(); err != nil {
+	configDir, err := paths.EnsureDataDir()
+	if err != nil {
 		println("Warning: data directory:", err.Error())
 	}
+
+	// Open all stores up front, before the window, so saved settings are ready at creation time.
+	svc.InitStores(configDir)
+	settings := svc.SettingsStore()
 
 	if f := app.FindSQLiteArg(os.Args[1:]); f != "" {
 		svc.SetPendingFile(f)
@@ -62,29 +68,30 @@ func main() {
 		},
 	})
 
-	var screenW int
-	var screenH int
-	screen := wailsApp.Screen.GetPrimary()
-	if screen != nil {
-		screenW = screen.Size.Width * 80 / 100
-		screenH = screen.Size.Height * 80 / 100
-	} else {
-		screenW = 1280
-		screenH = 720
-	}
-
-	window = wailsApp.Window.NewWithOptions(application.WebviewWindowOptions{
+	opts := application.WebviewWindowOptions{
 		Title:          "XenSQL",
-		Width:          screenW,
-		Height:         screenH,
 		MinWidth:       800,
 		MinHeight:      600,
 		Frameless:      true,
 		EnableFileDrop: true,
 		URL:            "/",
-		StartState:     application.WindowStateMaximised,
 		BackgroundType: application.BackgroundTypeTranslucent,
-	})
+	}
+
+	// Restore size/position/state from the last session, or the default on first run.
+	var saved windowstate.State
+	restorable := false
+	if settings != nil {
+		saved, restorable = windowstate.Load(settings)
+	}
+	windowstate.Apply(&opts, saved, restorable, wailsApp.Screen.GetPrimary(), opts.MinWidth, opts.MinHeight)
+
+	window = wailsApp.Window.NewWithOptions(opts)
+
+	// Track geometry changes; the returned flush captures the final state on shutdown.
+	if settings != nil {
+		svc.SetWindowStateFlush(windowstate.Track(window, settings))
+	}
 
 	window.OnWindowEvent(events.Common.WindowFilesDropped, func(e *application.WindowEvent) {
 		wailsApp.Event.Emit("files-dropped", e.Context().DroppedFiles())

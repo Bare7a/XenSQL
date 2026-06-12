@@ -145,6 +145,10 @@ export function GetSettings(): $CancellablePromise<{ [_ in string]?: string }> {
     });
 }
 
+export function InitStores(configDir: string): $CancellablePromise<void> {
+    return $Call.ByID(1152712829, configDir);
+}
+
 export function InsertRow(connectionID: string, schema: string, table: string, values: { [_ in string]?: any }): $CancellablePromise<{ [_ in string]?: any }> {
     return $Call.ByID(1655633052, connectionID, schema, table, values).then(($result: any) => {
         return $$createType8($result);
@@ -267,9 +271,19 @@ export function SetSetting(key: string, value: string): $CancellablePromise<void
     return $Call.ByID(2719370137, key, value);
 }
 
+export function SetWindowStateFlush(flush: any): $CancellablePromise<void> {
+    return $Call.ByID(844868674, flush);
+}
+
+export function SettingsStore(): $CancellablePromise<storage$0.SettingsStore | null> {
+    return $Call.ByID(2329735545).then(($result: any) => {
+        return $$createType23($result);
+    });
+}
+
 export function SupportedDrivers(): $CancellablePromise<string[]> {
     return $Call.ByID(4071936312).then(($result: any) => {
-        return $$createType22($result);
+        return $$createType24($result);
     });
 }
 
@@ -311,4 +325,6 @@ const $$createType18 = $Create.Array($$createType17);
 const $$createType19 = database$0.TableInfo.createFrom;
 const $$createType20 = $Create.Array($$createType19);
 const $$createType21 = database$0.SchemaBundle.createFrom;
-const $$createType22 = $Create.Array($Create.Any);
+const $$createType22 = storage$0.SettingsStore.createFrom;
+const $$createType23 = $Create.Nullable($$createType22);
+const $$createType24 = $Create.Array($Create.Any);
