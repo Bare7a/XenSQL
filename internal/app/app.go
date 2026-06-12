@@ -28,6 +28,8 @@ type App struct {
 	session      *storage.SessionStore
 	settings     *storage.SettingsStore
 
+	windowStateFlush func()
+
 	pendingMu   sync.Mutex
 	pendingFile string
 }
@@ -40,16 +42,9 @@ func NewApp() *App {
 	}
 }
 
-func (a *App) ServiceStartup(ctx context.Context, _ application.ServiceOptions) error {
-	a.ctx = ctx
-	a.app = application.Get()
-	configDir, err := paths.EnsureDataDir()
-	if err != nil {
-		a.logErrorf("data dir: %v", err)
-		configDir = paths.DataDir()
-	}
-	a.store, err = storage.NewStore(configDir)
-	if err != nil {
+func (a *App) InitStores(configDir string) {
+	var err error
+	if a.store, err = storage.NewStore(configDir); err != nil {
 		a.logErrorf("store init: %v", err)
 	}
 	if a.history, err = storage.NewHistoryStore(configDir); err != nil {
@@ -64,7 +59,20 @@ func (a *App) ServiceStartup(ctx context.Context, _ application.ServiceOptions) 
 	if a.settings, err = storage.NewSettingsStore(configDir); err != nil {
 		a.logErrorf("settings store: %v", err)
 	}
+}
+
+func (a *App) SettingsStore() *storage.SettingsStore {
+	return a.settings
+}
+
+func (a *App) ServiceStartup(ctx context.Context, _ application.ServiceOptions) error {
+	a.ctx = ctx
+	a.app = application.Get()
 	return nil
+}
+
+func (a *App) SetWindowStateFlush(flush func()) {
+	a.windowStateFlush = flush
 }
 
 func (a *App) emit(name string, data any) {
@@ -78,9 +86,13 @@ func (a *App) emit(name string, data any) {
 }
 
 func (a *App) logErrorf(format string, args ...any) {
+	msg := fmt.Sprintf(format, args...)
 	if a.app != nil {
-		a.app.Logger.Error(fmt.Sprintf(format, args...))
+		a.app.Logger.Error(msg)
+		return
 	}
+	// Before Run (e.g. during InitStores) the Wails logger isn't up yet.
+	println("Error:", msg)
 }
 
 func (a *App) requireStore() (*storage.Store, error) {
@@ -91,6 +103,10 @@ func (a *App) requireStore() (*storage.Store, error) {
 }
 
 func (a *App) ServiceShutdown() error {
+	// Persist the final window geometry while we're still on a synchronous path.
+	if a.windowStateFlush != nil {
+		a.windowStateFlush()
+	}
 	// Cancel in-flight queries so goroutines unwind before sessions close.
 	if a.queries != nil {
 		a.queries.CancelAll()

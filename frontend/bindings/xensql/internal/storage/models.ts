@@ -103,6 +103,27 @@ export class EditorTab {
     }
 }
 
+/**
+ * SettingsStore is a flat key/value store persisted as settings.json, holding the
+ * frontend's preferences in the portable data dir (not the WebView's localStorage).
+ */
+export class SettingsStore {
+
+    /** Creates a new SettingsStore instance. */
+    constructor($$source: Partial<SettingsStore> = {}) {
+
+        Object.assign(this, $$source);
+    }
+
+    /**
+     * Creates a new SettingsStore instance from a string or object.
+     */
+    static createFrom($$source: any = {}): SettingsStore {
+        let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
+        return new SettingsStore($$parsedSource as Partial<SettingsStore>);
+    }
+}
+
 export class TableViewRef {
     "schema": string;
     "table": string;
