@@ -96,6 +96,8 @@
   },
   "toast": {
     "dismiss": "Schließen",
+    "updateAvailable": "Update v{{version}} ist verfügbar",
+    "update": "Aktualisieren",
     "copiedClipboard": "In Zwischenablage kopiert",
     "copiedCell": "Zelle in Zwischenablage kopiert",
     "savedFile": "Gespeichert als {{fileName}}",
@@ -476,7 +478,8 @@
     "version": "Version",
     "createdBy": "Erstellt von",
     "repository": "Quellcode-Repository",
-    "stack": "Erstellt mit Go, Wails, React und Monaco Editor."
+    "stack": "Erstellt mit Go, Wails, React und Monaco Editor.",
+    "checkUpdates": "Nach Updates suchen"
   },
   "shortcuts": {
     "title": "Tastenkürzel",

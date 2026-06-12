@@ -38,18 +38,6 @@ jobs:
           submodules: recursive
           fetch-depth: 0
 
-      - name: Determine version
-        id: version
-        shell: bash
-        run: |
-          if [ -n "${{ github.event.inputs.version }}" ]; then
-            echo "VERSION=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
-          elif [ "${{ github.ref_type }}" = "tag" ]; then
-            echo "VERSION=${{ github.ref_name }}" >> $GITHUB_OUTPUT
-          else
-            echo "VERSION=dev-${GITHUB_SHA::8}" >> $GITHUB_OUTPUT
-          fi
-
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
@@ -74,29 +62,46 @@ jobs:
           go install github.com/wailsapp/wails/v3/cmd/wails3@latest
           echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
 
-      - name: Build (Linux / Windows)
-        if: matrix.build.platform != 'darwin/universal'
-        run: wails3 task build
+      # The updater matches an asset by filename (GOOS+GOARCH) and unpacks a
+      # single top-level entry, so each archive is named <platform>-<arch> and
+      # holds exactly one entry: the binary (linux/windows) or XenSQL.app (macOS).
 
-      - name: Build & package universal .app (macOS)
-        if: matrix.build.platform == 'darwin/universal'
-        run: wails3 task darwin:package:universal
+      - name: Build & package (Linux)
+        if: matrix.build.platform == 'linux/amd64'
+        shell: bash
+        run: |
+          set -euo pipefail
+          wails3 task build                       # -> bin/XenSQL
+          mkdir -p dist
+          tar -C bin -czf "dist/XenSQL-linux-amd64.tar.gz" XenSQL
 
-      - name: Package macOS (.dmg)
+      - name: Build & package (Windows)
+        if: matrix.build.platform == 'windows/amd64'
+        shell: pwsh
+        run: |
+          wails3 task build                       # -> bin/XenSQL.exe
+          New-Item -ItemType Directory -Force -Path dist | Out-Null
+          Compress-Archive -Path bin/XenSQL.exe -DestinationPath dist/XenSQL-windows-amd64.zip -Force
+
+      - name: Build & package (macOS)
         if: matrix.build.platform == 'darwin/universal'
         shell: bash
         run: |
-          set -e
-          APP_PATH="bin/XenSQL.app"
-          DMG_PATH="bin/XenSQL.dmg"
-          hdiutil create -volname "XenSQL" -srcfolder "$APP_PATH" -ov -format UDZO "$DMG_PATH"
-          rm -rf "$APP_PATH"
+          set -euo pipefail
+          wails3 task darwin:package:universal     # -> bin/XenSQL.app (universal)
+          mkdir -p dist
+          # Plain `zip` keeps XenSQL.app as the sole top-level entry (no __MACOSX/._).
+          # The universal app runs on both arches, so publish it under both names.
+          ( cd bin && zip -r -y -X "../dist/XenSQL-darwin-arm64.zip" "XenSQL.app" >/dev/null )
+          cp "dist/XenSQL-darwin-arm64.zip" "dist/XenSQL-darwin-amd64.zip"
+          # .dmg for manual installs; no darwin/arch tokens, so the updater skips it.
+          hdiutil create -volname "XenSQL" -srcfolder "bin/XenSQL.app" -ov -format UDZO "dist/XenSQL-macos-universal.dmg"
 
-      - name: Upload artifacts
+      - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: XenSQL-${{ matrix.build.os }}
-          path: bin/*
+          name: dist-${{ matrix.build.os }}
+          path: dist/*
           if-no-files-found: error
 
   release:
@@ -105,17 +110,28 @@ jobs:
     if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
 
     steps:
-      - name: Download all artifacts
+      - name: Download all build artifacts
         uses: actions/download-artifact@v4
         with:
-          path: artifacts
+          path: dist
+          merge-multiple: true
+
+      - name: Generate SHA256SUMS
+        shell: bash
+        working-directory: dist
+        run: |
+          set -euo pipefail
+          # Updater verifies each downloaded asset against its line here. The
+          # "XenSQL-*" glob skips the SHA256SUMS file itself.
+          sha256sum XenSQL-* > SHA256SUMS
+          cat SHA256SUMS
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.event.inputs.version || github.ref_name }}
           name: XenSQL ${{ github.event.inputs.version || github.ref_name }}
-          files: artifacts/**/*
+          files: dist/*
           generate_release_notes: true
           draft: false
           prerelease: ${{ contains(github.event.inputs.version || github.ref_name, 'beta') || contains(github.event.inputs.version || github.ref_name, 'rc') }}

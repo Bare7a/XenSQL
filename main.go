@@ -6,6 +6,8 @@ import (
 
 	"github.com/wailsapp/wails/v3/pkg/application"
 	"github.com/wailsapp/wails/v3/pkg/events"
+	"github.com/wailsapp/wails/v3/pkg/updater"
+	"github.com/wailsapp/wails/v3/pkg/updater/providers/github"
 
 	"xensql/internal/app"
 	"xensql/internal/paths"
@@ -67,6 +69,20 @@ func main() {
 			ApplicationShouldTerminateAfterLastWindowClosed: true,
 		},
 	})
+
+	// In-app updates from GitHub Releases. application.New already wired the
+	// helper-mode hook, so the built-in window's "Restart & Apply" just works.
+	if ghProvider, perr := github.New(github.Config{
+		Repository:    "Bare7a/XenSQL",
+		ChecksumAsset: "SHA256SUMS",
+	}); perr != nil {
+		println("Warning: updater provider:", perr.Error())
+	} else if perr := wailsApp.Updater.Init(updater.Config{
+		CurrentVersion: app.Version,
+		Providers:      []updater.Provider{ghProvider},
+	}); perr != nil {
+		println("Warning: updater init:", perr.Error())
+	}
 
 	opts := application.WebviewWindowOptions{
 		Title:          "XenSQL",

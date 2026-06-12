@@ -1,6 +1,7 @@
 import {
   BeginTransaction,
   CancelQuery,
+  CheckForUpdates,
   CleanupTabTransaction,
   ClearQueryHistory,
   CommitTransaction,
@@ -119,6 +120,8 @@ export const api = {
   pickExportSavePath: (ext: string): Promise<string> => PickExportSavePath(ext),
   saveTextFile: (path: string, content: string): Promise<void> => SaveTextFile(path, content),
   getAppInfo: (): Promise<import('@/shared/lib/appInfo').AppInfo> => cast(GetAppInfo()),
+  // Fire-and-forget: the native update window drives the rest of the flow.
+  checkForUpdates: (): Promise<void> => CheckForUpdates(),
   getPendingFile: (): Promise<{ filePath: string; name: string } | null> => cast(GetPendingFile()),
   beginTransaction: (connectionId: string, tabId: string): Promise<void> => cast(BeginTransaction(connectionId, tabId)),
   commitTransaction: (tabId: string): Promise<void> => cast(CommitTransaction(tabId)),

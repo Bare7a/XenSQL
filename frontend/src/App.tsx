@@ -24,6 +24,7 @@ import { useAppInit } from '@/features/layout/hooks/useAppInit';
 import { useFullscreenToggle } from '@/features/layout/hooks/useFullscreenToggle';
 import { useGlobalShortcuts } from '@/features/layout/hooks/useGlobalShortcuts';
 import { usePersistedPanelWidth } from '@/features/layout/hooks/usePersistedPanelWidth';
+import { useUpdateNotification } from '@/features/layout/hooks/useUpdateNotification';
 import { useVerticalSplitter } from '@/features/layout/hooks/useVerticalSplitter';
 import { QuickSearchDialog } from '@/features/layout/QuickSearchDialog';
 import { ResultsPane } from '@/features/results/ResultsPane';
@@ -133,6 +134,7 @@ function App() {
   const appInfo = useAppInfo();
   const { fileDragOver } = useFileDropZone();
   useOpenSqliteEvents();
+  useUpdateNotification();
 
   const connectionsById = useMemo(() => {
     const m = new Map<string, (typeof connections)[number]>();

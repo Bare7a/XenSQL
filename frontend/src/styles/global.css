@@ -270,6 +270,20 @@ textarea,
   background: var(--bg-hover);
 }
 
+.app-toast-action {
+  flex-shrink: 0;
+  align-self: center;
+  padding: var(--space-4) var(--space-8);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--accent);
+  border-radius: var(--radius-md);
+}
+
+.app-toast-action:hover {
+  background: var(--bg-hover);
+}
+
 @keyframes app-toast-in {
   from {
     opacity: 0;

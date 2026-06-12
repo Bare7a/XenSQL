@@ -30,6 +30,20 @@ export function CancelQuery(connectionID: string): $CancellablePromise<boolean> 
 }
 
 /**
+ * CheckForUpdates runs the GitHub-backed update flow. It opens the built-in
+ * Wails update window, which walks the user through checking, downloading,
+ * verifying, and "Restart & Apply". The call returns immediately; the flow runs
+ * on its own goroutine and reports progress through that window. Any error is
+ * logged here — the window surfaces it to the user on its own.
+ * 
+ * Bound to the frontend and triggered by the About dialog's "Check for Updates"
+ * button. The updater itself is configured once in main via app.Updater.Init.
+ */
+export function CheckForUpdates(): $CancellablePromise<void> {
+    return $Call.ByID(74745528);
+}
+
+/**
  * CleanupTabTransaction rolls back any open transaction for the tab. Called when a tab is closed.
  */
 export function CleanupTabTransaction(tabID: string): $CancellablePromise<void> {
