@@ -66,6 +66,53 @@ tasks:
     cmds:
       - go test ./internal/...
 
+  bump-version:
+    summary: Show bump-version usage (wails3 task does not forward CLI flags)
+    cmds:
+      - go run ./scripts/bump-version.go -help
+
+  bump-version:minor:
+    summary: Bump minor version, then refresh build assets
+    cmds:
+      - go run ./scripts/bump-version.go -minor
+
+  bump-version:patch:
+    summary: Bump patch version, then refresh build assets
+    cmds:
+      - go run ./scripts/bump-version.go -patch
+
+  bump-version:major:
+    summary: Bump major version, then refresh build assets
+    cmds:
+      - go run ./scripts/bump-version.go -major
+
+  bump-version:sync:
+    summary: Sync non-build files to version.go, then refresh build assets
+    cmds:
+      - go run ./scripts/bump-version.go -sync
+
+  bump-version:dry-run:minor:
+    summary: Preview a minor version bump
+    cmds:
+      - go run ./scripts/bump-version.go -dry-run -minor
+
+  bump-version:dry-run:patch:
+    summary: Preview a patch version bump
+    cmds:
+      - go run ./scripts/bump-version.go -dry-run -patch
+
+  bump-version:dry-run:major:
+    summary: Preview a major version bump
+    cmds:
+      - go run ./scripts/bump-version.go -dry-run -major
+
+  bump-version:set:*:
+    summary: Set an explicit version (e.g. bump-version:set:1.2.0)
+    vars:
+      VERSION: '{{index .MATCH 0}}'
+    cmds:
+      - go run ./scripts/bump-version.go {{.VERSION}}
+
   build:check:
     summary: Compiles the app and every internal package without a full frontend build
     cmds:

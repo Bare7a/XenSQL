@@ -2,10 +2,10 @@
 set -e
 
 # Build configuration
-APP_NAME="xensql"
+APP_NAME="XenSQL"
 BUNDLE_ID="com.bare7a.xensql"
-VERSION="1.1.2"
-BUILD_NUMBER="1.1.2"
+VERSION="1.2.0"
+BUILD_NUMBER="1.2.0"
 BUILD_DIR="build/ios"
 TARGET="simulator"
 

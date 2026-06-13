@@ -1,6 +1,6 @@
 package app
 
-// Version must match the published GitHub release tag (without the "v"); the
-// updater compares it to decide when a newer release exists. Keep it in step
-// with build/config.yml and frontend/package.json.
-const Version = "1.1.2"
+// Version is the source of truth for the application version.
+// In order to update it use the following command:
+// go run ./scripts/bump-version.go [-major, -minor, -patch, 1.2.0]
+const Version = "1.2.0"

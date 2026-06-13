@@ -1,15 +1,15 @@
 {
 	"fixed": {
-		"file_version": "1.1.2"
+		"file_version": "1.2.0"
 	},
 	"info": {
 		"0000": {
-			"ProductVersion": "1.1.2",
+			"ProductVersion": "1.2.0",
 			"CompanyName": "Bare7a",
 			"FileDescription": "A fast, native SQL client built with Go and Wails.",
-			"LegalCopyright": "© 2026, My Company",
+			"LegalCopyright": "(c) 2026, Bare7a",
 			"ProductName": "XenSQL",
-			"Comments": "This is a comment"
+			"Comments": "A fast, native SQL client built with Go and Wails."
 		}
 	}
 }
