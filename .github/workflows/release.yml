@@ -7,8 +7,8 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Version tag (e.g. v1.0.0). Leave empty to use commit SHA.'
-        required: false
+        description: 'Release tag (required), e.g. v1.1.2'
+        required: true
         type: string
 
 permissions:
@@ -113,6 +113,29 @@ jobs:
     if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
 
     steps:
+      - name: Resolve release tag
+        id: release
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            TAG="${{ github.event.inputs.version }}"
+            if [ -z "${TAG// /}" ]; then
+              echo "::error::Version tag is required for manual releases."
+              exit 1
+            fi
+          elif [ "${{ github.ref_type }}" = "tag" ]; then
+            TAG="${{ github.ref_name }}"
+          else
+            echo "::error::Release job expects a v* tag push or workflow_dispatch with a version."
+            exit 1
+          fi
+          if [[ ! "$TAG" =~ ^v ]]; then
+            echo "::error::Release tag must start with 'v' (got: $TAG)"
+            exit 1
+          fi
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+
       - name: Download all build artifacts
         uses: actions/download-artifact@v4
         with:
@@ -132,9 +155,9 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ github.event.inputs.version || github.ref_name }}
-          name: XenSQL ${{ github.event.inputs.version || github.ref_name }}
+          tag_name: ${{ steps.release.outputs.tag }}
+          name: XenSQL ${{ steps.release.outputs.tag }}
           files: dist/*
           generate_release_notes: true
           draft: false
-          prerelease: ${{ contains(github.event.inputs.version || github.ref_name, 'beta') || contains(github.event.inputs.version || github.ref_name, 'rc') }}
+          prerelease: ${{ contains(steps.release.outputs.tag, 'beta') || contains(steps.release.outputs.tag, 'rc') }}
