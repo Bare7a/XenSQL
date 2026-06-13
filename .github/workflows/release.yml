@@ -65,6 +65,7 @@ jobs:
       # The updater matches an asset by filename (GOOS+GOARCH) and unpacks a
       # single top-level entry, so each archive is named <platform>-<arch> and
       # holds exactly one entry: the binary (linux/windows) or XenSQL.app (macOS).
+      # Plain XenSQL / XenSQL.exe (no platform tokens) are manual-download only.
 
       - name: Build & package (Linux)
         if: matrix.build.platform == 'linux/amd64'
@@ -74,6 +75,7 @@ jobs:
           wails3 task build                       # -> bin/XenSQL
           mkdir -p dist
           tar -C bin -czf "dist/XenSQL-linux-amd64.tar.gz" XenSQL
+          cp bin/XenSQL dist/XenSQL               # manual download; updater skips (no linux/amd64 in name)
 
       - name: Build & package (Windows)
         if: matrix.build.platform == 'windows/amd64'
@@ -82,6 +84,7 @@ jobs:
           wails3 task build                       # -> bin/XenSQL.exe
           New-Item -ItemType Directory -Force -Path dist | Out-Null
           Compress-Archive -Path bin/XenSQL.exe -DestinationPath dist/XenSQL-windows-amd64.zip -Force
+          Copy-Item bin/XenSQL.exe dist/XenSQL.exe  # manual download; updater skips (no windows/amd64 in name)
 
       - name: Build & package (macOS)
         if: matrix.build.platform == 'darwin/universal'
@@ -121,9 +124,9 @@ jobs:
         working-directory: dist
         run: |
           set -euo pipefail
-          # Updater verifies each downloaded asset against its line here. The
-          # "XenSQL-*" glob skips the SHA256SUMS file itself.
-          sha256sum XenSQL-* > SHA256SUMS
+          # Updater verifies its picked asset against its line here.
+          # "XenSQL*" glob covers archives, manual binaries, and the .dmg
+          sha256sum XenSQL* > SHA256SUMS
           cat SHA256SUMS
 
       - name: Create GitHub Release
