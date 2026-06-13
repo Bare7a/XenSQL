@@ -14,10 +14,10 @@
     !define INFO_PRODUCTNAME "XenSQL"
 !endif
 !ifndef INFO_PRODUCTVERSION
-    !define INFO_PRODUCTVERSION "1.1.2"
+    !define INFO_PRODUCTVERSION "1.2.0"
 !endif
 !ifndef INFO_COPYRIGHT
-    !define INFO_COPYRIGHT "© 2026, My Company"
+    !define INFO_COPYRIGHT "(c) 2026, Bare7a"
 !endif
 !ifndef PRODUCT_EXECUTABLE
     !define PRODUCT_EXECUTABLE "${INFO_PROJECTNAME}.exe"
@@ -229,10 +229,40 @@ RequestExecutionLevel "${REQUEST_EXECUTION_LEVEL}"
 !macro wails.associateFiles
     ; Create file associations
     
+    !insertmacro APP_ASSOCIATE "db" "SQLite Database" "SQLite Database File" "$INSTDIR\.ico" "Open with ${INFO_PRODUCTNAME}" "$INSTDIR\${PRODUCT_EXECUTABLE} $\"%1$\""
+    File "..\.ico"
+    
+    !insertmacro APP_ASSOCIATE "sqlite" "SQLite Database" "SQLite Database File" "$INSTDIR\.ico" "Open with ${INFO_PRODUCTNAME}" "$INSTDIR\${PRODUCT_EXECUTABLE} $\"%1$\""
+    File "..\.ico"
+    
+    !insertmacro APP_ASSOCIATE "sqlite3" "SQLite Database" "SQLite Database File" "$INSTDIR\.ico" "Open with ${INFO_PRODUCTNAME}" "$INSTDIR\${PRODUCT_EXECUTABLE} $\"%1$\""
+    File "..\.ico"
+    
+    !insertmacro APP_ASSOCIATE "s3db" "SQLite Database" "SQLite Database File" "$INSTDIR\.ico" "Open with ${INFO_PRODUCTNAME}" "$INSTDIR\${PRODUCT_EXECUTABLE} $\"%1$\""
+    File "..\.ico"
+    
+    !insertmacro APP_ASSOCIATE "sl3" "SQLite Database" "SQLite Database File" "$INSTDIR\.ico" "Open with ${INFO_PRODUCTNAME}" "$INSTDIR\${PRODUCT_EXECUTABLE} $\"%1$\""
+    File "..\.ico"
+    
 !macroend
 
 !macro wails.unassociateFiles
     ; Delete app associations
+    
+    !insertmacro APP_UNASSOCIATE "db" "SQLite Database"
+    Delete "$INSTDIR\.ico"
+    
+    !insertmacro APP_UNASSOCIATE "sqlite" "SQLite Database"
+    Delete "$INSTDIR\.ico"
+    
+    !insertmacro APP_UNASSOCIATE "sqlite3" "SQLite Database"
+    Delete "$INSTDIR\.ico"
+    
+    !insertmacro APP_UNASSOCIATE "s3db" "SQLite Database"
+    Delete "$INSTDIR\.ico"
+    
+    !insertmacro APP_UNASSOCIATE "sl3" "SQLite Database"
+    Delete "$INSTDIR\.ico"
     
 !macroend
 

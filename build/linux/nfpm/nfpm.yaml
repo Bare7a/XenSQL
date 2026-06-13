@@ -3,10 +3,10 @@
 #
 # The lines below are called `modelines`. See `:help modeline`
 
-name: "xensql"
+name: "XenSQL"
 arch: ${GOARCH}
 platform: "linux"
-version: "1.1.2"
+version: "1.2.0"
 section: "default"
 priority: "extra"
 maintainer: ${GIT_COMMITTER_NAME} <${GIT_COMMITTER_EMAIL}>
@@ -17,12 +17,12 @@ license: "MIT"
 release: "1"
 
 contents:
-  - src: "./bin/xensql"
-    dst: "/usr/local/bin/xensql"
+  - src: "./bin/XenSQL"
+    dst: "/usr/local/bin/XenSQL"
   - src: "./build/appicon.png"
-    dst: "/usr/share/icons/hicolor/128x128/apps/xensql.png"
-  - src: "./build/linux/xensql.desktop"
-    dst: "/usr/share/applications/xensql.desktop"
+    dst: "/usr/share/icons/hicolor/128x128/apps/XenSQL.png"
+  - src: "./build/linux/XenSQL.desktop"
+    dst: "/usr/share/applications/XenSQL.desktop"
 
 # Default dependencies for the GTK4 + WebKitGTK 6.0 stack (Ubuntu 24.04+ / Debian 13+)
 depends:

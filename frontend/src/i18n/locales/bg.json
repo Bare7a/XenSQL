@@ -96,6 +96,8 @@
   },
   "toast": {
     "dismiss": "Затвори",
+    "updateAvailable": "Налична е актуализация v{{version}}",
+    "update": "Актуализирай",
     "copiedClipboard": "Копирано в клипборда",
     "copiedCell": "Клетката е копирана в клипборда",
     "savedFile": "Запазено като {{fileName}}",
@@ -476,7 +478,8 @@
     "version": "Версия",
     "createdBy": "Създадено от",
     "repository": "Хранилище с изходен код",
-    "stack": "Създадено с Go, Wails, React и Monaco Editor."
+    "stack": "Създадено с Go, Wails, React и Monaco Editor.",
+    "checkUpdates": "Проверка за актуализации"
   },
   "shortcuts": {
     "title": "Клавишни комбинации",

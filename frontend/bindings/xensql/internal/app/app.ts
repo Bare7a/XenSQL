@@ -30,6 +30,14 @@ export function CancelQuery(connectionID: string): $CancellablePromise<boolean> 
 }
 
 /**
+ * CheckForUpdates opens the built-in update window and runs the full flow
+ * (download, verify, Restart & Apply). Bound to the About dialog's button.
+ */
+export function CheckForUpdates(): $CancellablePromise<void> {
+    return $Call.ByID(74745528);
+}
+
+/**
  * CleanupTabTransaction rolls back any open transaction for the tab. Called when a tab is closed.
  */
 export function CleanupTabTransaction(tabID: string): $CancellablePromise<void> {

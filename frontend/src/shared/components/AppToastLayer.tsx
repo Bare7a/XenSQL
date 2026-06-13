@@ -14,6 +14,18 @@ export function AppToastLayer() {
       {toasts.map((toast) => (
         <div key={toast.id} className={`app-toast app-toast-${toast.kind}`} role="status">
           <span className="app-toast-message">{toast.message}</span>
+          {toast.action ? (
+            <button
+              type="button"
+              className="app-toast-action"
+              onClick={() => {
+                toast.action?.onClick();
+                dismiss(toast.id);
+              }}
+            >
+              {toast.action.label}
+            </button>
+          ) : null}
           <button
             type="button"
             className="app-toast-dismiss"

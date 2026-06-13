@@ -1,6 +1,7 @@
 import { Browser } from '@wailsio/runtime';
 import { useTranslation } from 'react-i18next';
 import { Modal } from '@/shared/components/Modal';
+import { api } from '@/shared/lib/api';
 import type { AppInfo } from '@/shared/lib/appInfo';
 
 interface Props {
@@ -54,6 +55,9 @@ export function AboutDialog({ info, onClose }: Props) {
         <p className="about-stack">{t('about.stack')}</p>
       </div>
       <div className="modal-footer">
+        <button type="button" className="btn" onClick={() => void api.checkForUpdates()}>
+          {t('about.checkUpdates')}
+        </button>
         <button type="button" className="btn btn-primary" onClick={onClose}>
           {t('common.close')}
         </button>

@@ -2,10 +2,16 @@ import { create } from 'zustand';
 
 export type ToastKind = 'info' | 'success' | 'error';
 
+export interface ToastAction {
+  label: string;
+  onClick: () => void;
+}
+
 export interface ToastItem {
   id: number;
   message: string;
   kind: ToastKind;
+  action?: ToastAction;
 }
 
 const MAX_TOASTS = 5;
@@ -16,19 +22,19 @@ const timers = new Map<number, ReturnType<typeof setTimeout>>();
 
 interface ToastState {
   toasts: ToastItem[];
-  push: (message: string, kind?: ToastKind, durationMs?: number) => void;
+  push: (message: string, kind?: ToastKind, durationMs?: number, action?: ToastAction) => void;
   dismiss: (id: number) => void;
 }
 
 export const useToastStore = create<ToastState>((set, get) => ({
   toasts: [],
 
-  push(message, kind = 'info', durationMs = DEFAULT_DURATION_MS) {
+  push(message, kind = 'info', durationMs = DEFAULT_DURATION_MS, action) {
     const trimmed = message.trim();
     if (!trimmed) return;
 
     const id = nextId++;
-    const item: ToastItem = { id, message: trimmed, kind };
+    const item: ToastItem = { id, message: trimmed, kind, action };
 
     const combined = [...get().toasts, item];
     // Clear timers for toasts dropped by the cap so they don't linger until expiry.
@@ -41,13 +47,16 @@ export const useToastStore = create<ToastState>((set, get) => ({
     }
     set({ toasts: combined.slice(-MAX_TOASTS) });
 
-    timers.set(
-      id,
-      setTimeout(() => {
-        timers.delete(id);
-        get().dismiss(id);
-      }, durationMs),
-    );
+    // durationMs <= 0 keeps the toast until the user acts on or dismisses it.
+    if (durationMs > 0) {
+      timers.set(
+        id,
+        setTimeout(() => {
+          timers.delete(id);
+          get().dismiss(id);
+        }, durationMs),
+      );
+    }
   },
 
   dismiss(id) {

@@ -68,6 +68,7 @@ func (a *App) SettingsStore() *storage.SettingsStore {
 func (a *App) ServiceStartup(ctx context.Context, _ application.ServiceOptions) error {
 	a.ctx = ctx
 	a.app = application.Get()
+	a.startBackgroundUpdateCheck()
 	return nil
 }
 
@@ -165,7 +166,7 @@ type AppInfo struct {
 func (a *App) GetAppInfo() AppInfo {
 	return AppInfo{
 		Name:        "XenSQL",
-		Version:     "1.1.2",
+		Version:     Version,
 		Author:      "Bare7a",
 		Email:       "bare7a@gmail.com",
 		Repository:  "https://github.com/Bare7a/XenSQL",

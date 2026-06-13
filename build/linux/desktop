@@ -3,11 +3,11 @@ Version=1.0
 Name=XenSQL
 Comment=A fast, native SQL client built with Go and Wails.
 # The Exec line includes %u to pass the URL to the application
-Exec=/usr/local/bin/xensql %u
+Exec=/usr/local/bin/XenSQL %u
 Terminal=false
 Type=Application
-Icon=xensql
+Icon=XenSQL
 Categories=Utility;
-StartupWMClass=xensql
+StartupWMClass=XenSQL
 
  
