@@ -1,3 +1,4 @@
+import { MONACO_FONT_METRICS_OPTIONS } from '@/features/editor/lib/monacoFontMetrics';
 import { settings } from '@/shared/lib/settingsStore';
 import { STORAGE_KEYS } from '@/shared/lib/storageKeys';
 
@@ -66,6 +67,11 @@ export function editorLineHeight(fontSize: number): number {
 export function monacoFontOptions(fontSize: number): {
   fontSize: number;
   lineHeight: number;
+  fontFamily: string;
 } {
-  return { fontSize, lineHeight: editorLineHeight(fontSize) };
+  return {
+    ...MONACO_FONT_METRICS_OPTIONS,
+    fontSize,
+    lineHeight: editorLineHeight(fontSize),
+  };
 }

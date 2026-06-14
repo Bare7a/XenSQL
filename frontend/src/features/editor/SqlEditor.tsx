@@ -19,7 +19,6 @@ import { subscribeShortcutsChanged } from '@/shared/lib/shortcuts';
 import type { ColumnInfo, DriverType, EditorCursorState, SchemaInfo, TableInfo, TxnState } from '@/types';
 
 const STATIC_EDITOR_OPTIONS = {
-  fontFamily: 'JetBrains Mono, Consolas, monospace',
   minimap: { enabled: false },
   contextmenu: false,
   wordWrap: 'on' as const,

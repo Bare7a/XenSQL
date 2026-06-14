@@ -5,6 +5,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useEditorFontSize } from '@/features/editor/hooks/useEditorFontSize';
 import { monacoFontOptions } from '@/features/editor/lib/editorFontSize';
+import { MONACO_FONT_METRICS_OPTIONS } from '@/features/editor/lib/monacoFontMetrics';
 import { getMonacoThemeName, setupMonacoBeforeMount } from '@/features/editor/lib/monacoTheme';
 import { useAppTheme } from '@/shared/hooks/useAppTheme';
 import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue';
@@ -18,7 +19,7 @@ interface Props {
 
 const EDITOR_OPTS_BASE = {
   readOnly: true,
-  fontFamily: 'JetBrains Mono, Consolas, monospace',
+  ...MONACO_FONT_METRICS_OPTIONS,
   minimap: { enabled: false },
   contextmenu: false,
   wordWrap: 'on' as const,

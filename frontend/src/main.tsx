@@ -1,8 +1,13 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
+
+import '@fontsource/fira-code/400.css';
+import '@fontsource/inter/400.css';
+
 import App from '@/App';
 import { initMonaco } from '@/features/editor/lib/monacoSetup';
 import { initI18n } from '@/i18n';
+import { loadAppFonts } from '@/shared/lib/appFonts';
 import { hydrateSettings } from '@/shared/lib/settingsStore';
 import { initTheme } from '@/shared/lib/theme';
 import { initUiZoom } from '@/shared/lib/uiZoom';
@@ -14,7 +19,12 @@ async function bootstrap() {
 
   initI18n();
   initTheme();
-  initUiZoom();
+  const uiZoomPx = initUiZoom();
+
+  // Keep the index.html splash visible until fonts are ready so Monaco never
+  // caches fallback metrics and the UI does not flash wrong typography.
+  await loadAppFonts(uiZoomPx);
+
   initMonaco();
 
   const container = document.getElementById('root');

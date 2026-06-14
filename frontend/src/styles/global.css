@@ -11,8 +11,8 @@
   --success: #22c55e;
   --danger: #ef4444;
   --warning: #f59e0b;
-  --font-mono: "JetBrains Mono", "Cascadia Code", "Consolas", monospace;
-  --font-sans: "Segoe UI", system-ui, sans-serif;
+  --font-mono: "Fira Code", monospace;
+  --font-sans: "Inter", sans-serif;
   --radius-xs: 0.154rem; /* 2px */
   --radius-sm: 0.231rem; /* 3px */
   --radius-md: 0.308rem; /* 4px */
@@ -194,7 +194,6 @@ textarea,
   pointer-events: none;
   padding: var(--space-3) var(--space-8);
   font-size: var(--text-sm);
-  line-height: 1.385rem;
   font-family: var(--font-sans);
   color: var(--tooltip-fg);
   background: var(--tooltip-bg);
@@ -223,11 +222,10 @@ textarea,
 
 .app-toast {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: var(--space-10);
   padding: var(--space-10) var(--space-12);
   font-size: var(--text-md);
-  line-height: 1.4;
   color: var(--text);
   background: var(--bg-elevated);
   border: 1px solid var(--border);
@@ -260,7 +258,6 @@ textarea,
   height: 1.692rem;
   margin: calc(-1 * var(--space-2)) calc(-1 * var(--space-4)) 0 0;
   font-size: var(--text-xl);
-  line-height: 1;
   color: var(--text-muted);
   border-radius: var(--radius-md);
 }
@@ -324,7 +321,6 @@ textarea,
   gap: var(--space-10);
   padding: var(--space-5) 0;
   font-size: var(--text-md);
-  line-height: 1.45;
 }
 
 .keyboard-tips-kbd {
@@ -373,8 +369,6 @@ select {
   -moz-appearance: none;
   display: block;
   width: 100%;
-  min-height: var(--space-32);
-  line-height: 1.35;
   padding: var(--space-6) var(--space-32) var(--space-6) var(--space-10);
   background-color: var(--bg-base);
   background-image: var(--select-chevron);
@@ -668,7 +662,6 @@ select:focus {
   border: 1px solid var(--border);
   border-radius: var(--radius);
   font-size: var(--text-xs);
-  line-height: 1;
   color: var(--text);
   background: var(--bg-elevated);
 }
@@ -999,7 +992,6 @@ select:focus {
   border-radius: var(--radius-pill);
   font-size: var(--text-2xs);
   font-weight: 600;
-  line-height: 1.231rem;
   white-space: nowrap;
 }
 
@@ -1135,7 +1127,6 @@ select:focus {
 .table-view-add-row-context-hint {
   margin: 0;
   font-size: var(--text-xs);
-  line-height: 1.4;
   color: var(--text-muted);
 }
 
@@ -1202,7 +1193,6 @@ td.cell-pending-edit {
 
 .shortcuts-note {
   color: var(--text-muted);
-  line-height: 1.5;
   font-size: var(--text-sm);
 }
 
@@ -1794,7 +1784,6 @@ td.cell-pending-edit {
   flex-shrink: 0;
   width: var(--icon-sm);
   height: var(--space-14);
-  line-height: 0;
 }
 
 .tab-saved-wrap {
@@ -1804,7 +1793,6 @@ td.cell-pending-edit {
   flex-shrink: 0;
   width: var(--space-14);
   height: var(--space-14);
-  line-height: 0;
 }
 
 .editor-tab .tab-saved-icon {
@@ -1825,7 +1813,6 @@ td.cell-pending-edit {
   flex-shrink: 0;
   width: var(--space-14);
   height: var(--space-14);
-  line-height: 0;
 }
 
 .editor-tab .tab-table-icon {
@@ -1851,7 +1838,6 @@ td.cell-pending-edit {
 .unsaved-query-hint {
   font-size: var(--text-sm);
   color: var(--text-muted);
-  line-height: 1.45;
 }
 
 .unsaved-query-footer {
@@ -1976,7 +1962,6 @@ td.cell-pending-edit {
   min-width: 0;
   font-size: var(--text-md);
   font-weight: 500;
-  line-height: 1.385rem;
   color: var(--text);
   display: block;
   padding-top: 0;
@@ -1985,7 +1970,6 @@ td.cell-pending-edit {
 .form-hint {
   margin: var(--space-6) 0 0;
   font-size: var(--text-xs);
-  line-height: 1.45;
   color: var(--text-muted);
 }
 
@@ -2001,7 +1985,6 @@ td.cell-pending-edit {
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  line-height: 0;
   opacity: 0.5;
   padding: 0 var(--space-2);
   margin-left: var(--space-4);
@@ -2259,7 +2242,6 @@ td.cell-pending-edit {
   height: var(--results-control-height);
   box-sizing: border-box;
   padding-block: 0;
-  line-height: 1;
 }
 
 .results-selection-count {
@@ -2277,7 +2259,6 @@ td.cell-pending-edit {
   width: auto;
   display: inline-block;
   font-size: var(--text-xs);
-  line-height: 1;
   padding: 0 1.692rem 0 var(--space-8);
   min-width: 8.462rem;
   box-sizing: border-box;
@@ -2509,7 +2490,6 @@ td.cell-pending-edit {
   background: transparent;
   color: var(--text-muted);
   cursor: pointer;
-  line-height: 1;
   font-size: var(--text-xs);
 }
 
@@ -2528,7 +2508,6 @@ td.cell-pending-edit {
   border-bottom: 1px solid var(--border);
   border-right: 1px solid var(--border);
   padding: var(--space-4) var(--space-10);
-  line-height: 1.231rem;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -3231,7 +3210,6 @@ td.cell-pending-edit {
 .modal-description {
   margin: 0;
   font-size: var(--text-md);
-  line-height: 1.55;
   color: var(--text-muted);
 }
 
@@ -3240,7 +3218,6 @@ td.cell-pending-edit {
   padding: var(--space-10) var(--space-12);
   font-size: var(--text-xs);
   font-family: var(--font-mono);
-  line-height: 1.45;
   color: var(--text-muted);
   background: var(--bg-base);
   border: 1px solid var(--border);
@@ -3382,7 +3359,6 @@ td.cell-pending-edit {
   background: var(--bg-panel);
   border-top: 1px solid var(--border);
   font-size: var(--text-xs);
-  line-height: 1.4;
   color: var(--text-muted);
   white-space: nowrap;
   overflow: hidden;
@@ -3505,7 +3481,6 @@ td.cell-pending-edit {
   color: var(--text);
   font-family: var(--font-mono);
   font-size: var(--text-sm);
-  line-height: 1.5;
   white-space: pre-wrap;
   word-break: break-word;
   /* Opt back in: errors are worth copying */
@@ -3611,7 +3586,6 @@ td.cell-pending-edit {
   box-sizing: border-box;
   padding: 0 var(--space-24) 0 var(--space-8);
   font-size: var(--text-xs);
-  line-height: 1;
   text-transform: uppercase;
   background-color: var(--bg-elevated);
   background-size: var(--icon-xs) var(--icon-xs);
@@ -3639,7 +3613,6 @@ td.cell-pending-edit {
   color: var(--text);
   font-family: var(--font-mono);
   font-size: var(--text-md);
-  line-height: 1.55;
   resize: none;
   outline: none;
   white-space: pre;
