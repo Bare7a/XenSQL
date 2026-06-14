@@ -2576,7 +2576,7 @@ td.cell-pending-edit {
 .sidebar-connections-toolbar .btn-block {
   width: auto;
   flex: 1;
-  padding: var(--space-5) var(--space-8)
+  padding: var(--space-5) var(--space-8);
 }
 
 .connection-item {
