@@ -174,7 +174,7 @@ export function AppTitleBar({ onAction, sidebarOpen, onToggleSidebar, jsonPanelO
             <button
               key={item.id}
               type="button"
-              className="app-title-bar-dropdown-item"
+              className="menu-check-row"
               role="menuitem"
               onClick={() => {
                 setOpenMenu(null);
