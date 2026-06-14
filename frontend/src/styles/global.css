@@ -3368,7 +3368,7 @@ td.cell-pending-edit {
   display: flex;
   align-items: center;
   gap: var(--space-6);
-  min-width: 0;
+  min-width: fit-content;
   flex: 1;
   max-width: 50%;
   overflow: hidden;
