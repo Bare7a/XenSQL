@@ -909,7 +909,7 @@ select:focus {
 .table-view-pending-stat {
   display: inline-flex;
   align-items: center;
-  padding: var(--space-1) var(--space-7);
+  padding: var(--space-3) var(--space-8);
   border-radius: var(--radius-pill);
   font-size: var(--text-2xs);
   font-weight: 600;
