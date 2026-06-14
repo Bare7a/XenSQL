@@ -1,4 +1,6 @@
 import type { Monaco } from '@monaco-editor/react';
+import type { editor } from 'monaco-editor';
+import * as monaco from 'monaco-editor/esm/vs/editor/editor.api';
 import type { AppTheme } from '@/shared/lib/theme';
 
 export const XENSQL_MONACO_THEME_DARK = 'xensql-dark';
@@ -86,6 +88,18 @@ const lightEditorColors = {
 
 export function getMonacoThemeName(theme: AppTheme): string {
   return theme === 'light' ? XENSQL_MONACO_THEME_LIGHT : XENSQL_MONACO_THEME_DARK;
+}
+
+/** Apply theme, layout, and re-tokenize after mount or when a panel becomes visible. */
+export function syncMonacoEditorView(ed: editor.IStandaloneCodeEditor, theme: string): void {
+  requestAnimationFrame(() => {
+    monaco.editor.setTheme(theme);
+    ed.layout();
+    const model = ed.getModel();
+    if (model) {
+      monaco.editor.setModelLanguage(model, model.getLanguageId());
+    }
+  });
 }
 
 export function ensureXenSqlMonacoThemes(monaco: Monaco): void {
