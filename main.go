@@ -85,13 +85,14 @@ func main() {
 	}
 
 	opts := application.WebviewWindowOptions{
-		Title:          "XenSQL",
-		MinWidth:       800,
-		MinHeight:      600,
-		Frameless:      true,
-		EnableFileDrop: true,
-		URL:            "/",
-		BackgroundType: application.BackgroundTypeTranslucent,
+		Title:            "XenSQL",
+		MinWidth:         800,
+		MinHeight:        600,
+		Frameless:        true,
+		EnableFileDrop:   true,
+		URL:              "/",
+		BackgroundType:   application.BackgroundTypeSolid,
+		BackgroundColour: application.RGBA{Red: 15, Green: 17, Blue: 23, Alpha: 1},
 	}
 
 	// Restore size/position/state from the last session, or the default on first run.
