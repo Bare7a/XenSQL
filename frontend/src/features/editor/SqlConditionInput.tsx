@@ -1,8 +1,8 @@
 import Editor, { type Monaco } from '@monaco-editor/react';
 import type { editor, languages, Position } from 'monaco-editor';
 import { useCallback, useEffect, useMemo, useRef } from 'react';
-import { getMonacoThemeName, setupMonacoBeforeMount } from '@/features/editor/lib/monacoTheme';
 import { MONACO_FONT_METRICS_OPTIONS } from '@/features/editor/lib/monacoFontMetrics';
+import { getMonacoThemeName, setupMonacoBeforeMount } from '@/features/editor/lib/monacoTheme';
 import { formatSqlIdentifier } from '@/features/editor/lib/sqlCompletion';
 import { matchScore, rank } from '@/features/editor/lib/sqlSuggestions';
 import { useAppTheme } from '@/shared/hooks/useAppTheme';
