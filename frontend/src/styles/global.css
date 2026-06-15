@@ -2318,6 +2318,9 @@ td.cell-pending-edit {
 }
 
 .results-sort-chev {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   height: var(--space-18);
   min-width: var(--space-18);
   padding: 0 var(--space-3);
@@ -2326,7 +2329,6 @@ td.cell-pending-edit {
   background: transparent;
   color: var(--text-muted);
   cursor: pointer;
-  font-size: var(--text-xs);
 }
 
 .data-table th.col-sorted .results-sort-chev {
