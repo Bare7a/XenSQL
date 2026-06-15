@@ -1,0 +1,116 @@
+/* Schema tree: tree items, columns, row actions. */
+
+.tree-column-match {
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+}
+
+.tree-column-match .tree-column-name {
+  color: var(--accent);
+}
+
+.tree-item.history-item {
+  flex-direction: row;
+  align-items: flex-start;
+  gap: var(--space-6);
+}
+
+.tree-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-5) var(--space-6);
+  border-radius: var(--radius);
+  cursor: pointer;
+  font-size: var(--text-md);
+}
+
+.tree-item:hover {
+  background: var(--bg-hover);
+}
+
+.tree-item .icon {
+  width: var(--icon-sm);
+  height: var(--icon-sm);
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.tree-children {
+  padding-left: var(--space-16);
+}
+
+.tree-column {
+  cursor: default;
+  font-size: var(--text-sm);
+  gap: var(--space-6);
+}
+
+.tree-column:hover {
+  background: var(--bg-hover);
+}
+
+.tree-column-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--font-mono);
+  color: var(--text);
+}
+
+.tree-column-type {
+  flex-shrink: 0;
+  font-size: var(--text-2xs);
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+}
+
+.tree-column-pk {
+  flex-shrink: 0;
+  font-size: var(--text-3xs);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--accent);
+  padding: 0 var(--space-4);
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+}
+
+.tree-column-fk {
+  flex-shrink: 0;
+  font-size: var(--text-3xs);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--warning);
+  padding: 0 var(--space-4);
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--warning) 12%, transparent);
+}
+
+.tree-row-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  padding: var(--space-1) var(--space-3);
+  color: var(--text-muted);
+  border-radius: var(--radius-sm);
+  opacity: 0;
+  transition: opacity 0.1s ease;
+}
+
+.tree-item--table:hover .tree-row-action,
+.tree-item--table:focus .tree-row-action,
+.tree-item--table:focus-within .tree-row-action {
+  opacity: 1;
+}
+
+.tree-row-action:hover {
+  color: var(--text);
+  background: var(--bg-hover);
+}
+
+.tree-column--clickable {
+  cursor: pointer;
+}

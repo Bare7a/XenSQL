@@ -1,0 +1,107 @@
+/* Toasts and tooltips. */
+
+/* Overlays: modals, popovers, context menus, toasts, tooltips, cell viewer. */
+
+.app-tooltip {
+  position: fixed;
+  z-index: var(--z-tooltip);
+  pointer-events: none;
+  padding: var(--space-3) var(--space-8);
+  font-size: var(--text-sm);
+  font-family: var(--font-sans);
+  color: var(--tooltip-fg);
+  background: var(--tooltip-bg);
+  border: 1px solid var(--tooltip-border);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--tooltip-shadow);
+  white-space: pre-wrap;
+  max-width: 36.923rem;
+}
+
+.app-tooltip[hidden] {
+  display: none !important;
+}
+
+.app-toast-host {
+  position: fixed;
+  bottom: var(--space-32);
+  left: var(--space-16);
+  z-index: var(--z-toast);
+  display: flex;
+  flex-direction: column-reverse;
+  gap: var(--space-8);
+  max-width: min(27.692rem, calc(100vw - var(--space-32)));
+  pointer-events: none;
+}
+
+.app-toast {
+  display: flex;
+  align-items: center;
+  gap: var(--space-10);
+  padding: var(--space-10) var(--space-12);
+  font-size: var(--text-md);
+  color: var(--text);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-overlay);
+  pointer-events: auto;
+  animation: app-toast-in 0.18s ease-out;
+}
+
+.app-toast-success {
+  border-left: var(--space-3) solid var(--success);
+}
+
+.app-toast-error {
+  border-left: var(--space-3) solid var(--danger);
+}
+
+.app-toast-info {
+  border-left: var(--space-3) solid var(--accent);
+}
+
+.app-toast-message {
+  flex: 1;
+  min-width: 0;
+}
+
+.app-toast-dismiss {
+  flex-shrink: 0;
+  width: 1.692rem;
+  height: 1.692rem;
+  margin: calc(-1 * var(--space-2)) calc(-1 * var(--space-4)) 0 0;
+  font-size: var(--text-xl);
+  color: var(--text-muted);
+  border-radius: var(--radius-md);
+}
+
+.app-toast-dismiss:hover {
+  color: var(--text);
+  background: var(--bg-hover);
+}
+
+.app-toast-action {
+  flex-shrink: 0;
+  align-self: center;
+  padding: var(--space-4) var(--space-8);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--accent);
+  border-radius: var(--radius-md);
+}
+
+.app-toast-action:hover {
+  background: var(--bg-hover);
+}
+
+@keyframes app-toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(var(--space-8));
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

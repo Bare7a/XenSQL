@@ -1,0 +1,48 @@
+/* Right-click context menus. */
+
+.context-menu {
+  position: fixed;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: var(--space-4) 0;
+  min-width: 15.385rem;
+  z-index: var(--z-menu);
+  box-shadow: var(--shadow-overlay);
+}
+
+.context-menu-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  width: 100%;
+  padding: var(--space-7) var(--space-14);
+  font-size: var(--text-sm);
+  font-family: inherit;
+  color: inherit;
+  text-align: left;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.context-menu-item:hover {
+  background: var(--bg-hover);
+}
+
+.context-menu-item-icon {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.context-menu-item--active {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.context-menu-separator {
+  height: 1px;
+  background: var(--border);
+  margin: var(--space-4) 0;
+}

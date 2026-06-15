@@ -1,0 +1,265 @@
+/* Editable table view: grid, add-row, pending edits. */
+
+.table-view-pane {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--bg-panel);
+}
+
+.table-view-filter-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  height: var(--layout-chrome-toolbar-height);
+  padding: 0 var(--space-12);
+  box-sizing: border-box;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.table-view-filter-icon {
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.sql-condition-input {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  height: var(--space-28);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-input);
+  overflow: hidden;
+}
+
+.sql-condition-input:focus-within {
+  outline: var(--space-2) solid var(--accent);
+  outline-offset: -1px;
+  border-color: var(--accent);
+}
+
+.sql-condition-input .monaco-editor,
+.sql-condition-input .monaco-editor .overflow-guard,
+.sql-condition-input .monaco-editor-background,
+.sql-condition-input .monaco-editor .margin {
+  background: transparent !important;
+}
+
+.sql-condition-input-placeholder {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  /* matches Monaco lineDecorationsWidth so placeholder aligns with typed text */
+  padding: 0 var(--space-10);
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  pointer-events: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.table-view-grid-wrap {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.table-view-grid {
+  flex: 1;
+  min-height: 0;
+}
+
+.table-view-table-wrap {
+  flex: 1;
+  min-height: 0;
+}
+
+.table-view-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-12);
+  padding: var(--space-8) var(--space-12);
+  border-top: 1px solid var(--border);
+  flex-shrink: 0;
+  background: var(--bg-panel);
+}
+
+.table-view-footer-left,
+.table-view-footer-right {
+  display: flex;
+  align-items: center;
+  gap: var(--space-6);
+}
+
+.table-view-apply-btn {
+  position: relative;
+}
+
+.table-view-pending-summary {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-6);
+}
+
+.table-view-pending-stat {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--space-3) var(--space-8);
+  border-radius: var(--radius-pill);
+  font-size: var(--text-2xs);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.table-view-pending-stat--update {
+  color: var(--warning);
+  background: color-mix(in srgb, var(--warning) 18%, transparent);
+}
+
+.table-view-pending-stat--delete {
+  color: var(--danger);
+  background: color-mix(in srgb, var(--danger) 18%, transparent);
+}
+
+.table-view-cell-input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: var(--space-4) var(--space-10);
+  border: 1px solid var(--accent);
+  border-radius: var(--radius-xs);
+  background: var(--bg-input);
+  color: var(--text);
+  font: inherit;
+}
+
+.table-view-grid-empty {
+  padding: var(--space-16);
+  color: var(--text-muted);
+}
+
+.table-view-add-row-status {
+  margin: 0;
+  font-size: var(--text-sm);
+}
+
+.table-view-add-row-fields {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
+  margin-top: var(--space-8);
+}
+
+.table-view-add-row-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.table-view-add-row-field-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-8);
+  margin-bottom: var(--space-2);
+}
+
+.table-view-add-row-label {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: var(--space-5);
+  min-width: 0;
+  font-weight: 500;
+  font-size: var(--text-sm);
+}
+
+.table-view-add-row-type {
+  font-weight: 400;
+  color: var(--text-muted);
+  font-size: var(--text-xs);
+}
+
+.table-view-add-row-field-head-end {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--space-6);
+  flex-shrink: 0;
+}
+
+.table-view-add-row-mode-select {
+  width: auto;
+  min-width: 5.385rem;
+  height: var(--space-24);
+  box-sizing: border-box;
+  padding: 0 var(--space-24) 0 var(--space-8);
+  font-size: var(--text-xs);
+  background-color: var(--bg-input);
+  background-size: var(--icon-xs) var(--icon-xs);
+  background-position: right var(--space-6) center;
+}
+
+.table-view-add-row-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  flex-shrink: 0;
+}
+
+.table-view-add-row-badge {
+  font-size: var(--text-2xs);
+  padding: 0.115rem var(--space-5);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+}
+
+.table-view-add-row-badge-required {
+  color: var(--warning);
+  border-color: color-mix(in srgb, var(--warning) 45%, transparent);
+}
+
+.table-view-add-row-input {
+  width: 100%;
+  min-width: 0;
+  padding: var(--space-5) var(--space-8);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: var(--bg-input);
+  color: var(--text);
+  font: inherit;
+}
+
+.table-view-add-row-input:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.table-view-add-row-input:disabled::placeholder {
+  color: var(--text-muted);
+  opacity: 0.85;
+}
+
+tr.row-pending-delete,
+tr.row-pending-delete td {
+  background: color-mix(in srgb, var(--danger) 22%, transparent) !important;
+}
+
+td.cell-pending-edit {
+  background: color-mix(in srgb, var(--warning) 22%, var(--bg-base)) !important;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--warning) 55%, transparent);
+}

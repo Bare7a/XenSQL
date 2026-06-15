@@ -1,0 +1,114 @@
+/* Design tokens: CSS custom properties + theme overrides. Loaded first. */
+
+:root {
+  --bg-base: #0f1117;
+  --bg-panel: #161b22;
+  --bg-elevated: #1c2128;
+  --bg-hover: #262c36;
+  --border: #30363d;
+  --text: #e6edf3;
+  --text-muted: #8b949e;
+  --accent: #3b82f6;
+  --accent-hover: #2563eb;
+  --success: #22c55e;
+  --danger: #ef4444;
+  --warning: #f59e0b;
+  --font-mono: "Fira Code", monospace;
+  --font-sans: "Inter", sans-serif;
+  --radius-xs: 0.154rem; /* 2px */
+  --radius-sm: 0.231rem; /* 3px */
+  --radius-md: 0.308rem; /* 4px */
+  --radius-lg: 0.462rem; /* 6px */
+  --radius-xl: 0.615rem; /* 8px */
+  --radius-pill: 999px;
+  --radius: var(--radius-lg); /* alias for --radius-lg */
+  --sidebar-width: 21.538rem;
+  --layout-chrome-tab-height: 2.769rem;
+  --layout-chrome-toolbar-height: 3.077rem;
+  --icon-2xs: 0.846rem;
+  --icon-xs: 0.923rem;
+  --icon-sm: 1.077rem;
+  --icon-md: 1.231rem;
+  --icon-lg: 1.385rem;
+  --icon-2xl: 2.462rem;
+  --icon-3xl: 3.692rem;
+  /* rem at 13px root; scales with UI zoom (see uiZoom.ts) */
+  --text-3xs: 0.692rem; /* 9px */
+  --text-2xs: 0.769rem; /* 10px */
+  --text-xs: 0.846rem; /* 11px */
+  --text-sm: 0.923rem; /* 12px */
+  --text-md: 1rem; /* 13px - body / base */
+  --text-lg: 1.077rem; /* 14px */
+  --text-xl: 1.231rem; /* 16px */
+  --text-2xl: 1.385rem; /* 18px */
+  --select-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%238b949e' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  --select-chevron-focus: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23e6edf3' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  --scrollbar-thumb: #3d4550;
+  --scrollbar-thumb-hover: #525a66;
+  --checkbox-border: #484f58;
+  --tooltip-bg: #161b22;
+  --tooltip-fg: #e6edf3;
+  --tooltip-border: #30363d;
+  --tooltip-shadow: 0 0.154rem 0.615rem rgba(0, 0, 0, 0.36);
+  --bg-input: var(--bg-base);
+  --accent-dim: color-mix(in srgb, var(--accent) 35%, transparent);
+  --on-accent: #ffffff; /* same in both themes */
+  --titlebar-close-hover-bg: #c42b1c; /* Windows close-button red, both themes */
+  --bg-overlay: rgba(0, 0, 0, 0.6);
+  --shadow-overlay: 0 0.615rem 1.846rem rgba(0, 0, 0, 0.35);
+  --shadow-modal: 0 1.538rem 4.615rem rgba(0, 0, 0, 0.5);
+  /* Z-index layers */
+  --z-dropdown: 900;
+  --z-modal: 1000;
+  --z-popover: 1500;
+  --z-menu: 2000;
+  --z-tooltip: 10000;
+  --z-toast: 10001;
+  /* Spacing scale - rem at 13px root */
+  --space-1: 0.077rem; /* 1px */
+  --space-2: 0.154rem; /* 2px */
+  --space-3: 0.231rem; /* 3px */
+  --space-4: 0.308rem; /* 4px */
+  --space-5: 0.385rem; /* 5px */
+  --space-6: 0.462rem; /* 6px */
+  --space-7: 0.538rem; /* 7px */
+  --space-8: 0.615rem; /* 8px */
+  --space-10: 0.769rem; /* 10px */
+  --space-12: 0.923rem; /* 12px */
+  --space-14: 1.077rem; /* 14px */
+  --space-16: 1.231rem; /* 16px */
+  --space-18: 1.385rem; /* 18px */
+  --space-20: 1.538rem; /* 20px */
+  --space-24: 1.846rem; /* 24px */
+  --space-28: 2.154rem; /* 28px */
+  --space-32: 2.462rem; /* 32px */
+
+  --sidebar-ctl-h: 2.308rem;
+}
+
+[data-theme="light"] {
+  --bg-base: #ffffff;
+  --bg-panel: #f6f8fa;
+  --bg-elevated: #ffffff;
+  --bg-hover: #eef1f4;
+  --border: #d0d7de;
+  --text: #1f2328;
+  --text-muted: #656d76;
+  --accent: #0969da;
+  --accent-hover: #0550ae;
+  --success: #1a7f37;
+  --danger: #cf222e;
+  --warning: #9a6700;
+  --select-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23656d76' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  --select-chevron-focus: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%231f2328' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  --scrollbar-thumb: #c4cad0;
+  --scrollbar-thumb-hover: #a8b0b8;
+  --checkbox-border: #c4cad0;
+  --tooltip-bg: #ffffff;
+  --tooltip-fg: #1f2328;
+  --tooltip-border: #d0d7de;
+  --tooltip-shadow: 0 0.154rem 0.615rem rgba(31, 35, 40, 0.12);
+  --shadow-overlay: 0 0.615rem 1.846rem rgba(31, 35, 40, 0.12);
+  --shadow-modal: 0 1.538rem 4.615rem rgba(31, 35, 40, 0.18);
+  --bg-overlay: rgba(31, 35, 40, 0.45);
+}

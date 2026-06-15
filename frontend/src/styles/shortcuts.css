@@ -1,0 +1,115 @@
+/* Keyboard shortcuts editor and tips. */
+
+.keyboard-tips-section {
+  margin-bottom: var(--space-18);
+}
+
+.keyboard-tips-section:last-child {
+  margin-bottom: 0;
+}
+
+.keyboard-tips-section-title {
+  margin: 0 0 var(--space-8);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+}
+
+.keyboard-tips-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.keyboard-tips-item {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-10);
+  padding: var(--space-5) 0;
+  font-size: var(--text-md);
+}
+
+.keyboard-tips-kbd {
+  flex-shrink: 0;
+  min-width: 4.5em;
+  padding: var(--space-2) var(--space-8);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  text-align: center;
+  color: var(--text);
+  background: var(--bg-base);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+}
+
+.shortcuts-note {
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+}
+
+.shortcuts-recording {
+  padding: var(--space-8) var(--space-10);
+  border-radius: var(--radius);
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent);
+  font-size: var(--text-sm);
+}
+
+.shortcuts-section {
+  margin-top: var(--space-16);
+}
+
+.shortcuts-section-title {
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  margin-bottom: var(--space-8);
+}
+
+.shortcuts-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.shortcuts-table td {
+  padding: var(--space-6) 0;
+  vertical-align: middle;
+}
+
+.shortcuts-label {
+  width: 100%;
+}
+
+.shortcuts-key-btn {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  padding: var(--space-4) var(--space-10);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--bg-base);
+  min-width: 11rem;
+}
+
+.shortcuts-key-btn.recording {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent);
+}
+
+/* Size to content so translated labels ("Zurücksetzen" / "Нулиране") are never clipped */
+.shortcuts-actions,
+.shortcuts-keys {
+  width: 1%;
+  white-space: nowrap;
+}
+
+/* Higher specificity than .shortcuts-table td */
+.shortcuts-table td.shortcuts-actions {
+  padding-left: var(--space-12);
+}
+
+.shortcuts-table td.shortcuts-keys {
+  padding-left: var(--space-8);
+}

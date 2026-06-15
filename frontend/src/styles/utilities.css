@@ -56,10 +56,6 @@
   white-space: pre-wrap;
 }
 
-.sidebar-empty-compact {
-  padding: var(--space-12);
-}
-
 .sidebar-saved-hint {
   margin-top: var(--space-4);
 }
@@ -105,10 +101,6 @@
 .context-menu-item.context-menu-item--disabled {
   opacity: 0.4;
   pointer-events: none;
-}
-
-.app-status-warning {
-  color: var(--warning);
 }
 
 .app-empty-flex {
