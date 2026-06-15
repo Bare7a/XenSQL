@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useEditorFontSize } from '@/features/editor/hooks/useEditorFontSize';
 import { monacoFontOptions } from '@/features/editor/lib/editorFontSize';
+import { MONACO_FONT_METRICS_OPTIONS } from '@/features/editor/lib/monacoFontMetrics';
 import { getMonacoThemeName, setupMonacoBeforeMount } from '@/features/editor/lib/monacoTheme';
 import {
   applyContentFormat,
@@ -34,7 +35,7 @@ interface Props {
 }
 
 const MONACO_BASE: editor.IStandaloneEditorConstructionOptions = {
-  fontFamily: 'JetBrains Mono, Consolas, monospace',
+  ...MONACO_FONT_METRICS_OPTIONS,
   minimap: { enabled: false },
   wordWrap: 'on',
   scrollBeyondLastLine: false,

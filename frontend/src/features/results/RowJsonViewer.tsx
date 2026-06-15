@@ -1,11 +1,12 @@
 import Editor from '@monaco-editor/react';
 import { Search, X } from 'lucide-react';
 import type { editor } from 'monaco-editor';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useEditorFontSize } from '@/features/editor/hooks/useEditorFontSize';
 import { monacoFontOptions } from '@/features/editor/lib/editorFontSize';
-import { getMonacoThemeName, setupMonacoBeforeMount } from '@/features/editor/lib/monacoTheme';
+import { MONACO_FONT_METRICS_OPTIONS } from '@/features/editor/lib/monacoFontMetrics';
+import { getMonacoThemeName, setupMonacoBeforeMount, syncMonacoEditorView } from '@/features/editor/lib/monacoTheme';
 import { useAppTheme } from '@/shared/hooks/useAppTheme';
 import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue';
 import { filterJsonForViewer } from '@/shared/lib/rowJson';
@@ -18,7 +19,7 @@ interface Props {
 
 const EDITOR_OPTS_BASE = {
   readOnly: true,
-  fontFamily: 'JetBrains Mono, Consolas, monospace',
+  ...MONACO_FONT_METRICS_OPTIONS,
   minimap: { enabled: false },
   contextmenu: false,
   wordWrap: 'on' as const,
@@ -42,6 +43,8 @@ export function RowJsonViewer({ data, onClose }: Props) {
   const monacoTheme = getMonacoThemeName(appTheme);
   const fontSize = useEditorFontSize();
   const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
+  const editorContainerRef = useRef<HTMLDivElement>(null);
+  const [editorReady, setEditorReady] = useState(false);
   const [filter, setFilter] = useState('');
   // Debounce filter to avoid JSON.stringify/Monaco work per keystroke.
   const debouncedFilter = useDebouncedValue(filter, 150);
@@ -60,7 +63,10 @@ export function RowJsonViewer({ data, onClose }: Props) {
 
   // Clear ref when data is null so the font-size effect can't poke a disposed Monaco instance.
   useEffect(() => {
-    if (!data) editorRef.current = null;
+    if (!data) {
+      editorRef.current = null;
+      setEditorReady(false);
+    }
   }, [data]);
 
   const jsonText = useMemo(() => {
@@ -73,6 +79,39 @@ export function RowJsonViewer({ data, onClose }: Props) {
       return t('jsonViewer.serializeError');
     }
   }, [data, debouncedFilter, t]);
+
+  const handleEditorMount = useCallback(
+    (ed: editor.IStandaloneCodeEditor) => {
+      editorRef.current = ed;
+      setEditorReady(true);
+      syncMonacoEditorView(ed, monacoTheme);
+    },
+    [monacoTheme],
+  );
+
+  useEffect(() => {
+    const ed = editorRef.current;
+    if (!ed) return;
+    syncMonacoEditorView(ed, monacoTheme);
+  }, [monacoTheme, jsonText]);
+
+  useEffect(() => {
+    if (!editorReady) return;
+    const container = editorContainerRef.current;
+    const ed = editorRef.current;
+    if (!container || !ed) return;
+
+    const layout = () => {
+      if (container.clientHeight > 0 && container.clientWidth > 0) {
+        syncMonacoEditorView(ed, monacoTheme);
+      }
+    };
+
+    layout();
+    const observer = new ResizeObserver(layout);
+    observer.observe(container);
+    return () => observer.disconnect();
+  }, [editorReady, monacoTheme]);
 
   const closeLabel = t('tooltip.closeJsonViewer', {
     shortcut: formatBinding(getEffectiveBinding('toggleJsonPanel')),
@@ -106,15 +145,14 @@ export function RowJsonViewer({ data, onClose }: Props) {
                 onChange={(e) => setFilter(e.target.value)}
               />
             </div>
-            <div className="json-viewer-editor">
+            <div ref={editorContainerRef} className="json-viewer-editor">
               <Editor
+                height="100%"
                 theme={monacoTheme}
                 language="json"
                 value={jsonText}
                 beforeMount={setupMonacoBeforeMount}
-                onMount={(ed) => {
-                  editorRef.current = ed;
-                }}
+                onMount={handleEditorMount}
                 options={editorOptions}
               />
             </div>
