@@ -9,7 +9,11 @@ export const MONACO_FONT_FAMILY = `"${APP_FONT_MONO}", monospace`;
 const FONT_LOAD_TIMEOUT_MS = 10_000;
 
 function fontLoadSpecs(uiRootPx: number, editorFontPx: number): string[] {
-  return [`${uiRootPx}px "${APP_FONT_SANS}"`, `${editorFontPx}px ${MONACO_FONT_FAMILY}`];
+  return [
+    `${uiRootPx}px "${APP_FONT_SANS}"`,
+    `${editorFontPx}px ${MONACO_FONT_FAMILY}`,
+    `600 ${editorFontPx}px "${APP_FONT_MONO}"`,
+  ];
 }
 
 /** Block boot until UI fonts are loaded so Monaco and the shell paint with correct metrics. */
