@@ -5,6 +5,7 @@
 
 import { loader } from '@monaco-editor/react';
 import * as monaco from 'monaco-editor/esm/vs/editor/editor.api';
+import { remeasureMonacoFonts } from '@/features/editor/lib/monacoFontMetrics';
 // JSON language service (needs a worker) - used by the row/cell JSON viewers.
 import 'monaco-editor/esm/vs/language/json/monaco.contribution';
 // Syntax-highlighting-only languages (no worker): SQL editor/filter + cell viewer (xml/html).
@@ -20,6 +21,8 @@ import jsonWorker from 'monaco-editor/esm/vs/language/json/json.worker?worker';
 // plus xml/html highlighting in the cell viewer - never the TypeScript/CSS/HTML language
 // services, so their (large) workers stay out of the bundle.
 export function initMonaco(): void {
+  remeasureMonacoFonts();
+
   self.MonacoEnvironment = {
     getWorker(_workerId, label) {
       if (label === 'json') return new jsonWorker();

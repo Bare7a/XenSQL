@@ -118,9 +118,9 @@ export function EditorToolbar({
             data-tooltip={txnState === 'error' ? t('tooltip.txnError') : t('tooltip.txnActive')}
           >
             {txnState === 'error' ? (
-              <CircleAlert className="icon-xs toolbar-txn-icon" />
+              <CircleAlert className="icon-sm toolbar-txn-icon" />
             ) : (
-              <Clock className="icon-xs toolbar-txn-icon" />
+              <Clock className="icon-sm toolbar-txn-icon" />
             )}
             {txnState === 'error' ? t('editor.txnError') : t('editor.txnActive')}
           </span>

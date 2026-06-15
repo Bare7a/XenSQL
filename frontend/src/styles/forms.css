@@ -1,0 +1,107 @@
+/* Form controls: form-group, checkbox, color picker. */
+
+.form-group-checkbox .form-hint {
+  margin: var(--space-6) 0 0;
+}
+
+.form-group .checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  margin-bottom: 0;
+  cursor: pointer;
+  user-select: none;
+  font-size: inherit;
+  color: inherit;
+}
+
+.checkbox-label input[type="checkbox"] {
+  appearance: none;
+  -webkit-appearance: none;
+  flex-shrink: 0;
+  width: var(--space-18);
+  height: var(--space-18);
+  margin: 0;
+  padding: 0;
+  align-self: center;
+  border: 1px solid var(--checkbox-border);
+  border-radius: var(--radius-md);
+  background-color: var(--bg-elevated);
+  cursor: pointer;
+  outline: none;
+  transition:
+    background-color 0.15s,
+    border-color 0.15s,
+    box-shadow 0.15s;
+}
+
+.checkbox-label:hover input[type="checkbox"] {
+  border-color: var(--text-muted);
+}
+
+.checkbox-label input[type="checkbox"]:focus-visible {
+  box-shadow:
+    0 0 0 0.154rem var(--bg-base),
+    0 0 0 0.308rem color-mix(in srgb, var(--accent) 45%, transparent);
+}
+
+.checkbox-label input[type="checkbox"]:checked {
+  background-color: var(--accent);
+  border-color: var(--accent);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none'%3E%3Cpath d='M3.5 8.5L6.5 11.5L12.5 4.5' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: var(--icon-xs) var(--icon-xs);
+}
+
+.checkbox-text {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--text-md);
+  font-weight: 500;
+  color: var(--text);
+  display: block;
+  padding-top: 0;
+}
+
+.form-hint {
+  margin: var(--space-6) 0 0;
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+}
+
+.form-group > label:not(.checkbox-label) {
+  display: block;
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  margin-bottom: var(--space-4);
+}
+
+.form-group > input:not([type="checkbox"]):not([type="radio"]) {
+  width: 100%;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-10);
+}
+
+.color-picker {
+  display: grid;
+  grid-template-columns: repeat(15, var(--space-24));
+  gap: var(--space-6);
+}
+
+.color-swatch {
+  width: var(--space-24);
+  height: var(--space-24);
+  border-radius: 50%;
+  cursor: pointer;
+  border: var(--space-2) solid transparent;
+}
+
+.color-swatch.selected {
+  border-color: var(--bg-base);
+  box-shadow: 0 0 0 0.154rem var(--accent);
+}

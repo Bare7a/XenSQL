@@ -1,6 +1,7 @@
 import Editor, { type Monaco } from '@monaco-editor/react';
 import type { editor, languages, Position } from 'monaco-editor';
 import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { MONACO_FONT_METRICS_OPTIONS } from '@/features/editor/lib/monacoFontMetrics';
 import { getMonacoThemeName, setupMonacoBeforeMount } from '@/features/editor/lib/monacoTheme';
 import { formatSqlIdentifier } from '@/features/editor/lib/sqlCompletion';
 import { matchScore, rank } from '@/features/editor/lib/sqlSuggestions';
@@ -38,7 +39,7 @@ interface Props {
 }
 
 const STATIC_OPTIONS: editor.IStandaloneEditorConstructionOptions = {
-  fontFamily: 'JetBrains Mono, Consolas, monospace',
+  ...MONACO_FONT_METRICS_OPTIONS,
   minimap: { enabled: false },
   contextmenu: false,
   glyphMargin: false,
@@ -215,6 +216,10 @@ export function SqlConditionInput({
   }, []);
 
   const options = useMemo(() => ({ ...STATIC_OPTIONS, ...sizingOptions(uiZoomPx), ariaLabel }), [uiZoomPx, ariaLabel]);
+
+  useEffect(() => {
+    editorRef.current?.updateOptions({ ...MONACO_FONT_METRICS_OPTIONS, ...sizingOptions(uiZoomPx) });
+  }, [uiZoomPx]);
 
   const showPlaceholder = !value && !!placeholder;
 

@@ -1,0 +1,72 @@
+/* Expanded cell value viewer modal. */
+
+.cell-viewer-modal {
+  height: min(78vh, 55.385rem);
+  display: flex;
+  flex-direction: column;
+}
+
+.cell-viewer-hint {
+  margin-left: var(--space-8);
+  font-size: var(--text-xs);
+  font-weight: 400;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+.cell-viewer-lines {
+  margin-left: var(--space-10);
+  font-size: var(--text-xs);
+  font-weight: 400;
+  color: var(--text-muted);
+  text-transform: none;
+}
+
+.cell-viewer-kind-select {
+  width: auto;
+  min-width: unset;
+  min-height: unset;
+  height: var(--space-24);
+  box-sizing: border-box;
+  padding: 0 var(--space-24) 0 var(--space-8);
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  background-color: var(--bg-elevated);
+  background-size: var(--icon-xs) var(--icon-xs);
+  background-position: right var(--space-6) center;
+}
+
+.cell-viewer-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 0 !important;
+  overflow: hidden;
+}
+
+.cell-viewer-monaco {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  overflow: hidden;
+}
+
+.cell-viewer-monaco .monaco-editor,
+.cell-viewer-monaco .monaco-editor .overflow-guard {
+  border-radius: 0;
+}
+
+.cell-viewer-footer {
+  flex-wrap: wrap;
+  gap: var(--space-8);
+  justify-content: space-between;
+}
+
+.cell-viewer-footer-left,
+.cell-viewer-footer-right {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-8);
+}

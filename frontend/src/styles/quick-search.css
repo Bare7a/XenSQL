@@ -1,0 +1,99 @@
+/* Quick search / command palette. */
+
+.quick-search-dialog {
+  width: min(55.385rem, calc(100vw - var(--space-24)));
+  padding: 0;
+}
+
+.quick-search-input-row {
+  padding: var(--space-10);
+  border-bottom: 1px solid var(--border);
+}
+
+.quick-search-input {
+  width: 100%;
+  height: var(--space-32);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: var(--bg-base);
+  color: var(--text);
+  padding: 0 var(--space-10);
+}
+
+.quick-search-input:focus {
+  outline: var(--space-2) solid var(--accent);
+  outline-offset: -1px;
+  border-color: var(--accent);
+}
+
+.quick-search-list {
+  max-height: min(32.308rem, calc(100vh - 16.923rem));
+  overflow: auto;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  column-gap: var(--space-10);
+}
+
+.quick-search-empty {
+  grid-column: 1 / -1;
+  padding: var(--space-14) var(--space-12);
+  color: var(--text-muted);
+}
+
+.quick-search-item {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: subgrid;
+  align-items: center;
+  padding: var(--space-10) var(--space-12);
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.quick-search-item.active,
+.quick-search-item:hover {
+  background: var(--bg-hover);
+}
+
+.quick-search-kind {
+  justify-self: stretch;
+  font-size: var(--text-2xs);
+  color: var(--text-muted);
+  padding: var(--space-2) var(--space-6);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  white-space: nowrap;
+  text-align: center;
+}
+
+.quick-search-label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-7);
+  min-width: 0;
+}
+
+.quick-search-label-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.quick-search-detail {
+  color: var(--text-muted);
+  font-size: var(--text-2xs);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: right;
+}
+
+.quick-search-overlay {
+  /* Fixed Y so palette doesn't jump when results count changes */
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 5.5rem;
+}

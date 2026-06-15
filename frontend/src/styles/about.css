@@ -1,0 +1,46 @@
+/* About dialog. */
+
+.about-dialog-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-14);
+}
+
+.about-meta {
+  display: grid;
+  gap: var(--space-10);
+}
+
+.about-meta dt {
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  margin-bottom: var(--space-2);
+}
+
+.about-meta dd {
+  margin: 0;
+}
+
+.about-link,
+.about-link-btn {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.about-link-btn {
+  padding: 0;
+  text-align: left;
+  word-break: break-all;
+}
+
+.about-link:hover,
+.about-link-btn:hover {
+  text-decoration: underline;
+}
+
+.about-stack {
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+}

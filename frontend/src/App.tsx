@@ -57,8 +57,7 @@ import {
   useTabs,
 } from '@/store/selectors';
 import type { EditorCursorState, EditorTab, TableInfo, TxnState } from '@/types';
-import '@/styles/global.css';
-import '@/styles/utilities.css';
+import '@/styles/index.css';
 
 // Stable empty array so connections with no cached tables don't churn referential equality.
 const EMPTY_TABLES: TableInfo[] = [];

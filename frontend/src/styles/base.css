@@ -1,0 +1,137 @@
+/* Base: element resets, root/body, global text utilities, scrollbars. */
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  overflow: hidden;
+}
+
+body {
+  font-family: var(--font-sans);
+  background: var(--bg-base);
+  color: var(--text);
+  font-size: var(--text-md);
+  -webkit-font-smoothing: antialiased;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+input,
+textarea,
+[contenteditable="true"],
+.monaco-editor,
+.monaco-editor * {
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+.ui-text-2xs {
+  font-size: var(--text-2xs);
+}
+
+.ui-text-xs {
+  font-size: var(--text-xs);
+}
+
+.ui-text-sm {
+  font-size: var(--text-sm);
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+  background: none;
+  color: inherit;
+}
+
+input:not([type="checkbox"]):not([type="radio"]),
+select,
+textarea {
+  font-family: inherit;
+  font-size: inherit;
+  color: var(--text);
+  background: var(--bg-base);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: var(--space-6) var(--space-10);
+}
+
+input:not([type="checkbox"]):not([type="radio"]):focus,
+select:focus,
+textarea:focus {
+  outline: var(--space-2) solid var(--accent);
+  outline-offset: -1px;
+}
+
+select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  display: block;
+  width: 100%;
+  padding: var(--space-6) var(--space-32) var(--space-6) var(--space-10);
+  background-color: var(--bg-base);
+  background-image: var(--select-chevron);
+  background-repeat: no-repeat;
+  background-position: right var(--space-8) center;
+  background-size: var(--icon-md) var(--icon-md);
+  cursor: pointer;
+}
+
+select:focus {
+  background-image: var(--select-chevron-focus);
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+*,
+*::before,
+*::after {
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) var(--bg-panel);
+}
+
+*::-webkit-scrollbar {
+  width: 0.846rem;
+  height: 0.846rem;
+}
+
+*::-webkit-scrollbar-track {
+  background: var(--bg-panel);
+}
+
+*::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+  border-radius: var(--radius-lg);
+  border: var(--space-2) solid var(--bg-panel);
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-thumb-hover);
+}
+
+*::-webkit-scrollbar-thumb:active {
+  background: var(--accent);
+}
+
+*::-webkit-scrollbar-corner {
+  background: var(--bg-panel);
+}

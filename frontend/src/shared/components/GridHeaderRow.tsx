@@ -1,3 +1,4 @@
+import { ChevronDown, ChevronsUpDown, ChevronUp } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 interface Props {
@@ -58,7 +59,15 @@ export function GridHeaderRow({
                 onSortToggle(col);
               }}
             >
-              {sortedColumn === col ? (sortDirection === 'ASC' ? '▴' : '▾') : '▴▾'}
+              {sortedColumn === col ? (
+                sortDirection === 'ASC' ? (
+                  <ChevronUp className="icon-xs"></ChevronUp>
+                ) : (
+                  <ChevronDown className="icon-xs"></ChevronDown>
+                )
+              ) : (
+                <ChevronsUpDown className="icon-xs"></ChevronsUpDown>
+              )}
             </button>
             {/* biome-ignore lint/a11y/noStaticElementInteractions: pointer-drag column resize handle; resizing is a mouse affordance and columns remain readable without it. */}
             <div className="col-resize-handle" onMouseDown={(e) => onStartResize(e, colPos)} />

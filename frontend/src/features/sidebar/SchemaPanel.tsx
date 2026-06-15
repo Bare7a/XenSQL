@@ -179,7 +179,7 @@ export function SchemaPanel({ onOpenQuery, onBrowseTable, onOpenConnectionTab }:
         </div>
         <button
           type="button"
-          className="btn btn-sm sidebar-icon-btn"
+          className="btn btn-sm sidebar-filter-btn"
           data-tooltip={t('sidebar.refreshSchema')}
           disabled={!connId || loadingSchema}
           onClick={() => connId && void loadSchema(connId)}

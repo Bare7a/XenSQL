@@ -1,0 +1,192 @@
+/* Connection list: items, switcher, folders, status dots. */
+
+.connection-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-6);
+  padding: var(--space-7) var(--space-8);
+  font-size: var(--text-md);
+  border-radius: var(--radius);
+  cursor: pointer;
+}
+
+.connection-item.dragging {
+  opacity: 0.45;
+}
+
+.connection-item.drag-over {
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+
+.connection-item-name {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.connection-item:hover,
+.connection-item.active {
+  background: var(--bg-hover);
+}
+
+.connection-dot {
+  width: var(--space-10);
+  height: var(--space-10);
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.connection-switcher {
+  display: flex;
+  align-items: center;
+  gap: var(--space-6);
+  width: 100%;
+  height: 100%;
+  padding: 0 var(--space-10);
+  box-sizing: border-box;
+  background: transparent;
+  border: none;
+  color: var(--text);
+  font-size: var(--text-md);
+  cursor: pointer;
+}
+
+.connection-switcher:hover {
+  background: var(--bg-hover);
+}
+
+.connection-switcher-empty {
+  justify-content: center;
+  color: var(--text-muted);
+}
+
+.connection-switcher-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: left;
+  font-weight: 600;
+}
+
+.connection-switcher-pip {
+  width: var(--space-7);
+  height: var(--space-7);
+  border-radius: 50%;
+  background: var(--success);
+  flex-shrink: 0;
+}
+
+.connection-switcher-caret {
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.connection-switcher-menu {
+  position: fixed;
+  z-index: var(--z-dropdown);
+  max-height: 60vh;
+  overflow-y: auto;
+  padding: var(--space-8);
+  box-sizing: border-box;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-overlay);
+}
+
+.connection-item-main {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  gap: var(--space-1);
+}
+
+.connection-item-sub {
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.connection-item-hover-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-shrink: 0;
+  opacity: 0;
+  transition: opacity 0.1s ease;
+}
+
+.connection-item:hover .connection-item-hover-actions,
+.connection-item:focus .connection-item-hover-actions,
+.connection-item:focus-within .connection-item-hover-actions {
+  opacity: 1;
+}
+
+.connection-item {
+  position: relative;
+}
+
+.connection-item::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: var(--space-5);
+  bottom: var(--space-5);
+  width: var(--space-3);
+  border-radius: 0 var(--radius-xs) var(--radius-xs) 0;
+  background: var(--conn-color, transparent);
+}
+
+.connection-status-dot {
+  width: var(--space-7);
+  height: var(--space-7);
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: var(--text-muted);
+  opacity: 0.45;
+}
+
+.connection-status-dot.is-connected {
+  background: var(--success);
+  opacity: 1;
+}
+
+.connection-folder {
+  margin-top: var(--space-2);
+}
+
+.connection-folder.drag-over .connection-folder-header {
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+
+.connection-folder-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-6);
+  padding: var(--space-5) var(--space-6);
+  cursor: pointer;
+  border-radius: var(--radius);
+  color: var(--text-muted);
+  font-size: var(--text-xs);
+  font-weight: 600;
+}
+
+.connection-folder-header:hover {
+  background: var(--bg-hover);
+  color: var(--text);
+}
+
+.connection-folder-body {
+  padding-left: var(--space-8);
+}
+
+.connection-folder-empty {
+  padding: var(--space-5) var(--space-8);
+}
