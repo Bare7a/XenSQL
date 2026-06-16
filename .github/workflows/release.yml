@@ -62,6 +62,101 @@ jobs:
           go install github.com/wailsapp/wails/v3/cmd/wails3@latest
           echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
 
+      # Optional code signing - enabled when the matching repository secrets are set.
+      # https://v3.wails.io/guides/build/signing/#github-actions-integration
+      #
+      # macOS:   MACOS_CERTIFICATE, MACOS_CERTIFICATE_PASSWORD, MACOS_SIGN_IDENTITY
+      #          + APPLE_ID, APPLE_TEAM_ID, APPLE_APP_PASSWORD for notarization
+      # Windows: WINDOWS_CERTIFICATE, WINDOWS_CERTIFICATE_PASSWORD
+      # Linux:   PGP_PRIVATE_KEY, PGP_PASSWORD
+
+      - name: Detect Linux package signing
+        if: matrix.build.platform == 'linux/amd64'
+        id: sign_linux
+        shell: bash
+        env:
+          PGP_PRIVATE_KEY: ${{ secrets.PGP_PRIVATE_KEY }}
+        run: |
+          if [ -n "$PGP_PRIVATE_KEY" ]; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Import PGP signing key
+        if: matrix.build.platform == 'linux/amd64' && steps.sign_linux.outputs.enabled == 'true'
+        shell: bash
+        env:
+          PGP_PRIVATE_KEY: ${{ secrets.PGP_PRIVATE_KEY }}
+        run: |
+          set -euo pipefail
+          echo "$PGP_PRIVATE_KEY" | base64 -d > signing-key.asc
+
+      - name: Detect Windows code signing
+        if: matrix.build.platform == 'windows/amd64'
+        id: sign_windows
+        shell: bash
+        env:
+          WINDOWS_CERTIFICATE: ${{ secrets.WINDOWS_CERTIFICATE }}
+        run: |
+          if [ -n "$WINDOWS_CERTIFICATE" ]; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Import Windows code signing certificate
+        if: matrix.build.platform == 'windows/amd64' && steps.sign_windows.outputs.enabled == 'true'
+        shell: pwsh
+        env:
+          CERTIFICATE_BASE64: ${{ secrets.WINDOWS_CERTIFICATE }}
+        run: |
+          $certBytes = [Convert]::FromBase64String($env:CERTIFICATE_BASE64)
+          [IO.File]::WriteAllBytes("certificate.pfx", $certBytes)
+
+      - name: Detect macOS code signing
+        if: matrix.build.platform == 'darwin/universal'
+        id: sign_macos
+        shell: bash
+        env:
+          MACOS_CERTIFICATE: ${{ secrets.MACOS_CERTIFICATE }}
+          MACOS_SIGN_IDENTITY: ${{ secrets.MACOS_SIGN_IDENTITY }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          APPLE_APP_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
+        run: |
+          if [ -n "$MACOS_CERTIFICATE" ] && [ -n "$MACOS_SIGN_IDENTITY" ]; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+            if [ -n "$APPLE_ID" ] && [ -n "$APPLE_TEAM_ID" ] && [ -n "$APPLE_APP_PASSWORD" ]; then
+              echo "notarize=true" >> "$GITHUB_OUTPUT"
+            fi
+          fi
+
+      - name: Import macOS code signing certificate
+        if: matrix.build.platform == 'darwin/universal' && steps.sign_macos.outputs.enabled == 'true'
+        shell: bash
+        env:
+          CERTIFICATE_BASE64: ${{ secrets.MACOS_CERTIFICATE }}
+          CERTIFICATE_PASSWORD: ${{ secrets.MACOS_CERTIFICATE_PASSWORD }}
+        run: |
+          set -euo pipefail
+          echo "$CERTIFICATE_BASE64" | base64 --decode > certificate.p12
+          security create-keychain -p "" build.keychain
+          security default-keychain -s build.keychain
+          security unlock-keychain -p "" build.keychain
+          security import certificate.p12 -k build.keychain -P "$CERTIFICATE_PASSWORD" -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "" build.keychain
+
+      - name: Store macOS notarization credentials
+        if: matrix.build.platform == 'darwin/universal' && steps.sign_macos.outputs.notarize == 'true'
+        shell: bash
+        env:
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          APPLE_APP_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
+        run: |
+          set -euo pipefail
+          xcrun notarytool store-credentials "notarize-profile" \
+            --apple-id "$APPLE_ID" \
+            --team-id "$APPLE_TEAM_ID" \
+            --password "$APPLE_APP_PASSWORD"
+
       # The updater matches an asset by filename (GOOS+GOARCH) and unpacks a
       # single top-level entry, so each archive is named <platform>-<arch> and
       # holds exactly one entry: the binary (linux/windows) or XenSQL.app (macOS).
@@ -83,6 +178,22 @@ jobs:
           # Manual downloads (updater skips — no GOOS/GOARCH in filenames)
           cp bin/XenSQL bin/XenSQL.deb bin/XenSQL.rpm bin/XenSQL.pkg.tar.zst bin/xensql-x86_64.AppImage dist/
 
+      - name: Sign Linux packages
+        if: matrix.build.platform == 'linux/amd64' && steps.sign_linux.outputs.enabled == 'true'
+        shell: bash
+        env:
+          WAILS_PGP_PASSWORD: ${{ secrets.PGP_PASSWORD }}
+        run: |
+          set -euo pipefail
+          wails3 tool sign --input "bin/XenSQL*.deb" --pgp-key signing-key.asc
+          wails3 tool sign --input "bin/XenSQL*.rpm" --pgp-key signing-key.asc
+          cp bin/XenSQL.deb bin/XenSQL.rpm dist/
+
+      - name: Cleanup Linux signing material
+        if: always() && matrix.build.platform == 'linux/amd64' && steps.sign_linux.outputs.enabled == 'true'
+        shell: bash
+        run: rm -f signing-key.asc
+
       - name: Install NSIS
         if: matrix.build.platform == 'windows/amd64'
         shell: pwsh
@@ -97,6 +208,22 @@ jobs:
           Compress-Archive -Path bin/XenSQL.exe -DestinationPath dist/XenSQL-windows-amd64.zip -Force
           Copy-Item bin/XenSQL.exe, bin/XenSQL-amd64-installer.exe dist/
 
+      - name: Sign Windows binaries
+        if: matrix.build.platform == 'windows/amd64' && steps.sign_windows.outputs.enabled == 'true'
+        shell: pwsh
+        env:
+          WAILS_WINDOWS_CERT_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
+        run: |
+          wails3 tool sign --input bin/XenSQL.exe --certificate certificate.pfx
+          wails3 tool sign --input bin/XenSQL-amd64-installer.exe --certificate certificate.pfx
+          Copy-Item bin/XenSQL.exe, bin/XenSQL-amd64-installer.exe dist/ -Force
+          Compress-Archive -Path bin/XenSQL.exe -DestinationPath dist/XenSQL-windows-amd64.zip -Force
+
+      - name: Cleanup Windows signing material
+        if: always() && matrix.build.platform == 'windows/amd64' && steps.sign_windows.outputs.enabled == 'true'
+        shell: pwsh
+        run: Remove-Item -Force -ErrorAction SilentlyContinue certificate.pfx
+
       - name: Build & package (macOS)
         if: matrix.build.platform == 'darwin/universal'
         shell: bash
@@ -110,6 +237,28 @@ jobs:
           cp "dist/XenSQL-darwin-arm64.zip" "dist/XenSQL-darwin-amd64.zip"
           # .dmg for manual installs; no darwin/arch tokens, so the updater skips it.
           hdiutil create -volname "XenSQL" -srcfolder "bin/XenSQL.app" -ov -format UDZO "dist/XenSQL-macos-universal.dmg"
+
+      - name: Sign macOS application
+        if: matrix.build.platform == 'darwin/universal' && steps.sign_macos.outputs.enabled == 'true'
+        shell: bash
+        env:
+          SIGN_IDENTITY: ${{ secrets.MACOS_SIGN_IDENTITY }}
+        run: |
+          set -euo pipefail
+          SIGN_ARGS=(--input "bin/XenSQL.app" --identity "$SIGN_IDENTITY")
+          if [ "${{ steps.sign_macos.outputs.notarize }}" = "true" ]; then
+            SIGN_ARGS+=(--notarize --keychain-profile notarize-profile)
+          fi
+          wails3 tool sign "${SIGN_ARGS[@]}"
+          # Re-package signed app for release assets.
+          ( cd bin && zip -r -y -X "../dist/XenSQL-darwin-arm64.zip" "XenSQL.app" >/dev/null )
+          cp "dist/XenSQL-darwin-arm64.zip" "dist/XenSQL-darwin-amd64.zip"
+          hdiutil create -volname "XenSQL" -srcfolder "bin/XenSQL.app" -ov -format UDZO "dist/XenSQL-macos-universal.dmg"
+
+      - name: Cleanup macOS signing material
+        if: always() && matrix.build.platform == 'darwin/universal' && steps.sign_macos.outputs.enabled == 'true'
+        shell: bash
+        run: rm -f certificate.p12
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
