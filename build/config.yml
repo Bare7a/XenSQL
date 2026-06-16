@@ -64,22 +64,27 @@ dev_mode:
 fileAssociations:
   - ext: db
     name: SQLite Database
+    iconName: icon
     description: SQLite Database File
     role: Editor
   - ext: sqlite
     name: SQLite Database
+    iconName: icon
     description: SQLite Database File
     role: Editor
   - ext: sqlite3
     name: SQLite Database
+    iconName: icon
     description: SQLite Database File
     role: Editor
   - ext: s3db
     name: SQLite Database
+    iconName: icon
     description: SQLite Database File
     role: Editor
   - ext: sl3
     name: SQLite Database
+    iconName: icon
     description: SQLite Database File
     role: Editor
 

@@ -229,20 +229,20 @@ RequestExecutionLevel "${REQUEST_EXECUTION_LEVEL}"
 !macro wails.associateFiles
     ; Create file associations
     
-    !insertmacro APP_ASSOCIATE "db" "SQLite Database" "SQLite Database File" "$INSTDIR\.ico" "Open with ${INFO_PRODUCTNAME}" "$INSTDIR\${PRODUCT_EXECUTABLE} $\"%1$\""
-    File "..\.ico"
+    !insertmacro APP_ASSOCIATE "db" "SQLite Database" "SQLite Database File" "$INSTDIR\icon.ico" "Open with ${INFO_PRODUCTNAME}" "$INSTDIR\${PRODUCT_EXECUTABLE} $\"%1$\""
+    File "..\icon.ico"
     
-    !insertmacro APP_ASSOCIATE "sqlite" "SQLite Database" "SQLite Database File" "$INSTDIR\.ico" "Open with ${INFO_PRODUCTNAME}" "$INSTDIR\${PRODUCT_EXECUTABLE} $\"%1$\""
-    File "..\.ico"
+    !insertmacro APP_ASSOCIATE "sqlite" "SQLite Database" "SQLite Database File" "$INSTDIR\icon.ico" "Open with ${INFO_PRODUCTNAME}" "$INSTDIR\${PRODUCT_EXECUTABLE} $\"%1$\""
+    File "..\icon.ico"
     
-    !insertmacro APP_ASSOCIATE "sqlite3" "SQLite Database" "SQLite Database File" "$INSTDIR\.ico" "Open with ${INFO_PRODUCTNAME}" "$INSTDIR\${PRODUCT_EXECUTABLE} $\"%1$\""
-    File "..\.ico"
+    !insertmacro APP_ASSOCIATE "sqlite3" "SQLite Database" "SQLite Database File" "$INSTDIR\icon.ico" "Open with ${INFO_PRODUCTNAME}" "$INSTDIR\${PRODUCT_EXECUTABLE} $\"%1$\""
+    File "..\icon.ico"
     
-    !insertmacro APP_ASSOCIATE "s3db" "SQLite Database" "SQLite Database File" "$INSTDIR\.ico" "Open with ${INFO_PRODUCTNAME}" "$INSTDIR\${PRODUCT_EXECUTABLE} $\"%1$\""
-    File "..\.ico"
+    !insertmacro APP_ASSOCIATE "s3db" "SQLite Database" "SQLite Database File" "$INSTDIR\icon.ico" "Open with ${INFO_PRODUCTNAME}" "$INSTDIR\${PRODUCT_EXECUTABLE} $\"%1$\""
+    File "..\icon.ico"
     
-    !insertmacro APP_ASSOCIATE "sl3" "SQLite Database" "SQLite Database File" "$INSTDIR\.ico" "Open with ${INFO_PRODUCTNAME}" "$INSTDIR\${PRODUCT_EXECUTABLE} $\"%1$\""
-    File "..\.ico"
+    !insertmacro APP_ASSOCIATE "sl3" "SQLite Database" "SQLite Database File" "$INSTDIR\icon.ico" "Open with ${INFO_PRODUCTNAME}" "$INSTDIR\${PRODUCT_EXECUTABLE} $\"%1$\""
+    File "..\icon.ico"
     
 !macroend
 
@@ -250,19 +250,19 @@ RequestExecutionLevel "${REQUEST_EXECUTION_LEVEL}"
     ; Delete app associations
     
     !insertmacro APP_UNASSOCIATE "db" "SQLite Database"
-    Delete "$INSTDIR\.ico"
+    Delete "$INSTDIR\icon.ico"
     
     !insertmacro APP_UNASSOCIATE "sqlite" "SQLite Database"
-    Delete "$INSTDIR\.ico"
+    Delete "$INSTDIR\icon.ico"
     
     !insertmacro APP_UNASSOCIATE "sqlite3" "SQLite Database"
-    Delete "$INSTDIR\.ico"
+    Delete "$INSTDIR\icon.ico"
     
     !insertmacro APP_UNASSOCIATE "s3db" "SQLite Database"
-    Delete "$INSTDIR\.ico"
+    Delete "$INSTDIR\icon.ico"
     
     !insertmacro APP_UNASSOCIATE "sl3" "SQLite Database"
-    Delete "$INSTDIR\.ico"
+    Delete "$INSTDIR\icon.ico"
     
 !macroend
 
