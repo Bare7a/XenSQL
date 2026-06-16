@@ -10,7 +10,7 @@
 					<string>db</string>
 				</array>
 				<key>CFBundleTypeIconFile</key>
-				<string/>
+				<string>icon</string>
 				<key>CFBundleTypeName</key>
 				<string>SQLite Database</string>
 				<key>CFBundleTypeRole</key>
@@ -22,7 +22,7 @@
 					<string>sqlite</string>
 				</array>
 				<key>CFBundleTypeIconFile</key>
-				<string/>
+				<string>icon</string>
 				<key>CFBundleTypeName</key>
 				<string>SQLite Database</string>
 				<key>CFBundleTypeRole</key>
@@ -34,7 +34,7 @@
 					<string>sqlite3</string>
 				</array>
 				<key>CFBundleTypeIconFile</key>
-				<string/>
+				<string>icon</string>
 				<key>CFBundleTypeName</key>
 				<string>SQLite Database</string>
 				<key>CFBundleTypeRole</key>
@@ -46,7 +46,7 @@
 					<string>s3db</string>
 				</array>
 				<key>CFBundleTypeIconFile</key>
-				<string/>
+				<string>icon</string>
 				<key>CFBundleTypeName</key>
 				<string>SQLite Database</string>
 				<key>CFBundleTypeRole</key>
@@ -58,7 +58,7 @@
 					<string>sl3</string>
 				</array>
 				<key>CFBundleTypeIconFile</key>
-				<string/>
+				<string>icon</string>
 				<key>CFBundleTypeName</key>
 				<string>SQLite Database</string>
 				<key>CFBundleTypeRole</key>
