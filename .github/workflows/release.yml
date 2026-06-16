@@ -65,9 +65,9 @@ jobs:
       # The updater matches an asset by filename (GOOS+GOARCH) and unpacks a
       # single top-level entry, so each archive is named <platform>-<arch> and
       # holds exactly one entry: the binary (linux/windows) or XenSQL.app (macOS).
-      # Plain XenSQL / XenSQL.exe (no platform tokens) 
-      # and distro packages (XenSQL.deb, XenSQL.rpm, XenSQL.pkg.tar.zst, xensql-x86_64.AppImage)
-      # are manual-download only.
+      # Plain XenSQL / XenSQL.exe (no platform tokens), distro packages
+      # (XenSQL.deb, XenSQL.rpm, XenSQL.pkg.tar.zst, xensql-x86_64.AppImage), and
+      # XenSQL-amd64-installer.exe are manual-download only.
 
       - name: Build & package (Linux)
         if: matrix.build.platform == 'linux/amd64'
@@ -83,14 +83,19 @@ jobs:
           # Manual downloads (updater skips — no GOOS/GOARCH in filenames)
           cp bin/XenSQL bin/XenSQL.deb bin/XenSQL.rpm bin/XenSQL.pkg.tar.zst bin/xensql-x86_64.AppImage dist/
 
+      - name: Install NSIS
+        if: matrix.build.platform == 'windows/amd64'
+        shell: pwsh
+        run: winget install NSIS.NSIS --accept-source-agreements --accept-package-agreements
+
       - name: Build & package (Windows)
         if: matrix.build.platform == 'windows/amd64'
         shell: pwsh
         run: |
-          wails3 task build                       # -> bin/XenSQL.exe
+          wails3 package GOOS=windows
           New-Item -ItemType Directory -Force -Path dist | Out-Null
           Compress-Archive -Path bin/XenSQL.exe -DestinationPath dist/XenSQL-windows-amd64.zip -Force
-          Copy-Item bin/XenSQL.exe dist/XenSQL.exe  # manual download; updater skips (no windows/amd64 in name)
+          Copy-Item bin/XenSQL.exe, bin/XenSQL-amd64-installer.exe dist/
 
       - name: Build & package (macOS)
         if: matrix.build.platform == 'darwin/universal'

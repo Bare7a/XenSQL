@@ -230,19 +230,19 @@ RequestExecutionLevel "${REQUEST_EXECUTION_LEVEL}"
     ; Create file associations
     
     !insertmacro APP_ASSOCIATE "db" "SQLite Database" "SQLite Database File" "$INSTDIR\.ico" "Open with ${INFO_PRODUCTNAME}" "$INSTDIR\${PRODUCT_EXECUTABLE} $\"%1$\""
-    File "..\.ico"
+    File "..\icon.ico"
     
     !insertmacro APP_ASSOCIATE "sqlite" "SQLite Database" "SQLite Database File" "$INSTDIR\.ico" "Open with ${INFO_PRODUCTNAME}" "$INSTDIR\${PRODUCT_EXECUTABLE} $\"%1$\""
-    File "..\.ico"
+    File "..\icon.ico"
     
     !insertmacro APP_ASSOCIATE "sqlite3" "SQLite Database" "SQLite Database File" "$INSTDIR\.ico" "Open with ${INFO_PRODUCTNAME}" "$INSTDIR\${PRODUCT_EXECUTABLE} $\"%1$\""
-    File "..\.ico"
+    File "..\icon.ico"
     
     !insertmacro APP_ASSOCIATE "s3db" "SQLite Database" "SQLite Database File" "$INSTDIR\.ico" "Open with ${INFO_PRODUCTNAME}" "$INSTDIR\${PRODUCT_EXECUTABLE} $\"%1$\""
-    File "..\.ico"
+    File "..\icon.ico"
     
     !insertmacro APP_ASSOCIATE "sl3" "SQLite Database" "SQLite Database File" "$INSTDIR\.ico" "Open with ${INFO_PRODUCTNAME}" "$INSTDIR\${PRODUCT_EXECUTABLE} $\"%1$\""
-    File "..\.ico"
+    File "..\icon.ico"
     
 !macroend
 
