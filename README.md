@@ -14,7 +14,21 @@ Just a focused, native desktop tool for working with databases.
 
 ## ⬇️ Download
 
-Grab the latest build for **Windows**, **macOS**, or **Linux** from the [**Releases**](../../releases/latest) page - no installer, no account, just download and run.
+Grab the latest build for **Windows**, **macOS**, or **Linux** from the [**Releases**](../../releases/latest) page.
+
+### Recommended assets:
+- **Windows**: `XenSQL-windows-amd64.zip` (portable) **or** `XenSQL-amd64-installer.exe` (installer)
+- **Linux**: `XenSQL-linux-amd64.tar.gz` (portable)
+- **macOS**: `XenSQL-darwin-arm64.zip` **or** `XenSQL-darwin-amd64.zip` (universal `.app`)
+
+### Additional options:
+- **Windows**: `XenSQL.exe` (standalone)
+- **Linux**: `xensql-x86_64.AppImage`, `.deb`, `.rpm`, `.pkg.tar.zst`
+- **macOS**: `XenSQL-macos-universal.dmg`
+
+No account required - just download and run.
+
+Auto-update functionality works with the platform-specific `.zip`/`.tar.gz` assets listed above.
 
 Prefer to build it yourself? See **Installation & Development** below.
 
@@ -41,7 +55,8 @@ Work with **SQLite**, **PostgreSQL**, and **MySQL / MariaDB** in a single fast d
 🧳 Portable  
 ⚡ Fast startup  
 🔒 Local-first  
-🧠 Developer-focused
+🧠 Developer-focused  
+🔄 Auto-updating
 
 ---
 
@@ -53,6 +68,7 @@ Work with **SQLite**, **PostgreSQL**, and **MySQL / MariaDB** in a single fast d
 - Explore schemas instantly
 - Save and reuse queries
 - Export anything in one click
+- **Auto-update** with one click
 
 ---
 
@@ -202,6 +218,15 @@ View and modify table data directly in the grid - no hand-written `UPDATE` / `DE
 
 ---
 
+## 🔄 Auto Updates
+
+- Automatically checks for new versions on startup
+- Clean modal with changelog highlights
+- One-click download and update
+- Supports Windows (MSI), macOS, and Linux builds
+
+---
+
 ## 🌍 UX
 
 - **Dark & light** themes
@@ -209,6 +234,7 @@ View and modify table data directly in the grid - no hand-written `UPDATE` / `DE
 - **Quick Search palette** (`Ctrl+P`) - jump to connections, saved queries, history, tabs
 - Custom shortcuts editor + keyboard tips
 - Frameless native title bar
+- **Window state persistence** - size, position, and maximized state restored between sessions
 
 ---
 
@@ -296,11 +322,7 @@ wails3 dev
 wails3 task build       # or: wails3 task package  (platform bundle/installer)
 ```
 
-Output:
-
-```text
-bin/XenSQL(.exe)        # bin/XenSQL.app on macOS
-```
+The release pipeline now automatically produces cross-compiled Linux binaries and Windows MSI installers.
 
 ---
 
