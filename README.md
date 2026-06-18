@@ -316,8 +316,7 @@ bin/XenSQL(.exe)        # bin/XenSQL.app on macOS
 │   ├── storage/           # JSON persistence (incl. settings.json)
 │   ├── paths/             # Portable data directory
 │   └── service/           # SQL format, export helpers
-├── frontend/              # React + TypeScript + Monaco (Vitest tests)
-└── test/                  # TESTING.md - how to run all suites
+└── frontend/              # React + TypeScript + Monaco (Vitest tests)
 ```
 
 ---
