@@ -68,7 +68,7 @@ Work with **SQLite**, **PostgreSQL**, and **MySQL / MariaDB** in a single fast d
 - Explore schemas instantly
 - Save and reuse queries
 - Export anything in one click
-- **Auto-update** with one click
+- Auto-update with one click
 
 ---
 
@@ -320,9 +320,6 @@ wails3 dev
 
 ```bash
 wails3 task build       # or: wails3 task package  (platform bundle/installer)
-```
-
-The release pipeline now automatically produces cross-compiled Linux binaries and Windows MSI installers.
 
 ---
 
