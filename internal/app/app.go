@@ -80,8 +80,17 @@ func (a *App) emit(name string, data any) {
 	if a.app == nil {
 		return
 	}
+	windows := a.app.Window.GetAll()
+	// Server mode (e.g. the Playwright E2E binary) has no native windows, so a
+	// per-window dispatch reaches nobody. Route through the application event
+	// system instead, which fans the event out to the WebSocket broadcaster and
+	// on to every connected browser. Desktop keeps the direct per-window path.
+	if len(windows) == 0 {
+		a.app.Event.Emit(name, data)
+		return
+	}
 	event := &application.CustomEvent{Name: name, Data: data}
-	for _, w := range a.app.Window.GetAll() {
+	for _, w := range windows {
 		w.DispatchWailsEvent(event)
 	}
 }

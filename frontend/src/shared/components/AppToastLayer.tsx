@@ -12,7 +12,12 @@ export function AppToastLayer() {
   return createPortal(
     <div className="app-toast-host" aria-live="polite" aria-relevant="additions">
       {toasts.map((toast) => (
-        <div key={toast.id} className={`app-toast app-toast-${toast.kind}`} role="status">
+        <div
+          key={toast.id}
+          className={`app-toast app-toast-${toast.kind}`}
+          role="status"
+          data-testid={`toast-${toast.kind}`}
+        >
           <span className="app-toast-message">{toast.message}</span>
           {toast.action ? (
             <button

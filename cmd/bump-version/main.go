@@ -4,12 +4,12 @@
 //
 // Usage:
 //
-//	go run ./scripts/bump-version.go -minor
-//	go run ./scripts/bump-version.go -patch
-//	go run ./scripts/bump-version.go -major
-//	go run ./scripts/bump-version.go 1.2.0
-//	go run ./scripts/bump-version.go -dry-run -minor
-//	go run ./scripts/bump-version.go -sync
+//	go run ./cmd/bump-version -minor
+//	go run ./cmd/bump-version -patch
+//	go run ./cmd/bump-version -major
+//	go run ./cmd/bump-version 1.2.0
+//	go run ./cmd/bump-version -dry-run -minor
+//	go run ./cmd/bump-version -sync
 package main
 
 import (
@@ -35,15 +35,15 @@ var (
 
 func main() {
 	flag.Usage = func() {
-		fmt.Fprintf(os.Stderr, "Usage: go run ./scripts/bump-version.go [flags] [version]\n\n")
+		fmt.Fprintf(os.Stderr, "Usage: go run ./cmd/bump-version [flags] [version]\n\n")
 		fmt.Fprintf(os.Stderr, "Updates version.go, build/config.yml, and frontend metadata, then runs\n")
 		fmt.Fprintf(os.Stderr, "wails3 task common:update:build-assets to refresh everything under build/.\n\n")
 		fmt.Fprintf(os.Stderr, "Examples:\n")
-		fmt.Fprintf(os.Stderr, "  go run ./scripts/bump-version.go -minor\n")
-		fmt.Fprintf(os.Stderr, "  go run ./scripts/bump-version.go -patch\n")
-		fmt.Fprintf(os.Stderr, "  go run ./scripts/bump-version.go 1.2.0\n")
-		fmt.Fprintf(os.Stderr, "  go run ./scripts/bump-version.go -dry-run -minor\n")
-		fmt.Fprintf(os.Stderr, "  go run ./scripts/bump-version.go -sync\n\n")
+		fmt.Fprintf(os.Stderr, "  go run ./cmd/bump-version -minor\n")
+		fmt.Fprintf(os.Stderr, "  go run ./cmd/bump-version -patch\n")
+		fmt.Fprintf(os.Stderr, "  go run ./cmd/bump-version 1.2.0\n")
+		fmt.Fprintf(os.Stderr, "  go run ./cmd/bump-version -dry-run -minor\n")
+		fmt.Fprintf(os.Stderr, "  go run ./cmd/bump-version -sync\n\n")
 		flag.PrintDefaults()
 	}
 	flag.Parse()

@@ -54,6 +54,8 @@ export function SchemaTreeNode({
         role="button"
         tabIndex={0}
         data-nav-item
+        data-testid="schema-node"
+        data-schema={sch.name}
         onClick={onToggleSchema}
         onKeyDown={rowActivateKeyDown}
       >

@@ -69,49 +69,49 @@ tasks:
   bump-version:
     summary: Show bump-version usage (wails3 task does not forward CLI flags)
     cmds:
-      - go run ./scripts/bump-version.go -help
+      - go run ./cmd/bump-version -help
 
   bump-version:minor:
     summary: Bump minor version, then refresh build assets
     cmds:
-      - go run ./scripts/bump-version.go -minor
+      - go run ./cmd/bump-version -minor
 
   bump-version:patch:
     summary: Bump patch version, then refresh build assets
     cmds:
-      - go run ./scripts/bump-version.go -patch
+      - go run ./cmd/bump-version -patch
 
   bump-version:major:
     summary: Bump major version, then refresh build assets
     cmds:
-      - go run ./scripts/bump-version.go -major
+      - go run ./cmd/bump-version -major
 
   bump-version:sync:
     summary: Sync non-build files to version.go, then refresh build assets
     cmds:
-      - go run ./scripts/bump-version.go -sync
+      - go run ./cmd/bump-version -sync
 
   bump-version:dry-run:minor:
     summary: Preview a minor version bump
     cmds:
-      - go run ./scripts/bump-version.go -dry-run -minor
+      - go run ./cmd/bump-version -dry-run -minor
 
   bump-version:dry-run:patch:
     summary: Preview a patch version bump
     cmds:
-      - go run ./scripts/bump-version.go -dry-run -patch
+      - go run ./cmd/bump-version -dry-run -patch
 
   bump-version:dry-run:major:
     summary: Preview a major version bump
     cmds:
-      - go run ./scripts/bump-version.go -dry-run -major
+      - go run ./cmd/bump-version -dry-run -major
 
   bump-version:set:*:
     summary: Set an explicit version (e.g. bump-version:set:1.2.0)
     vars:
       VERSION: '{{index .MATCH 0}}'
     cmds:
-      - go run ./scripts/bump-version.go {{.VERSION}}
+      - go run ./cmd/bump-version {{.VERSION}}
 
   build:check:
     summary: Compiles the app and every internal package without a full frontend build
@@ -150,3 +150,25 @@ tasks:
       - defer: { task: e2e:down }
       - task: e2e:up
       - task: e2e
+
+  e2e:playwright:install:
+    summary: Install Playwright dependencies and the Chromium browser
+    dir: e2e
+    cmds:
+      - npm install
+      - npx playwright install chromium
+
+  e2e:playwright:
+    summary: Run the Playwright UI suite (drives the app in Wails server mode; data dir ./XenSQL-data-e2e)
+    dir: e2e
+    cmds:
+      # e2e/playwright.config.ts builds the frontend, starts the server, and brings the
+      # database stack up (global-setup) on its own.
+      - npx playwright test
+
+  e2e:playwright:all:
+    summary: One-shot Playwright E2E - DB stack up, run UI tests, then always tear down
+    cmds:
+      - defer: { task: e2e:down }
+      - task: e2e:up
+      - task: e2e:playwright

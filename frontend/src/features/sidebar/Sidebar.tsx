@@ -29,7 +29,7 @@ export function Sidebar({ onOpenQuery, onOpenSavedQuery, onBrowseTable, onOpenCo
   const selectedConnectionId = useSelectedConnectionId();
 
   return (
-    <aside className="sidebar">
+    <aside className="sidebar" data-testid="sidebar">
       <ConnectionSwitcher onConnected={() => setSidebarView('schema')} onOpenConnectionTab={onOpenConnectionTab} />
 
       <div className="sidebar-tabs">

@@ -59,6 +59,8 @@ export const SchemaTableRow = memo(function SchemaTableRow({
         role="button"
         tabIndex={0}
         data-nav-item
+        data-testid="schema-table"
+        data-table={table.name}
         data-tooltip={t('tooltip.schemaTableRow')}
         onClick={() => onToggleTable(schemaName, table.name)}
         onKeyDown={rowActivateKeyDown}
@@ -70,6 +72,7 @@ export const SchemaTableRow = memo(function SchemaTableRow({
         <button
           type="button"
           className="tree-row-action"
+          data-testid="schema-table-browse"
           data-tooltip={t('sidebar.browseData')}
           onClick={(e) => {
             e.stopPropagation();
@@ -105,6 +108,8 @@ export const SchemaTableRow = memo(function SchemaTableRow({
                 role="button"
                 tabIndex={0}
                 data-nav-item
+                data-testid="schema-column"
+                data-column={col.name}
                 data-tooltip={t('tooltip.schemaColumnRow')}
                 onClick={() => onColumnClick(col.name)}
                 onKeyDown={rowActivateKeyDown}
