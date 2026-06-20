@@ -122,8 +122,8 @@ tasks:
       - touch frontend/dist/.gitkeep
       - go build . ./internal/...
 
-  e2e:
-    summary: Runs the E2E suite against an already-running database stack (see e2e:up)
+  e2e:go:
+    summary: Runs the Go API E2E suite against an already-running database stack (see e2e:up)
     cmds:
       - go test -tags e2e -count=1 -run TestE2E -v ./internal/app/
 
@@ -142,23 +142,23 @@ tasks:
     cmds:
       - "{{.COMPOSE}} logs --no-color"
 
-  e2e:all:
-    summary: One-shot E2E - bring the stack up, run the suite, then always tear it down
+  e2e:go:all:
+    summary: One-shot Go API E2E - bring the stack up, run the suite, then always tear it down
     cmds:
       # defer registers first so teardown runs even if the suite (or startup) fails;
       # the task still exits non-zero when the suite fails.
       - defer: { task: e2e:down }
       - task: e2e:up
-      - task: e2e
+      - task: e2e:go
 
-  e2e:playwright:install:
+  e2e:ui:install:
     summary: Install Playwright dependencies and the Chromium browser
     dir: e2e
     cmds:
       - npm install
       - npx playwright install chromium
 
-  e2e:playwright:
+  e2e:ui:
     summary: Run the Playwright UI suite (drives the app in Wails server mode; data dir ./XenSQL-data-e2e)
     dir: e2e
     cmds:
@@ -166,9 +166,9 @@ tasks:
       # database stack up (global-setup) on its own.
       - npx playwright test
 
-  e2e:playwright:all:
-    summary: One-shot Playwright E2E - DB stack up, run UI tests, then always tear down
+  e2e:ui:all:
+    summary: One-shot UI E2E - DB stack up, run Playwright tests, then always tear down
     cmds:
       - defer: { task: e2e:down }
       - task: e2e:up
-      - task: e2e:playwright
+      - task: e2e:ui

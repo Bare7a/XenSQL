@@ -53,9 +53,16 @@ cd frontend && npm test && cd ..
 # Fast Go unit tests (embedded SQLite, no servers needed)
 task test
 
-# End-to-end tests against real PostgreSQL, MySQL and MariaDB
+# API E2E against real PostgreSQL, MySQL and MariaDB
 # (spins up the docker-compose.yml stack, runs the suite, tears it down)
-task e2e:all
+task e2e:go:all
+
+# UI E2E (Playwright) - local only, not run in CI
+# Run when changing frontend UI, e2e/, or server-mode plumbing
+task e2e:ui:all
 ```
 
-CI runs all three suites on every pull request.
+CI runs the frontend, API E2E (Go), and Go unit suites on every pull request.
+
+**Playwright UI tests are not in CI** - run them locally before merging UI-facing
+work. See **[TESTING.md](./TESTING.md#ui-end-to-end-tests-playwright)** for details.

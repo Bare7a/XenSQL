@@ -84,7 +84,7 @@ jobs:
         run: task build:check
 
   e2e:
-    name: E2E tests (PostgreSQL, MySQL, MariaDB)
+    name: API E2E (PostgreSQL, MySQL, MariaDB)
     if: github.event_name != 'workflow_dispatch' || inputs.suite == 'all' || inputs.suite == 'e2e'
     runs-on: ubuntu-latest
 
@@ -112,8 +112,8 @@ jobs:
       - name: Start database stack
         run: task e2e:up
 
-      - name: Run E2E suite
-        run: task e2e
+      - name: Run API E2E suite
+        run: task e2e:go
 
       - name: Dump database logs on failure
         if: failure()

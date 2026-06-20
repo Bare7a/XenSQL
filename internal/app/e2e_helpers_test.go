@@ -8,7 +8,7 @@
 // (which only has embedded SQLite) never tries to reach a server.
 //
 // Bring the servers up with `task e2e:up` (see docker-compose.yml), then run
-// `task e2e`. Connection details are read from the environment with defaults
+// `task e2e:go`. Connection details are read from the environment with defaults
 // that match the compose file, so you can point the suite at any server:
 //
 //	XENSQL_E2E_PG_HOST / _PORT / _USER / _PASSWORD / _DB
