@@ -39,8 +39,8 @@
 
 - [ ] 🎨 Frontend (`cd frontend && npm test`)
 - [ ] 🧠 Backend (`wails3 task test`)
-- [ ] 🗄️ API E2E (`task e2e:go:all`)
-- [ ] 🖥️ UI E2E (`task e2e:ui:all`) - **local only, not in CI**
+- [ ] 🗄️ API E2E (`wails3 task e2e:go:all`)
+- [ ] 🖥️ UI E2E (`wails3 task e2e:ui:all`) - **local only, not in CI**
 - [ ] 💻 CI is sufficient
 
 ---
