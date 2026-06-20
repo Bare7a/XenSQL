@@ -44,7 +44,7 @@ wails3 task dev
 
 ## 🧪 Testing
 
-Before opening a PR, run the tests. See **[test/TESTING.md](../test/TESTING.md)** for full details.
+Before opening a PR, run the tests. See **[TESTING.md](./TESTING.md)** for full details.
 
 ```bash
 # Frontend tests (React/TypeScript, Vitest)
