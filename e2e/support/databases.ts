@@ -1,7 +1,6 @@
 // Database matrix the E2E suite runs against. Network drivers come from
-// docker-compose.yml; SQLite uses a file inside the E2E data directory (a path
-// relative to the server's working directory, which is the repo root both natively
-// and under WSL, so it resolves the same everywhere).
+// docker-compose.yml; SQLite uses a file under e2e/XenSQL-data (path relative to the
+// server working directory, which is the repo root both natively and under WSL).
 
 export type DriverKey = 'postgres' | 'mysql' | 'mariadb' | 'sqlite';
 
@@ -68,7 +67,7 @@ export const SQLITE: DbConfig = {
   label: 'E2E SQLite',
   driver: 'sqlite',
   network: false,
-  filePath: env('XENSQL_E2E_SQLITE_PATH', 'XenSQL-data-e2e/e2e.sqlite'),
+  filePath: env('XENSQL_E2E_SQLITE_PATH', 'e2e/XenSQL-data/e2e.sqlite'),
 };
 
 /** Every supported driver. */

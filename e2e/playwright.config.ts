@@ -3,11 +3,9 @@ import { fileURLToPath } from 'node:url';
 import { defineConfig } from '@playwright/test';
 
 const e2eDir = path.dirname(fileURLToPath(import.meta.url));
-const rootDir = path.dirname(e2eDir);
 
-// The E2E run gets its own data directory so it never touches a developer's real
-// XenSQL-data. e2e/e2e-server.mjs resets it on every launch.
-const dataDir = path.join(rootDir, 'XenSQL-data-e2e');
+// Isolated app data for UI E2E (connections, tabs, SQLite file). Reset on every run.
+const dataDir = path.join(e2eDir, 'XenSQL-data');
 
 // XenSQL runs in Wails v3 server mode for E2E (HTTP + WebSocket, no native window),
 // so a real browser can drive the actual Go backend. 8080 is the Wails server default.

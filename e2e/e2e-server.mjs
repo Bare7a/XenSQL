@@ -13,11 +13,12 @@ import { cpSync, existsSync, mkdirSync, rmSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const rootDir = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
+const e2eDir = path.dirname(fileURLToPath(import.meta.url));
+const rootDir = path.dirname(e2eDir);
 const frontendDir = path.join(rootDir, 'frontend');
 const serverDist = path.join(rootDir, 'cmd', 'e2e-server', 'dist');
 
-const dataDir = process.env.XENSQL_DATA_DIR ?? path.join(rootDir, 'XenSQL-data-e2e');
+const dataDir = process.env.XENSQL_DATA_DIR ?? path.join(e2eDir, 'XenSQL-data');
 const serverHost = process.env.WAILS_SERVER_HOST ?? '127.0.0.1';
 const serverPort = process.env.WAILS_SERVER_PORT ?? '8080';
 

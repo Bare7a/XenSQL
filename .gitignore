@@ -9,7 +9,7 @@ XenSQL-data/
 .DS_STORE
 
 # Playwright E2E
-/XenSQL-data-e2e/
+/e2e/XenSQL-data/
 /e2e/test-results/
 /e2e/blob-report/
 /e2e/playwright/.cache/

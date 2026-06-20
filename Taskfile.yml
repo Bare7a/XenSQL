@@ -159,7 +159,7 @@ tasks:
       - npx playwright install chromium
 
   e2e:ui:
-    summary: Run the Playwright UI suite (drives the app in Wails server mode; data dir ./XenSQL-data-e2e)
+    summary: Run the Playwright UI suite (drives the app in Wails server mode; data dir ./e2e/XenSQL-data)
     dir: e2e
     cmds:
       # e2e/playwright.config.ts builds the frontend, starts the server, and brings the
