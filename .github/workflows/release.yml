@@ -86,7 +86,7 @@ jobs:
       - name: Install NSIS
         if: matrix.build.platform == 'windows/amd64'
         shell: pwsh
-        run: winget install NSIS.NSIS --accept-source-agreements --accept-package-agreements
+        run: choco install nsis -y
 
       - name: Build & package (Windows)
         if: matrix.build.platform == 'windows/amd64'
