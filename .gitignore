@@ -7,3 +7,11 @@ node_modules
 frontend/dist
 XenSQL-data/
 .DS_STORE
+
+# Playwright E2E
+/e2e/XenSQL-data/
+/e2e/test-results/
+/e2e/blob-report/
+/e2e/playwright/.cache/
+/e2e/playwright-report/
+cmd/e2e-server/dist/

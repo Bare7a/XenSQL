@@ -102,6 +102,7 @@ export function ConnectionSwitcher({ onConnected, onOpenConnectionTab }: Props) 
       <button
         ref={anchorRef}
         type="button"
+        data-testid="connection-switcher"
         className={cx('connection-switcher', !hasConnections && 'connection-switcher-empty')}
         data-tooltip={hasConnections ? detail || t('tooltip.switchConnection') : undefined}
         onClick={() => {
@@ -112,7 +113,9 @@ export function ConnectionSwitcher({ onConnected, onOpenConnectionTab }: Props) 
         {hasConnections && current ? (
           <>
             <span className="connection-dot" style={{ background: current.color }} />
-            <span className="connection-switcher-name">{current.name}</span>
+            <span className="connection-switcher-name" data-testid="connection-switcher-name">
+              {current.name}
+            </span>
             {isConnected && <span className="connection-switcher-pip" aria-hidden />}
             <ChevronDown className="icon-xs connection-switcher-caret" aria-hidden />
           </>

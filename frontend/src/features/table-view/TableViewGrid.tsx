@@ -62,7 +62,7 @@ interface Props {
 }
 
 // Memoized so the grid skips TableViewPane's parent-only re-renders (filter typing, focus
-// tracking, apply/loading toggles) — props are stabilized there to make this hold.
+// tracking, apply/loading toggles) - props are stabilized there to make this hold.
 export const TableViewGrid = memo(function TableViewGrid({
   columns,
   columnTypes,

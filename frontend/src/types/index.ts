@@ -76,7 +76,10 @@ export interface QueryResult {
   streaming?: boolean;
 }
 
+// Monotonic, contiguous per-stream counter (meta=0, then each rows/result/done) used to replay events
+// in order: server mode can deliver them reordered over the WebSocket. See useQueryStreamEvents.ts.
 export interface QueryStreamMetaPayload {
+  seq: number;
   tabId: string;
   streamId: string;
   connectionId: string;
@@ -88,6 +91,7 @@ export interface QueryStreamMetaPayload {
 }
 
 export interface QueryStreamRowsPayload {
+  seq: number;
   tabId: string;
   streamId: string;
   resultIndex: number;
@@ -96,6 +100,7 @@ export interface QueryStreamRowsPayload {
 
 // Finalizes one result set within a run (result carries metadata only; rows arrived via rows events).
 export interface QueryStreamResultPayload {
+  seq: number;
   tabId: string;
   streamId: string;
   connectionId: string;
@@ -108,6 +113,7 @@ export interface QueryStreamResultPayload {
 // Terminates a run. resultCount is how many result sets were emitted; error is a batch-level
 // failure (per-statement errors arrive on the result event instead).
 export interface QueryStreamDonePayload {
+  seq: number;
   tabId: string;
   streamId: string;
   connectionId: string;

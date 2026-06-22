@@ -1,4 +1,4 @@
-# Database servers for the XenSQL E2E suite (see test/e2e and `task e2e`).
+# Database servers for the XenSQL E2E suites (API + UI; see `task e2e:up`).
 #
 # Ports are intentionally non-default so this stack never collides with a local
 # Postgres/MySQL you might already be running:
@@ -7,11 +7,12 @@
 #   MySQL      -> 33306
 #   MariaDB    -> 33307
 #
-# The Go E2E tests read these same defaults from the environment, so once the
-# stack is healthy you can just run `task e2e`.
+# The Go API E2E tests read these same defaults from the environment, so once the
+# stack is healthy you can run `task e2e:go` or `task e2e:ui`.
 #
 #   task e2e:up                 # docker compose up -d --wait (or: COMPOSE="podman compose")
-#   task e2e
+#   task e2e:go                 # Go API suite (or: task e2e:go:all for one-shot)
+#   task e2e:ui                 # Playwright UI suite (or: task e2e:ui:all)
 #   task e2e:down
 #
 # Works with Docker Compose v2 and Podman. Healthchecks gate readiness so the

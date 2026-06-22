@@ -50,6 +50,8 @@ export function ConnectionItem({
       style={{ '--conn-color': conn.color } as CSSProperties}
       role="button"
       tabIndex={0}
+      data-testid="connection-item"
+      data-connection-name={conn.name}
       data-nav-item
       draggable
       onClick={onActivate}
@@ -69,6 +71,8 @@ export function ConnectionItem({
         <button
           type="button"
           className="btn btn-sm"
+          data-testid="connection-connect-toggle"
+          data-connected={isConnected ? 'true' : 'false'}
           data-tooltip={isConnected ? t('tooltip.disconnect') : t('tooltip.connect')}
           onClick={(e) => {
             e.stopPropagation();
@@ -93,6 +97,7 @@ export function ConnectionItem({
           type="button"
           className="btn btn-sm btn-danger"
           data-nav-delete
+          data-testid="connection-delete"
           data-tooltip={t('common.delete')}
           onClick={(e) => {
             e.stopPropagation();

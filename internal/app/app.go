@@ -32,6 +32,10 @@ type App struct {
 
 	pendingMu   sync.Mutex
 	pendingFile string
+
+	// streamSeqs tags each query:stream:* event with a per-StreamID sequence number so the frontend
+	// can reorder events the server-mode WebSocket may deliver out of order. Created lazily per run.
+	streamSeqs sync.Map
 }
 
 func NewApp() *App {
@@ -80,8 +84,15 @@ func (a *App) emit(name string, data any) {
 	if a.app == nil {
 		return
 	}
+	windows := a.app.Window.GetAll()
+	// Server mode (the E2E binary) has no native windows, so dispatch through the application
+	// event system (→ WebSocket broadcaster → browsers); desktop dispatches per-window.
+	if len(windows) == 0 {
+		a.app.Event.Emit(name, data)
+		return
+	}
 	event := &application.CustomEvent{Name: name, Data: data}
-	for _, w := range a.app.Window.GetAll() {
+	for _, w := range windows {
 		w.DispatchWailsEvent(event)
 	}
 }

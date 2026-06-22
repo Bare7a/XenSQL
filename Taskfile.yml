@@ -69,49 +69,49 @@ tasks:
   bump-version:
     summary: Show bump-version usage (wails3 task does not forward CLI flags)
     cmds:
-      - go run ./scripts/bump-version.go -help
+      - go run ./cmd/bump-version -help
 
   bump-version:minor:
     summary: Bump minor version, then refresh build assets
     cmds:
-      - go run ./scripts/bump-version.go -minor
+      - go run ./cmd/bump-version -minor
 
   bump-version:patch:
     summary: Bump patch version, then refresh build assets
     cmds:
-      - go run ./scripts/bump-version.go -patch
+      - go run ./cmd/bump-version -patch
 
   bump-version:major:
     summary: Bump major version, then refresh build assets
     cmds:
-      - go run ./scripts/bump-version.go -major
+      - go run ./cmd/bump-version -major
 
   bump-version:sync:
     summary: Sync non-build files to version.go, then refresh build assets
     cmds:
-      - go run ./scripts/bump-version.go -sync
+      - go run ./cmd/bump-version -sync
 
   bump-version:dry-run:minor:
     summary: Preview a minor version bump
     cmds:
-      - go run ./scripts/bump-version.go -dry-run -minor
+      - go run ./cmd/bump-version -dry-run -minor
 
   bump-version:dry-run:patch:
     summary: Preview a patch version bump
     cmds:
-      - go run ./scripts/bump-version.go -dry-run -patch
+      - go run ./cmd/bump-version -dry-run -patch
 
   bump-version:dry-run:major:
     summary: Preview a major version bump
     cmds:
-      - go run ./scripts/bump-version.go -dry-run -major
+      - go run ./cmd/bump-version -dry-run -major
 
   bump-version:set:*:
     summary: Set an explicit version (e.g. bump-version:set:1.2.0)
     vars:
       VERSION: '{{index .MATCH 0}}'
     cmds:
-      - go run ./scripts/bump-version.go {{.VERSION}}
+      - go run ./cmd/bump-version {{.VERSION}}
 
   build:check:
     summary: Compiles the app and every internal package without a full frontend build
@@ -122,8 +122,8 @@ tasks:
       - touch frontend/dist/.gitkeep
       - go build . ./internal/...
 
-  e2e:
-    summary: Runs the E2E suite against an already-running database stack (see e2e:up)
+  e2e:go:
+    summary: Runs the Go API E2E suite against an already-running database stack (see e2e:up)
     cmds:
       - go test -tags e2e -count=1 -run TestE2E -v ./internal/app/
 
@@ -142,11 +142,33 @@ tasks:
     cmds:
       - "{{.COMPOSE}} logs --no-color"
 
-  e2e:all:
-    summary: One-shot E2E - bring the stack up, run the suite, then always tear it down
+  e2e:go:all:
+    summary: One-shot Go API E2E - bring the stack up, run the suite, then always tear it down
     cmds:
       # defer registers first so teardown runs even if the suite (or startup) fails;
       # the task still exits non-zero when the suite fails.
       - defer: { task: e2e:down }
       - task: e2e:up
-      - task: e2e
+      - task: e2e:go
+
+  e2e:ui:install:
+    summary: Install Playwright dependencies and the Chromium browser
+    dir: e2e
+    cmds:
+      - npm install
+      - npx playwright install chromium
+
+  e2e:ui:
+    summary: Run the Playwright UI suite (drives the app in Wails server mode; data dir ./e2e/XenSQL-data)
+    dir: e2e
+    cmds:
+      # e2e/playwright.config.ts builds the frontend, starts the server, and brings the
+      # database stack up (global-setup) on its own.
+      - npx playwright test
+
+  e2e:ui:all:
+    summary: One-shot UI E2E - DB stack up, run Playwright tests, then always tear down
+    cmds:
+      - defer: { task: e2e:down }
+      - task: e2e:up
+      - task: e2e:ui

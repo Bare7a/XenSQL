@@ -383,6 +383,7 @@ function ResultsGridImpl({
   return (
     <div
       className={cx('results-grid', isSelecting && 'table-view-selecting')}
+      data-testid="results-grid"
       onKeyDownCapture={(e) => {
         if (e.key === 'Escape') handleEscape(e);
       }}
