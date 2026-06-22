@@ -1,6 +1,7 @@
 import { Events } from '@wailsio/runtime';
 import { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
+import { createStreamReorder } from '@/features/editor/lib/streamReorder';
 import { api } from '@/shared/lib/api';
 import { useAppStore } from '@/store/appStore';
 import type {
@@ -31,30 +32,8 @@ export function useQueryStreamEvents(onConnectionStatusChange: (status: Connecti
     const buffers = new Map<string, Buffer>();
     let rafId: number | null = null;
 
-    // Per-stream reordering: hold each event by its seq and apply in order once the gap is filled.
-    type Held = { run: () => void; done: boolean };
-    const ordered = new Map<string, { next: number; held: Map<number, Held> }>();
-
-    const ingest = (streamId: string, seq: number, done: boolean, run: () => void) => {
-      let state = ordered.get(streamId);
-      if (!state) {
-        state = { next: 0, held: new Map() };
-        ordered.set(streamId, state);
-      }
-      state.held.set(seq, { run, done });
-      let h = state.held.get(state.next);
-      while (h) {
-        state.held.delete(state.next);
-        state.next += 1;
-        h.run();
-        if (h.done) {
-          // done is the terminal event for a stream; drop its bookkeeping.
-          ordered.delete(streamId);
-          break;
-        }
-        h = state.held.get(state.next);
-      }
-    };
+    // Replay each stream's events in seq order (server mode can deliver them reordered).
+    const reorder = createStreamReorder();
 
     const flushBuffers = () => {
       rafId = null;
@@ -80,7 +59,7 @@ export function useQueryStreamEvents(onConnectionStatusChange: (status: Connecti
 
     const unsubMeta = Events.On('query:stream:meta', (e) => {
       const payload = e.data as QueryStreamMetaPayload;
-      ingest(payload.streamId, payload.seq, false, () => {
+      reorder.ingest(payload.streamId, payload.seq, false, () => {
         const { tabId, streamId, resultIndex, columns, columnTypes, schemaName, tableName } = payload;
         // Each result set restarts the tab's row buffer.
         buffers.set(tabId, { streamId, resultIndex, rows: [] });
@@ -97,7 +76,7 @@ export function useQueryStreamEvents(onConnectionStatusChange: (status: Connecti
 
     const unsubRows = Events.On('query:stream:rows', (e) => {
       const payload = e.data as QueryStreamRowsPayload;
-      ingest(payload.streamId, payload.seq, false, () => {
+      reorder.ingest(payload.streamId, payload.seq, false, () => {
         const { tabId, streamId, resultIndex, rows } = payload;
         let buf = buffers.get(tabId);
         if (!buf || buf.streamId !== streamId || buf.resultIndex !== resultIndex) {
@@ -112,7 +91,7 @@ export function useQueryStreamEvents(onConnectionStatusChange: (status: Connecti
 
     const unsubResult = Events.On('query:stream:result', (e) => {
       const payload = e.data as QueryStreamResultPayload;
-      ingest(payload.streamId, payload.seq, false, () => {
+      reorder.ingest(payload.streamId, payload.seq, false, () => {
         // Flush buffered rows before finalise so the row count can't snap ahead of visible rows.
         flushNow();
         const { tabId, streamId, resultIndex, result, statement, error } = payload;
@@ -135,7 +114,7 @@ export function useQueryStreamEvents(onConnectionStatusChange: (status: Connecti
 
     const unsubDone = Events.On('query:stream:done', (e) => {
       const payload = e.data as QueryStreamDonePayload;
-      ingest(payload.streamId, payload.seq, true, () => {
+      reorder.ingest(payload.streamId, payload.seq, true, () => {
         flushNow();
         buffers.delete(payload.tabId);
 
