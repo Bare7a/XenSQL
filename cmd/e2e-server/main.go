@@ -2,9 +2,8 @@
 // its bindings served over HTTP/WebSocket, with no native window. This is what the
 // Playwright E2E suite drives - a real browser talks to the real app.
 //
-// It is built with the "server" build tag (see Wails v3 server mode). Server mode
-// does not compile on Windows yet, so on Windows the launcher (e2e/e2e-server.mjs)
-// runs this through WSL; on Linux/macOS and in CI it runs natively:
+// Built with the "server" tag. Server mode doesn't compile on Windows yet, so there the
+// launcher (e2e/e2e-server.mjs) runs it through WSL; on Linux/macOS and CI it runs natively:
 //
 //	go run -tags server ./cmd/e2e-server
 //
@@ -17,6 +16,7 @@ package main
 
 import (
 	"embed"
+	"log/slog"
 	"os"
 	"strconv"
 
@@ -73,6 +73,9 @@ func main() {
 	wailsApp := application.New(application.Options{
 		Name:        "XenSQL",
 		Description: "A fast, native SQL client built with Go and Wails.",
+		// Quiet the Wails system logger: drop the per-asset-request / WebSocket INFO
+		// chatter from the Playwright test output, keeping warnings and errors.
+		LogLevel: slog.LevelWarn,
 		Server: application.ServerOptions{
 			Host: serverHost(),
 			Port: serverPort(),

@@ -19,8 +19,7 @@ export class ConnectionsPage {
   // ── Dialog ────────────────────────────────────────────────────────────────
   /**
    * True when at least one connection exists. Uses the switcher's empty marker
-   * (driven by connections.length) rather than the name badge, which can be hidden
-   * by a stale/unresolvable selection even when connections exist.
+   * (connections.length) not the name badge, which a stale/unresolvable selection can hide.
    */
   async hasConnections(): Promise<boolean> {
     const cls = (await this.switcher.getAttribute('class')) ?? '';
@@ -29,8 +28,8 @@ export class ConnectionsPage {
 
   async openNewDialog(): Promise<void> {
     await this.closeMenu();
-    // With connections the switcher opens a menu (pick "New connection" from it);
-    // with none it opens the dialog directly.
+    // With connections the switcher opens a menu (pick "New connection"); with none it
+    // opens the dialog directly.
     if (await this.hasConnections()) {
       await this.openMenu();
       await this.menu.getByRole('button', { name: 'New connection' }).click();
@@ -72,13 +71,18 @@ export class ConnectionsPage {
     await this.saveDialog();
   }
 
+  /** Save a connection and immediately connect to it - the common "given a live connection" setup. */
+  async createAndConnect(cfg: DbConfig): Promise<void> {
+    await this.create(cfg);
+    await this.connect(cfg.label);
+  }
+
   // ── Switcher menu / list ───────────────────────────────────────────────────
   get menu(): Locator {
     return this.page.locator('.connection-switcher-menu');
   }
 
-  // The switcher button toggles the menu, so a blind click can close an already-open
-  // menu. Retry until it is actually open.
+  // The switcher toggles the menu, so a blind click can close it. Retry until it's actually open.
   async openMenu(): Promise<void> {
     for (let attempt = 0; attempt < 3; attempt++) {
       if (await this.menu.isVisible().catch(() => false)) return;
@@ -97,7 +101,7 @@ export class ConnectionsPage {
     if (!(await this.menu.isVisible().catch(() => false))) return;
     await this.page.keyboard.press('Escape');
     if (await this.menu.isVisible().catch(() => false)) {
-      // Fallback: click a neutral element to trigger the menu's outside-click close.
+      // Fallback: click a neutral element to trigger outside-click close.
       await this.page.locator('.app-title-bar-logo').click({ force: true });
     }
     await this.menu.waitFor({ state: 'hidden', timeout: 5_000 }).catch(() => {});

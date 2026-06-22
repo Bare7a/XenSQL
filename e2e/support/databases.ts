@@ -1,16 +1,16 @@
 // Database matrix the E2E suite runs against. Network drivers come from
-// docker-compose.yml; SQLite uses a file under e2e/XenSQL-data (path relative to the
-// server working directory, which is the repo root both natively and under WSL).
+// docker-compose.yml; SQLite uses a file under e2e/XenSQL-data (relative to the
+// server cwd, which is the repo root both natively and under WSL).
 
 export type DriverKey = 'postgres' | 'mysql' | 'mariadb' | 'sqlite';
 
-// The value selected in the connection dialog's driver <select>. MariaDB speaks the
-// MySQL wire protocol, so it uses the same 'mysql' driver.
+// Value selected in the connection dialog's driver <select>. MariaDB speaks the
+// MySQL wire protocol, so it reuses the 'mysql' driver.
 export type DialogDriver = 'postgres' | 'mysql' | 'sqlite';
 
 export interface DbConfig {
   key: DriverKey;
-  /** Base name shown in the connection dialog / switcher. */
+  /** Name shown in the connection dialog / switcher. */
   label: string;
   driver: DialogDriver;
   network: boolean;
@@ -78,7 +78,7 @@ export const NETWORK_DATABASES: DbConfig[] = [POSTGRES, MYSQL, MARIADB];
 
 let counter = 0;
 
-/** A short, SQL-safe unique identifier (e.g. for table names) unique within a run. */
+/** Short, SQL-safe identifier (e.g. table names), unique within a run. */
 export function uniqueIdent(prefix = 'e2e'): string {
   counter += 1;
   return `${prefix}_${Date.now().toString(36)}_${counter}`.toLowerCase();

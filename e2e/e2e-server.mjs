@@ -1,13 +1,11 @@
 // Launches XenSQL in Wails v3 server mode for the Playwright suite.
 //
-// Steps:
 //   1. Reset the dedicated E2E data directory (this process owns it for the run).
 //   2. Build the frontend and stage it into cmd/e2e-server/dist for embedding.
-//   3. Start the server-mode binary - natively on Linux/macOS/CI, or via WSL on
-//      Windows (Wails v3 server mode does not compile natively on Windows yet).
+//   3. Start the server-mode binary - native on Linux/macOS/CI, via WSL on Windows
+//      (server mode does not compile natively on Windows yet).
 //
-// Playwright's webServer config waits on GET /health, so this only needs to start
-// the server and keep it in the foreground.
+// Playwright waits on GET /health, so this just starts the server in the foreground.
 import { execSync, spawn } from 'node:child_process';
 import { cpSync, existsSync, mkdirSync, rmSync } from 'node:fs';
 import path from 'node:path';
@@ -22,7 +20,7 @@ const dataDir = process.env.XENSQL_DATA_DIR ?? path.join(e2eDir, 'XenSQL-data');
 const serverHost = process.env.WAILS_SERVER_HOST ?? '127.0.0.1';
 const serverPort = process.env.WAILS_SERVER_PORT ?? '8080';
 
-// 1. Fresh data directory every run so tests start from a known-empty state.
+// 1. Fresh data directory so tests start from a known-empty state.
 rmSync(dataDir, { recursive: true, force: true });
 mkdirSync(dataDir, { recursive: true });
 
@@ -62,7 +60,7 @@ function startServer() {
   console.log(`[e2e-server] starting server mode on ${serverHost}:${serverPort}`);
 
   if (process.platform === 'win32') {
-    // Server mode does not build natively on Windows; run it through WSL instead.
+    // Server mode does not build natively on Windows; run via WSL.
     const wslRoot = toWslPath(rootDir);
     const wslData = toWslPath(dataDir);
     const shellCmd = [

@@ -3,8 +3,7 @@ import { POSTGRES } from '../support/databases';
 
 test.describe('SQL editor', () => {
   test('shows autocomplete suggestions', async ({ connections, editor }) => {
-    await connections.create(POSTGRES);
-    await connections.connect(POSTGRES.label);
+    await connections.createAndConnect(POSTGRES);
 
     await editor.clear();
     await editor.type('SEL');
@@ -15,8 +14,7 @@ test.describe('SQL editor', () => {
   });
 
   test('saves a query to the library', async ({ connections, editor, queries }) => {
-    await connections.create(POSTGRES);
-    await connections.connect(POSTGRES.label);
+    await connections.createAndConnect(POSTGRES);
 
     await editor.setSql('SELECT 42 AS answer;');
     await editor.saveQueryToLibrary('E2E Saved Query');
@@ -27,8 +25,7 @@ test.describe('SQL editor', () => {
   });
 
   test('records executed queries in history', async ({ connections, editor, results, queries }) => {
-    await connections.create(POSTGRES);
-    await connections.connect(POSTGRES.label);
+    await connections.createAndConnect(POSTGRES);
 
     await editor.run('SELECT 314 AS hist;');
     await results.waitForRows();

@@ -4,8 +4,7 @@ import { POSTGRES, uniqueIdent } from '../support/databases';
 test.describe('Results grid', () => {
   test('sorts a column ascending then descending', async ({ app, connections, editor, results }) => {
     const t = uniqueIdent('e2e_sort');
-    await connections.create(POSTGRES);
-    await connections.connect(POSTGRES.label);
+    await connections.createAndConnect(POSTGRES);
 
     await editor.run(`CREATE TABLE ${t} (id INTEGER PRIMARY KEY, name VARCHAR(50));`);
     await app.expectStatementApplied();
@@ -22,20 +21,18 @@ test.describe('Results grid', () => {
     await expect(results.cell(0, 1)).toHaveText('Charlie');
   });
 
-  test('shows the focused row in the JSON viewer', async ({ app, connections, editor, results }) => {
-    await connections.create(POSTGRES);
-    await connections.connect(POSTGRES.label);
+  test('shows the focused row in the JSON viewer', async ({ connections, editor, results, jsonViewer }) => {
+    await connections.createAndConnect(POSTGRES);
 
     await editor.run(`SELECT 1 AS id, 'Zelda' AS name;`);
     await results.waitForRows();
 
-    await app.toggleJsonViewer();
-    await expect(app.jsonViewer).toBeVisible();
-
+    // Toggle via Ctrl+J; the View-menu path is racy (covered in app-shell.spec).
+    await jsonViewer.open();
     await results.focusRow(0);
-    await expect(app.jsonViewer).toContainText('Zelda');
+    await expect(jsonViewer.panel).toContainText('Zelda');
 
-    await app.toggleJsonViewer();
-    await expect(app.jsonViewer).toBeHidden();
+    await jsonViewer.toggle();
+    await expect(jsonViewer.panel).toBeHidden();
   });
 });

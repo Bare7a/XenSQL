@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sync/atomic"
 
 	"xensql/internal/database"
 )
@@ -28,9 +29,11 @@ func queryErr(err error) error {
 	return err
 }
 
-// Events are tagged with ResultIndex so one run (StreamID) can carry several result sets - multiple
-// statements in a script, or a stored procedure returning more than one set.
+// ResultIndex lets one run (StreamID) carry several result sets. Seq is a monotonic, contiguous
+// per-stream counter (meta=0, then each rows/result/done) the frontend uses to reorder events that
+// server mode's WebSocket can deliver out of order (desktop is ordered). See useQueryStreamEvents.ts.
 type QueryStreamMetaEvent struct {
+	Seq          int      `json:"seq"`
 	TabID        string   `json:"tabId"`
 	StreamID     string   `json:"streamId"`
 	ConnectionID string   `json:"connectionId"`
@@ -42,6 +45,7 @@ type QueryStreamMetaEvent struct {
 }
 
 type QueryStreamRowsEvent struct {
+	Seq         int             `json:"seq"`
 	TabID       string          `json:"tabId"`
 	StreamID    string          `json:"streamId"`
 	ResultIndex int             `json:"resultIndex"`
@@ -51,6 +55,7 @@ type QueryStreamRowsEvent struct {
 // QueryStreamResultEvent finalizes one result set within a run. Result carries metadata only; rows
 // were delivered via stream batches. Statement is the SQL that produced it (for labeling).
 type QueryStreamResultEvent struct {
+	Seq          int                   `json:"seq"`
 	TabID        string                `json:"tabId"`
 	StreamID     string                `json:"streamId"`
 	ConnectionID string                `json:"connectionId"`
@@ -64,6 +69,7 @@ type QueryStreamResultEvent struct {
 // a batch-level failure (e.g. a connection couldn't be acquired) - per-statement errors arrive on
 // the result event instead.
 type QueryStreamDoneEvent struct {
+	Seq          int    `json:"seq"`
 	TabID        string `json:"tabId"`
 	StreamID     string `json:"streamId"`
 	ConnectionID string `json:"connectionId"`
@@ -75,6 +81,7 @@ const queryStreamBatchSize = 5000
 
 func (a *App) emitStreamMeta(tabID, streamID, connectionID string, resultIndex int, columns, columnTypes []string, schemaName, tableName string) {
 	a.emit("query:stream:meta", QueryStreamMetaEvent{
+		Seq:          a.nextStreamSeq(streamID),
 		TabID:        tabID,
 		StreamID:     streamID,
 		ConnectionID: connectionID,
@@ -88,6 +95,7 @@ func (a *App) emitStreamMeta(tabID, streamID, connectionID string, resultIndex i
 
 func (a *App) emitStreamRows(tabID, streamID string, resultIndex int, rows [][]interface{}) {
 	a.emit("query:stream:rows", QueryStreamRowsEvent{
+		Seq:         a.nextStreamSeq(streamID),
 		TabID:       tabID,
 		StreamID:    streamID,
 		ResultIndex: resultIndex,
@@ -97,6 +105,7 @@ func (a *App) emitStreamRows(tabID, streamID string, resultIndex int, rows [][]i
 
 func (a *App) emitStreamResult(tabID, streamID, connectionID string, resultIndex int, result *database.QueryResult, statement string, err error) {
 	payload := QueryStreamResultEvent{
+		Seq:          a.nextStreamSeq(streamID),
 		TabID:        tabID,
 		StreamID:     streamID,
 		ConnectionID: connectionID,
@@ -112,6 +121,7 @@ func (a *App) emitStreamResult(tabID, streamID, connectionID string, resultIndex
 
 func (a *App) emitStreamDone(tabID, streamID, connectionID string, resultCount int, err error) {
 	payload := QueryStreamDoneEvent{
+		Seq:          a.nextStreamSeq(streamID),
 		TabID:        tabID,
 		StreamID:     streamID,
 		ConnectionID: connectionID,
@@ -285,6 +295,8 @@ func (a *App) streamRun(tabID, connectionID string, fn func(streamID string, que
 	streamID, queryCtx, end := a.queryContext(connectionID)
 	go func() {
 		defer end()
+		// Drop the counter after this run's emits (LIFO: runs after the panic-path done below).
+		defer a.streamSeqs.Delete(streamID)
 		// Recover panics at the goroutine boundary; surface them as a terminal done error so the UI
 		// shows them instead of the process crashing.
 		defer func() {
@@ -294,6 +306,13 @@ func (a *App) streamRun(tabID, connectionID string, fn func(streamID string, que
 		}()
 		fn(streamID, queryCtx)
 	}()
+}
+
+// nextStreamSeq returns the next 0-based per-StreamID sequence number. Emits within a run are
+// sequential (one goroutine), so the counter stays contiguous.
+func (a *App) nextStreamSeq(streamID string) int {
+	v, _ := a.streamSeqs.LoadOrStore(streamID, &atomic.Uint64{})
+	return int(v.(*atomic.Uint64).Add(1) - 1)
 }
 
 func (a *App) UpdateRow(connectionID string, upd database.RowUpdate) error {

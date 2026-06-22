@@ -184,16 +184,34 @@ npm run e2e
 
 - **Connections** - add, test, connect, disconnect, edit, delete, drag-reorder
 - **Schema & DDL** - create table, refresh, expand columns
+- **Schema actions** - "SELECT in new tab" and "Count rows" (context menu, run + verify),
+  click-a-column-to-insert into the editor
 - **Queries** - single/multi-statement, run selection, error surfacing
 - **Transactions** - rollback vs commit with row-count verification
-- **Table view** - browse table data
-- **Results grid** - column sort, JSON viewer
+- **Results grid** - column sort; cell / range / column / row selection; JSON viewer
+- **Editor tabs** - open (`+`), switch (`Ctrl+Tab` / `Ctrl+Shift+Tab`), close (`Ctrl+W` / ✕)
+- **Table view (browse)** - browse data; sort; scroll-paginate past the first 100 rows
+- **Table view (edit)** - inline edit, set NULL, mark row for delete, Reset / Apply
+  (verified against the DB), and undo / redo (`Ctrl+Z` / `Ctrl+Shift+Z`)
+- **Table view (data ops)** - filter by a condition; add a row via the Add-row dialog
+- **Cell viewer** - open a JSON cell with `Shift+Enter`, Beautify / Minify, Set to NULL
+- **JSON viewer** - `Ctrl+J` toggle, mirrors the focused row, key filter, JSON nesting
+- **Saved queries** - open into a tab, rename, delete, pin
+- **Query history** - open into the editor, delete an entry, clear all
+- **Sidebar** - schema search/filter; saved-query filter and sort; query-history filter
+- **Export** - the *Export as* dialog (format, row/column scope, live summary). The
+  actual *Save to file* (native OS dialog) and clipboard copy (Wails clipboard) aren't
+  driven in a headless browser.
 - **Editor** - autocomplete, save query, query history
 - **App shell** - sidebar and JSON panel toggles
 
+> Most feature tests run against **PostgreSQL** only (single-driver UI behaviour);
+> the connection / query / schema / transaction / browse suites still run across all
+> four drivers.
+
 **When to run it:** before merging UI-facing changes (sidebar, editor, connections,
-results grid, etc.) or when touching `e2e/`, `cmd/e2e-server/`, or server-mode
-event handling in `internal/app/`.
+results grid, table view, tabs, etc.) or when touching `e2e/`, `cmd/e2e-server/`, or
+server-mode event handling in `internal/app/`.
 
 ---
 

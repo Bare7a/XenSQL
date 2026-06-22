@@ -2,11 +2,10 @@ import { expect, test } from '../fixtures';
 import { ALL_DATABASES, POSTGRES } from '../support/databases';
 
 test.describe('Queries', () => {
-  // A simple SELECT round-trips through the real backend for every driver.
+  // A SELECT round-trips through the real backend, per driver.
   for (const db of ALL_DATABASES) {
     test(`runs a simple query: ${db.label}`, async ({ connections, editor, results }) => {
-      await connections.create(db);
-      await connections.connect(db.label);
+      await connections.createAndConnect(db);
 
       await editor.run('SELECT 1 AS one;');
       await results.waitForRows();
@@ -15,8 +14,7 @@ test.describe('Queries', () => {
   }
 
   test('runs multiple statements and switches result tabs', async ({ connections, editor, results }) => {
-    await connections.create(POSTGRES);
-    await connections.connect(POSTGRES.label);
+    await connections.createAndConnect(POSTGRES);
 
     await editor.run('SELECT 1 AS a; SELECT 2 AS b;');
     await results.waitForRows();
@@ -29,8 +27,7 @@ test.describe('Queries', () => {
   });
 
   test('runs only the selected statement', async ({ connections, editor, results }) => {
-    await connections.create(POSTGRES);
-    await connections.connect(POSTGRES.label);
+    await connections.createAndConnect(POSTGRES);
 
     await editor.setSql('SELECT 7 AS sel;');
     await editor.selectAll();
@@ -41,8 +38,7 @@ test.describe('Queries', () => {
   });
 
   test('surfaces a query error', async ({ app, connections, editor }) => {
-    await connections.create(POSTGRES);
-    await connections.connect(POSTGRES.label);
+    await connections.createAndConnect(POSTGRES);
 
     await editor.run('SELECT * FROM definitely_missing_table_e2e;');
     await expect(app.status).toHaveClass(/error/);

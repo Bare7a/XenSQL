@@ -4,22 +4,22 @@ import { defineConfig } from '@playwright/test';
 
 const e2eDir = path.dirname(fileURLToPath(import.meta.url));
 
-// Isolated app data for UI E2E (connections, tabs, SQLite file). Reset on every run.
+// Isolated app data (connections, tabs, SQLite file). Reset every run.
 const dataDir = path.join(e2eDir, 'XenSQL-data');
 
-// XenSQL runs in Wails v3 server mode for E2E (HTTP + WebSocket, no native window),
-// so a real browser can drive the actual Go backend. 8080 is the Wails server default.
+// Wails v3 server mode (HTTP + WebSocket, no native window) lets a real browser
+// drive the Go backend. 8080 is the Wails server default.
 const serverPort = process.env.WAILS_SERVER_PORT ?? '8080';
 const baseURL = `http://127.0.0.1:${serverPort}`;
 
 export default defineConfig({
   testDir: './specs',
-  // The suite shares one app + one database stack, so tests run serially.
+  // One shared app + database stack, so tests run serially.
   fullyParallel: false,
   workers: 1,
   forbidOnly: !!process.env.CI,
-  // One local / two CI retries: Wails server mode delivers WebSocket events without
-  // ordering guarantees, so streamed-result tests can occasionally need a re-run.
+  // Server-mode WebSocket events arrive unordered, so streamed-result tests
+  // occasionally need a re-run.
   retries: process.env.CI ? 2 : 1,
   reporter: process.env.CI
     ? [['github'], ['html', { open: 'never' }]]
@@ -31,11 +31,13 @@ export default defineConfig({
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
+    // Opt-in `PW_SLOWMO=400` slows each action to follow a headed run; no-op headless.
+    launchOptions: { slowMo: process.env.PW_SLOWMO ? Number(process.env.PW_SLOWMO) : undefined },
   },
-  // Brings the database stack up (docker compose) before any test connects.
+  // Brings the database stack up before any test connects.
   globalSetup: './global-setup.ts',
-  // Builds the frontend, then starts the server-mode binary. The build + first WSL
-  // module download can be slow, hence the generous timeout.
+  // Builds frontend then starts the server-mode binary; build + first WSL module
+  // download can be slow, hence the generous timeout.
   webServer: {
     command: 'npm run e2e:server',
     url: `${baseURL}/health`,

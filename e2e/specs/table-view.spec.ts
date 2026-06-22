@@ -5,8 +5,7 @@ test.describe('Table view', () => {
   for (const db of ALL_DATABASES) {
     test(`browses table data: ${db.label}`, async ({ app, connections, editor, schema, tableView }) => {
       const t = uniqueIdent('e2e_tv');
-      await connections.create(db);
-      await connections.connect(db.label);
+      await connections.createAndConnect(db);
 
       await editor.run(`CREATE TABLE ${t} (id INTEGER PRIMARY KEY, name VARCHAR(50));`);
       await app.expectStatementApplied();
@@ -15,7 +14,6 @@ test.describe('Table view', () => {
 
       await schema.refresh();
       await schema.browseTable(t);
-
       await tableView.waitForRows();
       await expect(tableView.pane).toContainText('Alice');
       await expect(tableView.pane).toContainText('Bob');

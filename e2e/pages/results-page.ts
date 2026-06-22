@@ -18,28 +18,9 @@ export class ResultsPage {
     await expect(this.grid).toBeVisible({ timeout: 30_000 });
   }
 
-  private async rerunActiveQuery(): Promise<void> {
-    await this.page.locator('.tab-editor-layer.tab-layer-active').getByRole('button', { name: 'Run All' }).click();
-  }
-
-  /**
-   * Wait until result rows are rendered. In Wails server mode the WebSocket
-   * broadcaster delivers stream events without ordering guarantees, so a result's
-   * row batches can lose the race to its terminal event and the grid renders no
-   * rows. Re-running starts a fresh stream, so retry a few times. (Production uses
-   * ordered IPC and is unaffected.)
-   */
+  /** Wait until result rows are rendered. */
   async waitForRows(): Promise<void> {
-    const firstCell = this.grid.locator('td[data-row]').first();
-    for (let attempt = 0; attempt < 4; attempt++) {
-      try {
-        await expect(firstCell).toBeVisible({ timeout: 8_000 });
-        return;
-      } catch {
-        await this.rerunActiveQuery();
-      }
-    }
-    await expect(firstCell).toBeVisible({ timeout: 8_000 });
+    await expect(this.grid.locator('td[data-row]').first()).toBeVisible({ timeout: 30_000 });
   }
 
   /** Cell text at a visual row (0-based) and column position (0-based). */
@@ -70,5 +51,72 @@ export class ResultsPage {
   /** Focus a result row so dependent panels (e.g. the JSON viewer) update. */
   async focusRow(row: number): Promise<void> {
     await this.cell(row, 0).click();
+  }
+
+  // ── Selection (shares grid infrastructure with the table view) ────────────
+  rownum(row: number): Locator {
+    return this.grid.locator(`#result-rownum-${row}`);
+  }
+
+  header(column: string): Locator {
+    return this.grid.locator(`th[data-col="${column}"]`);
+  }
+
+  /** A plain header click selects the whole column (sorting is a separate chevron). */
+  async selectColumn(column: string): Promise<void> {
+    await this.header(column).click();
+  }
+
+  selectedCells(): Locator {
+    return this.grid.locator('td.cell-range-selected');
+  }
+
+  focusedCell(): Locator {
+    return this.grid.locator('td.cell-focused');
+  }
+
+  selectedHeader(): Locator {
+    return this.grid.locator('th.col-header-selected');
+  }
+
+  /** Toolbar " · {rows} × {cols} selected" indicator (only shown for multi-cell selections). */
+  selectionCount(): Locator {
+    return this.active.locator('.results-selection-count');
+  }
+
+  // ── Export ───────────────────────────────────────────────────────────────
+  /** The "Export as" options dialog (note: "Save to file" itself uses a native dialog). */
+  get exportDialog(): Locator {
+    return this.page.locator('.modal').filter({ has: this.page.locator('#export-format') });
+  }
+
+  get exportFormat(): Locator {
+    return this.page.locator('#export-format');
+  }
+
+  get exportRowsGroup(): Locator {
+    return this.page.locator('#export-rows-group');
+  }
+
+  get exportColsGroup(): Locator {
+    return this.page.locator('#export-cols-group');
+  }
+
+  get exportSummary(): Locator {
+    return this.page.locator('.export-results-summary');
+  }
+
+  async openExportDialog(): Promise<void> {
+    await this.active.getByRole('button', { name: 'Export as' }).click();
+    await expect(this.exportDialog).toBeVisible();
+  }
+
+  async setExportFormat(value: string): Promise<void> {
+    await this.exportFormat.selectOption(value);
+  }
+
+  async cancelExport(): Promise<void> {
+    await this.exportDialog.getByRole('button', { name: 'Cancel' }).click();
+    await expect(this.exportDialog).toBeHidden();
   }
 }

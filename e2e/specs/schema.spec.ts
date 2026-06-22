@@ -10,8 +10,7 @@ test.describe('Schema & DDL', () => {
       schema,
     }) => {
       const table = uniqueIdent('e2e_schema');
-      await connections.create(db);
-      await connections.connect(db.label);
+      await connections.createAndConnect(db);
 
       await editor.run(`CREATE TABLE ${table} (id INTEGER PRIMARY KEY, name VARCHAR(50));`);
       await app.expectStatementApplied();

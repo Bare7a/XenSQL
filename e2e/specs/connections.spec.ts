@@ -2,7 +2,7 @@ import { expect, test } from '../fixtures';
 import { ALL_DATABASES, POSTGRES } from '../support/databases';
 
 test.describe('Connections', () => {
-  // The full add -> test -> save -> connect -> disconnect flow for every driver.
+  // Full add → test → save → connect → disconnect, per driver.
   for (const db of ALL_DATABASES) {
     test(`adds, tests, connects and disconnects: ${db.label}`, async ({ connections, page }) => {
       await connections.openNewDialog();
@@ -56,7 +56,7 @@ test.describe('Connections', () => {
 
     expect(await connections.listOrder()).toEqual(['Conn A', 'Conn B', 'Conn C']);
 
-    // Dragging the first onto the last moves it to the end.
+    // Drag first onto last → moves it to the end.
     await connections.reorder('Conn A', 'Conn C');
     expect(await connections.listOrder()).toEqual(['Conn B', 'Conn C', 'Conn A']);
   });

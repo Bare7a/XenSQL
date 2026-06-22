@@ -7,7 +7,7 @@ import { MARIADB, MYSQL, POSTGRES } from './support/databases';
 const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const compose = process.env.COMPOSE ?? 'docker compose';
 
-// All network databases the suite connects to (see docker-compose.yml).
+// Network databases the suite connects to (see docker-compose.yml).
 const services = [POSTGRES, MYSQL, MARIADB].map((db) => ({
   label: db.label,
   host: db.host as string,
@@ -36,13 +36,13 @@ async function waitForPort(host: string, port: number, timeoutMs: number): Promi
   return false;
 }
 
-// The data directory is owned and reset by e2e/e2e-server.mjs; here we only make
-// sure every database server the tests connect to is up and healthy.
+// Data directory is owned/reset by e2e-server.mjs; here we only ensure every
+// database server is up and healthy.
 export default async function globalSetup() {
   const allUp = (await Promise.all(services.map((s) => probePort(s.host, s.port)))).every(Boolean);
   if (allUp) return;
 
-  // `--wait` blocks until the compose healthchecks pass for every service.
+  // `--wait` blocks until every service's compose healthcheck passes.
   execSync(`${compose} up -d --wait`, { cwd: rootDir, stdio: 'inherit' });
 
   for (const s of services) {

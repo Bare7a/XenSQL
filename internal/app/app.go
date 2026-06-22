@@ -32,6 +32,10 @@ type App struct {
 
 	pendingMu   sync.Mutex
 	pendingFile string
+
+	// streamSeqs tags each query:stream:* event with a per-StreamID sequence number so the frontend
+	// can reorder events the server-mode WebSocket may deliver out of order. Created lazily per run.
+	streamSeqs sync.Map
 }
 
 func NewApp() *App {
@@ -81,10 +85,8 @@ func (a *App) emit(name string, data any) {
 		return
 	}
 	windows := a.app.Window.GetAll()
-	// Server mode (e.g. the Playwright E2E binary) has no native windows, so a
-	// per-window dispatch reaches nobody. Route through the application event
-	// system instead, which fans the event out to the WebSocket broadcaster and
-	// on to every connected browser. Desktop keeps the direct per-window path.
+	// Server mode (the E2E binary) has no native windows, so dispatch through the application
+	// event system (→ WebSocket broadcaster → browsers); desktop dispatches per-window.
 	if len(windows) == 0 {
 		a.app.Event.Emit(name, data)
 		return

@@ -14,8 +14,7 @@ export class EditorPage {
     this.active = page.locator('.tab-editor-layer.tab-layer-active');
     this.monaco = this.active.locator('.monaco-editor').first();
     this.txnBadge = this.active.locator('.toolbar-txn-badge');
-    // Monaco renders the suggest widget as a fixed overflow widget at the page level,
-    // adding `.visible` while it is shown.
+    // Monaco renders the suggest widget at the page level (overflow widget), with `.visible` while shown.
     this.suggestWidget = page.locator('.suggest-widget.visible');
   }
 
