@@ -85,8 +85,7 @@ jobs:
 
       - name: Install NSIS
         if: matrix.build.platform == 'windows/amd64'
-        shell: pwsh
-        run: choco install nsis -y
+        uses: negrutiu/nsis-install@v2
 
       - name: Build & package (Windows)
         if: matrix.build.platform == 'windows/amd64'
