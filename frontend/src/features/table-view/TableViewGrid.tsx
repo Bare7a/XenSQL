@@ -627,8 +627,6 @@ export const TableViewGrid = memo(function TableViewGrid({
               setEditTick={setEditTick}
               setEditing={setEditing}
               onCellEdit={onCellEdit}
-              focusRow={focusRow}
-              focusElement={focusElement}
               onMouseDown={(e) => {
                 if (editing != null) return;
                 handleCellMouseDown(rowIdx, colPos, e);

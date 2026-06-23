@@ -208,6 +208,16 @@ func stripSQLComments(sql string) string {
 				i++
 			}
 		case ch == '/' && i+1 < len(sql) && sql[i+1] == '*':
+			// MySQL/MariaDB run /*! ... */ comments, so unwrap the body for classification instead of
+			// stripping it, or a write like /*!40000 DROP TABLE t */ would slip past the read-only guard.
+			if i+2 < len(sql) && sql[i+2] == '!' {
+				i += 3
+				for i < len(sql) && sql[i] >= '0' && sql[i] <= '9' {
+					i++
+				}
+				b.WriteByte(' ')
+				continue
+			}
 			i += 2
 			for i+1 < len(sql) && !(sql[i] == '*' && sql[i+1] == '/') {
 				i++

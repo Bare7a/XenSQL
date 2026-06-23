@@ -31,8 +31,6 @@ interface Props {
   setEditTick: Dispatch<SetStateAction<number>>;
   setEditing: Dispatch<SetStateAction<{ row: number; col: number } | null>>;
   onCellEdit: (rowIdx: number, col: string, value: string | null) => void;
-  focusRow: (globalIdx: number, colPos?: FocusCol) => void;
-  focusElement: (globalIdx: number, colPos: FocusCol) => void;
   onMouseDown: (e: React.MouseEvent) => void;
   onFocus: () => void;
   onClick: (e: React.MouseEvent) => void;
@@ -66,8 +64,6 @@ export function TableViewCell({
   setEditTick,
   setEditing,
   onCellEdit,
-  focusRow,
-  focusElement,
   onMouseDown,
   onFocus,
   onClick,
@@ -121,8 +117,6 @@ export function TableViewCell({
           setEditTick={setEditTick}
           setEditing={setEditing}
           onCellEdit={onCellEdit}
-          focusRow={focusRow}
-          focusElement={focusElement}
         />
       ) : (
         text

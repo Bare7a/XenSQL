@@ -56,6 +56,29 @@ func TestIsReadOnlySQLQuotingBypass(t *testing.T) {
 	}
 }
 
+// MySQL/MariaDB execute /*! ... */ comments: hidden writes must be BLOCKED, read-only hints ALLOWED.
+func TestIsReadOnlySQLMySQLExecutableComment(t *testing.T) {
+	tests := []struct {
+		sql  string
+		want bool
+	}{
+		// Hidden writes - blocked.
+		{`/*!40000 DROP TABLE t */`, false},
+		{`/*! INSERT INTO t VALUES (1) */`, false},
+		{`/*!UPDATE t SET a=1*/`, false},
+		{`/*!40000 TRUNCATE t */`, false},
+		{`SELECT 1; /*! DELETE FROM t */`, false},
+		// Read-only hints - allowed.
+		{`SELECT /*!40001 SQL_NO_CACHE */ * FROM t`, true},
+		{`SELECT /*! STRAIGHT_JOIN */ a FROM t`, true},
+	}
+	for _, tc := range tests {
+		if got := IsReadOnlySQL(tc.sql); got != tc.want {
+			t.Errorf("IsReadOnlySQL(%q) = %v, want %v", tc.sql, got, tc.want)
+		}
+	}
+}
+
 // Bare reads and known inspection pragmas are allowed; any other argument-bearing PRAGMA is a write.
 func TestIsReadOnlySQLPragma(t *testing.T) {
 	tests := []struct {

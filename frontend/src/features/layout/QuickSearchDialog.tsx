@@ -63,7 +63,7 @@ export function QuickSearchDialog({
     if (!open) return;
     setQuery('');
     setActiveIdx(0);
-    requestAnimationFrame(() => inputRef.current?.focus());
+    inputRef.current?.focus();
   }, [open]);
 
   const items = useMemo<QuickItem[]>(() => {
@@ -100,7 +100,6 @@ export function QuickSearchDialog({
           key: `table:${connectionId}:${schema}:${tbl.name}`,
           label: tbl.name,
           detail: connName ? connName : schema,
-          // detail: connName ? `${connName} · ${schema}` : schema,
           color: connColorById.get(connectionId) ?? FALLBACK_COLOR,
           connectionId,
           schema,

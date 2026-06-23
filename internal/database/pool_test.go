@@ -47,11 +47,18 @@ func (f *fakeSession) ConnectionInfo(context.Context) (ConnectionStatus, error) 
 type fakeDriver struct {
 	connectCalls atomic.Int32
 	delay        time.Duration
+	started      chan struct{} // if set, signaled once when Connect enters, before the delay
 }
 
 func (d *fakeDriver) Type() DriverType { return "fake" }
 func (d *fakeDriver) Connect(ctx context.Context, _ ConnectionConfig) (Session, error) {
 	d.connectCalls.Add(1)
+	if d.started != nil {
+		select {
+		case d.started <- struct{}{}:
+		default:
+		}
+	}
 	if d.delay > 0 {
 		select {
 		case <-time.After(d.delay):
@@ -145,6 +152,30 @@ func TestPoolDisconnectClosesSession(t *testing.T) {
 	}
 	if p.IsConnected("a") {
 		t.Fatal("Disconnect should drop from pool")
+	}
+}
+
+// A Disconnect during an in-flight Connect must not be lost (no-op while nothing is stored yet),
+// leaving the connect's session live afterwards. Run with -race.
+func TestPoolDisconnectDuringConnectIsNotLost(t *testing.T) {
+	d := registerFakeDriver(t)
+	d.delay = 50 * time.Millisecond
+	d.started = make(chan struct{}, 1)
+	p := NewPool()
+	cfg := ConnectionConfig{ID: "a", Driver: "fake", Host: "h"}
+
+	connectDone := make(chan struct{})
+	go func() {
+		_ = p.Connect(context.Background(), cfg)
+		close(connectDone)
+	}()
+
+	<-d.started       // Connect is now in driver.Connect, holding the flight lock.
+	p.Disconnect("a") // Must block on it, then remove the session Connect stores.
+	<-connectDone
+
+	if p.IsConnected("a") {
+		t.Fatal("Disconnect during an in-flight Connect was lost: a live session remains in the pool")
 	}
 }
 

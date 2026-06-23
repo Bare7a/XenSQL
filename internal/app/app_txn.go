@@ -35,33 +35,30 @@ func (a *App) BeginTransaction(connectionID, tabID string) error {
 
 // CommitTransaction commits the open transaction on the tab and releases the pinned connection.
 func (a *App) CommitTransaction(tabID string) error {
-	txn, ok := a.txns.Get(tabID)
+	txn, ok := a.txns.Take(tabID)
 	if !ok {
 		return fmt.Errorf("no active transaction on this tab")
 	}
-	a.txns.End(tabID)
 	defer txn.Close()
 	return txn.Commit(a.ctx)
 }
 
 // RollbackTransaction rolls back the open transaction on the tab and releases the pinned connection.
 func (a *App) RollbackTransaction(tabID string) error {
-	txn, ok := a.txns.Get(tabID)
+	txn, ok := a.txns.Take(tabID)
 	if !ok {
 		return fmt.Errorf("no active transaction on this tab")
 	}
-	a.txns.End(tabID)
 	defer txn.Close()
 	return txn.Rollback(a.ctx)
 }
 
 // CleanupTabTransaction rolls back any open transaction for the tab. Called when a tab is closed.
 func (a *App) CleanupTabTransaction(tabID string) {
-	txn, ok := a.txns.Get(tabID)
+	txn, ok := a.txns.Take(tabID)
 	if !ok {
 		return
 	}
-	a.txns.End(tabID)
 	_ = txn.Rollback(a.ctx)
 	txn.Close()
 }
@@ -71,4 +68,3 @@ func (a *App) TransactionStatus(tabID string) bool {
 	_, ok := a.txns.Get(tabID)
 	return ok
 }
-
