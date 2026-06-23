@@ -80,6 +80,13 @@ func (p *Pool) storeSession(id string, s Session, fingerprint string) {
 }
 
 func (p *Pool) Disconnect(id string) {
+	// Take the per-ID flight lock Connect holds across driver.Connect; else a Disconnect racing an
+	// in-flight Connect is lost and leaks a live session. Entry stays in the map (cleared in CloseAll).
+	mu, _ := p.flight.LoadOrStore(id, &sync.Mutex{})
+	flight := mu.(*sync.Mutex)
+	flight.Lock()
+	defer flight.Unlock()
+
 	p.mu.Lock()
 	s, ok := p.sessions[id]
 	if ok {
@@ -90,8 +97,6 @@ func (p *Pool) Disconnect(id string) {
 	if ok {
 		_ = s.Close()
 	}
-	// Keep the per-ID flight mutex: deleting it here races an in-flight Connect.
-	// Bounded by connection count and cleared in CloseAll.
 }
 
 func (p *Pool) Session(id string) (Session, error) {

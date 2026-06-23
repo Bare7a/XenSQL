@@ -33,10 +33,15 @@ func (m *TxnManager) Get(tabID string) (PinnedTxn, bool) {
 	return txn, ok
 }
 
-func (m *TxnManager) End(tabID string) {
+// Take atomically removes and returns the tab's transaction, so only one racing caller finalizes it.
+func (m *TxnManager) Take(tabID string) (PinnedTxn, bool) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	delete(m.txns, tabID)
+	txn, ok := m.txns[tabID]
+	if ok {
+		delete(m.txns, tabID)
+	}
+	return txn, ok
 }
 
 // RollbackAll rolls back every open transaction. Called at shutdown.

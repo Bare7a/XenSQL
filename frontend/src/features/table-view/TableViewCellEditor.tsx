@@ -14,8 +14,6 @@ interface Props {
   setEditTick: Dispatch<SetStateAction<number>>;
   setEditing: Dispatch<SetStateAction<{ row: number; col: number } | null>>;
   onCellEdit: (rowIdx: number, col: string, value: string | null) => void;
-  focusRow: (globalIdx: number, colPos?: FocusCol) => void;
-  focusElement: (globalIdx: number, colPos: FocusCol) => void;
 }
 
 export function TableViewCellEditor({
@@ -31,8 +29,6 @@ export function TableViewCellEditor({
   setEditTick,
   setEditing,
   onCellEdit,
-  focusRow,
-  focusElement,
 }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
   useEffect(() => {
@@ -64,19 +60,6 @@ export function TableViewCellEditor({
         setEditTick((x) => x + 1);
 
         setEditing(null);
-
-        requestAnimationFrame(() => {
-          focusRow(rowIdx, colPos);
-          focusElement(rowIdx, colPos);
-        });
-        setTimeout(() => {
-          focusRow(rowIdx, colPos);
-          focusElement(rowIdx, colPos);
-        }, 0);
-        setTimeout(() => {
-          focusRow(rowIdx, colPos);
-          focusElement(rowIdx, colPos);
-        }, 50);
       }}
       onKeyDown={(e) => {
         if (e.key === 'Enter') {
