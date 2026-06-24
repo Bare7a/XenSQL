@@ -126,12 +126,12 @@ XenSQL focuses on one thing:
 
 ## 🗄️ Supported Databases
 
-| Database | Read & write | Read-only mode | Secure transport | Notes |
-|----------|:------------:|:--------------:|:-----------------|-------|
-| **PostgreSQL** | ✅ | ✅ | SSL - `disable` / `require` / `verify-full` | via pgx |
-| **MySQL** | ✅ | ✅ | TLS | |
-| **MariaDB** | ✅ | ✅ | TLS | MySQL-compatible |
-| **SQLite** | ✅ | ✅ | local file | file-picker workflow |
+| Database | Read & write | Read-only mode | Secure transport |
+|----------|:------------:|:--------------:|:-----------------|
+| **PostgreSQL** | ✅ | ✅ | SSL - `disable` / `require` / `verify-full` |
+| **MySQL** | ✅ | ✅ | TLS |
+| **MariaDB** | ✅ | ✅ | TLS |
+| **SQLite** | ✅ | ✅ | local file |
 
 ---
 
