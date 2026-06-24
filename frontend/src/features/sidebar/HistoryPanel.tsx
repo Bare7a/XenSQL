@@ -1,4 +1,4 @@
-import { BookmarkPlus, Search, Trash2 } from 'lucide-react';
+import { BookmarkPlus, Database, Globe, Search, SlidersHorizontal, Trash2 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ContextMenu } from '@/shared/components/ContextMenu';
@@ -136,6 +136,48 @@ export function HistoryPanel({ onOpenQuery }: HistoryPanelProps) {
     [onOpenQuery, saveAsQuery, t],
   );
 
+  const openFilterMenu = useCallback(
+    (e: React.MouseEvent) => {
+      const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+      openMenu(
+        {
+          preventDefault: () => e.preventDefault(),
+          stopPropagation: () => e.stopPropagation(),
+          clientX: rect.left,
+          clientY: rect.bottom + 4,
+        } as React.MouseEvent,
+        [
+          {
+            label: t('sidebar.scopeConnection'),
+            icon: <Database className="icon-xs" />,
+            active: scope === 'connection',
+            action: () => {
+              setScope('connection');
+              void loadHistory(resolvedConnId || undefined, 'connection');
+            },
+          },
+          {
+            label: t('sidebar.scopeAll'),
+            icon: <Globe className="icon-xs" />,
+            active: scope === 'all',
+            action: () => {
+              setScope('all');
+              void loadHistory(undefined, 'all');
+            },
+          },
+          { label: '', action: () => {}, separator: true },
+          {
+            label: t('sidebar.clearAll'),
+            icon: <Trash2 className="icon-xs" />,
+            disabled: !(history?.length ?? 0),
+            action: () => void clearAllHistory(),
+          },
+        ],
+      );
+    },
+    [scope, history, resolvedConnId, loadHistory, t],
+  );
+
   const debouncedFilter = useDebouncedValue(filter, 150);
   const filtered = useMemo(() => {
     const needle = debouncedFilter.trim().toLowerCase();
@@ -149,31 +191,6 @@ export function HistoryPanel({ onOpenQuery }: HistoryPanelProps) {
 
   return (
     <>
-      <div className="sidebar-saved-controls">
-        <div className="sidebar-toggle-group" role="group" aria-label={t('sidebar.history')}>
-          <button
-            type="button"
-            className={`btn btn-sm ${scope === 'connection' ? 'active' : ''}`}
-            onClick={() => {
-              setScope('connection');
-              void loadHistory(resolvedConnId || undefined, 'connection');
-            }}
-          >
-            {t('sidebar.scopeConnection')}
-          </button>
-          <button
-            type="button"
-            className={`btn btn-sm ${scope === 'all' ? 'active' : ''}`}
-            onClick={() => {
-              setScope('all');
-              void loadHistory(undefined, 'all');
-            }}
-          >
-            {t('sidebar.scopeAll')}
-          </button>
-        </div>
-      </div>
-
       <div className="sidebar-filter">
         <Search className="sidebar-filter-icon" aria-hidden />
         <input
@@ -185,12 +202,12 @@ export function HistoryPanel({ onOpenQuery }: HistoryPanelProps) {
         />
         <button
           type="button"
-          className="btn btn-sm btn-danger sidebar-filter-btn"
-          disabled={!(history?.length ?? 0)}
-          onClick={() => void clearAllHistory()}
-          data-tooltip={t('sidebar.clearAll')}
+          className="btn btn-sm sidebar-filter-btn"
+          data-testid="filter-menu"
+          data-tooltip={t('tooltip.queryOptions')}
+          onClick={openFilterMenu}
         >
-          <Trash2 className="icon-xs" />
+          <SlidersHorizontal className="icon-xs" />
         </button>
       </div>
 

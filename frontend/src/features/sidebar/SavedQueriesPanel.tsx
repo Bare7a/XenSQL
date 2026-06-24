@@ -1,4 +1,16 @@
-import { ArrowDownAZ, CalendarPlus, Clock, Edit2, Pin, PinOff, Search, Trash2 } from 'lucide-react';
+import {
+  ArrowDownAZ,
+  CalendarPlus,
+  Clock,
+  Database,
+  Edit2,
+  Globe,
+  Pin,
+  PinOff,
+  Search,
+  SlidersHorizontal,
+  Trash2,
+} from 'lucide-react';
 import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { RenameQueryDialog } from '@/features/editor/RenameQueryDialog';
@@ -189,7 +201,7 @@ export function SavedQueriesPanel({ onOpenSavedQuery }: SavedQueriesPanelProps) 
     [onOpenSavedQuery, isPinned, togglePin, duplicate, t],
   );
 
-  const openSortMenu = useCallback(
+  const openFilterMenu = useCallback(
     (e: React.MouseEvent) => {
       const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
       const labelFor: Record<SortKey, string> = {
@@ -204,46 +216,34 @@ export function SavedQueriesPanel({ onOpenSavedQuery }: SavedQueriesPanelProps) 
           clientX: rect.left,
           clientY: rect.bottom + 4,
         } as React.MouseEvent,
-        SORT_KEYS.map((key) => ({
-          label: labelFor[key],
-          icon: sortIconFor(key),
-          active: sort === key,
-          action: () => changeSort(key),
-        })),
+        [
+          {
+            label: t('sidebar.scopeConnection'),
+            icon: <Database className="icon-xs" />,
+            active: scope === 'connection',
+            action: () => setScope('connection'),
+          },
+          {
+            label: t('sidebar.scopeAll'),
+            icon: <Globe className="icon-xs" />,
+            active: scope === 'all',
+            action: () => setScope('all'),
+          },
+          { label: '', action: () => {}, separator: true },
+          ...SORT_KEYS.map((key) => ({
+            label: labelFor[key],
+            icon: sortIconFor(key),
+            active: sort === key,
+            action: () => changeSort(key),
+          })),
+        ],
       );
     },
-    [sort, changeSort, t],
+    [scope, sort, changeSort, t],
   );
-
-  const sortLabel =
-    sort === 'name'
-      ? t('sidebar.sortName')
-      : sort === 'createdAt'
-        ? t('sidebar.sortCreated')
-        : t('sidebar.sortUpdated');
 
   return (
     <>
-      <div className="sidebar-saved-controls">
-        <div className="sidebar-toggle-group" role="group" aria-label={t('sidebar.saved')}>
-          <button
-            type="button"
-            className={`btn btn-sm ${scope === 'connection' ? 'active' : ''}`}
-            onClick={() => setScope('connection')}
-            data-tooltip={t('tooltip.savedQueriesScope')}
-          >
-            {t('sidebar.scopeConnection')}
-          </button>
-          <button
-            type="button"
-            className={`btn btn-sm ${scope === 'all' ? 'active' : ''}`}
-            onClick={() => setScope('all')}
-          >
-            {t('sidebar.scopeAll')}
-          </button>
-        </div>
-      </div>
-
       <div className="sidebar-filter">
         <Search className="sidebar-filter-icon" aria-hidden />
         <input
@@ -256,10 +256,11 @@ export function SavedQueriesPanel({ onOpenSavedQuery }: SavedQueriesPanelProps) 
         <button
           type="button"
           className="btn btn-sm sidebar-filter-btn"
-          data-tooltip={`${t('sidebar.sort')}: ${sortLabel}`}
-          onClick={openSortMenu}
+          data-testid="filter-menu"
+          data-tooltip={t('tooltip.queryOptions')}
+          onClick={openFilterMenu}
         >
-          {sortIconFor(sort)}
+          <SlidersHorizontal className="icon-xs" />
         </button>
       </div>
 

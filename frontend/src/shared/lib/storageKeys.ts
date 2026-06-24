@@ -12,7 +12,6 @@ export const STORAGE_KEYS = {
   shortcuts: 'xensql-shortcut-overrides',
   theme: 'xensql-theme',
   language: 'xensql-language',
-  queriesMode: 'xensql-queries-mode',
   savedSort: 'xensql-saved-sort',
   pinnedQueries: 'xensql-pinned-queries',
   schemaExpanded: 'xensql-schema-expanded',

@@ -165,18 +165,16 @@ export function SchemaPanel({ onOpenQuery, onBrowseTable, onOpenConnectionTab }:
 
   return (
     <>
-      <div className="sidebar-schema-toolbar">
-        <div className="sidebar-schema-search">
-          <Search className="sidebar-filter-icon" aria-hidden />
-          <input
-            type="search"
-            className="sidebar-filter-input"
-            placeholder={t('sidebar.searchTablesColumns')}
-            value={tableSearch}
-            onChange={(e) => setTableSearch(e.target.value)}
-            disabled={!connId || !connConnected}
-          />
-        </div>
+      <div className="sidebar-filter">
+        <Search className="sidebar-filter-icon" aria-hidden />
+        <input
+          type="search"
+          className="sidebar-filter-input"
+          placeholder={t('sidebar.searchTablesColumns')}
+          value={tableSearch}
+          onChange={(e) => setTableSearch(e.target.value)}
+          disabled={!connId || !connConnected}
+        />
         <button
           type="button"
           className="btn btn-sm sidebar-filter-btn"

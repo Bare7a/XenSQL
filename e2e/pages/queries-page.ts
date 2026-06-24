@@ -9,15 +9,15 @@ export class QueriesPage {
   }
 
   async open(): Promise<void> {
-    await this.page.locator('.sidebar-tabs').getByRole('button', { name: 'Queries' }).click();
+    await this.showSaved();
   }
 
   async showSaved(): Promise<void> {
-    await this.page.locator('.queries-mode').getByRole('button', { name: 'Saved' }).click();
+    await this.page.locator('.sidebar-tabs').getByRole('button', { name: 'Saved' }).click();
   }
 
   async showHistory(): Promise<void> {
-    await this.page.locator('.queries-mode').getByRole('button', { name: 'Recent' }).click();
+    await this.page.locator('.sidebar-tabs').getByRole('button', { name: 'Recent' }).click();
   }
 
   savedItem(name: string): Locator {
@@ -45,15 +45,15 @@ export class QueriesPage {
     await this.historyFilter.fill(text);
   }
 
-  // ── Sorting (saved queries only; opens a menu, no asc/desc toggle) ───────────
-  get sortButton(): Locator {
-    return this.page.locator('button.sidebar-filter-btn[data-tooltip^="Sort:"]');
+  // ── Filter popover (scope + sort for Saved; scope + clear for Recent) ────────
+  get filterMenuButton(): Locator {
+    return this.page.getByTestId('filter-menu');
   }
 
-  /** Pick a saved-query sort: "Name", "Updated" or "Created". */
+  /** Pick a saved-query sort from the filter popover: "Name", "Updated" or "Created". */
   async sortBy(option: 'Name' | 'Updated' | 'Created'): Promise<void> {
-    await this.sortButton.click();
-    await this.page.getByRole('menuitem', { name: option }).click();
+    await this.filterMenuButton.click();
+    await this.page.getByRole('menuitem', { name: option, exact: true }).click();
   }
 
   /** Saved-query titles in their listed (post-sort) order. */
@@ -63,13 +63,18 @@ export class QueriesPage {
       .evaluateAll((els) => els.map((el) => (el.textContent ?? '').trim()));
   }
 
-  // ── Scope toggles ────────────────────────────────────────────────────────────
+  // ── Scope (lives in the filter popover; pick the connection / all menu item) ─
+  async setScope(name: 'This connection' | 'All connections'): Promise<void> {
+    await this.filterMenuButton.click();
+    await this.page.getByRole('menuitem', { name, exact: true }).click();
+  }
+
   async setSavedScope(name: 'This connection' | 'All connections'): Promise<void> {
-    await this.page.getByRole('group', { name: 'Saved' }).getByRole('button', { name }).click();
+    await this.setScope(name);
   }
 
   async setHistoryScope(name: 'This connection' | 'All connections'): Promise<void> {
-    await this.page.getByRole('group', { name: 'History' }).getByRole('button', { name }).click();
+    await this.setScope(name);
   }
 
   // ── Saved-query actions (Queries → Saved) ──────────────────────────────────
@@ -124,9 +129,10 @@ export class QueriesPage {
     await row.locator('[data-tooltip="Delete from history"]').click();
   }
 
-  /** Clear all history for the current scope (confirms the dialog). */
+  /** Clear all history for the current scope via the filter popover (confirms the dialog). */
   async clearAllHistory(): Promise<void> {
-    await this.page.locator('.sidebar-filter button[data-tooltip="Clear all"]').click();
+    await this.filterMenuButton.click();
+    await this.page.getByRole('menuitem', { name: 'Clear all', exact: true }).click();
     await this.page.getByRole('alertdialog').getByRole('button', { name: 'Clear history' }).click();
   }
 }
