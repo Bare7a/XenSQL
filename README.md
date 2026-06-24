@@ -76,19 +76,19 @@ Work with **SQLite**, **PostgreSQL**, and **MySQL / MariaDB** in a single fast d
 
 <table>
   <tr>
-    <td align="center"><img src=".github/screenshots/1.png?raw=true" width="100%"><br><sub><b>Editor</b> - autocomplete · streaming results · JSON row view</sub></td>
-    <td align="center"><img src=".github/screenshots/2.png?raw=true" width="100%"><br><sub><b>Transactions & multiple results</b> - per-tab begin/commit/rollback · a result tab per statement</sub></td>
-    <td align="center"><img src=".github/screenshots/3.png?raw=true" width="100%"><br><sub><b>Table data</b> - browse rows; stage edits before apply</sub></td>
+    <td align="center"><img src=".github/screenshots/1.png?raw=true" width="100%"><br><sub><b>Editor</b></sub></td>
+    <td align="center"><img src=".github/screenshots/2.png?raw=true" width="100%"><br><sub><b>Transactions & multiple results</b></sub></td>
+    <td align="center"><img src=".github/screenshots/3.png?raw=true" width="100%"><br><sub><b>Table data</b></sub></td>
   </tr>
   <tr>
-    <td align="center"><img src=".github/screenshots/4.png?raw=true" width="100%"><br><sub><b>Cell editor</b> - JSON, XML, HTML, or text with beautify</sub></td>
-    <td align="center"><img src=".github/screenshots/5.png?raw=true" width="100%"><br><sub><b>Grid</b> - row/column select, context menu, export</sub></td>
-    <td align="center"><img src=".github/screenshots/6.png?raw=true" width="100%"><br><sub><b>Export</b> - CSV, JSON, Markdown, or SQL inserts</sub></td>
+    <td align="center"><img src=".github/screenshots/4.png?raw=true" width="100%"><br><sub><b>Cell editor</b></sub></td>
+    <td align="center"><img src=".github/screenshots/5.png?raw=true" width="100%"><br><sub><b>Grid</b></sub></td>
+    <td align="center"><img src=".github/screenshots/6.png?raw=true" width="100%"><br><sub><b>Export</b></sub></td>
   </tr>
   <tr>
-    <td align="center"><img src=".github/screenshots/7.png?raw=true" width="100%"><br><sub><b>Connections</b> - SSL, read-only mode, tab colors</sub></td>
-    <td align="center"><img src=".github/screenshots/8.png?raw=true" width="100%"><br><sub><b>Quick Search</b> - <code>Ctrl+P</code> for tabs, tables, queries</sub></td>
-    <td align="center"><img src=".github/screenshots/9.png?raw=true" width="100%"><br><sub><b>Appearance</b> - dark or light theme, zoom, language support</sub></td>
+    <td align="center"><img src=".github/screenshots/7.png?raw=true" width="100%"><br><sub><b>Connections</b></sub></td>
+    <td align="center"><img src=".github/screenshots/8.png?raw=true" width="100%"><br><sub><b>Quick Search</b></sub></td>
+    <td align="center"><img src=".github/screenshots/9.png?raw=true" width="100%"><br><sub><b>Appearance</b></sub></td>
   </tr>
 </table>
 
@@ -320,6 +320,7 @@ wails3 dev
 
 ```bash
 wails3 task build       # or: wails3 task package  (platform bundle/installer)
+```
 
 ---
 
@@ -329,13 +330,18 @@ wails3 task build       # or: wails3 task package  (platform bundle/installer)
 ├── main.go                # Wails entry point (embeds frontend/dist)
 ├── docker-compose.yml     # PostgreSQL / MySQL / MariaDB for the E2E suite
 ├── Taskfile.yml           # dev tasks: build / test / e2e (run via `task` or `wails3 task`)
+├── cmd/
+│   ├── e2e-server/        # Wails server-mode launcher the Playwright suite drives
+│   └── bump-version/      # version bump tool (keeps build assets in sync)
 ├── internal/
 │   ├── app/               # Wails App API bindings + tests (connections, query, history, …)
 │   ├── database/          # Driver interface + SQLite / PostgreSQL / MySQL
 │   ├── storage/           # JSON persistence (incl. settings.json)
 │   ├── paths/             # Portable data directory
+│   ├── windowstate/       # Window size / position / mode persistence
 │   └── service/           # SQL format, export helpers
-└── frontend/              # React + TypeScript + Monaco (Vitest tests)
+├── frontend/              # React + TypeScript + Monaco (Vitest tests)
+└── e2e/                   # Playwright E2E suite (specs, pages, support)
 ```
 
 ---
