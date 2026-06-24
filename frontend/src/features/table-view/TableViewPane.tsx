@@ -468,7 +468,7 @@ export function TableViewPane({ tab, driver, readOnly, isActive, running, onFocu
         />
         <button
           type="button"
-          className="btn btn-sm table-view-filter-search"
+          className="btn btn-sm sql-condition-input-icon"
           onClick={applyFilter}
           disabled={running}
           aria-label={t('tableView.applyFilter')}

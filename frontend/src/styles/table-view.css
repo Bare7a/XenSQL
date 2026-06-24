@@ -68,6 +68,10 @@
   text-overflow: ellipsis;
 }
 
+.sql-condition-input-icon {
+  padding: var(--space-6);
+}
+
 .table-view-grid-wrap {
   flex: 1;
   min-height: 0;
