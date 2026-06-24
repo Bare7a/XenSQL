@@ -1,7 +1,8 @@
-import { Bookmark, type LucideIcon, Table2 } from 'lucide-react';
+import { Bookmark, Clock, type LucideIcon, Table2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { ConnectionSwitcher } from '@/features/sidebar/ConnectionSwitcher';
-import { QueriesPanel } from '@/features/sidebar/QueriesPanel';
+import { HistoryPanel } from '@/features/sidebar/HistoryPanel';
+import { SavedQueriesPanel } from '@/features/sidebar/SavedQueriesPanel';
 import { SchemaPanel } from '@/features/sidebar/SchemaPanel';
 import { ErrorBoundary } from '@/shared/components/ErrorBoundary';
 import { useAppStore } from '@/store/appStore';
@@ -15,11 +16,12 @@ interface Props {
   onOpenConnectionTab: (connId: string) => void;
 }
 
-type SidebarView = 'schema' | 'queries';
+type SidebarView = 'schema' | 'saved' | 'history';
 
 const VIEWS: ReadonlyArray<[SidebarView, string, LucideIcon]> = [
   ['schema', 'sidebar.schema', Table2],
-  ['queries', 'sidebar.queries', Bookmark],
+  ['saved', 'sidebar.saved', Bookmark],
+  ['history', 'sidebar.recent', Clock],
 ];
 
 export function Sidebar({ onOpenQuery, onOpenSavedQuery, onBrowseTable, onOpenConnectionTab }: Props) {
@@ -57,9 +59,15 @@ export function Sidebar({ onOpenQuery, onOpenSavedQuery, onBrowseTable, onOpenCo
           </ErrorBoundary>
         )}
 
-        {sidebarView === 'queries' && (
+        {sidebarView === 'saved' && (
           <ErrorBoundary label={t('errorBoundary.queries')} resetKey={selectedConnectionId}>
-            <QueriesPanel onOpenQuery={onOpenQuery} onOpenSavedQuery={onOpenSavedQuery} />
+            <SavedQueriesPanel onOpenSavedQuery={onOpenSavedQuery} />
+          </ErrorBoundary>
+        )}
+
+        {sidebarView === 'history' && (
+          <ErrorBoundary label={t('errorBoundary.queries')} resetKey={selectedConnectionId}>
+            <HistoryPanel onOpenQuery={onOpenQuery} />
           </ErrorBoundary>
         )}
       </div>

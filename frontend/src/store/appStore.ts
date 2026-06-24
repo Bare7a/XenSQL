@@ -66,7 +66,7 @@ interface AppState {
   runningTabId: string | null;
   history: HistoryEntry[];
   savedQueries: SavedQuery[];
-  sidebarView: 'schema' | 'queries';
+  sidebarView: 'schema' | 'saved' | 'history';
   selectedConnectionId: string | null;
 
   setConnections: (c: ConnectionConfig[]) => void;

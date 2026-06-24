@@ -7,7 +7,7 @@ export class SchemaPage {
 
   constructor(page: Page) {
     this.page = page;
-    this.refreshButton = page.locator('.sidebar-schema-toolbar button[data-tooltip="Refresh schema"]');
+    this.refreshButton = page.locator('.sidebar-filter button[data-tooltip="Refresh schema"]');
   }
 
   async refresh(): Promise<void> {
