@@ -14,7 +14,7 @@
   align-items: center;
   gap: var(--space-8);
   height: var(--layout-chrome-toolbar-height);
-  padding: 0 var(--space-12);
+  padding: 0 var(--space-10);
   box-sizing: border-box;
   border-bottom: 1px solid var(--border);
   flex-shrink: 0;
