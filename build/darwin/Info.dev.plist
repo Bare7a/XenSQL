@@ -71,8 +71,6 @@
 		<string>A fast, native SQL client built with Go, Wails and React.</string>
 		<key>CFBundleIconFile</key>
 		<string>icons</string>
-		<key>CFBundleIconName</key>
-		<string>appicon</string>
 		<key>CFBundleIdentifier</key>
 		<string>com.bare7a.xensql</string>
 		<key>CFBundleName</key>
@@ -80,9 +78,9 @@
 		<key>CFBundlePackageType</key>
 		<string>APPL</string>
 		<key>CFBundleShortVersionString</key>
-		<string>1.2.5</string>
+		<string>1.2.6</string>
 		<key>CFBundleVersion</key>
-		<string>1.2.5</string>
+		<string>1.2.6</string>
 		<key>LSMinimumSystemVersion</key>
 		<string>12.0.0</string>
 		<key>NSAppTransportSecurity</key>

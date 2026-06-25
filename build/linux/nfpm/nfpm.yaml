@@ -6,7 +6,7 @@
 name: "XenSQL"
 arch: ${GOARCH}
 platform: "linux"
-version: "1.2.5"
+version: "1.2.6"
 section: "default"
 priority: "extra"
 maintainer: ${GIT_COMMITTER_NAME} <${GIT_COMMITTER_EMAIL}>
