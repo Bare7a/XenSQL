@@ -137,7 +137,7 @@ export function RowJsonViewer({ data, onClose }: Props) {
             <div className="json-viewer-filter">
               <Search className="icon-sm json-viewer-filter-icon" aria-hidden />
               <input
-                type="text"
+                type="search"
                 className="json-viewer-filter-input"
                 placeholder={t('jsonViewer.filterPlaceholder')}
                 aria-label={t('jsonViewer.filterPlaceholder')}

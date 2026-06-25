@@ -35,6 +35,16 @@
   flex-shrink: 0;
 }
 
+/* Table/schema row label: fills the row but truncates so it never pushes the
+   row wide (horizontal scroll) or spills over the trailing row action. */
+.tree-label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .tree-children {
   padding-left: var(--space-16);
 }

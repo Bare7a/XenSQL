@@ -68,7 +68,7 @@ export const SchemaTableRow = memo(function SchemaTableRow({
       >
         {isTableExpanded ? <ChevronDown className="icon-sm" /> : <ChevronRight className="icon-sm" />}
         <Table2 className="icon-sm icon" />
-        <span className="flex-1">{table.name}</span>
+        <span className="tree-label">{table.name}</span>
         <button
           type="button"
           className="tree-row-action"

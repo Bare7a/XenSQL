@@ -18,7 +18,7 @@
         PublisherName="CN=Bare7a"
         PublisherDisplayName="Bare7a"
         Version="1.1.2.0"
-        PackageDescription="A fast, native SQL client built with Go and Wails.">
+        PackageDescription="A fast, native SQL client built with Go, Wails and React.">
         <Capabilities>
             <Capability Name="runFullTrust" />
             
@@ -26,7 +26,7 @@
         <Applications>
             <Application
                 Id="com.bare7a.xensql"
-                Description="A fast, native SQL client built with Go and Wails."
+                Description="A fast, native SQL client built with Go, Wails and React."
                 DisplayName="XenSQL"
                 ExecutableName="xensql"
                 EntryPoint="Windows.FullTrustApplication">
@@ -43,7 +43,7 @@
             <Framework>false</Framework>
             <DisplayName>XenSQL</DisplayName>
             <PublisherDisplayName>Bare7a</PublisherDisplayName>
-            <Description>A fast, native SQL client built with Go and Wails.</Description>
+            <Description>A fast, native SQL client built with Go, Wails and React.</Description>
             <Logo>Assets\AppIcon.png</Logo>
         </Properties>
     </PackageInformation>
