@@ -475,7 +475,7 @@
     "version": "Version",
     "createdBy": "Created by",
     "repository": "Source repository",
-    "stack": "Built with Go, Wails, React, and Monaco Editor.",
+    "stack": "Built with Go, Wails, React and Monaco Editor.",
     "checkUpdates": "Check for Updates"
   },
   "shortcuts": {
