@@ -61,7 +61,7 @@ export function SchemaTreeNode({
       >
         {schemaExpanded ? <ChevronDown className="icon-sm" /> : <ChevronRight className="icon-sm" />}
         <FolderOpen className="icon-sm icon" />
-        <span className="flex-1">{sch.name}</span>
+        <span className="tree-label">{sch.name}</span>
         {allTables.length > 0 && (
           <span className="ui-text-2xs text-muted">
             {schemaSearch ? `${visibleTables.length}/${allTables.length}` : allTables.length}

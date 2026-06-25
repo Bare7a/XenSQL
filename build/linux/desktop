@@ -1,7 +1,7 @@
 [Desktop Entry]
 Version=1.0
 Name=XenSQL
-Comment=A fast, native SQL client built with Go and Wails.
+Comment=A fast, native SQL client built with Go, Wails and React.
 # The Exec line includes %u to pass the URL to the application
 Exec=/usr/local/bin/XenSQL %u
 Terminal=false

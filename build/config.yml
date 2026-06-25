@@ -8,10 +8,10 @@ info:
   companyName: "Bare7a" # The name of the company
   productName: "XenSQL" # The name of the application
   productIdentifier: "com.bare7a.xensql" # The unique product identifier
-  description: "A fast, native SQL client built with Go and Wails." # The application description
+  description: "A fast, native SQL client built with Go, Wails and React." # The application description
   copyright: "(c) 2026, Bare7a" # Copyright text
-  comments: "A fast, native SQL client built with Go and Wails." # Comments
-  version: "1.2.4" # The application version
+  comments: "A fast, native SQL client built with Go, Wails and React." # Comments
+  version: "1.2.5" # The application version
   # cfBundleIconName: "appicon" # The macOS icon name in Assets.car icon bundles (optional)
   #                               # Should match the name of your .icon file without the extension
   #                               # If not set and Assets.car exists, defaults to "appicon"

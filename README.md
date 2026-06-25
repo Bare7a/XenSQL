@@ -5,7 +5,7 @@
 ![License](https://img.shields.io/badge/license-GPL--3.0-blue?style=for-the-badge)
 ![Status](https://img.shields.io/badge/status-active-success?style=for-the-badge)
 
-> **A fast, local-first SQL workbench built with Go + Wails.**
+> **A fast, local-first SQL workbench built with Go, Wails and React.**
 
 No cloud. No accounts. No telemetry.  
 Just a focused, native desktop tool for working with databases.

@@ -6,11 +6,11 @@
 name: "XenSQL"
 arch: ${GOARCH}
 platform: "linux"
-version: "1.2.4"
+version: "1.2.5"
 section: "default"
 priority: "extra"
 maintainer: ${GIT_COMMITTER_NAME} <${GIT_COMMITTER_EMAIL}>
-description: "A fast, native SQL client built with Go and Wails."
+description: "A fast, native SQL client built with Go, Wails and React."
 vendor: "Bare7a"
 homepage: "https://wails.io"
 license: "MIT"

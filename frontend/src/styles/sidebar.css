@@ -79,7 +79,8 @@
   flex: 1;
   display: flex;
   flex-direction: column;
-  overflow: auto;
+  overflow: hidden;
+  min-height: 0;
   padding: var(--space-8);
   font-size: var(--text-md);
 }
@@ -89,6 +90,15 @@
   align-items: center;
   gap: var(--space-8);
   margin-bottom: var(--space-8);
+  flex-shrink: 0;
+}
+
+.schema-tree,
+.sidebar-list {
+  flex: 1;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 .sidebar-filter-icon {
