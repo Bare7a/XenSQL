@@ -42,6 +42,7 @@ export const useStoreActions = () =>
       setConnected: s.setConnected,
       setSchemas: s.setSchemas,
       setTables: s.setTables,
+      clearConnectionCache: s.clearConnectionCache,
       setTabs: s.setTabs,
       setActiveTab: s.setActiveTab,
       addTab: s.addTab,

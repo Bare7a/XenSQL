@@ -75,6 +75,7 @@ interface AppState {
   setConnected: (id: string, connected: boolean) => void;
   setSchemas: (connId: string, schemas: SchemaInfo[]) => void;
   setTables: (key: string, tables: TableInfo[]) => void;
+  clearConnectionCache: (connId: string) => void;
   setTabs: (tabs: EditorTab[]) => void;
   setActiveTab: (id: string | null) => void;
   addTab: (tab: EditorTab) => void;
@@ -161,6 +162,14 @@ export const useAppStore = create<AppState>((set, get) => ({
   },
   setSchemas: (connId, schemas) => set((s) => ({ schemas: { ...s.schemas, [connId]: schemas } })),
   setTables: (key, tables) => set((s) => ({ tables: { ...s.tables, [key]: tables } })),
+  clearConnectionCache: (connId) =>
+    set((s) => {
+      const schemas = { ...s.schemas };
+      delete schemas[connId];
+      const prefix = `${connId}:`;
+      const tables = Object.fromEntries(Object.entries(s.tables).filter(([k]) => !k.startsWith(prefix)));
+      return { schemas, tables };
+    }),
   setTabs: (tabs) => set({ tabs }),
   setActiveTab: (activeTabId) => set({ activeTabId }),
   addTab: (tab) => {

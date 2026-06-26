@@ -34,7 +34,8 @@ export function ConnectionsPanel({ onConnected, onOpenTab, onNew, onEdit, onRequ
   const folders = useFolders();
   const connectedIds = useConnectedIds();
   const selectedConnectionId = useSelectedConnectionId();
-  const { setConnections, setConnected, setSelectedConnection, reorderConnections } = useStoreActions();
+  const { setConnections, setConnected, setSelectedConnection, reorderConnections, clearConnectionCache } =
+    useStoreActions();
 
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>(() =>
     readStoredJson(STORAGE_KEYS.foldersCollapsed, {}),
@@ -78,6 +79,7 @@ export function ConnectionsPanel({ onConnected, onOpenTab, onNew, onEdit, onRequ
   const handleDisconnect = (id: string) => {
     api.disconnect(id);
     setConnected(id, false);
+    clearConnectionCache(id);
   };
 
   const handleDelete = async (id: string) => {
@@ -99,6 +101,7 @@ export function ConnectionsPanel({ onConnected, onOpenTab, onNew, onEdit, onRequ
         return;
       }
       setConnections(connections.filter((c) => c.id !== id));
+      clearConnectionCache(id);
     } catch (err) {
       void appError(err, t('errors.generic'));
       await refreshConnections();
