@@ -84,7 +84,7 @@
 
 .quick-search-match {
   background: transparent;
-  color: var(--accent);
+  color: color-mix(in srgb, var(--accent) 70%, var(--text));
   font-weight: 600;
 }
 
