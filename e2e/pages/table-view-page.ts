@@ -191,7 +191,7 @@ export class TableViewPage {
   }
 
   get applyFilterButton(): Locator {
-    return this.pane.locator('.table-view-filter-search');
+    return this.pane.getByRole('button', { name: 'Apply filter' });
   }
 
   /** Type a WHERE condition and apply it (server-side refetch). */
