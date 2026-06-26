@@ -60,7 +60,7 @@
 
 .quick-search-kind {
   justify-self: stretch;
-  font-size: var(--text-2xs);
+  font-size: var(--text-xs);
   color: var(--text-muted);
   padding: var(--space-2) var(--space-6);
   border-radius: var(--radius-lg);
@@ -72,7 +72,7 @@
 .quick-search-label {
   display: flex;
   align-items: center;
-  gap: var(--space-7);
+  gap: var(--space-10);
   min-width: 0;
 }
 
@@ -80,6 +80,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  font-size: var(--text-md);
 }
 
 .quick-search-match {
@@ -89,7 +90,7 @@
 
 .quick-search-detail {
   color: var(--text-muted);
-  font-size: var(--text-2xs);
+  font-size: var(--text-xs);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
