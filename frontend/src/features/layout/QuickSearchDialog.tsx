@@ -64,6 +64,7 @@ const KIND_KEY: Record<QuickItem['type'], string> = {
 
 function iconForItem(item: QuickItem): LucideIcon {
   if (item.type === 'tab' && item.tab.tableView) return TYPE_ICON['table'];
+  if (item.type === 'tab' && item.tab.savedQueryId) return TYPE_ICON['saved'];
   return TYPE_ICON[item.type];
 }
 
