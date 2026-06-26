@@ -1,3 +1,4 @@
+import { Bookmark, Database, File, type LucideIcon, Table2 } from 'lucide-react';
 import { type ReactNode, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { isSavedQueryOpenInTabs } from '@/features/editor/lib/savedQueryTab';
@@ -47,6 +48,25 @@ const FALLBACK_COLOR = 'var(--text-muted)';
 
 const CATEGORY_BIAS = { tab: 100, table: 70, saved: 40, conn: 10 } as const;
 const rankOf = (item: QuickItem) => item.score + CATEGORY_BIAS[item.type];
+
+const TYPE_ICON: Record<QuickItem['type'], LucideIcon> = {
+  tab: File,
+  table: Table2,
+  saved: Bookmark,
+  conn: Database,
+};
+const KIND_KEY: Record<QuickItem['type'], string> = {
+  tab: 'quickSearch.kindTab',
+  table: 'quickSearch.kindTable',
+  saved: 'quickSearch.kindSavedQuery',
+  conn: 'quickSearch.kindConnection',
+};
+
+function iconForItem(item: QuickItem): LucideIcon {
+  if (item.type === 'tab' && item.tab.tableView) return TYPE_ICON['table'];
+  if (item.type === 'tab' && item.tab.savedQueryId) return TYPE_ICON['saved'];
+  return TYPE_ICON[item.type];
+}
 
 function highlightLabel(text: string, ranges: [number, number][]): ReactNode {
   if (ranges.length === 0) return text;
@@ -237,30 +257,24 @@ export function QuickSearchDialog({
           {items.length === 0 ? (
             <div className="quick-search-empty">{t('quickSearch.noResults')}</div>
           ) : (
-            items.map((item, idx) => (
-              <button
-                key={item.key}
-                type="button"
-                className={`quick-search-item${idx === activeIdx ? ' active' : ''}`}
-                onMouseEnter={() => setActiveIdx(idx)}
-                onClick={() => openItem(item)}
-              >
-                <span className={`quick-search-kind kind-${item.type}`}>
-                  {item.type === 'tab'
-                    ? t('quickSearch.kindTab')
-                    : item.type === 'table'
-                      ? t('quickSearch.kindTable')
-                      : item.type === 'saved'
-                        ? t('quickSearch.kindSavedQuery')
-                        : t('quickSearch.kindConnection')}
-                </span>
-                <span className="quick-search-label">
-                  <span className="connection-dot" style={{ background: item.color }} />
+            items.map((item, idx) => {
+              const Icon = iconForItem(item);
+              const kind = t(KIND_KEY[item.type]);
+              return (
+                <button
+                  key={item.key}
+                  type="button"
+                  className={`quick-search-item${idx === activeIdx ? ' active' : ''}`}
+                  aria-label={item.detail ? `${kind}: ${item.label}, ${item.detail}` : `${kind}: ${item.label}`}
+                  onMouseEnter={() => setActiveIdx(idx)}
+                  onClick={() => openItem(item)}
+                >
+                  <Icon className="quick-search-icon icon-sm" style={{ color: item.color }} aria-hidden />
                   <span className="quick-search-label-text">{highlightLabel(item.label, item.ranges)}</span>
-                </span>
-                {item.detail && <span className="quick-search-detail">{item.detail}</span>}
-              </button>
-            ))
+                  {item.detail && <span className="quick-search-detail">{item.detail}</span>}
+                </button>
+              );
+            })
           )}
         </div>
       </div>

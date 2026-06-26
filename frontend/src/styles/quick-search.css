@@ -31,7 +31,7 @@
   overflow: auto;
   display: grid;
   grid-template-columns: auto 1fr auto;
-  column-gap: var(--space-10);
+  column-gap: var(--space-6);
 }
 
 .quick-search-empty {
@@ -58,28 +58,16 @@
   background: var(--bg-hover);
 }
 
-.quick-search-kind {
-  justify-self: stretch;
-  font-size: var(--text-2xs);
-  color: var(--text-muted);
-  padding: var(--space-2) var(--space-6);
-  border-radius: var(--radius-lg);
-  border: 1px solid var(--border);
-  white-space: nowrap;
-  text-align: center;
-}
-
-.quick-search-label {
-  display: flex;
-  align-items: center;
-  gap: var(--space-7);
-  min-width: 0;
+.quick-search-icon {
+  justify-self: center;
 }
 
 .quick-search-label-text {
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  font-size: var(--text-md);
 }
 
 .quick-search-match {
@@ -89,7 +77,7 @@
 
 .quick-search-detail {
   color: var(--text-muted);
-  font-size: var(--text-2xs);
+  font-size: var(--text-xs);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
