@@ -1,10 +1,12 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { type ReactNode, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { isSavedQueryOpenInTabs } from '@/features/editor/lib/savedQueryTab';
 import { isTableViewOpenInTabs } from '@/features/table-view/lib/tableViewTab';
+import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue';
+import { rankCandidate } from '@/shared/lib/fuzzyMatch';
 import type { ConnectionConfig, EditorTab, SavedQuery, TableInfo } from '@/types';
 
-type QuickItem =
+type QuickItem = { score: number; ranges: [number, number][] } & (
   | { type: 'tab'; key: string; label: string; detail?: string; color: string; tab: EditorTab }
   | {
       type: 'table';
@@ -24,7 +26,8 @@ type QuickItem =
       detail?: string;
       color: string;
       conn: ConnectionConfig;
-    };
+    }
+);
 
 interface Props {
   open: boolean;
@@ -42,6 +45,26 @@ interface Props {
 const MAX_ITEMS = 10;
 const FALLBACK_COLOR = 'var(--text-muted)';
 
+const CATEGORY_BIAS = { tab: 100, table: 70, saved: 40, conn: 10 } as const;
+const rankOf = (item: QuickItem) => item.score + CATEGORY_BIAS[item.type];
+
+function highlightLabel(text: string, ranges: [number, number][]): ReactNode {
+  if (ranges.length === 0) return text;
+  const nodes: ReactNode[] = [];
+  let pos = 0;
+  for (const [start, end] of ranges) {
+    if (start > pos) nodes.push(text.slice(pos, start));
+    nodes.push(
+      <mark key={`${start}-${end}`} className="quick-search-match">
+        {text.slice(start, end)}
+      </mark>,
+    );
+    pos = end;
+  }
+  if (pos < text.length) nodes.push(text.slice(pos));
+  return nodes;
+}
+
 export function QuickSearchDialog({
   open,
   tabs,
@@ -58,6 +81,7 @@ export function QuickSearchDialog({
   const [query, setQuery] = useState('');
   const [activeIdx, setActiveIdx] = useState(0);
   const inputRef = useRef<HTMLInputElement | null>(null);
+  const debouncedQuery = useDebouncedValue(query, 50);
 
   useEffect(() => {
     if (!open) return;
@@ -68,71 +92,90 @@ export function QuickSearchDialog({
 
   const items = useMemo<QuickItem[]>(() => {
     if (!open) return [];
-    const q = query.trim().toLowerCase();
-    const match = (s: string) => (q ? s.toLowerCase().includes(q) : true);
+    const q = debouncedQuery.trim().toLowerCase();
+    const empty = q === '';
 
     const connNameById = new Map(connections.map((c) => [c.id, c.name] as const));
     const connColorById = new Map(connections.map((c) => [c.id, c.color] as const));
 
-    const tabItems: QuickItem[] = tabs
-      .filter((tab) => match(tab.title) || match(connNameById.get(tab.connectionId) ?? ''))
-      .map((tab) => ({
+    const out: QuickItem[] = [];
+
+    for (const tab of tabs) {
+      const r = rankCandidate(q, tab.title, [connNameById.get(tab.connectionId) ?? '']);
+      if (!r) continue;
+      out.push({
         type: 'tab',
         key: `tab:${tab.id}`,
         label: tab.title,
         detail: connNameById.get(tab.connectionId),
         color: connColorById.get(tab.connectionId) ?? FALLBACK_COLOR,
         tab,
-      }));
-
-    const tableItems: QuickItem[] = [];
-    for (const [mapKey, tableList] of Object.entries(tables)) {
-      const colon = mapKey.indexOf(':');
-      if (colon < 0) continue;
-      const connectionId = mapKey.slice(0, colon);
-      const schema = mapKey.slice(colon + 1);
-      const connName = connNameById.get(connectionId) ?? '';
-      for (const tbl of tableList) {
-        if (isTableViewOpenInTabs(tabs, connectionId, schema, tbl.name)) continue;
-        if (!match(tbl.name) && !match(schema) && !match(connName)) continue;
-        tableItems.push({
-          type: 'table',
-          key: `table:${connectionId}:${schema}:${tbl.name}`,
-          label: tbl.name,
-          detail: connName ? connName : schema,
-          color: connColorById.get(connectionId) ?? FALLBACK_COLOR,
-          connectionId,
-          schema,
-          table: tbl.name,
-        });
-      }
+        score: r.score,
+        ranges: r.ranges,
+      });
     }
 
-    const savedItems: QuickItem[] = savedQueries
-      .filter((sq) => !isSavedQueryOpenInTabs(tabs, sq))
-      .filter((sq) => match(sq.name))
-      .map((saved) => ({
-        type: 'saved',
-        key: `saved:${saved.id}`,
-        label: saved.name,
-        detail: saved.connectionId ? connNameById.get(saved.connectionId) : undefined,
-        color: (saved.connectionId ? connColorById.get(saved.connectionId) : undefined) ?? FALLBACK_COLOR,
-        saved,
-      }));
-
-    const connItems: QuickItem[] = connections
-      .filter((c) => match(c.name) || match(c.host ?? '') || match(c.database ?? ''))
-      .map((conn) => ({
+    for (const conn of connections) {
+      const r = rankCandidate(q, conn.name, [conn.host ?? '', conn.database ?? '']);
+      if (!r) continue;
+      out.push({
         type: 'conn',
         key: `conn:${conn.id}`,
         label: conn.name,
         detail: conn.database ? `${conn.driver} · ${conn.database}` : conn.driver,
         color: conn.color,
         conn,
-      }));
+        score: r.score,
+        ranges: r.ranges,
+      });
+    }
 
-    return [...tabItems, ...tableItems, ...savedItems, ...connItems].slice(0, MAX_ITEMS);
-  }, [open, query, tabs, tables, savedQueries, connections]);
+    if (!empty) {
+      for (const [mapKey, tableList] of Object.entries(tables)) {
+        const colon = mapKey.indexOf(':');
+        if (colon < 0) continue;
+        const connectionId = mapKey.slice(0, colon);
+        const schema = mapKey.slice(colon + 1);
+        const connName = connNameById.get(connectionId) ?? '';
+        for (const tbl of tableList) {
+          if (isTableViewOpenInTabs(tabs, connectionId, schema, tbl.name)) continue;
+          const r = rankCandidate(q, tbl.name, [schema, connName]);
+          if (!r) continue;
+          out.push({
+            type: 'table',
+            key: `table:${connectionId}:${schema}:${tbl.name}`,
+            label: tbl.name,
+            detail: connName ? connName : schema,
+            color: connColorById.get(connectionId) ?? FALLBACK_COLOR,
+            connectionId,
+            schema,
+            table: tbl.name,
+            score: r.score,
+            ranges: r.ranges,
+          });
+        }
+      }
+
+      for (const sq of savedQueries) {
+        if (isSavedQueryOpenInTabs(tabs, sq)) continue;
+        const r = rankCandidate(q, sq.name, [sq.connectionId ? (connNameById.get(sq.connectionId) ?? '') : '']);
+        if (!r) continue;
+        out.push({
+          type: 'saved',
+          key: `saved:${sq.id}`,
+          label: sq.name,
+          detail: sq.connectionId ? connNameById.get(sq.connectionId) : undefined,
+          color: (sq.connectionId ? connColorById.get(sq.connectionId) : undefined) ?? FALLBACK_COLOR,
+          saved: sq,
+          score: r.score,
+          ranges: r.ranges,
+        });
+      }
+    }
+
+    out.sort((a, b) => rankOf(b) - rankOf(a));
+    return out.slice(0, MAX_ITEMS);
+  }, [open, debouncedQuery, tabs, tables, savedQueries, connections]);
 
   useEffect(() => {
     if (!open) return;
@@ -213,7 +256,7 @@ export function QuickSearchDialog({
                 </span>
                 <span className="quick-search-label">
                   <span className="connection-dot" style={{ background: item.color }} />
-                  <span className="quick-search-label-text">{item.label}</span>
+                  <span className="quick-search-label-text">{highlightLabel(item.label, item.ranges)}</span>
                 </span>
                 {item.detail && <span className="quick-search-detail">{item.detail}</span>}
               </button>

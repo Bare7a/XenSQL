@@ -213,6 +213,11 @@ export const TableViewGrid = memo(function TableViewGrid({
     rowHeight,
   });
 
+  useEffect(() => {
+    const idx = focusRef.current.row;
+    if (idx != null) publishFocusedRowRef.current(idx);
+  }, [rows, focusRef, publishFocusedRowRef]);
+
   const rowIndices = useMemo(() => identityIndices(rows.length), [rows.length]);
 
   const exportResult = useMemo(
