@@ -113,8 +113,6 @@
     "saveQuery": "Save to library ({{shortcut}})",
     "updateSavedQuery": "Update saved query ({{shortcut}})",
     "renameSavedQuery": "Rename saved query ({{shortcut}})",
-    "savedQueryLinked": "Linked to saved query",
-    "savedQueryDirty": "Unsaved changes ({{shortcut}} to save)",
     "fitColumns": "Auto-fit column widths to content",
     "sort": "Sort",
     "copyFormat": "Format used for copy and export",

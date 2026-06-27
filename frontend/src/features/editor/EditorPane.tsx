@@ -1,5 +1,4 @@
 import { memo, useCallback, useMemo } from 'react';
-import { isSavedQueryTabDirty } from '@/features/editor/lib/savedQueryTab';
 import { SqlEditor } from '@/features/editor/SqlEditor';
 import type {
   ColumnInfo,
@@ -94,8 +93,6 @@ const EditorPaneTab = memo(function EditorPaneTab({
   const handleCommitTxn = useCallback(() => onCommitTxn(tabId), [onCommitTxn, tabId]);
   const handleRollbackTxn = useCallback(() => onRollbackTxn(tabId), [onRollbackTxn, tabId]);
 
-  const tabDirty = !!tab.savedQueryId && isSavedQueryTabDirty(tab);
-
   return (
     <div className={`tab-editor-layer${isActive ? ' tab-layer-active' : ''}`}>
       <SqlEditor
@@ -112,9 +109,7 @@ const EditorPaneTab = memo(function EditorPaneTab({
         isQueryRunning={isQueryRunning}
         onCancelQuery={handleCancel}
         savedQueryId={tab.savedQueryId}
-        savedQueryName={tab.savedQueryId ? tab.title : undefined}
         onSaveQuery={isActive ? onSaveQuery : undefined}
-        isSavedQueryDirty={tabDirty}
         onRenameSavedQuery={isActive && tab.savedQueryId ? onRenameSavedQuery : undefined}
         txnState={txnState}
         onBeginTxn={readOnly ? undefined : handleBeginTxn}

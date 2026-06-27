@@ -113,8 +113,6 @@
     "saveQuery": "In Bibliothek speichern ({{shortcut}})",
     "updateSavedQuery": "Gespeicherte Abfrage aktualisieren ({{shortcut}})",
     "renameSavedQuery": "Gespeicherte Abfrage umbenennen ({{shortcut}})",
-    "savedQueryLinked": "Mit gespeicherter Abfrage verknüpft",
-    "savedQueryDirty": "Ungespeicherte Änderungen ({{shortcut}} zum Speichern)",
     "fitColumns": "Spaltenbreiten automatisch anpassen",
     "sort": "Sortieren",
     "copyFormat": "Format für Kopieren und Export",

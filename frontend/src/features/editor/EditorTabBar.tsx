@@ -1,7 +1,8 @@
-import { Bookmark, Lock, Plus, Table2, X } from 'lucide-react';
+import { Lock, Plus, X } from 'lucide-react';
 import { forwardRef, memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { isSavedQueryTabDirty } from '@/features/editor/lib/savedQueryTab';
+import { iconForEditorTab } from '@/features/editor/lib/tabKindIcon';
 import { cx } from '@/shared/lib/cx';
 import type { ConnectionConfig, EditorTab } from '@/types';
 
@@ -52,6 +53,14 @@ export const EditorTabBar = memo(
           const tabReadOnly = !!conn?.readOnly;
           const tabDirty = isSavedQueryTabDirty(tab);
           const isActive = tab.id === activeTabId;
+          const TabIcon = iconForEditorTab(tab);
+          const tabKindTooltip = tab.tableView
+            ? t('tooltip.tableViewTab')
+            : tab.savedQueryId
+              ? tabDirty
+                ? t('tooltip.savedQueryTabDirty')
+                : t('tooltip.savedQueryTab')
+              : undefined;
           return (
             <div
               key={tab.id}
@@ -106,24 +115,14 @@ export const EditorTabBar = memo(
                 }
               }}
             >
-              <span className="tab-color" style={{ background: tab.color }} />
-              {tab.tableView && (
-                <span className="tab-table-wrap" data-tooltip={t('tooltip.tableViewTab')}>
-                  <Table2 className="icon-2xs tab-table-icon" strokeWidth={2.25} aria-hidden />
-                </span>
-              )}
-              {tab.savedQueryId && (
-                <span
-                  className="tab-saved-wrap"
-                  data-tooltip={tabDirty ? t('tooltip.savedQueryTabDirty') : t('tooltip.savedQueryTab')}
-                >
-                  <Bookmark
-                    className={cx('icon-2xs', 'tab-saved-icon', tabDirty && 'tab-saved-icon-dirty')}
-                    strokeWidth={2.25}
-                    aria-hidden
-                  />
-                </span>
-              )}
+              <span className="tab-kind-wrap" {...(tabKindTooltip ? { 'data-tooltip': tabKindTooltip } : {})}>
+                <TabIcon
+                  className="icon-2xs tab-kind-icon"
+                  strokeWidth={2.25}
+                  style={{ color: tab.color }}
+                  aria-hidden
+                />
+              </span>
               {tabReadOnly && (
                 <span className="tab-lock-wrap" data-tooltip={t('tooltip.readOnlyConnection')}>
                   <Lock
@@ -133,7 +132,7 @@ export const EditorTabBar = memo(
                   />
                 </span>
               )}
-              <span className="tab-title">{tab.title}</span>
+              <span className={cx('tab-title', tabDirty && 'tab-title-dirty')}>{tab.title}</span>
               <button
                 type="button"
                 className="close-btn"

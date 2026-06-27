@@ -10,8 +10,6 @@ interface Props {
   onSaveQuery?: () => void;
   onRenameSavedQuery?: () => void;
   savedQueryId?: string;
-  savedQueryName?: string;
-  isSavedQueryDirty?: boolean;
   txnState?: TxnState;
   onBeginTxn?: () => void;
   onCommitTxn?: () => void;
@@ -25,8 +23,6 @@ export function EditorToolbar({
   onSaveQuery,
   onRenameSavedQuery,
   savedQueryId,
-  savedQueryName,
-  isSavedQueryDirty,
   txnState,
   onBeginTxn,
   onCommitTxn,
@@ -147,22 +143,6 @@ export function EditorToolbar({
             </button>
           )}
         </>
-      )}
-      {savedQueryId && savedQueryName && (
-        <span
-          className={`toolbar-saved-badge ${isSavedQueryDirty ? 'toolbar-saved-badge-dirty' : ''}`}
-          data-tooltip={
-            isSavedQueryDirty
-              ? t('tooltip.savedQueryDirty', {
-                  shortcut: formatBinding(getEffectiveBinding('saveQuery')),
-                })
-              : t('tooltip.savedQueryLinked')
-          }
-        >
-          <Bookmark className="icon-xs toolbar-saved-icon" />
-          {savedQueryName}
-          {isSavedQueryDirty && <span className="toolbar-dirty-dot" aria-hidden />}
-        </span>
       )}
     </div>
   );

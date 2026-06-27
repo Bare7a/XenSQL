@@ -1,4 +1,4 @@
-import { ChevronDown, Plus } from 'lucide-react';
+import { ChevronDown, Database, Plus } from 'lucide-react';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ConnectionDialog } from '@/features/connections/ConnectionDialog';
@@ -112,11 +112,15 @@ export function ConnectionSwitcher({ onConnected, onOpenConnectionTab }: Props) 
       >
         {hasConnections && current ? (
           <>
-            <span className="connection-dot" style={{ background: current.color }} />
+            <Database className="icon-sm connection-switcher-icon" style={{ color: current.color }} aria-hidden />
             <span className="connection-switcher-name" data-testid="connection-switcher-name">
               {current.name}
             </span>
-            {isConnected && <span className="connection-switcher-pip" aria-hidden />}
+            <span
+              className={cx('connection-status-dot', isConnected && 'is-connected')}
+              data-tooltip={isConnected ? t('sidebar.connectedLabel') : t('sidebar.notConnected')}
+              aria-hidden
+            />
             <ChevronDown className="icon-xs connection-switcher-caret" aria-hidden />
           </>
         ) : (

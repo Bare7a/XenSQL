@@ -1,10 +1,10 @@
 {
 	"fixed": {
-		"file_version": "1.2.8"
+		"file_version": "1.3.0"
 	},
 	"info": {
 		"0000": {
-			"ProductVersion": "1.2.8",
+			"ProductVersion": "1.3.0",
 			"CompanyName": "Bare7a",
 			"FileDescription": "A fast, native SQL client built with Go, Wails and React.",
 			"LegalCopyright": "(c) 2026, Bare7a",
