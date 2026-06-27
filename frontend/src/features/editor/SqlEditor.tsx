@@ -57,8 +57,6 @@ interface Props {
   onSaveQuery?: () => void;
   onRenameSavedQuery?: () => void;
   savedQueryId?: string;
-  savedQueryName?: string;
-  isSavedQueryDirty?: boolean;
   txnState?: TxnState;
   onBeginTxn?: () => void;
   onCommitTxn?: () => void;
@@ -84,8 +82,6 @@ export const SqlEditor = memo(function SqlEditor({
   onSaveQuery,
   onRenameSavedQuery,
   savedQueryId,
-  savedQueryName,
-  isSavedQueryDirty,
   txnState,
   onBeginTxn,
   onCommitTxn,
@@ -336,8 +332,6 @@ export const SqlEditor = memo(function SqlEditor({
         onSaveQuery={onSaveQuery}
         onRenameSavedQuery={onRenameSavedQuery}
         savedQueryId={savedQueryId}
-        savedQueryName={savedQueryName}
-        isSavedQueryDirty={isSavedQueryDirty}
         txnState={txnState}
         onBeginTxn={onBeginTxn}
         onCommitTxn={onCommitTxn}

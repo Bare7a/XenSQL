@@ -8,6 +8,22 @@
   font-size: var(--text-md);
   border-radius: var(--radius);
   cursor: pointer;
+  position: relative;
+}
+
+.connection-item::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: var(--space-5);
+  bottom: var(--space-5);
+  width: var(--space-3);
+  border-radius: 0 var(--radius-xs) var(--radius-xs) 0;
+  background: var(--danger);
+}
+
+.connection-item.is-connected::before {
+  background: var(--success);
 }
 
 .connection-item.dragging {
@@ -19,7 +35,6 @@
 }
 
 .connection-item-name {
-  flex: 1;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -72,14 +87,6 @@
   font-weight: 600;
 }
 
-.connection-switcher-pip {
-  width: var(--space-7);
-  height: var(--space-7);
-  border-radius: 50%;
-  background: var(--success);
-  flex-shrink: 0;
-}
-
 .connection-switcher-caret {
   color: var(--text-muted);
   flex-shrink: 0;
@@ -115,33 +122,21 @@
 }
 
 .connection-item-hover-actions {
-  display: inline-flex;
+  display: none;
   align-items: center;
   gap: var(--space-3);
   flex-shrink: 0;
-  opacity: 0;
-  transition: opacity 0.1s ease;
 }
 
 .connection-item:hover .connection-item-hover-actions,
 .connection-item:focus .connection-item-hover-actions,
 .connection-item:focus-within .connection-item-hover-actions {
-  opacity: 1;
+  display: inline-flex;
 }
 
-.connection-item {
-  position: relative;
-}
-
-.connection-item::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  top: var(--space-5);
-  bottom: var(--space-5);
-  width: var(--space-3);
-  border-radius: 0 var(--radius-xs) var(--radius-xs) 0;
-  background: var(--conn-color, transparent);
+.connection-item-icon,
+.connection-switcher-icon {
+  flex-shrink: 0;
 }
 
 .connection-status-dot {
@@ -149,13 +144,11 @@
   height: var(--space-7);
   border-radius: 50%;
   flex-shrink: 0;
-  background: var(--text-muted);
-  opacity: 0.45;
+  background: var(--danger);
 }
 
 .connection-status-dot.is-connected {
   background: var(--success);
-  opacity: 1;
 }
 
 .connection-folder {

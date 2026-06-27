@@ -1,7 +1,7 @@
-import { Bookmark, Database, File, type LucideIcon, Table2 } from 'lucide-react';
 import { type ReactNode, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { isSavedQueryOpenInTabs } from '@/features/editor/lib/savedQueryTab';
+import { iconForEditorTab, iconForQuickSearchKind } from '@/features/editor/lib/tabKindIcon';
 import { isTableViewOpenInTabs } from '@/features/table-view/lib/tableViewTab';
 import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue';
 import { rankCandidate } from '@/shared/lib/fuzzyMatch';
@@ -49,12 +49,6 @@ const FALLBACK_COLOR = 'var(--text-muted)';
 const CATEGORY_BIAS = { tab: 100, table: 70, saved: 40, conn: 10 } as const;
 const rankOf = (item: QuickItem) => item.score + CATEGORY_BIAS[item.type];
 
-const TYPE_ICON: Record<QuickItem['type'], LucideIcon> = {
-  tab: File,
-  table: Table2,
-  saved: Bookmark,
-  conn: Database,
-};
 const KIND_KEY: Record<QuickItem['type'], string> = {
   tab: 'quickSearch.kindTab',
   table: 'quickSearch.kindTable',
@@ -62,10 +56,9 @@ const KIND_KEY: Record<QuickItem['type'], string> = {
   conn: 'quickSearch.kindConnection',
 };
 
-function iconForItem(item: QuickItem): LucideIcon {
-  if (item.type === 'tab' && item.tab.tableView) return TYPE_ICON.table;
-  if (item.type === 'tab' && item.tab.savedQueryId) return TYPE_ICON.saved;
-  return TYPE_ICON[item.type];
+function iconForItem(item: QuickItem) {
+  if (item.type === 'tab') return iconForEditorTab(item.tab);
+  return iconForQuickSearchKind(item.type);
 }
 
 function highlightLabel(text: string, ranges: [number, number][]): ReactNode {

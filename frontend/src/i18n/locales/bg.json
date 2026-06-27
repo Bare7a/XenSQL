@@ -113,8 +113,6 @@
     "saveQuery": "Запази в библиотеката ({{shortcut}})",
     "updateSavedQuery": "Обнови запазената заявка ({{shortcut}})",
     "renameSavedQuery": "Преименувай запазената заявка ({{shortcut}})",
-    "savedQueryLinked": "Свързано със запазена заявка",
-    "savedQueryDirty": "Незапазени промени ({{shortcut}} за запазване)",
     "fitColumns": "Автоматично оразмеряване на колоните",
     "sort": "Сортиране",
     "copyFormat": "Формат за копиране и експорт",

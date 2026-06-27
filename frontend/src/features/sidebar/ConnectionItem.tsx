@@ -1,5 +1,5 @@
-import { Edit2, Plug, Trash2, Unplug } from 'lucide-react';
-import type { CSSProperties, DragEventHandler } from 'react';
+import { Database, Edit2, Plug, Trash2, Unplug } from 'lucide-react';
+import type { DragEventHandler } from 'react';
 import { useTranslation } from 'react-i18next';
 import { rowActivateKeyDown } from '@/shared/hooks/useListKeyboardNav';
 import { connectionSubtitle } from '@/shared/lib/connectionLabel';
@@ -46,8 +46,13 @@ export function ConnectionItem({
   const { t } = useTranslation();
   return (
     <div
-      className={cx('connection-item', isSelected && 'active', isDragging && 'dragging', isDropTarget && 'drag-over')}
-      style={{ '--conn-color': conn.color } as CSSProperties}
+      className={cx(
+        'connection-item',
+        isSelected && 'active',
+        isConnected && 'is-connected',
+        isDragging && 'dragging',
+        isDropTarget && 'drag-over',
+      )}
       role="button"
       tabIndex={0}
       data-testid="connection-item"
@@ -59,10 +64,7 @@ export function ConnectionItem({
       onContextMenu={onContextMenu}
       {...dragProps}
     >
-      <span
-        className={cx('connection-status-dot', isConnected && 'is-connected')}
-        data-tooltip={isConnected ? t('sidebar.connectedLabel') : t('sidebar.notConnected')}
-      />
+      <Database className="icon-sm connection-item-icon" style={{ color: conn.color }} aria-hidden />
       <span className="connection-item-main">
         <span className="connection-item-name">{conn.name}</span>
         <span className="connection-item-sub">{connectionSubtitle(conn)}</span>
