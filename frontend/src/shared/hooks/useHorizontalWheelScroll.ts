@@ -1,7 +1,8 @@
 import { type RefObject, useEffect } from 'react';
 
-export function useHorizontalWheelScroll(ref: RefObject<HTMLElement | null>) {
+export function useHorizontalWheelScroll(ref: RefObject<HTMLElement | null>, enabled = true) {
   useEffect(() => {
+    if (!enabled) return;
     const el = ref.current;
     if (!el) return;
 
@@ -20,5 +21,5 @@ export function useHorizontalWheelScroll(ref: RefObject<HTMLElement | null>) {
 
     el.addEventListener('wheel', onWheel, { passive: false });
     return () => el.removeEventListener('wheel', onWheel);
-  }, [ref]);
+  }, [ref, enabled]);
 }
