@@ -1,38 +1,86 @@
 /* Left sidebar shell: tabs, filters, entries, history, group headers. */
 
+/* Stacked content column inside a saved/history row. */
+.sidebar-entry-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.sidebar-entry-head {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-6);
+  min-width: 0;
+}
+
 .sidebar-entry-meta {
   font-size: var(--text-2xs);
+  color: var(--text-muted);
 }
 
-.sidebar-entry-meta--success {
-  color: var(--success);
-}
-
-.sidebar-entry-meta--danger {
-  color: var(--danger);
-}
-
+/* Saved-query name: one line, ellipsis — never wraps the row tall. */
 .sidebar-entry-title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   font-weight: 600;
   font-size: var(--text-sm);
 }
 
-.sidebar-entry-sub {
+.sidebar-entry-conn {
+  flex-shrink: 0;
+  max-width: 45%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   font-size: var(--text-2xs);
   color: var(--text-muted);
-  margin-left: var(--space-6);
 }
 
+/* SQL preview: clamped to a fixed number of lines so every row is uniform
+   height and long statements no longer shatter mid-word (no break-all). */
 .sidebar-entry-sql {
-  display: block;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
   font-family: var(--font-mono);
   font-size: var(--text-xs);
-  opacity: 0.8;
-  word-break: break-all;
+  line-height: 1.45;
+  color: var(--text-muted);
+  overflow-wrap: anywhere;
 }
 
-.sidebar-entry-sql--spaced {
-  margin-top: var(--space-2);
+/* Saved: the name leads, so a single SQL line of context is enough. */
+.saved-item .sidebar-entry-sql {
+  -webkit-line-clamp: 1;
+}
+
+/* Recent: the SQL is the row's identity, so give it the primary text colour. */
+.history-entry .sidebar-entry-sql {
+  color: var(--text);
+}
+
+/* Per-row run status (Recent), aligned to the first SQL line. */
+.history-status {
+  flex-shrink: 0;
+  width: var(--space-6);
+  height: var(--space-6);
+  margin-top: var(--space-6);
+  border-radius: var(--radius-pill);
+  background: var(--text-muted);
+}
+
+.history-status--success {
+  background: var(--success);
+}
+
+.history-status--danger {
+  background: var(--danger);
 }
 
 .sidebar {
@@ -133,15 +181,6 @@
   color: var(--on-accent);
 }
 
-.history-item .btn {
-  flex-shrink: 0;
-  opacity: 0.5;
-}
-
-.history-item:hover .btn {
-  opacity: 1;
-}
-
 .sidebar-connections-toolbar {
   display: flex;
   align-items: center;
@@ -199,32 +238,58 @@
   color: var(--text-muted);
 }
 
+/* Row actions overlay the trailing edge (zero layout space until revealed), so
+   the content column always uses the full row width. The gradient masks the
+   content tail behind the buttons; matched to the hover/focus row background. */
 .history-item-actions {
+  position: absolute;
+  top: var(--space-4);
+  right: var(--space-4);
   display: inline-flex;
-  align-items: flex-start;
+  align-items: center;
   gap: var(--space-2);
-  flex-shrink: 0;
+  padding-left: var(--space-20);
+  background: linear-gradient(to right, transparent, var(--bg-hover) var(--space-16));
   opacity: 0;
+  pointer-events: none;
   transition: opacity 0.1s ease;
 }
 
-.history-item:hover .history-item-actions,
-.history-item:focus .history-item-actions,
-.history-item:focus-within .history-item-actions {
-  opacity: 1;
+.history-item:hover,
+.history-item:focus-within {
+  background: var(--bg-hover);
 }
 
+.history-item:hover .history-item-actions,
+.history-item:focus-within .history-item-actions {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Ghost icon buttons that sit cleanly on the gradient. */
 .history-item-actions .btn {
   opacity: 1;
+  padding: var(--space-3) var(--space-5);
+  background: transparent;
+  border-color: transparent;
+  color: var(--text-muted);
+}
+
+.history-item-actions .btn:hover {
+  background: var(--bg-elevated);
+  border-color: var(--border);
+  color: var(--text);
 }
 
 .sidebar-entry-error {
-  display: block;
-  margin-top: var(--space-2);
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 1;
+  overflow: hidden;
   font-family: var(--font-mono);
   font-size: var(--text-2xs);
   color: var(--danger);
-  word-break: break-all;
+  overflow-wrap: anywhere;
 }
 
 .sidebar-pin-icon {

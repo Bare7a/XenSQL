@@ -290,7 +290,7 @@ export function SavedQueriesPanel({ onOpenSavedQuery }: SavedQueriesPanelProps) 
             return (
               <div
                 key={item.id || `saved-${i}`}
-                className="tree-item history-item"
+                className="tree-item history-item saved-item"
                 role="button"
                 tabIndex={0}
                 data-nav-item
@@ -298,13 +298,15 @@ export function SavedQueriesPanel({ onOpenSavedQuery }: SavedQueriesPanelProps) 
                 onKeyDown={rowActivateKeyDown}
                 onContextMenu={(e) => openRowMenu(e, item)}
               >
-                <div className="flex-1">
-                  <span className="sidebar-entry-title">
-                    {pinnedNow && <Pin className="sidebar-pin-icon" aria-hidden />}
-                    {item.name}
-                  </span>
-                  {conn && scope === 'all' && <span className="sidebar-entry-sub">{conn.name}</span>}
-                  <span className="sidebar-entry-sql sidebar-entry-sql--spaced">{oneLinePreview(item.sql)}</span>
+                <div className="flex-1 sidebar-entry-body">
+                  <div className="sidebar-entry-head">
+                    <span className="sidebar-entry-title">
+                      {pinnedNow && <Pin className="sidebar-pin-icon" aria-hidden />}
+                      {item.name}
+                    </span>
+                    {conn && scope === 'all' && <span className="sidebar-entry-conn">{conn.name}</span>}
+                  </div>
+                  <span className="sidebar-entry-sql">{oneLinePreview(item.sql)}</span>
                 </div>
                 <span className="history-item-actions">
                   <button
