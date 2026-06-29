@@ -48,6 +48,7 @@ export const useStoreActions = () =>
       addTab: s.addTab,
       updateTab: s.updateTab,
       closeTab: s.closeTab,
+      reopenClosedTab: s.reopenClosedTab,
       updateTabSession: s.updateTabSession,
       setRunningTab: s.setRunningTab,
       setHistory: s.setHistory,

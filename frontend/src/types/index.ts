@@ -203,6 +203,20 @@ export const emptyTableViewPending = (): TableViewPendingState => ({
   deletes: [],
 });
 
+export const tableViewStateFrom = (tv: NonNullable<EditorTab['tableView']>): TableViewSessionState => ({
+  schema: tv.schema,
+  table: tv.table,
+  filter: tv.filter ?? '',
+  orderBy: tv.orderBy ?? null,
+  orderDir: tv.orderDir ?? 'ASC',
+  rows: [],
+  columns: [],
+  columnTypes: [],
+  primaryKeys: [],
+  hasMore: false,
+  pending: emptyTableViewPending(),
+});
+
 export interface HistoryEntry {
   id: string;
   connectionId: string;

@@ -13,7 +13,9 @@ import type {
   TableInfo,
   TabSessionState,
 } from '@/types';
-import { emptyTabSession } from '@/types';
+import { emptyTabSession, tableViewStateFrom } from '@/types';
+
+const CLOSED_TABS_LIMIT = 10;
 
 // Stream ids are monotonic decimal counters; compare numerically (lexical "9" > "10" would be wrong).
 function streamIdLessThan(a: string, b: string): boolean {
@@ -63,6 +65,7 @@ interface AppState {
   tabs: EditorTab[];
   activeTabId: string | null;
   tabSession: Record<string, TabSessionState>;
+  closedTabs: EditorTab[];
   runningTabId: string | null;
   history: HistoryEntry[];
   savedQueries: SavedQuery[];
@@ -81,6 +84,7 @@ interface AppState {
   addTab: (tab: EditorTab) => void;
   updateTab: (id: string, patch: Partial<EditorTab>) => void;
   closeTab: (id: string) => void;
+  reopenClosedTab: () => void;
   updateTabSession: (id: string, patch: Partial<TabSessionState>) => void;
   /** Begins a result set (meta event). A higher streamId starts a fresh run, resetting results. */
   startResultSet: (
@@ -132,6 +136,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   tabs: [],
   activeTabId: null,
   tabSession: {},
+  closedTabs: [],
   runningTabId: null,
   history: [],
   savedQueries: [],
@@ -181,6 +186,17 @@ export const useAppStore = create<AppState>((set, get) => ({
       tabs: s.tabs.map((t) => (t.id === id ? { ...t, ...patch } : t)),
     })),
   closeTab: (id) => {
+    const existing = get().tabs.find((t) => t.id === id);
+    let closed = existing;
+    if (existing?.tableView) {
+      const live = get().tabSession[id]?.tableViewState;
+      if (live) {
+        closed = {
+          ...existing,
+          tableView: { ...existing.tableView, filter: live.filter, orderBy: live.orderBy, orderDir: live.orderDir },
+        };
+      }
+    }
     const tabs = get().tabs.filter((t) => t.id !== id);
     let activeTabId = get().activeTabId;
     if (activeTabId === id) {
@@ -189,7 +205,25 @@ export const useAppStore = create<AppState>((set, get) => ({
     const tabSession = { ...get().tabSession };
     delete tabSession[id];
     const runningTabId = get().runningTabId === id ? null : get().runningTabId;
-    set({ tabs, activeTabId, tabSession, runningTabId });
+    const closedTabs = closed ? [...get().closedTabs, closed].slice(-CLOSED_TABS_LIMIT) : get().closedTabs;
+    set({ tabs, activeTabId, tabSession, runningTabId, closedTabs });
+  },
+  reopenClosedTab: () => {
+    const closedTabs = [...get().closedTabs];
+    const tab = closedTabs.pop();
+    if (!tab) return;
+    set({
+      tabs: [...get().tabs, tab],
+      activeTabId: tab.id,
+      selectedConnectionId: tab.connectionId,
+      closedTabs,
+    });
+    if (tab.tableView) {
+      get().updateTabSession(tab.id, {
+        tableViewState: tableViewStateFrom(tab.tableView),
+        dataBrowser: { schema: tab.tableView.schema, table: tab.tableView.table },
+      });
+    }
   },
   // Guard: stream:done after closeTab would otherwise resurrect the session and pin result rows
   updateTabSession: (id, patch) =>

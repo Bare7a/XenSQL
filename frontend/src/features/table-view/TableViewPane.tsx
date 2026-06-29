@@ -12,7 +12,7 @@ import { appError } from '@/shared/lib/appDialog';
 import { appToast } from '@/shared/lib/appToast';
 import { useAppStore } from '@/store/appStore';
 import type { DriverType, EditorTab, TableViewPendingState, TableViewSessionState } from '@/types';
-import { emptyTableViewPending } from '@/types';
+import { emptyTableViewPending, tableViewStateFrom } from '@/types';
 
 const sameStrings = (a: string[], b: string[]) => a.length === b.length && a.every((v, i) => v === b[i]);
 
@@ -29,19 +29,7 @@ interface Props {
 }
 
 function emptyTableViewState(schema: string, table: string): TableViewSessionState {
-  return {
-    schema,
-    table,
-    filter: '',
-    orderBy: null,
-    orderDir: 'ASC',
-    rows: [],
-    columns: [],
-    columnTypes: [],
-    primaryKeys: [],
-    hasMore: false,
-    pending: emptyTableViewPending(),
-  };
+  return tableViewStateFrom({ schema, table });
 }
 
 export function TableViewPane({ tab, driver, readOnly, isActive, running, onFocusedRowChange }: Props) {
@@ -67,6 +55,7 @@ export function TableViewPane({ tab, driver, readOnly, isActive, running, onFocu
   const notifyFocusedRow = useCallback((row: Record<string, unknown> | null) => onFocusedRowChangeRef.current(row), []);
 
   const state = session ?? emptyTableViewState(tv.schema, tv.table);
+  const effectiveOrderBy = state.orderBy ?? state.primaryKeys[0] ?? state.columns[0] ?? null;
 
   const persistState = useCallback(
     (patch: Partial<TableViewSessionState>) => {
@@ -273,7 +262,7 @@ export function TableViewPane({ tab, driver, readOnly, isActive, running, onFocu
   // Wrapped in useCallback so memo(TableViewGrid) holds across parent-only re-renders.
   const handleSortChange = useCallback(
     (col: string) => {
-      const nextDir: TableSortDir = state.orderBy === col && state.orderDir === 'ASC' ? 'DESC' : 'ASC';
+      const nextDir: TableSortDir = effectiveOrderBy === col && state.orderDir === 'ASC' ? 'DESC' : 'ASC';
       void fetchPage({
         offset: 0,
         replace: true,
@@ -282,7 +271,7 @@ export function TableViewPane({ tab, driver, readOnly, isActive, running, onFocu
         discardPending: true,
       });
     },
-    [state.orderBy, state.orderDir, fetchPage],
+    [effectiveOrderBy, state.orderDir, fetchPage],
   );
 
   const handleLoadMore = useCallback(() => {
@@ -489,7 +478,7 @@ export function TableViewPane({ tab, driver, readOnly, isActive, running, onFocu
             pending={state.pending}
             tableName={tableName}
             readOnly={readOnly}
-            orderBy={state.orderBy}
+            orderBy={effectiveOrderBy}
             orderDir={state.orderDir}
             loading={running || applying}
             hasMore={state.hasMore && !hasPending}
