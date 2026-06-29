@@ -1,6 +1,8 @@
 // biome-ignore-all lint/suspicious/noArrayIndexKey: result-set tabs are positional ("Result 1..N"), rebuilt wholesale on each run and never reordered, so the array index is the stable identity.
 import { CircleAlert } from 'lucide-react';
+import { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useHorizontalWheelScroll } from '@/shared/hooks/useHorizontalWheelScroll';
 import type { ResultSet } from '@/types';
 
 interface Props {
@@ -13,9 +15,13 @@ interface Props {
 // or a stored procedure returning several sets). Hidden for the common single-result case.
 export function ResultTabs({ results, activeIndex, onSelect }: Props) {
   const { t } = useTranslation();
-  if (results.length <= 1) return null;
+  const tabsRef = useRef<HTMLDivElement>(null);
+  const showTabs = results.length > 1;
+  useHorizontalWheelScroll(tabsRef, showTabs);
+
+  if (!showTabs) return null;
   return (
-    <div className="result-tabs" role="tablist">
+    <div ref={tabsRef} className="result-tabs" role="tablist">
       {results.map((rs, i) => {
         const isActive = i === activeIndex;
         const count = rs.error
