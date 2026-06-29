@@ -7,6 +7,7 @@
 }
 
 .results-pane {
+  min-width: 0;
   flex-shrink: 0;
   min-height: 9.231rem;
   border-top: 1px solid var(--border);
@@ -24,12 +25,19 @@
   overflow: hidden;
 }
 
+.results-pane .tab-results-layer {
+  min-width: 0;
+}
+
 .result-tabs {
   display: flex;
   align-items: stretch;
   flex-shrink: 0;
+  min-width: 0;
   border-bottom: 1px solid var(--border);
   overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: thin;
 }
 
 .result-tab {

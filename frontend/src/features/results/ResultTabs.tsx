@@ -1,7 +1,26 @@
 // biome-ignore-all lint/suspicious/noArrayIndexKey: result-set tabs are positional ("Result 1..N"), rebuilt wholesale on each run and never reordered, so the array index is the stable identity.
 import { CircleAlert } from 'lucide-react';
+import { useCallback, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { ResultSet } from '@/types';
+
+function bindHorizontalWheelScroll(el: HTMLElement) {
+  const onWheel = (e: WheelEvent) => {
+    if (el.scrollWidth <= el.clientWidth + 1) return;
+
+    const delta = e.deltaY !== 0 ? e.deltaY : e.deltaX;
+    if (delta === 0) return;
+
+    const max = el.scrollWidth - el.clientWidth;
+    const next = Math.max(0, Math.min(max, el.scrollLeft + delta));
+    if (next === el.scrollLeft) return;
+    e.preventDefault();
+    el.scrollLeft = next;
+  };
+
+  el.addEventListener('wheel', onWheel, { passive: false });
+  return () => el.removeEventListener('wheel', onWheel);
+}
 
 interface Props {
   results: ResultSet[];
@@ -13,9 +32,16 @@ interface Props {
 // or a stored procedure returning several sets). Hidden for the common single-result case.
 export function ResultTabs({ results, activeIndex, onSelect }: Props) {
   const { t } = useTranslation();
+  const wheelCleanupRef = useRef<(() => void) | null>(null);
+  const tabsRef = useCallback((el: HTMLDivElement | null) => {
+    wheelCleanupRef.current?.();
+    wheelCleanupRef.current = el ? bindHorizontalWheelScroll(el) : null;
+  }, []);
+  useEffect(() => () => wheelCleanupRef.current?.(), []);
+
   if (results.length <= 1) return null;
   return (
-    <div className="result-tabs" role="tablist">
+    <div ref={tabsRef} className="result-tabs" role="tablist">
       {results.map((rs, i) => {
         const isActive = i === activeIndex;
         const count = rs.error
