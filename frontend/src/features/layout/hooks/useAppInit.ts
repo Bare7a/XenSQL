@@ -3,7 +3,7 @@ import { api } from '@/shared/lib/api';
 import { refreshSavedQueries } from '@/shared/lib/savedQueriesSync';
 import { useAppStore } from '@/store/appStore';
 import type { EditorTab } from '@/types';
-import { emptyTableViewPending } from '@/types';
+import { tableViewStateFrom } from '@/types';
 
 function normalizeRestoredTabs(tabs: EditorTab[]): EditorTab[] {
   return tabs.map((t) => ({
@@ -18,19 +18,7 @@ function initTableViewTabSession(tab: EditorTab): void {
   if (!tv) return;
   const { updateTabSession } = useAppStore.getState();
   updateTabSession(tab.id, {
-    tableViewState: {
-      schema: tv.schema,
-      table: tv.table,
-      filter: tv.filter ?? '',
-      orderBy: tv.orderBy ?? null,
-      orderDir: tv.orderDir ?? 'ASC',
-      rows: [],
-      columns: [],
-      columnTypes: [],
-      primaryKeys: [],
-      hasMore: false,
-      pending: emptyTableViewPending(),
-    },
+    tableViewState: tableViewStateFrom(tv),
     dataBrowser: { schema: tv.schema, table: tv.table },
     result: null,
     resultError: null,

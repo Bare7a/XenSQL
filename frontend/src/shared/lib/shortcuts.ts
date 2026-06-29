@@ -59,6 +59,12 @@ export const APP_SHORTCUTS: ShortcutDef[] = [
     defaultBinding: { key: 'w', ctrl: true },
   },
   {
+    id: 'reopenClosedTab',
+    category: 'tabs',
+    scope: 'global',
+    defaultBinding: { key: 't', ctrl: true, shift: true },
+  },
+  {
     id: 'nextTab',
     category: 'tabs',
     scope: 'global',

@@ -250,6 +250,7 @@ Every shortcut is remappable in the in-app shortcuts editor.
 | Save query | `Ctrl/⌘ + S` |
 | Rename saved query | `F2` |
 | New / close tab | `Ctrl/⌘ + T` / `Ctrl/⌘ + W` |
+| Reopen closed tab | `Ctrl/⌘ + Shift + T` |
 | Next / previous tab | `Ctrl/⌘ + Tab` / `Ctrl/⌘ + Shift + Tab` |
 | Toggle sidebar / JSON panel | `Ctrl/⌘ + B` / `Ctrl/⌘ + J` |
 | Zoom in / out / reset | `Ctrl/⌘ + =` / `Ctrl/⌘ + -` / `Ctrl/⌘ + 0` |

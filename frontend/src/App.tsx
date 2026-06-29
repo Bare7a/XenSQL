@@ -78,7 +78,8 @@ function App() {
   const schemas = useSchemas();
   const tables = useTablesMap();
   const savedQueries = useSavedQueries();
-  const { updateTab, closeTab, setActiveTab, updateTabSession, setSelectedConnection, reorderTabs } = useStoreActions();
+  const { updateTab, closeTab, reopenClosedTab, setActiveTab, updateTabSession, setSelectedConnection, reorderTabs } =
+    useStoreActions();
 
   const [dragTabId, setDragTabId] = useState<string | null>(null);
   const [dropTabId, setDropTabId] = useState<string | null>(null);
@@ -267,6 +268,7 @@ function App() {
     closeTab: () => {
       if (activeTabId) handleCloseTab(activeTabId);
     },
+    reopenClosedTab,
     newTab: handleNewTabShortcut,
     quickSearch: () => setQuickSearchOpen(true),
     toggleSidebar: sidebarVisible.toggle,
@@ -284,9 +286,10 @@ function App() {
       if (action === 'tips') setTipsOpen(true);
       if (action === 'newTab') handleNewTabShortcut();
       if (action === 'closeTab' && activeTabId) handleCloseTab(activeTabId);
+      if (action === 'reopenClosedTab') reopenClosedTab();
       if (action === 'quickSearch') setQuickSearchOpen(true);
     },
-    [handleNewTabShortcut, handleCloseTab, activeTabId],
+    [handleNewTabShortcut, handleCloseTab, reopenClosedTab, activeTabId],
   );
 
   const handleChangeSql = useCallback((tabId: string, sql: string) => updateTab(tabId, { sql }), [updateTab]);

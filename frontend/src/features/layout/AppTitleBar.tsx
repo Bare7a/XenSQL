@@ -7,7 +7,7 @@ import { type EditAction, runEditAction } from '@/features/layout/lib/editAction
 import { ViewMenuContent } from '@/features/layout/ViewMenuContent';
 import { formatBinding, getEffectiveBinding, type KeyBinding } from '@/shared/lib/shortcuts';
 
-export type AppMenuAction = 'about' | 'shortcuts' | 'tips' | 'newTab' | 'closeTab' | 'quickSearch';
+export type AppMenuAction = 'about' | 'shortcuts' | 'tips' | 'newTab' | 'closeTab' | 'reopenClosedTab' | 'quickSearch';
 
 const HELP_ITEMS: { id: AppMenuAction; labelKey: string }[] = [
   { id: 'tips', labelKey: 'menu.keyboardTips' },
@@ -22,6 +22,7 @@ type FileMenuRow =
 const FILE_MENU_ROWS: FileMenuRow[] = [
   { id: 'newTab', labelKey: 'menu.newTab', bindingId: 'newTab' },
   { id: 'closeTab', labelKey: 'menu.closeTab', bindingId: 'closeTab' },
+  { id: 'reopenClosedTab', labelKey: 'menu.reopenClosedTab', bindingId: 'reopenClosedTab' },
   { separator: true, id: 'file-sep-1' },
   { id: 'quickSearch', labelKey: 'menu.quickSearch', bindingId: 'quickSearch' },
   { separator: true, id: 'file-sep-2' },
