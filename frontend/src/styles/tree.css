@@ -15,6 +15,7 @@
 }
 
 .tree-item {
+  position: relative;
   display: flex;
   align-items: center;
   gap: var(--space-4);
@@ -24,7 +25,8 @@
   font-size: var(--text-md);
 }
 
-.tree-item:hover {
+.tree-item:hover,
+.tree-item--table:focus-within {
   background: var(--bg-hover);
 }
 
@@ -98,27 +100,46 @@
   background: color-mix(in srgb, var(--warning) 12%, transparent);
 }
 
+/* Overlaid at the row's trailing edge so it occupies no layout space: the table
+   name spans the full width until the row is hovered/focused, then the action
+   fades in over its truncated tail (gradient masks the seam). */
 .tree-row-action {
+  position: absolute;
+  top: 50%;
+  right: var(--space-4);
+  transform: translateY(-50%);
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  flex-shrink: 0;
-  padding: var(--space-1) var(--space-3);
+  padding: var(--space-3) var(--space-4);
   color: var(--text-muted);
+  background: var(--bg-hover);
   border-radius: var(--radius-sm);
   opacity: 0;
+  pointer-events: none;
   transition: opacity 0.1s ease;
 }
 
+.tree-row-action::before {
+  content: "";
+  position: absolute;
+  right: 100%;
+  top: 0;
+  bottom: 0;
+  width: var(--space-16);
+  background: linear-gradient(to right, transparent, var(--bg-hover));
+  pointer-events: none;
+}
+
 .tree-item--table:hover .tree-row-action,
-.tree-item--table:focus .tree-row-action,
 .tree-item--table:focus-within .tree-row-action {
   opacity: 1;
+  pointer-events: auto;
 }
 
 .tree-row-action:hover {
   color: var(--text);
-  background: var(--bg-hover);
+  background: var(--bg-elevated);
 }
 
 .tree-column--clickable {

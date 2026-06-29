@@ -231,7 +231,7 @@ export function HistoryPanel({ onOpenQuery }: HistoryPanelProps) {
               <div key={entry.id || `history-${idx}`}>
                 {showHeader && <div className="sidebar-group-header">{t(BUCKET_LABEL[bucket])}</div>}
                 <div
-                  className="tree-item history-item"
+                  className="tree-item history-item history-entry"
                   role="button"
                   tabIndex={0}
                   data-nav-item
@@ -239,9 +239,14 @@ export function HistoryPanel({ onOpenQuery }: HistoryPanelProps) {
                   onKeyDown={rowActivateKeyDown}
                   onContextMenu={(e) => openRowMenu(e, entry.connectionId, entry.sql ?? '', entry.id)}
                 >
-                  <div className="flex-1">
+                  <span
+                    className={`history-status ${entry.success ? 'history-status--success' : 'history-status--danger'}`}
+                    aria-hidden
+                  />
+                  <div className="flex-1 sidebar-entry-body">
+                    <span className="sidebar-entry-sql">{oneLinePreview(entry.sql)}</span>
                     <span
-                      className={`sidebar-entry-meta${entry.success ? ' sidebar-entry-meta--success' : ' sidebar-entry-meta--danger'}`}
+                      className="sidebar-entry-meta"
                       data-tooltip={entry.executedAt ? new Date(entry.executedAt).toLocaleString() : undefined}
                     >
                       {entry.executedAt ? formatRelativeTime(entry.executedAt, i18n.language) : ''}
@@ -249,7 +254,6 @@ export function HistoryPanel({ onOpenQuery }: HistoryPanelProps) {
                       {entry.durationMs}ms
                       {conn && scope === 'all' ? ` · ${conn.name}` : ''}
                     </span>
-                    <span className="sidebar-entry-sql">{oneLinePreview(entry.sql)}</span>
                     {!entry.success && entry.error && (
                       <span className="sidebar-entry-error">{oneLinePreview(entry.error, 100)}</span>
                     )}
