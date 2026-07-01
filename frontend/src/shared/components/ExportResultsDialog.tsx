@@ -95,7 +95,7 @@ export function ExportResultsDialog({
       const text = runExport();
       const meta = EXPORT_FORMATS.find((f) => f.id === format);
       if (!meta) return;
-      const path = await api.pickExportSavePath(meta.ext);
+      const path = await api.pickExportSavePath(meta.ext).catch(() => '');
       if (!path) return;
       await api.saveTextFile(path, text);
       const fileName = path.split(/[/\\]/).pop() ?? path;

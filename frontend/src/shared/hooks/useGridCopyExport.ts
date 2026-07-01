@@ -142,7 +142,7 @@ export function useGridCopyExport(inputs: CopyExportInputs): GridCopyExport {
 
     setExportBusy(true);
     try {
-      const path = await api.pickExportSavePath(meta.ext);
+      const path = await api.pickExportSavePath(meta.ext).catch(() => '');
       if (!path) return;
       await api.saveTextFile(path, text);
       appToast.success(t('toast.savedFile', { fileName: path.split(/[/\\]/).pop() ?? path }));
