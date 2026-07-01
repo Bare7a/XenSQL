@@ -44,8 +44,14 @@
 .error-state-body {
   display: flex;
   flex-direction: column;
-  gap: var(--space-4);
+  gap: var(--space-6);
   min-width: 0;
+}
+
+.error-state-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
 }
 
 .error-state-title {
@@ -53,6 +59,56 @@
   font-size: var(--text-md);
   font-weight: 600;
   color: var(--danger);
+}
+
+.error-state-code {
+  flex-shrink: 0;
+  padding: 0 var(--space-6);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--danger);
+  background: color-mix(in srgb, var(--danger) 14%, transparent);
+  border-radius: var(--radius-sm);
+}
+
+.error-state-meta {
+  margin: 0;
+  max-height: 20vh;
+  overflow: auto;
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+  white-space: pre-wrap;
+  word-break: break-word;
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+.error-state-meta-label {
+  font-weight: 600;
+  color: var(--text);
+}
+
+.error-state-hint .error-state-meta-label {
+  color: var(--accent);
+}
+
+.error-state-actions {
+  display: flex;
+  gap: var(--space-8);
+  margin-top: var(--space-4);
+}
+
+.error-state-action {
+  color: var(--danger);
+  background: color-mix(in srgb, var(--danger) 12%, transparent);
+  border-color: color-mix(in srgb, var(--danger) 40%, transparent);
+}
+
+.error-state-action:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--danger) 20%, transparent);
+  border-color: color-mix(in srgb, var(--danger) 55%, transparent);
 }
 
 .error-state-message {

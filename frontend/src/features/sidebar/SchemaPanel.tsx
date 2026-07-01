@@ -1,4 +1,4 @@
-import { Loader2, Plug, RefreshCw, Search } from 'lucide-react';
+import { CircleAlert, Loader2, Plug, RefreshCw, Search } from 'lucide-react';
 import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { buildQualifiedTable } from '@/features/editor/lib/sqlIdentifiers';
@@ -186,7 +186,15 @@ export function SchemaPanel({ onOpenQuery, onBrowseTable, onOpenConnectionTab }:
         </button>
       </div>
 
-      {schemaError && <div className="ui-text-xs sidebar-error-banner text-danger">{schemaError}</div>}
+      {schemaError && (
+        <div className="sidebar-error-banner" role="alert">
+          <div className="sidebar-error-banner-head">
+            <CircleAlert className="icon-xs sidebar-error-banner-icon" aria-hidden />
+            <span className="sidebar-error-banner-title">{t('errors.generic')}</span>
+          </div>
+          <span className="sidebar-error-banner-text">{schemaError}</span>
+        </div>
+      )}
 
       {loadingSchema && (
         <div className="tree-item text-muted">

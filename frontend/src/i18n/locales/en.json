@@ -93,6 +93,10 @@
     "renameQueryFailed": "Could not rename query",
     "noConnection": "No connection selected",
     "couldNotConnect": "Could not connect",
+    "queryFailed": "Query failed",
+    "jumpToError": "Jump to error",
+    "detailLabel": "Detail",
+    "hintLabel": "Hint",
     "unknown": "Unknown error"
   },
   "toast": {
@@ -313,7 +317,10 @@
     "schema": "Schema browser error",
     "history": "History panel error",
     "saved": "Saved queries panel error",
-    "queries": "Queries panel error"
+    "queries": "Queries panel error",
+    "editor": "Editor error",
+    "results": "Results error",
+    "tableView": "Table view error"
   },
   "dialog": {
     "confirmTitle": "Confirm",

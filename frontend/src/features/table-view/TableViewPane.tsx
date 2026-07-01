@@ -10,6 +10,7 @@ import { ErrorState } from '@/shared/components/ErrorState';
 import { api } from '@/shared/lib/api';
 import { appError } from '@/shared/lib/appDialog';
 import { appToast } from '@/shared/lib/appToast';
+import { formatError } from '@/shared/lib/normalize';
 import { useAppStore } from '@/store/appStore';
 import type { DriverType, EditorTab, TableViewPendingState, TableViewSessionState } from '@/types';
 import { emptyTableViewPending, tableViewStateFrom } from '@/types';
@@ -39,6 +40,7 @@ export function TableViewPane({ tab, driver, readOnly, isActive, running, onFocu
   const session = useAppStore((s) => s.tabSession[tab.id]?.tableViewState);
   const result = useAppStore((s) => s.tabSession[tab.id]?.result);
   const resultError = useAppStore((s) => s.tabSession[tab.id]?.resultError);
+  const resultErrorInfo = useAppStore((s) => s.tabSession[tab.id]?.resultErrorInfo);
   const updateTabSession = useAppStore((s) => s.updateTabSession);
   const setRunningTab = useAppStore((s) => s.setRunningTab);
 
@@ -170,7 +172,7 @@ export function TableViewPane({ tab, driver, readOnly, isActive, running, onFocu
           orderDir: orderBy ? orderDir : undefined,
         });
       } catch (e) {
-        updateTabSession(tab.id, { resultError: String(e) });
+        updateTabSession(tab.id, { resultError: formatError(e) });
         setRunningTab(null);
       }
     },
@@ -468,7 +470,13 @@ export function TableViewPane({ tab, driver, readOnly, isActive, running, onFocu
 
       <div className="table-view-grid-wrap">
         {resultError ? (
-          <ErrorState message={resultError} />
+          <ErrorState
+            message={resultErrorInfo?.message || resultError}
+            title={resultErrorInfo?.code ? t('errors.queryFailed') : undefined}
+            code={resultErrorInfo?.code}
+            hint={resultErrorInfo?.hint}
+            detail={resultErrorInfo?.detail}
+          />
         ) : (
           <TableViewGrid
             columns={state.columns}

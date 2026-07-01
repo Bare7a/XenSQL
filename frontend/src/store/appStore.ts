@@ -6,6 +6,7 @@ import type {
   ConnectionFolder,
   EditorTab,
   HistoryEntry,
+  QueryError,
   QueryResult,
   ResultSet,
   SavedQuery,
@@ -29,7 +30,12 @@ function streamIdLessThan(a: string, b: string): boolean {
 // export) keep working without knowing about the results array.
 function withActiveMirror(session: TabSessionState): TabSessionState {
   const active = session.results[session.activeResultIndex];
-  return { ...session, result: active?.result ?? null, resultError: active?.error ?? null };
+  return {
+    ...session,
+    result: active?.result ?? null,
+    resultError: active?.error ?? null,
+    resultErrorInfo: active?.errorInfo ?? null,
+  };
 }
 
 // runFor returns the session ready to receive an event for streamId: unchanged for the current run,
@@ -44,6 +50,7 @@ function runFor(session: TabSessionState, streamId: string): TabSessionState | n
     activeResultIndex: 0,
     result: null,
     resultError: null,
+    resultErrorInfo: null,
     dataBrowser: null,
   };
 }
@@ -108,6 +115,7 @@ interface AppState {
     result: QueryResult | null,
     statement: string | null,
     error: string | null,
+    errorInfo?: QueryError | null,
   ) => void;
   /** Terminates a run (done event): clears the running indicator and surfaces a batch-level error. */
   finishRun: (
@@ -115,6 +123,7 @@ interface AppState {
     streamId: string,
     resultCount: number,
     error: string | null,
+    errorInfo?: QueryError | null,
     opts?: { connectionId?: string; markConnected?: boolean },
   ) => void;
   setActiveResultIndex: (tabId: string, index: number) => void;
@@ -239,6 +248,8 @@ export const useAppStore = create<AppState>((set, get) => ({
         const r = 'result' in patch ? (patch.result ?? null) : next.result;
         const e = 'resultError' in patch ? (patch.resultError ?? null) : next.resultError;
         next.activeResultIndex = 0;
+        // Direct-set callers carry no structured error info.
+        next.resultErrorInfo = null;
         if (e != null) {
           next.results = [{ result: null, error: e }];
           next.result = null;
@@ -306,7 +317,7 @@ export const useAppStore = create<AppState>((set, get) => ({
         tabSession: { ...s.tabSession, [tabId]: withActiveMirror({ ...session, results }) },
       };
     }),
-  finalizeResultSet: (tabId, streamId, resultIndex, result, statement, error) =>
+  finalizeResultSet: (tabId, streamId, resultIndex, result, statement, error, errorInfo) =>
     set((s) => {
       const tabStillOpen = s.tabs.some((t) => t.id === tabId);
       const sessionExists = s.tabSession[tabId] != null;
@@ -317,7 +328,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       const label = statement ?? undefined;
       let set_: ResultSet;
       if (error) {
-        set_ = { result: null, error, statement: label };
+        set_ = { result: null, error, errorInfo: errorInfo ?? null, statement: label };
       } else if (existing && existing.streamId === streamId) {
         // Streamed result set: merge backend metadata; rows stay as-is.
         set_ = {
@@ -349,7 +360,7 @@ export const useAppStore = create<AppState>((set, get) => ({
         runningTabId: tabStillOpen ? tabId : s.runningTabId,
       };
     }),
-  finishRun: (tabId, streamId, _resultCount, error, opts) =>
+  finishRun: (tabId, streamId, _resultCount, error, errorInfo, opts) =>
     set((s) => {
       const tabStillOpen = s.tabs.some((t) => t.id === tabId);
       const sessionExists = s.tabSession[tabId] != null;
@@ -362,7 +373,11 @@ export const useAppStore = create<AppState>((set, get) => ({
       if (error) {
         // Batch-level failure (e.g. a connection couldn't be acquired): show it as the lone result.
         const run = runFor(base, streamId) ?? base;
-        session = withActiveMirror({ ...run, results: [{ result: null, error }], activeResultIndex: 0 });
+        session = withActiveMirror({
+          ...run,
+          results: [{ result: null, error, errorInfo: errorInfo ?? null }],
+          activeResultIndex: 0,
+        });
       }
       let nextConnected = s.connectedIds;
       if (opts?.markConnected && opts.connectionId && !s.connectedIds[opts.connectionId]) {

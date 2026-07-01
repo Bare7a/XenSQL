@@ -255,7 +255,9 @@ export function HistoryPanel({ onOpenQuery }: HistoryPanelProps) {
                       {conn && scope === 'all' ? ` · ${conn.name}` : ''}
                     </span>
                     {!entry.success && entry.error && (
-                      <span className="sidebar-entry-error">{oneLinePreview(entry.error, 100)}</span>
+                      <span className="sidebar-entry-error" data-tooltip={entry.error}>
+                        {oneLinePreview(entry.error, 100)}
+                      </span>
                     )}
                   </div>
                   <span className="history-item-actions">

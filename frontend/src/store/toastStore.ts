@@ -16,6 +16,8 @@ export interface ToastItem {
 
 const MAX_TOASTS = 5;
 const DEFAULT_DURATION_MS = 3500;
+// Errors linger longer than confirmations.
+const ERROR_DURATION_MS = 7000;
 
 let nextId = 1;
 const timers = new Map<number, ReturnType<typeof setTimeout>>();
@@ -29,10 +31,11 @@ interface ToastState {
 export const useToastStore = create<ToastState>((set, get) => ({
   toasts: [],
 
-  push(message, kind = 'info', durationMs = DEFAULT_DURATION_MS, action) {
+  push(message, kind = 'info', durationMs, action) {
     const trimmed = message.trim();
     if (!trimmed) return;
 
+    const effectiveDuration = durationMs ?? (kind === 'error' ? ERROR_DURATION_MS : DEFAULT_DURATION_MS);
     const id = nextId++;
     const item: ToastItem = { id, message: trimmed, kind, action };
 
@@ -48,13 +51,13 @@ export const useToastStore = create<ToastState>((set, get) => ({
     set({ toasts: combined.slice(-MAX_TOASTS) });
 
     // durationMs <= 0 keeps the toast until the user acts on or dismisses it.
-    if (durationMs > 0) {
+    if (effectiveDuration > 0) {
       timers.set(
         id,
         setTimeout(() => {
           timers.delete(id);
           get().dismiss(id);
-        }, durationMs),
+        }, effectiveDuration),
       );
     }
   },

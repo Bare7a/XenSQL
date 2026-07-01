@@ -17,8 +17,12 @@ export function appPrompt(opts: PromptOptions | string): Promise<string | null> 
 }
 
 export function appError(err: unknown, title?: string): Promise<void> {
+  const message = formatError(err);
+  // Multi-line errors read better in the scrollable detail <pre> than as a wrapped paragraph.
+  const multiline = message.includes('\n');
   return appAlert({
     title: title ?? t('errors.generic'),
-    description: formatError(err),
+    description: multiline ? undefined : message,
+    detail: multiline ? message : undefined,
   });
 }

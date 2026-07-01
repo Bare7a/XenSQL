@@ -21,11 +21,12 @@ import { useGridVirtualizer } from '@/shared/hooks/useGridVirtualizer';
 import { useUiZoom } from '@/shared/hooks/useUiZoom';
 import { api } from '@/shared/lib/api';
 import { appConfirm, appError } from '@/shared/lib/appDialog';
+import { toastError } from '@/shared/lib/appToast';
 import { cx } from '@/shared/lib/cx';
 import { shouldCopySingleCell } from '@/shared/lib/exportResult';
 import { type FocusCol, handleGridArrowKey, identityIndices, rowHeightForZoom, rowPrimaryKey } from '@/shared/lib/grid';
 import { gridSelectionHighlightClasses } from '@/shared/lib/gridCellRange';
-import type { QueryResult } from '@/types';
+import type { QueryError, QueryResult } from '@/types';
 
 const EMPTY_COLUMNS: string[] = [];
 const EMPTY_ROWS: unknown[][] = [];
@@ -34,6 +35,8 @@ interface Props {
   connectionId: string;
   result: QueryResult | null;
   error: string | null;
+  errorInfo?: QueryError | null;
+  errorStatement?: string | null;
   readOnly?: boolean;
   tableMode?: { schema: string; table: string };
   /** Inactive grids stay mounted but must not respond to global shortcuts - otherwise N tabs = N copy toasts. */
@@ -46,6 +49,8 @@ function ResultsGridImpl({
   connectionId,
   result,
   error,
+  errorInfo,
+  errorStatement,
   readOnly,
   tableMode,
   isActive,
@@ -228,7 +233,7 @@ function ResultsGridImpl({
     selectionRef,
     focusRef,
     copy: copySelectionToClipboard,
-    onCopyError: (err) => void appError(err, t('errors.copyFailed')),
+    onCopyError: (err) => toastError(err, t('errors.copyFailed')),
     extraEditableSelectors: '[role="dialog"], .monaco-editor',
     overlayOpenRef,
     onEscapeClear: clearSelection,
@@ -254,7 +259,15 @@ function ResultsGridImpl({
   });
 
   if (!hasGrid) {
-    return <ResultsGridEmpty error={error} result={result} />;
+    return (
+      <ResultsGridEmpty
+        error={error}
+        errorInfo={errorInfo}
+        errorStatement={errorStatement}
+        result={result}
+        allowJump={!tableMode}
+      />
+    );
   }
 
   const pks = result?.primaryKeys || [];
@@ -359,7 +372,7 @@ function ResultsGridImpl({
     const items: ContextMenuItem[] = [
       {
         label: t('common.copy'),
-        action: () => void copySelectionToClipboard().catch((e) => void appError(e, t('errors.copyFailed'))),
+        action: () => void copySelectionToClipboard().catch((e) => toastError(e, t('errors.copyFailed'))),
       },
       { label: t('results.contextExportAs'), action: () => setExportOpen(true) },
       { label: '', action: () => {}, separator: true },

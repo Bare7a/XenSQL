@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useTransactionActions } from '@/features/editor/hooks/useTransactionActions';
 import { detectTransactionControl, type TxnControlAction } from '@/features/editor/lib/transactionControl';
 import { api } from '@/shared/lib/api';
+import { formatError } from '@/shared/lib/normalize';
 import { useStoreActions, useTabs } from '@/store/selectors';
 import type { QueryResult } from '@/types';
 
@@ -66,7 +67,7 @@ export function useQueryRunner() {
       try {
         await api.executeQueryStream(tab.connectionId, tabId, sql);
       } catch (e) {
-        updateTabSession(tabId, { result: null, resultError: String(e) });
+        updateTabSession(tabId, { result: null, resultError: formatError(e) });
         setRunningTab(null);
       }
     },

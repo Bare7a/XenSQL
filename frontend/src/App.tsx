@@ -35,6 +35,7 @@ import { AboutDialog } from '@/shared/components/AboutDialog';
 import { AppDialogHost } from '@/shared/components/AppDialogHost';
 import { AppToastLayer } from '@/shared/components/AppToastLayer';
 import { AppTooltipLayer } from '@/shared/components/AppTooltipLayer';
+import { ErrorBoundary } from '@/shared/components/ErrorBoundary';
 import { KeyboardTipsDialog } from '@/shared/components/KeyboardTipsDialog';
 import { ShortcutsDialog } from '@/shared/components/ShortcutsDialog';
 import { useHorizontalWheelScroll } from '@/shared/hooks/useHorizontalWheelScroll';
@@ -382,48 +383,54 @@ function App() {
                       tab.id === activeTabId ? ' tab-layer-active' : ''
                     }`}
                   >
-                    <TableViewPane
-                      tab={tab}
-                      driver={connectionsById.get(tab.connectionId)?.driver ?? 'postgres'}
-                      readOnly={!!connectionsById.get(tab.connectionId)?.readOnly}
-                      isActive={tab.id === activeTabId}
-                      running={runningTabId === tab.id}
-                      onFocusedRowChange={(row) => handleFocusedRowChangeForTab(tab.id, row)}
-                    />
+                    <ErrorBoundary label={t('errorBoundary.tableView')} resetKey={tab.id}>
+                      <TableViewPane
+                        tab={tab}
+                        driver={connectionsById.get(tab.connectionId)?.driver ?? 'postgres'}
+                        readOnly={!!connectionsById.get(tab.connectionId)?.readOnly}
+                        isActive={tab.id === activeTabId}
+                        running={runningTabId === tab.id}
+                        onFocusedRowChange={(row) => handleFocusedRowChangeForTab(tab.id, row)}
+                      />
+                    </ErrorBoundary>
                   </div>
                 ) : null,
               )}
               {activeTab && !activeTab.tableView && (
                 <>
-                  <EditorPane
-                    tabs={queryTabs}
-                    activeTabId={activeTabId}
-                    connections={connections}
-                    runningTabId={runningTabId}
-                    schemas={schemas}
-                    tablesForConnection={tablesForConnection}
-                    loadColumnsForConnection={loadColumnsForConnection}
-                    onChangeSql={handleChangeSql}
-                    onRun={handleRunForTab}
-                    onCancel={cancelQueryForTab}
-                    onSaveQuery={handleSaveQueryWrapped}
-                    onRenameSavedQuery={openRenameDialog}
-                    onCursorStateChange={handleEditorCursorChange}
-                    tabTxnStates={tabTxnStates}
-                    onBeginTxn={beginTransaction}
-                    onCommitTxn={commitTransaction}
-                    onRollbackTxn={rollbackTransaction}
-                  />
-                  {/* biome-ignore lint/a11y/noStaticElementInteractions: pointer-drag results splitter; resizing is a mouse affordance and both panes remain fully usable without it. */}
-                  <div className="resizer" onMouseDown={resultsSplit.onMouseDown} />
-                  <div className="results-pane" style={{ flex: `0 0 ${resultsSplit.percent}%`, minHeight: 0 }}>
-                    <ResultsPane
+                  <ErrorBoundary label={t('errorBoundary.editor')} resetKey={activeTabId}>
+                    <EditorPane
                       tabs={queryTabs}
                       activeTabId={activeTabId}
                       connections={connections}
-                      tabSession={tabSession}
-                      onFocusedRowChange={handleFocusedRowChangeForTab}
+                      runningTabId={runningTabId}
+                      schemas={schemas}
+                      tablesForConnection={tablesForConnection}
+                      loadColumnsForConnection={loadColumnsForConnection}
+                      onChangeSql={handleChangeSql}
+                      onRun={handleRunForTab}
+                      onCancel={cancelQueryForTab}
+                      onSaveQuery={handleSaveQueryWrapped}
+                      onRenameSavedQuery={openRenameDialog}
+                      onCursorStateChange={handleEditorCursorChange}
+                      tabTxnStates={tabTxnStates}
+                      onBeginTxn={beginTransaction}
+                      onCommitTxn={commitTransaction}
+                      onRollbackTxn={rollbackTransaction}
                     />
+                  </ErrorBoundary>
+                  {/* biome-ignore lint/a11y/noStaticElementInteractions: pointer-drag results splitter; resizing is a mouse affordance and both panes remain fully usable without it. */}
+                  <div className="resizer" onMouseDown={resultsSplit.onMouseDown} />
+                  <div className="results-pane" style={{ flex: `0 0 ${resultsSplit.percent}%`, minHeight: 0 }}>
+                    <ErrorBoundary label={t('errorBoundary.results')} resetKey={activeTabId}>
+                      <ResultsPane
+                        tabs={queryTabs}
+                        activeTabId={activeTabId}
+                        connections={connections}
+                        tabSession={tabSession}
+                        onFocusedRowChange={handleFocusedRowChangeForTab}
+                      />
+                    </ErrorBoundary>
                   </div>
                 </>
               )}

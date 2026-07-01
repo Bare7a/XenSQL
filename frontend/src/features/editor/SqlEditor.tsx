@@ -6,6 +6,7 @@ import { useCursorPersistence } from '@/features/editor/hooks/useCursorPersisten
 import { useEditorActions } from '@/features/editor/hooks/useEditorActions';
 import { useEditorContextMenu } from '@/features/editor/hooks/useEditorContextMenu';
 import { useEditorFontSize } from '@/features/editor/hooks/useEditorFontSize';
+import { useJumpToError } from '@/features/editor/hooks/useJumpToError';
 import { useRunGlyphs } from '@/features/editor/hooks/useRunGlyphs';
 import { useSidebarInsert } from '@/features/editor/hooks/useSidebarInsert';
 import { createSqlCompletionProvider } from '@/features/editor/lib/createSqlCompletionProvider';
@@ -15,6 +16,7 @@ import { findStatementAtRunLine } from '@/features/editor/lib/sqlStatements';
 import { subscribeLanguageChanged } from '@/i18n';
 import { ContextMenu } from '@/shared/components/ContextMenu';
 import { useAppTheme } from '@/shared/hooks/useAppTheme';
+import { clearQueryErrorMarkers } from '@/shared/lib/jumpToError';
 import { subscribeShortcutsChanged } from '@/shared/lib/shortcuts';
 import type { ColumnInfo, DriverType, EditorCursorState, SchemaInfo, TableInfo, TxnState } from '@/types';
 
@@ -164,7 +166,10 @@ export const SqlEditor = memo(function SqlEditor({
       } else {
         text = ed.getValue();
       }
-      if (text.trim()) onRun(text);
+      if (text.trim()) {
+        clearQueryErrorMarkers(monacoRef.current, ed.getModel());
+        onRun(text);
+      }
     },
     [onRun, isQueryRunning],
   );
@@ -172,7 +177,10 @@ export const SqlEditor = memo(function SqlEditor({
   const runStatement = useCallback((text: string) => {
     if (isQueryRunningRef.current) return;
     const trimmed = text.trim();
-    if (trimmed) onRunRef.current(trimmed);
+    if (trimmed) {
+      clearQueryErrorMarkers(monacoRef.current, editorRef.current?.getModel() ?? null);
+      onRunRef.current(trimmed);
+    }
   }, []);
 
   const { updateRunGlyphs, statementsRef } = useRunGlyphs(editorRef, monacoRef, sql, languageRevision);
@@ -318,6 +326,8 @@ export const SqlEditor = memo(function SqlEditor({
   useEffect(() => () => contextMenuCleanupRef.current?.(), []);
 
   useSidebarInsert(editorRef, isActive);
+
+  useJumpToError(editorRef, monacoRef, isActive, sql);
 
   useCursorPersistence(editorRef, cursorStateRef, isActive, tabId);
 

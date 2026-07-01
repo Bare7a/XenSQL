@@ -8,6 +8,8 @@ export class EditorPage {
   readonly monaco: Locator;
   readonly txnBadge: Locator;
   readonly suggestWidget: Locator;
+  /** Monaco error-marker squiggle. */
+  readonly errorMarker: Locator;
 
   constructor(page: Page) {
     this.page = page;
@@ -16,6 +18,7 @@ export class EditorPage {
     this.txnBadge = this.active.locator('.toolbar-txn-badge');
     // Monaco renders the suggest widget at the page level (overflow widget), with `.visible` while shown.
     this.suggestWidget = page.locator('.suggest-widget.visible');
+    this.errorMarker = this.active.locator('.squiggly-error');
   }
 
   async selectAll(): Promise<void> {
@@ -50,6 +53,11 @@ export class EditorPage {
 
   async runSelection(): Promise<void> {
     await this.active.getByRole('button', { name: 'Run', exact: true }).click();
+  }
+
+  /** Cancel the in-flight query. */
+  async stopQuery(): Promise<void> {
+    await this.active.getByRole('button', { name: 'Stop', exact: true }).click();
   }
 
   /** Set the SQL and run it. */
