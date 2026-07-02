@@ -1,5 +1,5 @@
-import { expect, test } from '../fixtures';
-import { POSTGRES } from '../support/databases';
+import { POSTGRES } from '@support/databases';
+import { expect, test } from '@support/fixtures';
 
 test.describe('JSON viewer', () => {
   test('mirrors the focused row and filters by key', async ({ connections, editor, results, jsonViewer }) => {

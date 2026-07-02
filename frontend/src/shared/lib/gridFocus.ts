@@ -20,7 +20,7 @@ export function resolveGridCellFocus(
   return { row: 0, colPos: 0 };
 }
 
-export function getGridCellElement(
+function getGridCellElement(
   wrap: HTMLElement | null,
   row: number,
   colPos: FocusCol,

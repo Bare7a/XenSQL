@@ -1,5 +1,5 @@
 import { ChevronDown, Database, Plus } from 'lucide-react';
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ConnectionDialog } from '@/features/connections/ConnectionDialog';
 import { ConnectionsPanel } from '@/features/sidebar/ConnectionsPanel';
@@ -89,13 +89,17 @@ export function ConnectionSwitcher({ onConnected, onOpenConnectionTab }: Props) 
     };
   }, [open]);
 
-  useLayoutEffect(() => {
-    if (!open) return;
-    const anchor = anchorRef.current;
-    if (!anchor) return;
-    const rect = anchor.getBoundingClientRect();
-    setPos({ top: rect.bottom + 4, left: rect.left, width: rect.width });
-  }, [open]);
+  const toggleMenu = () => {
+    if (!hasConnections) {
+      setDialogConn(null);
+      return;
+    }
+    if (!open) {
+      const rect = anchorRef.current?.getBoundingClientRect();
+      if (rect) setPos({ top: rect.bottom + 4, left: rect.left, width: rect.width });
+    }
+    setOpen(!open);
+  };
 
   return (
     <div className="sidebar-conn-header">
@@ -105,10 +109,7 @@ export function ConnectionSwitcher({ onConnected, onOpenConnectionTab }: Props) 
         data-testid="connection-switcher"
         className={cx('connection-switcher', !hasConnections && 'connection-switcher-empty')}
         data-tooltip={hasConnections ? detail || t('tooltip.switchConnection') : undefined}
-        onClick={() => {
-          if (!hasConnections) setDialogConn(null);
-          else setOpen((v) => !v);
-        }}
+        onClick={toggleMenu}
       >
         {hasConnections && current ? (
           <>

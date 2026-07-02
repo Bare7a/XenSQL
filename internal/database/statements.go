@@ -77,7 +77,7 @@ func splitBlockComment(s string, i, n int) int {
 	return n
 }
 
-// doubleEscape: '' / "" are embedded quotes (SQL convention); backticks don't double-escape.
+// doubleEscape: ” / "" are embedded quotes (SQL convention); backticks don't double-escape.
 func splitQuoted(s string, i int, quote byte, doubleEscape bool, n int) int {
 	i++
 	for i < n {

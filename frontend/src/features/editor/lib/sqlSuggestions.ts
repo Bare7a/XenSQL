@@ -23,7 +23,7 @@ export interface CompletionItem {
   sortText?: string; // lower lex = higher in list
 }
 
-export const SQL_KEYWORDS = [
+const SQL_KEYWORDS = [
   'SELECT',
   'FROM',
   'WHERE',
@@ -69,7 +69,7 @@ export const SQL_KEYWORDS = [
   'NULL',
 ];
 
-export const JOIN_KEYWORDS = new Set([
+const JOIN_KEYWORDS = new Set([
   'JOIN',
   'LEFT JOIN',
   'RIGHT JOIN',
@@ -79,9 +79,9 @@ export const JOIN_KEYWORDS = new Set([
   'OUTER JOIN',
 ]);
 
-export const ORDER_KEYWORDS = new Set(['ASC', 'DESC', 'ORDER BY']);
+const ORDER_KEYWORDS = new Set(['ASC', 'DESC', 'ORDER BY']);
 
-export const VALUE_LITERALS = ['NULL', 'TRUE', 'FALSE', 'DEFAULT'];
+const VALUE_LITERALS = ['NULL', 'TRUE', 'FALSE', 'DEFAULT'];
 
 // Keywords that can only begin a statement - offered just at the statement start, never mid-query.
 const STATEMENT_STARTERS = new Set([

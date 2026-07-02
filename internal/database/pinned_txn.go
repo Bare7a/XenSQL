@@ -35,9 +35,9 @@ type sqlPinnedConn struct {
 	done   bool // set once finalized (close/commit/rollback); guards against using a spent connection
 }
 
-// NewPinnedConn checks out a dedicated connection from db and runs optional setup (e.g. SET
+// newPinnedConn checks out a dedicated connection from db and runs optional setup (e.g. SET
 // search_path). The caller must Close it.
-func NewPinnedConn(ctx context.Context, db *sql.DB, driver DriverType, setup func(context.Context, *sql.Conn) error) (PinnedConn, error) {
+func newPinnedConn(ctx context.Context, db *sql.DB, driver DriverType, setup func(context.Context, *sql.Conn) error) (PinnedConn, error) {
 	conn, err := db.Conn(ctx)
 	if err != nil {
 		return nil, err
@@ -51,39 +51,39 @@ func NewPinnedConn(ctx context.Context, db *sql.DB, driver DriverType, setup fun
 	return &sqlPinnedConn{conn: conn, driver: driver}, nil
 }
 
-func (t *sqlPinnedConn) ExecuteStream(ctx context.Context, sqlText string, opts StreamOpts) (*QueryResult, error) {
-	t.mu.Lock()
-	defer t.mu.Unlock()
-	if t.done {
+func (c *sqlPinnedConn) ExecuteStream(ctx context.Context, sqlText string, opts StreamOpts) (*QueryResult, error) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if c.done {
 		return nil, fmt.Errorf("connection is no longer active")
 	}
-	return RunStatement(ctx, t.conn, t.driver, sqlText, opts)
+	return runStatement(ctx, c.conn, c.driver, sqlText, opts)
 }
 
-func (t *sqlPinnedConn) ExecuteScript(ctx context.Context, statements []string, sink ScriptSink) error {
-	t.mu.Lock()
-	defer t.mu.Unlock()
-	if t.done {
+func (c *sqlPinnedConn) ExecuteScript(ctx context.Context, statements []string, sink ScriptSink) error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if c.done {
 		return fmt.Errorf("connection is no longer active")
 	}
-	return RunScript(ctx, t.conn, t.driver, statements, sink)
+	return RunScript(ctx, c.conn, c.driver, statements, sink)
 }
 
-func (t *sqlPinnedConn) Close() {
-	t.mu.Lock()
-	defer t.mu.Unlock()
-	t.done = true
-	_ = t.conn.Close()
+func (c *sqlPinnedConn) Close() {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.done = true
+	_ = c.conn.Close()
 }
 
 type sqlPinnedTxn struct {
 	*sqlPinnedConn
 }
 
-// NewPinnedTxn checks out a dedicated connection, runs optional setup, then issues BEGIN. The caller
-// must call Commit or Rollback, then Close.
-func NewPinnedTxn(ctx context.Context, db *sql.DB, driver DriverType, setup func(context.Context, *sql.Conn) error) (PinnedTxn, error) {
-	pc, err := NewPinnedConn(ctx, db, driver, setup)
+// newPinnedTxn checks out a dedicated connection, runs optional setup, then issues BEGIN. The
+// caller must call Commit or Rollback, then Close.
+func newPinnedTxn(ctx context.Context, db *sql.DB, driver DriverType, setup func(context.Context, *sql.Conn) error) (PinnedTxn, error) {
+	pc, err := newPinnedConn(ctx, db, driver, setup)
 	if err != nil {
 		return nil, err
 	}
@@ -95,24 +95,18 @@ func NewPinnedTxn(ctx context.Context, db *sql.DB, driver DriverType, setup func
 	return &sqlPinnedTxn{sqlPinnedConn: conn}, nil
 }
 
-func (t *sqlPinnedTxn) Commit(ctx context.Context) error {
+// finalize runs stmt (COMMIT/ROLLBACK) once and marks the connection spent; later calls are no-ops.
+func (t *sqlPinnedTxn) finalize(ctx context.Context, stmt string) error {
 	t.mu.Lock()
 	defer t.mu.Unlock()
 	if t.done {
 		return nil
 	}
 	t.done = true
-	_, err := t.conn.ExecContext(ctx, "COMMIT")
+	_, err := t.conn.ExecContext(ctx, stmt)
 	return err
 }
 
-func (t *sqlPinnedTxn) Rollback(ctx context.Context) error {
-	t.mu.Lock()
-	defer t.mu.Unlock()
-	if t.done {
-		return nil
-	}
-	t.done = true
-	_, err := t.conn.ExecContext(ctx, "ROLLBACK")
-	return err
-}
+func (t *sqlPinnedTxn) Commit(ctx context.Context) error { return t.finalize(ctx, "COMMIT") }
+
+func (t *sqlPinnedTxn) Rollback(ctx context.Context) error { return t.finalize(ctx, "ROLLBACK") }

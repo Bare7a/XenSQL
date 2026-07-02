@@ -1,6 +1,6 @@
 // biome-ignore-all lint/a11y/noNoninteractiveTabindex: data-grid cells use roving tabindex for keyboard navigation; a <td> can be neither a native interactive element nor carry an interactive role without tripping the inverse rule.
 import { Trash2 } from 'lucide-react';
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { CellViewerModal } from '@/features/results/CellViewerModal';
 import { useGridSort } from '@/features/results/hooks/useGridSort';
@@ -82,7 +82,6 @@ function ResultsGridImpl({
     toggleColumn,
     showAllColumns,
     hideAllColumns,
-    resetHidden,
     colWidths,
     columnsSized,
     fitColumns,
@@ -109,8 +108,6 @@ function ResultsGridImpl({
     rowHeight,
     tableWrapRef,
   });
-
-  const visibleColumns = useMemo(() => columns.filter((c) => !hiddenColumns.has(c)), [columns, hiddenColumns]);
 
   const publishFocusedRowRef = useRef<(globalIdx: number | null) => void>(() => {});
 
@@ -159,7 +156,7 @@ function ResultsGridImpl({
     publishRef: publishFocusedRowRef,
     result,
     columns,
-    visibleColumns,
+    visibleColumns: displayColumns,
     columnIndexByName,
     hiddenColumns,
     focusedRowIdx,
@@ -174,7 +171,7 @@ function ResultsGridImpl({
   useEffect(() => {
     setSelectedRows(new Set());
     setSelectedColumns(new Set());
-    resetHidden();
+    showAllColumns();
     resetSort();
     setFocusedRowIdx(null);
     setFocusedColPos(0);
@@ -183,7 +180,7 @@ function ResultsGridImpl({
   }, [
     result?.streamId,
     resetSort,
-    resetHidden,
+    showAllColumns,
     setSelectedRows,
     setSelectedColumns,
     setFocusedRowIdx,

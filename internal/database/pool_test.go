@@ -35,7 +35,7 @@ func (f *fakeSession) QueryTableStream(context.Context, TableDataRequest, Stream
 }
 func (f *fakeSession) UpdateRow(context.Context, RowUpdate) error           { return nil }
 func (f *fakeSession) DeleteRows(context.Context, RowDelete) (int64, error) { return 0, nil }
-func (f *fakeSession) InsertRow(context.Context, string, string, map[string]interface{}) (map[string]interface{}, error) {
+func (f *fakeSession) InsertRow(context.Context, string, string, map[string]any) (map[string]any, error) {
 	return nil, nil
 }
 func (f *fakeSession) BeginTxn(context.Context) (PinnedTxn, error)    { return nil, nil }

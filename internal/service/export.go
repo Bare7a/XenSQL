@@ -31,7 +31,7 @@ func ExportResult(result *database.QueryResult, format string) (string, error) {
 // encoding/json sorts map keys alphabetically; this preserves column order to match JSON.stringify.
 type orderedObject struct {
 	columns []string
-	values  []interface{}
+	values  []any
 }
 
 func (o orderedObject) MarshalJSON() ([]byte, error) {
@@ -58,7 +58,7 @@ func (o orderedObject) MarshalJSON() ([]byte, error) {
 }
 
 // Encodes without HTML escaping to match JSON.stringify behaviour (<, >, & left as-is).
-func marshalJSONValue(v interface{}) ([]byte, error) {
+func marshalJSONValue(v any) ([]byte, error) {
 	var b bytes.Buffer
 	enc := json.NewEncoder(&b)
 	enc.SetEscapeHTML(false)
@@ -164,7 +164,7 @@ func exportText(result *database.QueryResult) string {
 	return strings.Join(lines, "\n")
 }
 
-func cellString(v interface{}) string {
+func cellString(v any) string {
 	if v == nil {
 		return ""
 	}
@@ -194,7 +194,7 @@ func sanitizeCSVCell(s string) string {
 var newlineToSpace = strings.NewReplacer("\r\n", " ", "\r", " ", "\n", " ")
 
 // Escapes pipes and flattens newlines so the value doesn't break the Markdown table structure.
-func markdownCell(v interface{}) string {
+func markdownCell(v any) string {
 	if v == nil {
 		return ""
 	}
@@ -202,7 +202,7 @@ func markdownCell(v interface{}) string {
 	return newlineToSpace.Replace(s)
 }
 
-func sqlLiteral(v interface{}) string {
+func sqlLiteral(v any) string {
 	if v == nil {
 		return "NULL"
 	}

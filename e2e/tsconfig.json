@@ -9,7 +9,11 @@
     "skipLibCheck": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
-    "forceConsistentCasingInFileNames": true
+    "forceConsistentCasingInFileNames": true,
+    // Playwright resolves these too, so nested specs import '@support/…' instead of '../../…'.
+    "paths": {
+      "@support/*": ["./support/*"]
+    }
   },
   "include": ["**/*.ts"]
 }

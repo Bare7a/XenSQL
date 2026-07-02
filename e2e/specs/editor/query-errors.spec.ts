@@ -1,8 +1,8 @@
-import { expect, test } from '../fixtures';
-import { POSTGRES } from '../support/databases';
+import { POSTGRES } from '@support/databases';
+import { expect, test } from '@support/fixtures';
 
 // Postgres-specific: only pgconn reports an error position, and these codes are Postgres SQLSTATEs.
-// The cross-driver smoke check lives in queries.spec.ts.
+// The cross-driver smoke check lives in query-execution.spec.ts.
 test.describe('Query errors', () => {
   test('shows a structured error card: code, message and hint', async ({ app, connections, editor, results }) => {
     await connections.createAndConnect(POSTGRES);

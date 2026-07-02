@@ -71,16 +71,16 @@ type ConnectionStatus struct {
 }
 
 type QueryResult struct {
-	Columns      []string        `json:"columns"`
-	ColumnTypes  []string        `json:"columnTypes"`
-	Rows         [][]interface{} `json:"rows"`
-	RowCount     int64           `json:"rowCount"`
-	AffectedRows int64           `json:"affectedRows"`
-	DurationMs   int64           `json:"durationMs"`
-	Message      string          `json:"message,omitempty"`
-	PrimaryKeys  []string        `json:"primaryKeys,omitempty"`
-	TableName    string          `json:"tableName,omitempty"`
-	SchemaName   string          `json:"schemaName,omitempty"`
+	Columns      []string `json:"columns"`
+	ColumnTypes  []string `json:"columnTypes"`
+	Rows         [][]any  `json:"rows"`
+	RowCount     int64    `json:"rowCount"`
+	AffectedRows int64    `json:"affectedRows"`
+	DurationMs   int64    `json:"durationMs"`
+	Message      string   `json:"message,omitempty"`
+	PrimaryKeys  []string `json:"primaryKeys,omitempty"`
+	TableName    string   `json:"tableName,omitempty"`
+	SchemaName   string   `json:"schemaName,omitempty"`
 }
 
 type TableDataRequest struct {
@@ -94,16 +94,16 @@ type TableDataRequest struct {
 }
 
 type RowUpdate struct {
-	Schema     string                 `json:"schema"`
-	Table      string                 `json:"table"`
-	PrimaryKey map[string]interface{} `json:"primaryKey"`
-	Changes    map[string]interface{} `json:"changes"`
+	Schema     string         `json:"schema"`
+	Table      string         `json:"table"`
+	PrimaryKey map[string]any `json:"primaryKey"`
+	Changes    map[string]any `json:"changes"`
 }
 
 type RowDelete struct {
-	Schema      string                   `json:"schema"`
-	Table       string                   `json:"table"`
-	PrimaryKeys []map[string]interface{} `json:"primaryKeys"`
+	Schema      string           `json:"schema"`
+	Table       string           `json:"table"`
+	PrimaryKeys []map[string]any `json:"primaryKeys"`
 }
 
 type HistoryEntry struct {

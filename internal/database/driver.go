@@ -31,7 +31,7 @@ type Session interface {
 	QueryTableStream(ctx context.Context, req TableDataRequest, opts StreamOpts) (*QueryResult, error)
 	UpdateRow(ctx context.Context, upd RowUpdate) error
 	DeleteRows(ctx context.Context, del RowDelete) (int64, error)
-	InsertRow(ctx context.Context, schema, table string, values map[string]interface{}) (map[string]interface{}, error)
+	InsertRow(ctx context.Context, schema, table string, values map[string]any) (map[string]any, error)
 	ConnectionInfo(ctx context.Context) (ConnectionStatus, error)
 	DriverType() DriverType
 }
@@ -57,12 +57,13 @@ func GetDriver(t DriverType) (Driver, error) {
 	return d, nil
 }
 
-func SupportedDrivers() []DriverType {
-	registryMu.RLock()
-	defer registryMu.RUnlock()
-	types := make([]DriverType, 0, len(registry))
-	for t := range registry {
-		types = append(types, t)
+// ConnectAndPing is the shared Driver.TestConnection implementation: open a real session, ping it,
+// close it.
+func ConnectAndPing(ctx context.Context, d Driver, cfg ConnectionConfig) error {
+	s, err := d.Connect(ctx, cfg)
+	if err != nil {
+		return err
 	}
-	return types
+	defer s.Close()
+	return s.Ping(ctx)
 }

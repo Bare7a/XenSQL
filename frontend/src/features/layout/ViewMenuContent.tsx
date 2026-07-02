@@ -1,33 +1,27 @@
 import { Window } from '@wailsio/runtime';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useEditorFontSize } from '@/features/editor/hooks/useEditorFontSize';
 import {
   DEFAULT_EDITOR_FONT_SIZE,
   decreaseEditorFontSize,
-  getEffectiveEditorFontSize,
   increaseEditorFontSize,
   MAX_EDITOR_FONT_SIZE,
   MIN_EDITOR_FONT_SIZE,
   resetEditorFontSize,
-  subscribeEditorFontSizeChanged,
 } from '@/features/editor/lib/editorFontSize';
 import { MenuStepperRow } from '@/features/layout/MenuStepperRow';
-import {
-  type AppLanguage,
-  changeLanguage,
-  getEffectiveLanguage,
-  SUPPORTED_LANGUAGES,
-  subscribeLanguageChanged,
-} from '@/i18n';
+import { type AppLanguage, changeLanguage, SUPPORTED_LANGUAGES } from '@/i18n';
+import { useAppLanguage } from '@/shared/hooks/useAppLanguage';
+import { useAppTheme } from '@/shared/hooks/useAppTheme';
+import { useUiZoom } from '@/shared/hooks/useUiZoom';
 import { formatBinding, getEffectiveBinding } from '@/shared/lib/shortcuts';
-import { type AppTheme, applyTheme, getEffectiveTheme, subscribeThemeChanged } from '@/shared/lib/theme';
+import { type AppTheme, applyTheme } from '@/shared/lib/theme';
 import {
   DEFAULT_UI_ZOOM_PX,
-  getEffectiveUiZoomPx,
   MAX_UI_ZOOM_PX,
   MIN_UI_ZOOM_PX,
   resetUiZoom,
-  subscribeUiZoomChanged,
   zoomUiIn,
   zoomUiOut,
 } from '@/shared/lib/uiZoom';
@@ -53,20 +47,15 @@ export function ViewMenuContent({
   onCloseMenu,
 }: Props) {
   const { t } = useTranslation();
-  const [theme, setTheme] = useState<AppTheme>(() => getEffectiveTheme());
-  const [language, setLanguage] = useState<AppLanguage>(() => getEffectiveLanguage());
-  const [fontSize, setFontSize] = useState(() => getEffectiveEditorFontSize());
-  const [uiZoomPx, setUiZoomPx] = useState(() => getEffectiveUiZoomPx());
+  const theme = useAppTheme();
+  const language = useAppLanguage();
+  const fontSize = useEditorFontSize();
+  const uiZoomPx = useUiZoom();
   const [isFullscreen, setIsFullscreen] = useState(false);
 
   useEffect(() => {
     void Window.IsFullscreen().then(setIsFullscreen);
   }, []);
-
-  useEffect(() => subscribeThemeChanged(setTheme), []);
-  useEffect(() => subscribeLanguageChanged(() => setLanguage(getEffectiveLanguage())), []);
-  useEffect(() => subscribeEditorFontSizeChanged(setFontSize), []);
-  useEffect(() => subscribeUiZoomChanged(setUiZoomPx), []);
 
   const toggleTheme = () => {
     applyTheme(theme === 'dark' ? 'light' : 'dark');
@@ -74,7 +63,6 @@ export function ViewMenuContent({
 
   const pickLanguage = (next: AppLanguage) => {
     changeLanguage(next);
-    document.documentElement.lang = next;
     onCloseMenu();
   };
 

@@ -4,14 +4,12 @@ import { expect, type Locator, type Page } from '@playwright/test';
 export class AppPage {
   readonly page: Page;
   readonly sidebar: Locator;
-  readonly jsonViewer: Locator;
   /** The status-bar result indicator (shows "Running…", rows/affected, or an error). */
   readonly status: Locator;
 
   constructor(page: Page) {
     this.page = page;
     this.sidebar = page.getByTestId('sidebar');
-    this.jsonViewer = page.locator('.json-viewer-panel');
     this.status = page.locator('.status-bar-status');
   }
 

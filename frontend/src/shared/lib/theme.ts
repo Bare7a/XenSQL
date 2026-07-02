@@ -3,7 +3,7 @@ import { STORAGE_KEYS } from '@/shared/lib/storageKeys';
 
 export type AppTheme = 'dark' | 'light';
 
-export const DEFAULT_THEME: AppTheme = 'dark';
+const DEFAULT_THEME: AppTheme = 'dark';
 
 const STORAGE_KEY = STORAGE_KEYS.theme;
 
@@ -11,7 +11,7 @@ type ThemeListener = (theme: AppTheme) => void;
 
 const listeners = new Set<ThemeListener>();
 
-export function readStoredTheme(): AppTheme {
+function readStoredTheme(): AppTheme {
   try {
     const value = settings.getItem(STORAGE_KEY);
     if (value === 'light' || value === 'dark') return value;

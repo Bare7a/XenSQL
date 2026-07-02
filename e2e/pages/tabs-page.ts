@@ -9,22 +9,20 @@ export class TabsPage {
   readonly page: Page;
   readonly tabs: Locator;
   readonly activeTab: Locator;
+  /** Title element of the currently active tab. */
+  readonly activeTitle: Locator;
   readonly addButton: Locator;
 
   constructor(page: Page) {
     this.page = page;
     this.tabs = page.locator('.editor-tab');
     this.activeTab = page.locator('.editor-tab.active');
+    this.activeTitle = this.activeTab.locator('.tab-title');
     this.addButton = page.locator('.editor-tabs-add');
   }
 
   count(): Promise<number> {
     return this.tabs.count();
-  }
-
-  /** Title of the currently active tab. */
-  async activeTitle(): Promise<string> {
-    return (await this.activeTab.locator('.tab-title').innerText()).trim();
   }
 
   /** Open a new tab via the "+" button (with a single connection this skips the picker). */

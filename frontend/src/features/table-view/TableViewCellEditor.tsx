@@ -6,14 +6,10 @@ interface Props {
   ci: number;
   colPos: FocusCol;
   col: string;
-  optimisticKey: string;
   defaultValue: string;
-  rows: unknown[][];
   lastCommittedEditRef: React.RefObject<{ row: number; colPos: number } | null>;
-  setOptimisticEdited: Dispatch<SetStateAction<Set<string>>>;
-  setEditTick: Dispatch<SetStateAction<number>>;
   setEditing: Dispatch<SetStateAction<{ row: number; col: number } | null>>;
-  onCellEdit: (rowIdx: number, col: string, value: string | null) => void;
+  onCommit: (rowIdx: number, colIdx: number, colName: string, value: string | null) => void;
 }
 
 export function TableViewCellEditor({
@@ -21,14 +17,10 @@ export function TableViewCellEditor({
   ci,
   colPos,
   col,
-  optimisticKey,
   defaultValue,
-  rows,
   lastCommittedEditRef,
-  setOptimisticEdited,
-  setEditTick,
   setEditing,
-  onCellEdit,
+  onCommit,
 }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
   useEffect(() => {
@@ -43,21 +35,10 @@ export function TableViewCellEditor({
         (e.target as HTMLInputElement).closest('td')?.classList.add('cell-pending-edit');
 
         // Blank editor => NULL (no separate empty-string affordance); other whitespace preserved.
+        // onCommit reconciles: it records the edit, or clears the tint when the value reverted.
         const raw = e.target.value;
-        const next = raw === '' ? null : raw;
-        const origRaw = rows[rowIdx]?.[ci];
-        const orig = origRaw == null ? null : String(origRaw);
-        const reverted = (next == null ? null : String(next)) === orig;
         lastCommittedEditRef.current = { row: rowIdx, colPos };
-        setOptimisticEdited((prevSet) => {
-          const nextSet = new Set(prevSet);
-          if (reverted) nextSet.delete(optimisticKey);
-          else nextSet.add(optimisticKey);
-          return nextSet;
-        });
-        // Always notify; the pane reconciles (records the edit, or clears it on revert).
-        onCellEdit(rowIdx, col, next);
-        setEditTick((x) => x + 1);
+        onCommit(rowIdx, ci, col, raw === '' ? null : raw);
 
         setEditing(null);
       }}

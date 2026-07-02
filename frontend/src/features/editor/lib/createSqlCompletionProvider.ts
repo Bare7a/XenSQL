@@ -3,13 +3,12 @@ import type { editor, languages } from 'monaco-editor';
 import {
   bindingsNeedingColumns,
   buildCompletionItems,
-  type CompletionContext,
-  type CompletionItem,
-  columnCacheKey,
   completionReplaceRange,
-  parseQueryContext,
 } from '@/features/editor/lib/sqlCompletion';
+import { parseQueryContext } from '@/features/editor/lib/sqlQueryParse';
+import { columnCacheKey } from '@/features/editor/lib/sqlQuoting';
 import { currentStatementRange, parseSqlStatements } from '@/features/editor/lib/sqlStatements';
+import type { CompletionContext, CompletionItem } from '@/features/editor/lib/sqlSuggestions';
 import type { ColumnInfo, DriverType, SchemaInfo, TableInfo } from '@/types';
 
 function toMonacoCompletion(

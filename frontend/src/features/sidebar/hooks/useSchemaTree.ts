@@ -54,8 +54,8 @@ export function useSchemaTree({ connId, connConnected, schemaList, schemaSearch 
   useEffect(() => writeStoredJson(STORAGE_KEYS.schemaTablesExpanded, expandedTables), [expandedTables]);
 
   const loadSchema = useCallback(
-    async (connId: string) => {
-      if (!connId) {
+    async (connectionId: string) => {
+      if (!connectionId) {
         setSchemaError(t('errors.noConnection'));
         return;
       }
@@ -67,14 +67,14 @@ export function useSchemaTree({ connId, connConnected, schemaList, schemaSearch 
       setTableColumns({});
 
       try {
-        const bundle = await api.loadSchemaData(connId);
-        setConnected(connId, true);
-        setSchemas(connId, bundle.schemas);
-        setSelectedConnection(connId);
+        const bundle = await api.loadSchemaData(connectionId);
+        setConnected(connectionId, true);
+        setSchemas(connectionId, bundle.schemas);
+        setSelectedConnection(connectionId);
 
         for (const block of bundle.loadedTables ?? []) {
           if (!block?.schema) continue;
-          const key = `${connId}:${block.schema}`;
+          const key = `${connectionId}:${block.schema}`;
           setTables(key, block.tables ?? []);
           loadedTablesRef.current.add(key);
           setExpandedSchemas((e) => ({ ...e, [key]: true }));
@@ -89,8 +89,8 @@ export function useSchemaTree({ connId, connConnected, schemaList, schemaSearch 
   );
 
   const loadTables = useCallback(
-    async (connId: string, schema: string) => {
-      const key = `${connId}:${schema}`;
+    async (connectionId: string, schema: string) => {
+      const key = `${connectionId}:${schema}`;
       if (tables[key]?.length) {
         loadedTablesRef.current.add(key);
         setExpandedSchemas((e) => ({ ...e, [key]: true }));
@@ -99,9 +99,9 @@ export function useSchemaTree({ connId, connConnected, schemaList, schemaSearch 
       setLoadingTables((prev) => ({ ...prev, [key]: true }));
       setSchemaError('');
       try {
-        await api.connect(connId);
-        setConnected(connId, true);
-        const loaded = await api.listTables(connId, schema);
+        await api.connect(connectionId);
+        setConnected(connectionId, true);
+        const loaded = await api.listTables(connectionId, schema);
         setTables(key, loaded);
         loadedTablesRef.current.add(key);
         setExpandedSchemas((e) => ({ ...e, [key]: true }));
@@ -196,7 +196,8 @@ export function useSchemaTree({ connId, connConnected, schemaList, schemaSearch 
     fetchTableColumns,
   ]);
 
-  // Pre-warm tables for all schemas while user types so name matches surface.
+  // Pre-warm while the user types: tables for every schema (so name matches surface), and columns
+  // for non-matching table names (so column matches surface). Loaded/loading guards make re-runs no-ops.
   useEffect(() => {
     if (!schemaSearch || !connId) return;
     for (const sch of schemaList) {
@@ -204,14 +205,6 @@ export function useSchemaTree({ connId, connConnected, schemaList, schemaSearch 
       if (!loadedTablesRef.current.has(key) && !loadingTables[key]) {
         void loadTables(connId, sch.name);
       }
-    }
-  }, [schemaSearch, connId, schemaList, tables, loadingTables, loadTables]);
-
-  // Pre-warm columns for non-matching table names so column matches surface.
-  useEffect(() => {
-    if (!schemaSearch || !connId) return;
-    for (const sch of schemaList) {
-      const key = `${connId}:${sch.name}`;
       for (const table of tables[key] || []) {
         const schemaName = table.schema || sch.name;
         if (table.name.toLowerCase().includes(schemaSearch)) continue;
@@ -220,7 +213,17 @@ export function useSchemaTree({ connId, connConnected, schemaList, schemaSearch 
         void fetchTableColumns(connId, schemaName, table.name);
       }
     }
-  }, [schemaSearch, connId, schemaList, tables, tableColumns, loadingColumns, fetchTableColumns]);
+  }, [
+    schemaSearch,
+    connId,
+    schemaList,
+    tables,
+    tableColumns,
+    loadingTables,
+    loadingColumns,
+    loadTables,
+    fetchTableColumns,
+  ]);
 
   return {
     tables,

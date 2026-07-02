@@ -28,8 +28,7 @@ func (p *Pool) Connect(ctx context.Context, cfg ConnectionConfig) error {
 	}
 	fp := ConfigFingerprint(cfg)
 
-	mu, _ := p.flight.LoadOrStore(cfg.ID, &sync.Mutex{})
-	flight := mu.(*sync.Mutex)
+	flight := p.flightLock(cfg.ID)
 	flight.Lock()
 	defer flight.Unlock()
 
@@ -79,11 +78,16 @@ func (p *Pool) storeSession(id string, s Session, fingerprint string) {
 	p.fingerprints[id] = fingerprint
 }
 
+// flightLock returns the per-ID mutex serializing Connect/Disconnect for one connection.
+func (p *Pool) flightLock(id string) *sync.Mutex {
+	mu, _ := p.flight.LoadOrStore(id, &sync.Mutex{})
+	return mu.(*sync.Mutex)
+}
+
 func (p *Pool) Disconnect(id string) {
 	// Take the per-ID flight lock Connect holds across driver.Connect; else a Disconnect racing an
 	// in-flight Connect is lost and leaks a live session. Entry stays in the map (cleared in CloseAll).
-	mu, _ := p.flight.LoadOrStore(id, &sync.Mutex{})
-	flight := mu.(*sync.Mutex)
+	flight := p.flightLock(id)
 	flight.Lock()
 	defer flight.Unlock()
 

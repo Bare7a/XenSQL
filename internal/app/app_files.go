@@ -26,19 +26,19 @@ func FindSQLiteArg(args []string) string {
 	return ""
 }
 
+// sqliteFilePayload is the {filePath, name} payload of open-sqlite flows; name is the file's base
+// name without extension.
+func sqliteFilePayload(path string) map[string]string {
+	name := filepath.Base(path)
+	name = strings.TrimSuffix(name, filepath.Ext(name))
+	return map[string]string{"filePath": path, "name": name}
+}
+
 func (a *App) EmitOpenSQLite(filePath string) {
 	if filePath == "" {
 		return
 	}
-	name := filepath.Base(filePath)
-	ext := filepath.Ext(name)
-	if ext != "" {
-		name = name[:len(name)-len(ext)]
-	}
-	a.emit("open-sqlite", map[string]string{
-		"filePath": filePath,
-		"name":     name,
-	})
+	a.emit("open-sqlite", sqliteFilePayload(filePath))
 }
 
 func (a *App) GetPendingFile() map[string]string {
@@ -49,12 +49,7 @@ func (a *App) GetPendingFile() map[string]string {
 	if path == "" {
 		return nil
 	}
-	name := filepath.Base(path)
-	ext := filepath.Ext(name)
-	if ext != "" {
-		name = name[:len(name)-len(ext)]
-	}
-	return map[string]string{"filePath": path, "name": name}
+	return sqliteFilePayload(path)
 }
 
 func (a *App) SetPendingFile(path string) {
@@ -77,7 +72,7 @@ func (a *App) PickExportSavePath(ext string) (string, error) {
 		ext = "txt"
 	}
 	return a.app.Dialog.SaveFile().
-		SetFilename("export." + ext).
+		SetFilename("export."+ext).
 		AddFilter(strings.ToUpper(ext)+" files", "*."+ext).
 		AddFilter("All Files", "*.*").
 		PromptForSingleSelection()

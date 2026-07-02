@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-type ExecFunc func(ctx context.Context, query string, args ...interface{}) (sql.Result, error)
+type execFunc func(ctx context.Context, query string, args ...any) (sql.Result, error)
 
 func IsSelectLike(driver DriverType, upper string) bool {
 	if strings.HasPrefix(upper, "SELECT") || strings.HasPrefix(upper, "WITH") || strings.HasPrefix(upper, "EXPLAIN") {
@@ -25,32 +25,38 @@ func IsSelectLike(driver DriverType, upper string) bool {
 	}
 }
 
-func RunStatement(ctx context.Context, conn *sql.Conn, driver DriverType, sqlText string, opts StreamOpts) (*QueryResult, error) {
+// execSummary is the QueryResult for a statement executed without reading rows.
+func execSummary(res sql.Result, startMs int64) *QueryResult {
+	affected, _ := res.RowsAffected()
+	return &QueryResult{
+		AffectedRows: affected,
+		DurationMs:   NowMs() - startMs,
+		Message:      fmt.Sprintf("%d row(s) affected", affected),
+	}
+}
+
+// runStatement executes one statement, routing row-returning SQL through the streaming scan and
+// everything else through Exec.
+func runStatement(ctx context.Context, conn *sql.Conn, driver DriverType, sqlText string, opts StreamOpts) (*QueryResult, error) {
 	start := NowMs()
 	upper := strings.ToUpper(StripLeadingComments(sqlText))
-	if IsSelectLike(driver, upper) || HasReturningClause(upper) {
-		return StreamQueryRows(ctx, conn, sqlText, start, opts, &QueryResult{})
+	if IsSelectLike(driver, upper) || hasReturningClause(upper) {
+		return streamQueryRows(ctx, conn, sqlText, start, opts, &QueryResult{})
 	}
 	res, err := conn.ExecContext(ctx, sqlText)
 	if err != nil {
 		return nil, err
 	}
-	affected, _ := res.RowsAffected()
-	return &QueryResult{
-		AffectedRows: affected,
-		DurationMs:   NowMs() - start,
-		Message:      fmt.Sprintf("%d row(s) affected", affected),
-	}, nil
+	return execSummary(res, start), nil
 }
 
-func StreamQueryRows(ctx context.Context, conn *sql.Conn, query string, startMs int64, opts StreamOpts, result *QueryResult) (*QueryResult, error) {
+func streamQueryRows(ctx context.Context, conn *sql.Conn, query string, startMs int64, opts StreamOpts, result *QueryResult) (*QueryResult, error) {
 	rows, err := conn.QueryContext(ctx, query)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	streamOpts := WrapStreamMeta(opts, result)
-	total, err := ScanRowsStream(ctx, rows, streamOpts)
+	total, err := ScanRowsStream(ctx, rows, wrapStreamMeta(opts, result))
 	result.RowCount = total
 	result.DurationMs = NowMs() - startMs
 	if err != nil {
@@ -66,7 +72,7 @@ func StreamQueryRows(ctx context.Context, conn *sql.Conn, query string, startMs 
 type ScriptSink struct {
 	BatchSize int
 	OnMeta    func(resultIndex int, columns, columnTypes []string)
-	OnBatch   func(resultIndex int, rows [][]interface{}) error
+	OnBatch   func(resultIndex int, rows [][]any) error
 	OnResult  func(resultIndex int, summary *QueryResult, statement string, err error)
 }
 
@@ -76,14 +82,14 @@ type ScriptSink struct {
 func RunScript(ctx context.Context, conn *sql.Conn, driver DriverType, statements []string, sink ScriptSink) error {
 	resultIndex := 0
 	for _, stmt := range statements {
-		if err := runStatementInto(ctx, conn, driver, stmt, &resultIndex, sink); err != nil {
+		if err := runScriptStatement(ctx, conn, driver, stmt, &resultIndex, sink); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func runStatementInto(ctx context.Context, conn *sql.Conn, driver DriverType, stmt string, resultIndex *int, sink ScriptSink) error {
+func runScriptStatement(ctx context.Context, conn *sql.Conn, driver DriverType, stmt string, resultIndex *int, sink ScriptSink) error {
 	start := NowMs()
 	upper := strings.ToUpper(StripLeadingComments(stmt))
 	if statementReturnsRows(driver, upper) {
@@ -96,12 +102,7 @@ func runStatementInto(ctx context.Context, conn *sql.Conn, driver DriverType, st
 		sink.OnResult(idx, nil, stmt, err)
 		return err
 	}
-	affected, _ := res.RowsAffected()
-	sink.OnResult(idx, &QueryResult{
-		AffectedRows: affected,
-		DurationMs:   NowMs() - start,
-		Message:      fmt.Sprintf("%d row(s) affected", affected),
-	}, stmt, nil)
+	sink.OnResult(idx, execSummary(res, start), stmt, nil)
 	return nil
 }
 
@@ -140,90 +141,27 @@ func streamResultSets(ctx context.Context, conn *sql.Conn, query string, start i
 	return nil
 }
 
+// streamOneResultSet scans the current result set of rows through the shared scan loop, adapting
+// the per-set ScriptSink callbacks to StreamOpts and returning the set's summary.
 func streamOneResultSet(ctx context.Context, rows *sql.Rows, batchSize, resultIndex int, sink ScriptSink) (*QueryResult, error) {
-	if batchSize <= 0 {
-		batchSize = defaultStreamBatchSize
-	}
-	cols, err := rows.Columns()
-	if err != nil {
-		return &QueryResult{}, err
-	}
-	colTypes, _ := rows.ColumnTypes()
-	typeNames := make([]string, len(cols))
-	for i, ct := range colTypes {
-		if ct != nil {
-			typeNames[i] = ct.DatabaseTypeName()
-		}
-	}
+	summary := &QueryResult{}
+	opts := StreamOpts{BatchSize: batchSize}
 	if sink.OnMeta != nil {
-		sink.OnMeta(resultIndex, cols, typeNames)
+		opts.OnMeta = func(cols, types []string) { sink.OnMeta(resultIndex, cols, types) }
 	}
-	summary := &QueryResult{Columns: cols, ColumnTypes: typeNames}
-
-	values := make([]interface{}, len(cols))
-	ptrs := make([]interface{}, len(cols))
-	for i := range ptrs {
-		ptrs[i] = &values[i]
+	if sink.OnBatch != nil {
+		opts.OnBatch = func(batch [][]any) error { return sink.OnBatch(resultIndex, batch) }
 	}
-
-	const ctxCheckInterval = 1024
-	var total int64
-	batch := make([][]interface{}, 0, batchSize)
-	flush := func() error {
-		if len(batch) == 0 || sink.OnBatch == nil {
-			batch = batch[:0]
-			return nil
-		}
-		if err := sink.OnBatch(resultIndex, batch); err != nil {
-			return err
-		}
-		batch = make([][]interface{}, 0, batchSize)
-		return nil
-	}
-
-	for rows.Next() {
-		if total%ctxCheckInterval == 0 {
-			if err := ctx.Err(); err != nil {
-				summary.RowCount = total
-				return summary, err
-			}
-		}
-		if err := rows.Scan(ptrs...); err != nil {
-			summary.RowCount = total
-			return summary, err
-		}
-		row := make([]interface{}, len(cols))
-		for i, v := range values {
-			row[i] = normalizeValue(v)
-		}
-		batch = append(batch, row)
-		total++
-		if len(batch) >= batchSize {
-			if err := flush(); err != nil {
-				summary.RowCount = total
-				return summary, err
-			}
-		}
-	}
+	total, err := ScanRowsStream(ctx, rows, wrapStreamMeta(opts, summary))
 	summary.RowCount = total
-	// rows.Next returning false ends this result set; rows.Err distinguishes end-of-set from failure.
-	if err := rows.Err(); err != nil {
-		if ctxErr := ctx.Err(); ctxErr != nil {
-			return summary, ctxErr
-		}
-		return summary, err
-	}
-	if err := flush(); err != nil {
-		return summary, err
-	}
-	return summary, nil
+	return summary, err
 }
 
 // statementReturnsRows decides whether a statement should run via the query protocol (so its result
 // sets - and any extra ones via NextResultSet - are read) rather than Exec. Mirrors IsSelectLike but
 // also covers stored-procedure calls, which can return one or more result sets.
 func statementReturnsRows(driver DriverType, upper string) bool {
-	if IsSelectLike(driver, upper) || HasReturningClause(upper) {
+	if IsSelectLike(driver, upper) || hasReturningClause(upper) {
 		return true
 	}
 	return strings.HasPrefix(upper, "CALL") ||
@@ -232,7 +170,7 @@ func statementReturnsRows(driver DriverType, upper string) bool {
 		strings.HasPrefix(upper, "TABLE ")
 }
 
-func BuildTableSelectSQL(driver DriverType, schema string, req TableDataRequest, cols []ColumnInfo, pks []string) string {
+func buildTableSelectSQL(driver DriverType, schema string, req TableDataRequest, cols []ColumnInfo, pks []string) string {
 	q := fmt.Sprintf("SELECT * FROM %s", tableRef(driver, schema, req.Table))
 	if req.Filter != "" {
 		q += " WHERE " + req.Filter
@@ -259,7 +197,7 @@ func BuildTableSelectSQL(driver DriverType, schema string, req TableDataRequest,
 	return q
 }
 
-func ApplyRowUpdate(ctx context.Context, exec ExecFunc, driver DriverType, schema string, upd RowUpdate, cols []ColumnInfo) error {
+func applyRowUpdate(ctx context.Context, exec execFunc, driver DriverType, schema string, upd RowUpdate, cols []ColumnInfo) error {
 	pks := PrimaryKeys(cols)
 	if len(pks) == 0 {
 		return fmt.Errorf("table has no primary key")
@@ -272,7 +210,7 @@ func ApplyRowUpdate(ctx context.Context, exec ExecFunc, driver DriverType, schem
 	return err
 }
 
-func ApplyRowDeletes(ctx context.Context, exec ExecFunc, driver DriverType, schema string, del RowDelete, cols []ColumnInfo) (int64, error) {
+func applyRowDeletes(ctx context.Context, exec execFunc, driver DriverType, schema string, del RowDelete, cols []ColumnInfo) (int64, error) {
 	pks := PrimaryKeys(cols)
 	if len(pks) == 0 {
 		return 0, fmt.Errorf("table has no primary key")
@@ -293,7 +231,9 @@ func ApplyRowDeletes(ctx context.Context, exec ExecFunc, driver DriverType, sche
 	return total, nil
 }
 
-func SelectSingleRow(ctx context.Context, db *sql.DB, query string, args ...interface{}) (map[string]interface{}, bool) {
+// SelectSingleRow runs query and returns its first row keyed by column name; ok is false when the
+// query errors or returns no rows.
+func SelectSingleRow(ctx context.Context, db *sql.DB, query string, args ...any) (map[string]any, bool) {
 	rows, err := db.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, false
@@ -303,14 +243,35 @@ func SelectSingleRow(ctx context.Context, db *sql.DB, query string, args ...inte
 	if err != nil || len(result.Rows) == 0 {
 		return nil, false
 	}
-	row := make(map[string]interface{}, len(result.Columns))
+	return FirstRowAsMap(result), true
+}
+
+// FirstRowAsMap returns the first row keyed by column name, or an empty map when there are no rows.
+func FirstRowAsMap(result *QueryResult) map[string]any {
+	row := make(map[string]any, len(result.Columns))
+	if len(result.Rows) == 0 {
+		return row
+	}
 	for i, col := range result.Columns {
 		row[col] = result.Rows[0][i]
 	}
-	return row, true
+	return row
 }
 
-func FirstIntegerPrimaryKey(cols []ColumnInfo) string {
+// SelectRowByIntegerPK reselects the row whose (first) integer primary key equals id, so drivers
+// that only get LastInsertId can return the full inserted record like Postgres RETURNING *.
+// ok is false when the table has no integer primary key or the lookup fails.
+func SelectRowByIntegerPK(ctx context.Context, db *sql.DB, driver DriverType, schema, table string, cols []ColumnInfo, id int64) (map[string]any, bool) {
+	pk := firstIntegerPrimaryKey(cols)
+	if pk == "" {
+		return nil, false
+	}
+	query := fmt.Sprintf("SELECT * FROM %s WHERE %s = ? LIMIT 1",
+		tableRef(driver, schema, table), QuoteIdent(driver, pk))
+	return SelectSingleRow(ctx, db, query, id)
+}
+
+func firstIntegerPrimaryKey(cols []ColumnInfo) string {
 	for _, c := range cols {
 		if c.IsPrimary && strings.Contains(strings.ToLower(c.DataType), "int") {
 			return c.Name

@@ -129,14 +129,14 @@ func TestScanRowsStreamDeliversBatches(t *testing.T) {
 
 	var metaCalls int
 	var gotCols []string
-	var batches [][][]interface{}
+	var batches [][][]any
 	got, err := ScanRowsStream(context.Background(), rows, StreamOpts{
 		BatchSize: 1000,
 		OnMeta: func(cols, _ []string) {
 			metaCalls++
 			gotCols = cols
 		},
-		OnBatch: func(batch [][]interface{}) error {
+		OnBatch: func(batch [][]any) error {
 			batches = append(batches, batch)
 			return nil
 		},
@@ -170,7 +170,7 @@ func TestScanRowsStreamStopsOnCallbackError(t *testing.T) {
 	var calls int
 	_, err = ScanRowsStream(context.Background(), rows, StreamOpts{
 		BatchSize: 500,
-		OnBatch: func([][]interface{}) error {
+		OnBatch: func([][]any) error {
 			calls++
 			return want
 		},

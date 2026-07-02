@@ -1,7 +1,7 @@
 import { readStoredEditorFontSize } from '@/features/editor/lib/editorFontSize';
 
-export const APP_FONT_SANS = 'Inter';
-export const APP_FONT_MONO = 'Fira Code';
+const APP_FONT_SANS = 'Inter';
+const APP_FONT_MONO = 'Fira Code';
 
 /** Monaco fontFamily option; must match @fontsource/fira-code and --font-mono in global.css. */
 export const MONACO_FONT_FAMILY = `"${APP_FONT_MONO}", monospace`;

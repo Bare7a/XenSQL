@@ -6,7 +6,7 @@ import { STORAGE_KEYS } from '@/shared/lib/storageKeys';
 export const DEFAULT_UI_ZOOM_PX = 13;
 export const MIN_UI_ZOOM_PX = 10;
 export const MAX_UI_ZOOM_PX = 22;
-export const UI_ZOOM_STEP_PX = 1;
+const UI_ZOOM_STEP_PX = 1;
 
 const STORAGE_KEY = STORAGE_KEYS.uiZoomPx;
 
@@ -18,7 +18,7 @@ function clampZoomPx(px: number): number {
   return Math.min(MAX_UI_ZOOM_PX, Math.max(MIN_UI_ZOOM_PX, Math.round(px)));
 }
 
-export function readStoredUiZoomPx(): number {
+function readStoredUiZoomPx(): number {
   try {
     const raw = settings.getItem(STORAGE_KEY);
     if (!raw) return DEFAULT_UI_ZOOM_PX;
@@ -40,7 +40,7 @@ export function getEffectiveUiZoomPx(): number {
   return readStoredUiZoomPx();
 }
 
-export function applyUiZoomPx(px: number): number {
+function applyUiZoomPx(px: number): number {
   const next = clampZoomPx(px);
   document.documentElement.style.fontSize = `${next}px`;
 

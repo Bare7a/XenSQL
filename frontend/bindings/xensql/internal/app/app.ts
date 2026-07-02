@@ -125,10 +125,6 @@ export function GetConnectionStatus(connectionID: string): $CancellablePromise<d
     });
 }
 
-export function GetDataDir(): $CancellablePromise<string> {
-    return $Call.ByID(3031616142);
-}
-
 export function GetEditorSession(): $CancellablePromise<storage$0.EditorSession> {
     return $Call.ByID(881302078).then(($result: any) => {
         return $$createType4($result);
@@ -221,12 +217,6 @@ export function PickSQLiteFile(): $CancellablePromise<string> {
     return $Call.ByID(2769801138);
 }
 
-export function QueryTable(connectionID: string, req: database$0.TableDataRequest): $CancellablePromise<database$0.QueryResult | null> {
-    return $Call.ByID(3137754197, connectionID, req).then(($result: any) => {
-        return $$createType1($result);
-    });
-}
-
 export function QueryTableStream(connectionID: string, tabID: string, req: database$0.TableDataRequest): $CancellablePromise<void> {
     return $Call.ByID(3607474293, connectionID, tabID, req);
 }
@@ -289,12 +279,6 @@ export function SettingsStore(): $CancellablePromise<storage$0.SettingsStore | n
     });
 }
 
-export function SupportedDrivers(): $CancellablePromise<string[]> {
-    return $Call.ByID(4071936312).then(($result: any) => {
-        return $$createType24($result);
-    });
-}
-
 export function TestConnection(cfg: database$0.ConnectionConfig): $CancellablePromise<void> {
     return $Call.ByID(1803584041, cfg);
 }
@@ -335,4 +319,3 @@ const $$createType20 = $Create.Array($$createType19);
 const $$createType21 = database$0.SchemaBundle.createFrom;
 const $$createType22 = storage$0.SettingsStore.createFrom;
 const $$createType23 = $Create.Nullable($$createType22);
-const $$createType24 = $Create.Array($Create.Any);

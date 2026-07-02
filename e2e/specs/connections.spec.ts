@@ -1,5 +1,5 @@
-import { expect, test } from '../fixtures';
-import { ALL_DATABASES, POSTGRES } from '../support/databases';
+import { ALL_DATABASES, POSTGRES } from '@support/databases';
+import { expect, test } from '@support/fixtures';
 
 test.describe('Connections', () => {
   // Full add → test → save → connect → disconnect, per driver.

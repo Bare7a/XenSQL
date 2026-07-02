@@ -20,12 +20,7 @@ type Driver struct{}
 func (d *Driver) Type() database.DriverType { return database.DriverPostgres }
 
 func (d *Driver) TestConnection(ctx context.Context, cfg database.ConnectionConfig) error {
-	s, err := d.Connect(ctx, cfg)
-	if err != nil {
-		return err
-	}
-	defer s.Close()
-	return s.Ping(ctx)
+	return database.ConnectAndPing(ctx, d, cfg)
 }
 
 func (d *Driver) Connect(ctx context.Context, cfg database.ConnectionConfig) (database.Session, error) {
@@ -33,109 +28,55 @@ func (d *Driver) Connect(ctx context.Context, cfg database.ConnectionConfig) (da
 	if err := database.ValidateConnectionConfig(cfg); err != nil {
 		return nil, err
 	}
-	dsn := buildDSN(cfg)
-	db, err := sql.Open("pgx", dsn)
+	db, err := sql.Open("pgx", buildDSN(cfg))
 	if err != nil {
 		return nil, err
 	}
 	db.SetMaxOpenConns(10)
-	// Fail fast on an unreachable host instead of hanging on the OS TCP timeout.
-	pingCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
-	defer cancel()
-	if err := db.PingContext(pingCtx); err != nil {
-		_ = db.Close()
+	if err := database.PingOrClose(ctx, db, 10*time.Second); err != nil {
 		return nil, err
 	}
 	schema := cfg.Schema
 	if schema == "" {
 		schema = "public"
 	}
-	// database/sql may use a different physical conn per call, so SET search_path must happen per-conn, not here.
-	return &Session{
-		db:            db,
-		defaultSchema: schema,
-		host:          cfg.Host,
-		readOnly:      cfg.ReadOnly,
-	}, nil
+	// database/sql may use a different physical conn per call, so SET search_path must happen
+	// per-conn (SetupConn), not here.
+	s := &Session{}
+	s.SessionBase = database.SessionBase{
+		DB:            db,
+		Driver:        database.DriverPostgres,
+		DefaultSchema: schema,
+		Host:          cfg.Host,
+		ReadOnly:      cfg.ReadOnly,
+		SetupConn:     s.setSearchPath,
+		RegisterKill:  s.registerQueryKill,
+		ListCols:      s.ListColumns,
+	}
+	return s, nil
 }
 
+// Session keeps only Postgres-specific behaviour; everything shared lives in database.SessionBase.
 type Session struct {
-	db            *sql.DB
-	defaultSchema string
-	host          string
-	// Defense-in-depth against future code paths that bypass the app-layer gate.
-	readOnly bool
+	database.SessionBase
 }
 
-func (s *Session) DriverType() database.DriverType { return database.DriverPostgres }
-
-func (s *Session) Close() error { return s.db.Close() }
-
-func (s *Session) Ping(ctx context.Context) error { return s.db.PingContext(ctx) }
-
-// Must run on a checked-out *sql.Conn so the SET applies to the same physical connection as the query.
-func (s *Session) ensureSearchPathOnConn(ctx context.Context, conn *sql.Conn) error {
-	_, err := conn.ExecContext(ctx, "SET search_path TO "+database.QuoteIdent(database.DriverPostgres, s.defaultSchema)+", public")
+// setSearchPath must run on a checked-out *sql.Conn so the SET applies to the same physical
+// connection as the query.
+func (s *Session) setSearchPath(ctx context.Context, conn *sql.Conn) error {
+	_, err := conn.ExecContext(ctx, "SET search_path TO "+database.QuoteIdent(database.DriverPostgres, s.DefaultSchema)+", public")
 	return err
 }
 
 func (s *Session) registerQueryKill(ctx context.Context, conn *sql.Conn) error {
-	connID, ok := database.ConnectionIDFromContext(ctx)
-	if !ok {
-		return nil
-	}
-	reg := database.QueryRegistryFromContext(ctx)
-	if reg == nil {
-		return nil
-	}
-	var pid int
-	if err := conn.QueryRowContext(ctx, "SELECT pg_backend_pid()").Scan(&pid); err != nil {
-		return err
-	}
-	reg.SetKill(connID, func() {
-		_, _ = s.db.ExecContext(context.Background(), "SELECT pg_cancel_backend($1)", pid)
+	return database.RegisterServerKill(ctx, conn, "SELECT pg_backend_pid()", func(pid int64) {
+		_, _ = s.DB.ExecContext(context.Background(), "SELECT pg_cancel_backend($1)", pid)
 	})
-	return nil
-}
-
-func (s *Session) BeginTxn(ctx context.Context) (database.PinnedTxn, error) {
-	return database.NewPinnedTxn(ctx, s.db, database.DriverPostgres, s.ensureSearchPathOnConn)
-}
-
-func (s *Session) PinnedConn(ctx context.Context) (database.PinnedConn, error) {
-	return database.NewPinnedConn(ctx, s.db, database.DriverPostgres, s.ensureSearchPathOnConn)
-}
-
-func (s *Session) Execute(ctx context.Context, sqlText string) (*database.QueryResult, error) {
-	return database.CollectExecute(func(opts database.StreamOpts) (*database.QueryResult, error) {
-		return s.ExecuteStream(ctx, sqlText, opts)
-	})
-}
-
-func (s *Session) ExecuteStream(ctx context.Context, sqlText string, opts database.StreamOpts) (*database.QueryResult, error) {
-	if s.readOnly {
-		if err := database.AssertReadOnlySQL(sqlText); err != nil {
-			return nil, err
-		}
-	}
-	conn, err := s.db.Conn(ctx)
-	if err != nil {
-		return nil, err
-	}
-	defer conn.Close()
-
-	if err := s.ensureSearchPathOnConn(ctx, conn); err != nil {
-		return nil, err
-	}
-	if err := s.registerQueryKill(ctx, conn); err != nil {
-		return nil, err
-	}
-	return database.RunStatement(ctx, conn, database.DriverPostgres, sqlText, opts)
 }
 
 func (s *Session) ConnectionInfo(ctx context.Context) (database.ConnectionStatus, error) {
 	var dbName, schema, user string
-	err := s.db.QueryRowContext(ctx,
+	err := s.DB.QueryRowContext(ctx,
 		`SELECT current_database(), current_schema(), current_user`).
 		Scan(&dbName, &schema, &user)
 	if err != nil {
@@ -146,13 +87,13 @@ func (s *Session) ConnectionInfo(ctx context.Context) (database.ConnectionStatus
 		Database:  dbName,
 		Schema:    schema,
 		User:      user,
-		Host:      s.host,
+		Host:      s.Host,
 	}, nil
 }
 
 func (s *Session) ListSchemas(ctx context.Context) ([]database.SchemaInfo, error) {
 	// Fully qualified to pg_catalog - search_path irrelevant, no per-call SET needed.
-	rows, err := s.db.QueryContext(ctx, `
+	rows, err := s.DB.QueryContext(ctx, `
 		SELECT nspname FROM pg_catalog.pg_namespace
 		WHERE nspname NOT LIKE 'pg_%'
 		  AND nspname NOT IN ('information_schema')
@@ -173,10 +114,7 @@ func (s *Session) ListSchemas(ctx context.Context) ([]database.SchemaInfo, error
 }
 
 func (s *Session) ListTables(ctx context.Context, schema string) ([]database.TableInfo, error) {
-	if schema == "" {
-		schema = s.defaultSchema
-	}
-	rows, err := s.db.QueryContext(ctx, `
+	rows, err := s.DB.QueryContext(ctx, `
 		SELECT n.nspname, c.relname,
 			CASE c.relkind
 				WHEN 'r' THEN 'table'
@@ -190,7 +128,7 @@ func (s *Session) ListTables(ctx context.Context, schema string) ([]database.Tab
 		JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace
 		WHERE n.nspname = $1
 		  AND c.relkind IN ('r', 'v', 'm', 'f', 'p')
-		ORDER BY c.relname`, schema)
+		ORDER BY c.relname`, s.SchemaOr(schema))
 	if err != nil {
 		return nil, err
 	}
@@ -211,10 +149,7 @@ func (s *Session) ListTables(ctx context.Context, schema string) ([]database.Tab
 }
 
 func (s *Session) ListColumns(ctx context.Context, schema, table string) ([]database.ColumnInfo, error) {
-	if schema == "" {
-		schema = s.defaultSchema
-	}
-	rows, err := s.db.QueryContext(ctx, `
+	rows, err := s.DB.QueryContext(ctx, `
 		SELECT a.attname,
 			pg_catalog.format_type(a.atttypid, a.atttypmod),
 			NOT a.attnotnull,
@@ -235,7 +170,7 @@ func (s *Session) ListColumns(ctx context.Context, schema, table string) ([]data
 		LEFT JOIN pg_catalog.pg_attrdef ad ON a.attrelid = ad.adrelid AND a.attnum = ad.adnum
 		WHERE n.nspname = $1 AND c.relname = $2
 		  AND a.attnum > 0 AND NOT a.attisdropped
-		ORDER BY a.attnum`, schema, table)
+		ORDER BY a.attnum`, s.SchemaOr(schema), table)
 	if err != nil {
 		return nil, err
 	}
@@ -260,100 +195,22 @@ func (s *Session) ListColumns(ctx context.Context, schema, table string) ([]data
 	return cols, rows.Err()
 }
 
-func (s *Session) QueryTable(ctx context.Context, req database.TableDataRequest) (*database.QueryResult, error) {
-	return database.CollectExecute(func(opts database.StreamOpts) (*database.QueryResult, error) {
-		return s.QueryTableStream(ctx, req, opts)
-	})
-}
-
-func (s *Session) QueryTableStream(ctx context.Context, req database.TableDataRequest, opts database.StreamOpts) (*database.QueryResult, error) {
-	if err := database.ValidateTableFilter(req.Filter); err != nil {
-		return nil, err
-	}
-	schema := req.Schema
-	if schema == "" {
-		schema = s.defaultSchema
-	}
-	cols, err := s.ListColumns(ctx, schema, req.Table)
-	if err != nil {
-		return nil, err
-	}
-	pks := database.PrimaryKeys(cols)
-	q := database.BuildTableSelectSQL(database.DriverPostgres, schema, req, cols, pks)
-
-	start := database.NowMs()
-	conn, err := s.db.Conn(ctx)
-	if err != nil {
-		return nil, err
-	}
-	defer conn.Close()
-	if err := s.ensureSearchPathOnConn(ctx, conn); err != nil {
-		return nil, err
-	}
-	if err := s.registerQueryKill(ctx, conn); err != nil {
-		return nil, err
-	}
-	result := &database.QueryResult{
-		PrimaryKeys: pks,
-		TableName:   req.Table,
-		SchemaName:  schema,
-	}
-	return database.StreamQueryRows(ctx, conn, q, start, opts, result)
-}
-
-func (s *Session) UpdateRow(ctx context.Context, upd database.RowUpdate) error {
-	if s.readOnly {
-		return database.ErrReadOnly
-	}
-	schema := upd.Schema
-	if schema == "" {
-		schema = s.defaultSchema
-	}
-	cols, err := s.ListColumns(ctx, schema, upd.Table)
-	if err != nil {
-		return err
-	}
-	return database.ApplyRowUpdate(ctx, s.db.ExecContext, database.DriverPostgres, schema, upd, cols)
-}
-
-func (s *Session) DeleteRows(ctx context.Context, del database.RowDelete) (int64, error) {
-	if s.readOnly {
-		return 0, database.ErrReadOnly
-	}
-	schema := del.Schema
-	if schema == "" {
-		schema = s.defaultSchema
-	}
-	cols, err := s.ListColumns(ctx, schema, del.Table)
-	if err != nil {
-		return 0, err
-	}
-	return database.ApplyRowDeletes(ctx, s.db.ExecContext, database.DriverPostgres, schema, del, cols)
-}
-
-func (s *Session) InsertRow(ctx context.Context, schema, table string, values map[string]interface{}) (map[string]interface{}, error) {
-	if s.readOnly {
+func (s *Session) InsertRow(ctx context.Context, schema, table string, values map[string]any) (map[string]any, error) {
+	if s.ReadOnly {
 		return nil, database.ErrReadOnly
 	}
-	if schema == "" {
-		schema = s.defaultSchema
-	}
-	base, args, err := database.BuildInsertSQL(database.DriverPostgres, schema, table, values)
+	base, args, err := database.BuildInsertSQL(database.DriverPostgres, s.SchemaOr(schema), table, values)
 	if err != nil {
 		return nil, err
 	}
-	rows, err := s.db.QueryContext(ctx, base+" RETURNING *", args...)
+	rows, err := s.DB.QueryContext(ctx, base+" RETURNING *", args...)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 	result, err := database.ScanRows(ctx, rows)
-	if err != nil || len(result.Rows) == 0 {
-		return map[string]interface{}{}, err
+	if err != nil {
+		return map[string]any{}, err
 	}
-	row := make(map[string]interface{}, len(result.Columns))
-	for i, col := range result.Columns {
-		row[col] = result.Rows[0][i]
-	}
-	return row, nil
+	return database.FirstRowAsMap(result), nil
 }

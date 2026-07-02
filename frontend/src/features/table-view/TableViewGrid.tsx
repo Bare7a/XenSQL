@@ -2,12 +2,15 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { CellViewerModal } from '@/features/results/CellViewerModal';
+import { useTableViewCellMenu } from '@/features/table-view/hooks/useTableViewCellMenu';
+import { useTableViewCellViewer } from '@/features/table-view/hooks/useTableViewCellViewer';
 import { useTableViewGridFocus } from '@/features/table-view/hooks/useTableViewGridFocus';
 import { useTableViewKeyboardActions } from '@/features/table-view/hooks/useTableViewKeyboardActions';
+import { useTableViewPendingCells } from '@/features/table-view/hooks/useTableViewPendingCells';
 import type { PasteCellEdit } from '@/features/table-view/lib/tableViewClipboard';
 import { buildTableViewExportResult } from '@/features/table-view/lib/tableViewExport';
 import { TableViewCell } from '@/features/table-view/TableViewCell';
-import { ContextMenu, type ContextMenuItem } from '@/shared/components/ContextMenu';
+import { ContextMenu } from '@/shared/components/ContextMenu';
 import { ExportResultsDialog } from '@/shared/components/ExportResultsDialog';
 import { GridHeaderRow } from '@/shared/components/GridHeaderRow';
 import { GridTable } from '@/shared/components/GridTable';
@@ -19,15 +22,11 @@ import { useGridCore } from '@/shared/hooks/useGridCore';
 import { useGridSelectionView } from '@/shared/hooks/useGridSelectionView';
 import { useGridVirtualizer } from '@/shared/hooks/useGridVirtualizer';
 import { useUiZoom } from '@/shared/hooks/useUiZoom';
-import { api } from '@/shared/lib/api';
-import { appToast } from '@/shared/lib/appToast';
 import {
   type FocusCol,
   handleGridArrowKey,
   identityIndices,
-  primaryKeyKey,
   rowHeightForZoom,
-  rowPrimaryKey,
   type SortDirection,
 } from '@/shared/lib/grid';
 import { rowToJsonObject } from '@/shared/lib/rowJson';
@@ -96,25 +95,8 @@ export const TableViewGrid = memo(function TableViewGrid({
   // values with commas/newlines) instead of re-parsing the clipboard. Cleared implicitly when an
   // external copy makes the clipboard text no longer match.
   const lastCopyRef = useRef<CopiedCells | null>(null);
-  const [optimisticEdited, setOptimisticEdited] = useState<Set<string>>(new Set());
   const [editing, setEditing] = useState<{ row: number; col: number } | null>(null);
-  const [editTick, setEditTick] = useState(0);
   const [exportOpen, setExportOpen] = useState(false);
-  const [cellViewer, setCellViewer] = useState<{
-    row: number;
-    ci: number;
-    col: string;
-    value: string;
-    isNull: boolean;
-  } | null>(null);
-  const [contextMenu, setContextMenu] = useState<{
-    x: number;
-    y: number;
-    row: number;
-    colPos: number;
-    ci: number;
-    col: string;
-  } | null>(null);
 
   const onFocusedRowChangeRef = useRef(onFocusedRowChange);
   onFocusedRowChangeRef.current = onFocusedRowChange;
@@ -218,6 +200,30 @@ export const TableViewGrid = memo(function TableViewGrid({
     if (idx != null) publishFocusedRowRef.current(idx);
   }, [rows, focusRef, publishFocusedRowRef]);
 
+  const pendingCells = useTableViewPendingCells({ rows, columns, primaryKeys, pending, onCellEdit });
+  const { optimisticEdited, setOptimisticEdited, rowPkKey, getCellDisplay, isRowDeletedByKey, isCellEditedByKey } =
+    pendingCells;
+  const { commitCell, isRowDeleted } = pendingCells;
+
+  const { cellViewer, openCellViewer, closeCellViewer, saveCellViewer, setNullFromViewer } = useTableViewCellViewer({
+    columns,
+    colIndices,
+    pendingCells,
+  });
+
+  const { contextMenu, menuItems, openCellContextMenu, closeContextMenu } = useTableViewCellMenu({
+    columns,
+    colIndices,
+    primaryKeys,
+    readOnly,
+    pendingCells,
+    focusRef,
+    focusRow,
+    focusElement,
+    openCellViewer,
+    onToggleDeleteRow,
+  });
+
   const rowIndices = useMemo(() => identityIndices(rows.length), [rows.length]);
 
   const exportResult = useMemo(
@@ -299,21 +305,16 @@ export const TableViewGrid = memo(function TableViewGrid({
     rowAnchorRef.current = null;
     columnAnchorRef.current = null;
     setOptimisticEdited(new Set());
-  }, [columns, tableName, setCellRange, setSelectedRows, setSelectedColumns, rowAnchorRef, columnAnchorRef]);
-
-  // Keep the optimistic edit tint in lockstep with the committed pending edits. Inline commits/paste
-  // update it eagerly for instant feedback; this reconciles it whenever pending changes out from
-  // under the grid - most importantly on undo/redo, which rewrite pending wholesale.
-  useEffect(() => {
-    setOptimisticEdited((prev) => {
-      const next = new Set<string>();
-      for (const [pkKey, cols] of Object.entries(pending.edits)) {
-        for (const col of Object.keys(cols)) next.add(`${pkKey}${col}`);
-      }
-      if (prev.size === next.size && [...next].every((k) => prev.has(k))) return prev;
-      return next;
-    });
-  }, [pending.edits]);
+  }, [
+    columns,
+    tableName,
+    setCellRange,
+    setSelectedRows,
+    setSelectedColumns,
+    rowAnchorRef,
+    columnAnchorRef,
+    setOptimisticEdited,
+  ]);
 
   // After blur, restore focus to the committed cell (blur fires before React re-render).
   useEffect(() => {
@@ -346,127 +347,6 @@ export const TableViewGrid = memo(function TableViewGrid({
     el.addEventListener('scroll', handleScroll, { passive: true });
     return () => el.removeEventListener('scroll', handleScroll);
   }, [handleScroll]);
-
-  const rowPkKey = (rowIdx: number): string => primaryKeyKey(rowPrimaryKey(rows[rowIdx], columns, primaryKeys));
-
-  const getCellDisplay = (rowIdx: number, colName: string, colIdx: number, pkKey: string) => {
-    const pendingVal = pending.edits[pkKey]?.[colName];
-    // rows can shrink under the virtualizer mid-refresh; guard like every other access here.
-    const raw = pendingVal !== undefined ? pendingVal : rows[rowIdx]?.[colIdx];
-    if (raw == null) return { text: t('common.null'), isNull: true };
-    return { text: String(raw), isNull: false };
-  };
-
-  const isRowDeletedByKey = (pkKey: string) => pending.deletes.includes(pkKey);
-
-  const isCellEditedByKey = (pkKey: string, colName: string) => pending.edits[pkKey]?.[colName] !== undefined;
-
-  const isRowDeleted = (rowIdx: number) => isRowDeletedByKey(rowPkKey(rowIdx));
-
-  // Commit a cell value through the same reconcile path the inline editor and paste use: a value
-  // reverted to the original drops the optimistic tint instead of recording a pending edit.
-  const commitCell = (rowIdx: number, ci: number, col: string, value: string | null) => {
-    const origRaw = rows[rowIdx]?.[ci];
-    const orig = origRaw == null ? null : String(origRaw);
-    const reverted = (value == null ? null : String(value)) === orig;
-    const optimisticKey = `${rowPkKey(rowIdx)}${col}`;
-    setOptimisticEdited((prevSet) => {
-      const nextSet = new Set(prevSet);
-      if (reverted) nextSet.delete(optimisticKey);
-      else nextSet.add(optimisticKey);
-      return nextSet;
-    });
-    onCellEdit(rowIdx, col, value);
-    setEditTick((x) => x + 1);
-  };
-
-  const restoreCell = (rowIdx: number, ci: number, col: string) => {
-    const origRaw = rows[rowIdx]?.[ci];
-    commitCell(rowIdx, ci, col, origRaw == null ? null : String(origRaw));
-  };
-
-  const openCellViewer = (rowIdx: number, colPos: number) => {
-    const ci = colIndices[colPos];
-    const col = columns[ci];
-    if (col == null) return;
-
-    const pendingVal = pending.edits[rowPkKey(rowIdx)]?.[col];
-    const raw = pendingVal !== undefined ? pendingVal : rows[rowIdx]?.[ci];
-    const isNull = raw == null;
-
-    setCellViewer({ row: rowIdx, ci, col, value: isNull ? '' : String(raw), isNull });
-  };
-
-  const saveCellViewer = (nextRaw: string) => {
-    if (!cellViewer) return;
-    commitCell(cellViewer.row, cellViewer.ci, cellViewer.col, nextRaw === '' ? null : nextRaw);
-    setCellViewer(null);
-  };
-
-  const copyCellValue = (rowIdx: number, ci: number, col: string) => {
-    const pendingVal = pending.edits[rowPkKey(rowIdx)]?.[col];
-    const raw = pendingVal !== undefined ? pendingVal : rows[rowIdx]?.[ci];
-    void (async () => {
-      try {
-        await api.copyToClipboard(raw == null ? '' : String(raw));
-        appToast.success(t('toast.copiedClipboard'));
-      } catch {
-        /* clipboard unavailable - nothing to recover */
-      }
-    })();
-  };
-
-  const openCellContextMenu = (e: React.MouseEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-    const td = (e.target as HTMLElement).closest('td[data-col-pos]') as HTMLElement | null;
-    const row = td ? Number(td.dataset.row) : (focusRef.current.row ?? -1);
-    const colPos = td ? Number(td.dataset.colPos) : Math.max(0, focusRef.current.colPos);
-    const ci = colIndices[colPos];
-    const col = columns[ci];
-    if (!Number.isInteger(row) || row < 0 || col == null) return;
-    if (td) {
-      focusRow(row, colPos);
-      focusElement(row, colPos);
-    }
-    setContextMenu({ x: e.clientX, y: e.clientY, row, colPos, ci, col });
-  };
-
-  const cellMenuItems = (m: NonNullable<typeof contextMenu>): ContextMenuItem[] => {
-    const { row, ci, col, colPos } = m;
-    const pkKey = rowPkKey(row);
-    const deleted = isRowDeletedByKey(pkKey);
-    const pendingVal = pending.edits[pkKey]?.[col];
-    const cellIsNull = (pendingVal !== undefined ? pendingVal : rows[row]?.[ci]) == null;
-    const hasEdit = isCellEditedByKey(pkKey, col) || optimisticEdited.has(`${pkKey}${col}`);
-    const canEdit = !readOnly && primaryKeys.length > 0;
-
-    return [
-      { label: t('common.copy'), action: () => copyCellValue(row, ci, col) },
-      {
-        label: t('tableView.contextEdit'),
-        action: () => openCellViewer(row, colPos),
-        disabled: !canEdit,
-      },
-      { label: '', action: () => {}, separator: true },
-      {
-        label: t('tableView.contextSetNull'),
-        action: () => commitCell(row, ci, col, null),
-        disabled: !canEdit || cellIsNull,
-      },
-      {
-        label: t('tableView.contextRestore'),
-        action: () => restoreCell(row, ci, col),
-        disabled: !canEdit || !hasEdit,
-      },
-      { label: '', action: () => {}, separator: true },
-      {
-        label: deleted ? t('tableView.undeleteRow') : t('tableView.deleteRow'),
-        action: () => onToggleDeleteRow(row),
-        disabled: !canEdit,
-      },
-    ];
-  };
 
   const onGridKeyDown = (e: React.KeyboardEvent, rowIdx: number, colPos: FocusCol) => {
     if (editing != null && (e.target as HTMLElement).tagName === 'INPUT') return;
@@ -598,9 +478,7 @@ export const TableViewGrid = memo(function TableViewGrid({
         renderCell={(rowIdx, colPos, ci, ctx) => {
           const col = columns[ci];
           const { text, isNull } = getCellDisplay(rowIdx, col, ci, ctx.pkKey);
-          const optimisticKey = `${ctx.pkKey}${col}`;
-          void editTick;
-          const edited = optimisticEdited.has(optimisticKey) || isCellEditedByKey(ctx.pkKey, col);
+          const edited = optimisticEdited.has(`${ctx.pkKey}${col}`) || isCellEditedByKey(ctx.pkKey, col);
           const isEditing = editing?.row === rowIdx && editing?.col === colPos && !readOnly;
           const isFocusedCell = ctx.isFocusedRow && focusedColPos === colPos;
 
@@ -617,7 +495,6 @@ export const TableViewGrid = memo(function TableViewGrid({
               isEditing={isEditing}
               isFocusedCell={isFocusedCell}
               deleted={ctx.deleted}
-              optimisticKey={optimisticKey}
               colWidth={colWidths[colPos]}
               hasCellSelection={hasCellSelection}
               hasRowColSelection={hasRowColSelection}
@@ -626,12 +503,9 @@ export const TableViewGrid = memo(function TableViewGrid({
               selectedColPositions={selectedColPositions}
               rowCount={rows.length}
               colCount={colIndices.length}
-              rows={rows}
               lastCommittedEditRef={lastCommittedEditRef}
-              setOptimisticEdited={setOptimisticEdited}
-              setEditTick={setEditTick}
               setEditing={setEditing}
-              onCellEdit={onCellEdit}
+              onCommitCell={commitCell}
               onMouseDown={(e) => {
                 if (editing != null) return;
                 handleCellMouseDown(rowIdx, colPos, e);
@@ -659,16 +533,9 @@ export const TableViewGrid = memo(function TableViewGrid({
           value={cellViewer.value}
           isNull={cellViewer.isNull}
           startInEditMode={!readOnly}
-          onClose={() => setCellViewer(null)}
+          onClose={closeCellViewer}
           onSave={!readOnly ? saveCellViewer : undefined}
-          onSetNull={
-            !readOnly
-              ? () => {
-                  commitCell(cellViewer.row, cellViewer.ci, cellViewer.col, null);
-                  setCellViewer(null);
-                }
-              : undefined
-          }
+          onSetNull={!readOnly ? setNullFromViewer : undefined}
         />
       )}
 
@@ -686,13 +553,8 @@ export const TableViewGrid = memo(function TableViewGrid({
         />
       )}
 
-      {contextMenu && (
-        <ContextMenu
-          x={contextMenu.x}
-          y={contextMenu.y}
-          items={cellMenuItems(contextMenu)}
-          onClose={() => setContextMenu(null)}
-        />
+      {contextMenu && menuItems && (
+        <ContextMenu x={contextMenu.x} y={contextMenu.y} items={menuItems} onClose={closeContextMenu} />
       )}
     </div>
   );

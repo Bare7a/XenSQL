@@ -11,11 +11,11 @@ export function rowHeightForZoom(uiZoomPx: number): number {
 }
 
 export const OVERSCAN = 12;
-export const COL_MIN_CH = 8;
+const COL_MIN_CH = 8;
 export const COL_MAX_CH = 50;
-export const COL_PAD_CH = 3;
+const COL_PAD_CH = 3;
 // Sort chevron in header - treat as extra chars so auto-fit doesn't undersize
-export const COL_HEADER_ICON_CH = 4;
+const COL_HEADER_ICON_CH = 4;
 export const SAMPLE_ROWS = 80;
 export const COL_WIDTH_DEBOUNCE_MS = 150;
 

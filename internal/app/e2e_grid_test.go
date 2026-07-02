@@ -8,6 +8,15 @@ import (
 	"xensql/internal/database"
 )
 
+func queryTable(t *testing.T, a *App, connID string, req database.TableDataRequest) (*database.QueryResult, error) {
+	t.Helper()
+	s, err := a.sessionFor(connID)
+	if err != nil {
+		t.Fatalf("session: %v", err)
+	}
+	return s.QueryTable(testCtx(), req)
+}
+
 // TestE2EQueryTable covers the Results Grid "browse table" path: pagination,
 // sorting, filtering, and the primary-key metadata that decides whether the grid
 // is editable.
@@ -20,7 +29,7 @@ func TestE2EQueryTable(t *testing.T) {
 		}
 
 		t.Run("metadata", func(t *testing.T) {
-			res, err := a.QueryTable(connID, database.TableDataRequest{
+			res, err := queryTable(t, a, connID, database.TableDataRequest{
 				Schema: e.browseSchema, Table: table, Limit: 100,
 			})
 			if err != nil {
@@ -38,7 +47,7 @@ func TestE2EQueryTable(t *testing.T) {
 		})
 
 		t.Run("pagination", func(t *testing.T) {
-			page, err := a.QueryTable(connID, database.TableDataRequest{
+			page, err := queryTable(t, a, connID, database.TableDataRequest{
 				Schema: e.browseSchema, Table: table, Limit: 2, Offset: 1, OrderBy: "id", OrderDir: "ASC",
 			})
 			if err != nil {
@@ -54,7 +63,7 @@ func TestE2EQueryTable(t *testing.T) {
 		})
 
 		t.Run("sort_desc", func(t *testing.T) {
-			res, err := a.QueryTable(connID, database.TableDataRequest{
+			res, err := queryTable(t, a, connID, database.TableDataRequest{
 				Schema: e.browseSchema, Table: table, Limit: 100, OrderBy: "name", OrderDir: "DESC",
 			})
 			if err != nil {
@@ -66,7 +75,7 @@ func TestE2EQueryTable(t *testing.T) {
 		})
 
 		t.Run("filter", func(t *testing.T) {
-			res, err := a.QueryTable(connID, database.TableDataRequest{
+			res, err := queryTable(t, a, connID, database.TableDataRequest{
 				Schema: e.browseSchema, Table: table, Limit: 100, Filter: "name = 'c'",
 			})
 			if err != nil {
@@ -78,7 +87,7 @@ func TestE2EQueryTable(t *testing.T) {
 		})
 
 		t.Run("malicious_filter_rejected", func(t *testing.T) {
-			_, err := a.QueryTable(connID, database.TableDataRequest{
+			_, err := queryTable(t, a, connID, database.TableDataRequest{
 				Schema: e.browseSchema, Table: table, Limit: 100, Filter: "1=1; DROP TABLE " + table,
 			})
 			if err == nil {
@@ -96,7 +105,7 @@ func TestE2EGridEditing(t *testing.T) {
 		createTempTable(t, a, e, connID, e.autoPKTable(table), table)
 
 		// Insert: the generated id must come back so the grid can address the new row.
-		row, err := a.InsertRow(connID, e.browseSchema, table, map[string]interface{}{"name": "first"})
+		row, err := a.InsertRow(connID, e.browseSchema, table, map[string]any{"name": "first"})
 		if err != nil {
 			t.Fatalf("InsertRow: %v", err)
 		}
@@ -112,8 +121,8 @@ func TestE2EGridEditing(t *testing.T) {
 		if err := a.UpdateRow(connID, database.RowUpdate{
 			Schema:     e.browseSchema,
 			Table:      table,
-			PrimaryKey: map[string]interface{}{"id": idVal},
-			Changes:    map[string]interface{}{"name": "edited"},
+			PrimaryKey: map[string]any{"id": idVal},
+			Changes:    map[string]any{"name": "edited"},
 		}); err != nil {
 			t.Fatalf("UpdateRow: %v", err)
 		}
@@ -129,7 +138,7 @@ func TestE2EGridEditing(t *testing.T) {
 		n, err := a.DeleteRows(connID, database.RowDelete{
 			Schema:      e.browseSchema,
 			Table:       table,
-			PrimaryKeys: []map[string]interface{}{{"id": idVal}},
+			PrimaryKeys: []map[string]any{{"id": idVal}},
 		})
 		if err != nil {
 			t.Fatalf("DeleteRows: %v", err)
@@ -159,8 +168,8 @@ func TestE2EUpdateRequiresPrimaryKey(t *testing.T) {
 		err := a.UpdateRow(connID, database.RowUpdate{
 			Schema:     e.browseSchema,
 			Table:      table,
-			PrimaryKey: map[string]interface{}{"a": 1},
-			Changes:    map[string]interface{}{"b": "y"},
+			PrimaryKey: map[string]any{"a": 1},
+			Changes:    map[string]any{"b": "y"},
 		})
 		if err == nil {
 			t.Error("UpdateRow on a table without a primary key should fail")
@@ -170,7 +179,7 @@ func TestE2EUpdateRequiresPrimaryKey(t *testing.T) {
 
 // asInt64 coerces the various integer representations the drivers return for
 // count(*) (int64, or a string for huge values) into an int64.
-func asInt64(v interface{}) int64 {
+func asInt64(v any) int64 {
 	switch n := v.(type) {
 	case int64:
 		return n

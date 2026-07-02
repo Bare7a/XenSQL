@@ -1,10 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useSyncExternalStore } from 'react';
 import { getEffectiveEditorFontSize, subscribeEditorFontSizeChanged } from '@/features/editor/lib/editorFontSize';
 
 export function useEditorFontSize(): number {
-  const [fontSize, setFontSize] = useState(() => getEffectiveEditorFontSize());
-
-  useEffect(() => subscribeEditorFontSizeChanged(setFontSize), []);
-
-  return fontSize;
+  return useSyncExternalStore(subscribeEditorFontSizeChanged, getEffectiveEditorFontSize);
 }

@@ -13,7 +13,6 @@ export interface GridColumnsView {
   toggleColumn: (col: string) => void;
   showAllColumns: () => void;
   hideAllColumns: () => void;
-  resetHidden: () => void;
   colWidths: string[];
   /** True once widths are computed for every visible column (safe to show the grid). */
   columnsSized: boolean;
@@ -124,10 +123,6 @@ export function useGridColumns(columns: string[], sortedRows: unknown[][]): Grid
     setHiddenColumns(new Set(columns));
   }, [columns]);
 
-  const resetHidden = useCallback(() => {
-    setHiddenColumns(new Set());
-  }, []);
-
   const applyColumnWidth = useCallback((colPos: number, widthPx: number) => {
     userSizedRef.current.add(colPos);
     setColWidths((prev) => {
@@ -146,7 +141,6 @@ export function useGridColumns(columns: string[], sortedRows: unknown[][]): Grid
     toggleColumn,
     showAllColumns,
     hideAllColumns,
-    resetHidden,
     colWidths,
     columnsSized,
     fitColumns,

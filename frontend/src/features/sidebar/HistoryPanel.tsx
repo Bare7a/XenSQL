@@ -1,6 +1,7 @@
-import { BookmarkPlus, Database, Globe, Search, SlidersHorizontal, Trash2 } from 'lucide-react';
+import { BookmarkPlus, Database, Globe, SlidersHorizontal, Trash2 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { SidebarFilterBar } from '@/features/sidebar/SidebarFilterBar';
 import { ContextMenu } from '@/shared/components/ContextMenu';
 import { useContextMenu } from '@/shared/hooks/useContextMenu';
 import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue';
@@ -191,15 +192,7 @@ export function HistoryPanel({ onOpenQuery }: HistoryPanelProps) {
 
   return (
     <>
-      <div className="sidebar-filter">
-        <Search className="sidebar-filter-icon" aria-hidden />
-        <input
-          type="search"
-          className="sidebar-filter-input"
-          placeholder={t('sidebar.filterHistory')}
-          value={filter}
-          onChange={(e) => setFilter(e.target.value)}
-        />
+      <SidebarFilterBar value={filter} placeholder={t('sidebar.filterHistory')} onChange={setFilter}>
         <button
           type="button"
           className="btn btn-sm sidebar-filter-btn"
@@ -209,7 +202,7 @@ export function HistoryPanel({ onOpenQuery }: HistoryPanelProps) {
         >
           <SlidersHorizontal className="icon-xs" />
         </button>
-      </div>
+      </SidebarFilterBar>
 
       {(history?.length ?? 0) === 0 ? (
         <div className="empty-state">

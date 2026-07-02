@@ -40,59 +40,6 @@ import {
 } from '@/features/editor/lib/sqlSuggestions';
 import type { DriverType, SchemaInfo, TableInfo } from '@/types';
 
-export {
-  type ClauseBodyKind,
-  clauseBodyStart,
-  type DotCompletion,
-  expectsExpression,
-  isColumnFilterContext,
-  isLimitOffsetContext,
-  isOrderOrGroupContext,
-  isUpdateSetColumnContext,
-  isValueContext,
-  matchTableContext,
-  parseDotCompletion,
-  type TableContextMatch,
-} from '@/features/editor/lib/sqlCompletionContext';
-export {
-  type ParsedQuery,
-  parseQueryContext,
-  parseTableRef,
-  type QueryTableRef,
-  resolveDotCompletion,
-  resolveQualifierToTable,
-  resolveTableName,
-  type TableBinding,
-} from '@/features/editor/lib/sqlQueryParse';
-export {
-  ALIAS_STOP_WORDS,
-  columnCacheKey,
-  formatSqlIdentifier,
-  identifierNeedsQuote,
-  QUOTE_FORCING_KEYWORDS,
-  unquoteIdent,
-} from '@/features/editor/lib/sqlQuoting';
-export {
-  columnDetail,
-  JOIN_KEYWORDS,
-  keywordsForContext,
-  matchScore,
-  ORDER_KEYWORDS,
-  rank,
-  SQL_KEYWORDS,
-  suggestClauseBody,
-  suggestColumnsForTable,
-  suggestColumnsFromBindings,
-  suggestCteItems,
-  suggestLimitOffset,
-  suggestQueryTableRefs,
-  suggestSchemas,
-  suggestTables,
-  suggestValueItems,
-  VALUE_LITERALS,
-} from '@/features/editor/lib/sqlSuggestions';
-export type { CompletionContext, CompletionItem };
-
 export interface BindingsNeedingColumnsCtx {
   tables: TableInfo[];
   schemas: SchemaInfo[];

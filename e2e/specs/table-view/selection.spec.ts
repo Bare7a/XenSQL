@@ -1,17 +1,10 @@
-import { expect, test } from '../fixtures';
-import { POSTGRES, uniqueIdent } from '../support/databases';
+import { POSTGRES } from '@support/databases';
+import { expect, test } from '@support/fixtures';
 
 test.describe('Table view - selection', () => {
-  test('selects a cell, a range, a column and a row', async ({ app, connections, editor, schema, tableView }) => {
-    const t = uniqueIdent('e2e_sel');
+  test('selects a cell, a range, a column and a row', async ({ connections, seed, tableView }) => {
     await connections.createAndConnect(POSTGRES);
-    await editor.run(`CREATE TABLE ${t} (id INTEGER PRIMARY KEY, name VARCHAR(50));`);
-    await app.expectStatementApplied();
-    await editor.run(`INSERT INTO ${t} (id, name) VALUES (1, 'Alice'), (2, 'Bob'), (3, 'Cara');`);
-    await app.expectStatementApplied();
-    await schema.refresh();
-    await schema.browseTable(t);
-    await tableView.waitForRows();
+    await seed.browseTable('e2e_sel', { insert: `(id, name) VALUES (1, 'Alice'), (2, 'Bob'), (3, 'Cara')` });
 
     // Single cell focus.
     await tableView.focusCell(0, 0);

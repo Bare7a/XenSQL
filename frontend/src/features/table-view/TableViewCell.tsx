@@ -16,7 +16,6 @@ interface Props {
   isEditing: boolean;
   isFocusedCell: boolean;
   deleted: boolean;
-  optimisticKey: string;
   colWidth: string;
   hasCellSelection: boolean;
   hasRowColSelection: boolean;
@@ -25,12 +24,9 @@ interface Props {
   selectedColPositions: Set<number>;
   rowCount: number;
   colCount: number;
-  rows: unknown[][];
   lastCommittedEditRef: React.RefObject<{ row: number; colPos: number } | null>;
-  setOptimisticEdited: Dispatch<SetStateAction<Set<string>>>;
-  setEditTick: Dispatch<SetStateAction<number>>;
   setEditing: Dispatch<SetStateAction<{ row: number; col: number } | null>>;
-  onCellEdit: (rowIdx: number, col: string, value: string | null) => void;
+  onCommitCell: (rowIdx: number, colIdx: number, colName: string, value: string | null) => void;
   onMouseDown: (e: React.MouseEvent) => void;
   onFocus: () => void;
   onClick: (e: React.MouseEvent) => void;
@@ -49,7 +45,6 @@ export function TableViewCell({
   isEditing,
   isFocusedCell,
   deleted,
-  optimisticKey,
   colWidth,
   hasCellSelection,
   hasRowColSelection,
@@ -58,12 +53,9 @@ export function TableViewCell({
   selectedColPositions,
   rowCount,
   colCount,
-  rows,
   lastCommittedEditRef,
-  setOptimisticEdited,
-  setEditTick,
   setEditing,
-  onCellEdit,
+  onCommitCell,
   onMouseDown,
   onFocus,
   onClick,
@@ -109,14 +101,10 @@ export function TableViewCell({
           ci={ci}
           colPos={colPos}
           col={col}
-          optimisticKey={optimisticKey}
           defaultValue={isNull ? '' : text}
-          rows={rows}
           lastCommittedEditRef={lastCommittedEditRef}
-          setOptimisticEdited={setOptimisticEdited}
-          setEditTick={setEditTick}
           setEditing={setEditing}
-          onCellEdit={onCellEdit}
+          onCommit={onCommitCell}
         />
       ) : (
         text

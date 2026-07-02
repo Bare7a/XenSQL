@@ -1,5 +1,5 @@
-import { expect, test } from '../fixtures';
-import { POSTGRES } from '../support/databases';
+import { POSTGRES } from '@support/databases';
+import { expect, test } from '@support/fixtures';
 
 test.describe('Results grid - selection', () => {
   test('selects a cell, a range, a column and a row', async ({ connections, editor, results }) => {

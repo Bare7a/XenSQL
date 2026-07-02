@@ -2,8 +2,8 @@ import { expect, type Locator, type Page } from '@playwright/test';
 
 /**
  * The rich cell-viewer modal (shared by results grid and table view). Opened with Shift+Enter
- * on a focused cell (or double-click in results). Exposes Beautify/Minify for JSON/XML/HTML, plus
- * "Set to NULL" and Save in an editable table view. Body is a Monaco editor, so assert on the
+ * on a focused cell (or double-click in results). Exposes Beautify/Minify for JSON/XML/HTML,
+ * plus "Set to NULL" in an editable table view. Body is a Monaco editor, so assert on the
  * header line-count badge ("1 line" vs "N lines"), not the virtualized text.
  */
 export class CellViewerPage {
@@ -36,11 +36,6 @@ export class CellViewerPage {
 
   async setNull(): Promise<void> {
     await this.modal.getByRole('button', { name: 'Set to NULL' }).click();
-  }
-
-  async save(): Promise<void> {
-    await this.modal.getByRole('button', { name: 'Save', exact: true }).click();
-    await expect(this.modal).toBeHidden();
   }
 
   async close(): Promise<void> {

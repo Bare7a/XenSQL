@@ -38,35 +38,35 @@ func TestBuildQualifiedTable(t *testing.T) {
 
 func TestBuildUpdateSQLValidates(t *testing.T) {
 	pks := []string{"id"}
-	if _, _, err := BuildUpdateSQL(DriverPostgres, "public", "t", map[string]interface{}{}, map[string]interface{}{"id": 1}, pks); err == nil {
+	if _, _, err := BuildUpdateSQL(DriverPostgres, "public", "t", map[string]any{}, map[string]any{"id": 1}, pks); err == nil {
 		t.Error("empty changes should error")
 	}
-	if _, _, err := BuildUpdateSQL(DriverPostgres, "public", "t", map[string]interface{}{"name": "x"}, map[string]interface{}{}, pks); err == nil {
+	if _, _, err := BuildUpdateSQL(DriverPostgres, "public", "t", map[string]any{"name": "x"}, map[string]any{}, pks); err == nil {
 		t.Error("missing pk value should error (else WHERE degrades to pk = NULL)")
 	}
-	q, args, err := BuildUpdateSQL(DriverPostgres, "public", "t", map[string]interface{}{"name": "x"}, map[string]interface{}{"id": 1}, pks)
+	q, args, err := BuildUpdateSQL(DriverPostgres, "public", "t", map[string]any{"name": "x"}, map[string]any{"id": 1}, pks)
 	if err != nil || q == "" || len(args) != 2 {
 		t.Errorf("valid update: err=%v q=%q args=%v", err, q, args)
 	}
 }
 
 func TestBuildDeleteSQLValidates(t *testing.T) {
-	if _, _, err := BuildDeleteSQL(DriverPostgres, "public", "t", []string{"id"}, map[string]interface{}{}); err == nil {
+	if _, _, err := BuildDeleteSQL(DriverPostgres, "public", "t", []string{"id"}, map[string]any{}); err == nil {
 		t.Error("missing pk value should error")
 	}
-	if _, _, err := BuildDeleteSQL(DriverPostgres, "public", "t", []string{}, map[string]interface{}{"id": 1}); err == nil {
+	if _, _, err := BuildDeleteSQL(DriverPostgres, "public", "t", []string{}, map[string]any{"id": 1}); err == nil {
 		t.Error("no primary key should error")
 	}
-	if _, _, err := BuildDeleteSQL(DriverPostgres, "public", "t", []string{"id"}, map[string]interface{}{"id": 1}); err != nil {
+	if _, _, err := BuildDeleteSQL(DriverPostgres, "public", "t", []string{"id"}, map[string]any{"id": 1}); err != nil {
 		t.Errorf("valid delete: %v", err)
 	}
 }
 
 func TestBuildInsertSQLValidates(t *testing.T) {
-	if _, _, err := BuildInsertSQL(DriverPostgres, "public", "t", map[string]interface{}{}); err == nil {
+	if _, _, err := BuildInsertSQL(DriverPostgres, "public", "t", map[string]any{}); err == nil {
 		t.Error("empty values should error")
 	}
-	if _, _, err := BuildInsertSQL(DriverPostgres, "public", "t", map[string]interface{}{"name": "x"}); err != nil {
+	if _, _, err := BuildInsertSQL(DriverPostgres, "public", "t", map[string]any{"name": "x"}); err != nil {
 		t.Errorf("valid insert: %v", err)
 	}
 }

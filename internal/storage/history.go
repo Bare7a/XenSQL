@@ -1,8 +1,6 @@
 package storage
 
 import (
-	"encoding/json"
-	"os"
 	"path/filepath"
 	"sync"
 	"time"
@@ -19,28 +17,32 @@ type HistoryStore struct {
 	max     int
 }
 
+func historyEntryID(e database.HistoryEntry) string { return e.ID }
+
 // Entries stored oldest-first so Add is O(1); List walks from the tail to return newest-first.
 func NewHistoryStore(configDir string) (*HistoryStore, error) {
 	h := &HistoryStore{
 		path: filepath.Join(configDir, "query_history.json"),
 		max:  500,
 	}
-	if data, err := os.ReadFile(h.path); err == nil {
-		var loaded []database.HistoryEntry
-		if json.Unmarshal(data, &loaded) == nil {
-			h.entries = loaded
-		} else {
-			backupCorruptFile(h.path)
-		}
+	entries, err := loadJSONFile[[]database.HistoryEntry](h.path)
+	if err != nil {
+		return nil, err
 	}
+	h.entries = entries
 	if h.entries == nil {
 		h.entries = []database.HistoryEntry{}
 	}
 	// Trim on load so a manually-edited file doesn't stay oversized until the next Add.
+	h.trim()
+	return h, nil
+}
+
+// trim drops the oldest entries beyond max; callers must hold the write lock (or own h exclusively).
+func (h *HistoryStore) trim() {
 	if over := len(h.entries) - h.max; over > 0 {
 		h.entries = append(h.entries[:0], h.entries[over:]...)
 	}
-	return h, nil
 }
 
 func (h *HistoryStore) Add(entry database.HistoryEntry) (database.HistoryEntry, error) {
@@ -53,10 +55,8 @@ func (h *HistoryStore) Add(entry database.HistoryEntry) (database.HistoryEntry, 
 		entry.ExecutedAt = time.Now().Format(time.RFC3339)
 	}
 	h.entries = append(h.entries, entry)
-	if over := len(h.entries) - h.max; over > 0 {
-		h.entries = append(h.entries[:0], h.entries[over:]...)
-	}
-	return entry, h.persist()
+	h.trim()
+	return entry, h.saveLocked()
 }
 
 func (h *HistoryStore) List(connectionID string, limit int) []database.HistoryEntry {
@@ -79,13 +79,11 @@ func (h *HistoryStore) List(connectionID string, limit int) []database.HistoryEn
 func (h *HistoryStore) Delete(id string) (bool, error) {
 	h.mu.Lock()
 	defer h.mu.Unlock()
-	for i, e := range h.entries {
-		if e.ID == id {
-			h.entries = append(h.entries[:i], h.entries[i+1:]...)
-			return true, h.persist()
-		}
+	var found bool
+	if h.entries, found = removeByID(h.entries, id, historyEntryID); !found {
+		return false, nil
 	}
-	return false, nil
+	return true, h.saveLocked()
 }
 
 func (h *HistoryStore) Clear(connectionID string) error {
@@ -102,16 +100,9 @@ func (h *HistoryStore) Clear(connectionID string) error {
 		}
 		h.entries = filtered
 	}
-	return h.persist()
+	return h.saveLocked()
 }
 
-func (h *HistoryStore) persist() error {
-	if len(h.entries) == 0 {
-		return writeFileAtomic(h.path, []byte("[]"), 0o600)
-	}
-	data, err := json.MarshalIndent(h.entries, "", "  ")
-	if err != nil {
-		return err
-	}
-	return writeFileAtomic(h.path, data, 0o600)
+func (h *HistoryStore) saveLocked() error {
+	return saveJSONFile(h.path, h.entries)
 }

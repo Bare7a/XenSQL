@@ -7,13 +7,13 @@ import {
   Globe,
   Pin,
   PinOff,
-  Search,
   SlidersHorizontal,
   Trash2,
 } from 'lucide-react';
 import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { RenameQueryDialog } from '@/features/editor/RenameQueryDialog';
+import { SidebarFilterBar } from '@/features/sidebar/SidebarFilterBar';
 import { ContextMenu } from '@/shared/components/ContextMenu';
 import { useContextMenu } from '@/shared/hooks/useContextMenu';
 import { rowActivateKeyDown, useListKeyboardNav } from '@/shared/hooks/useListKeyboardNav';
@@ -244,15 +244,7 @@ export function SavedQueriesPanel({ onOpenSavedQuery }: SavedQueriesPanelProps) 
 
   return (
     <>
-      <div className="sidebar-filter">
-        <Search className="sidebar-filter-icon" aria-hidden />
-        <input
-          type="search"
-          className="sidebar-filter-input"
-          placeholder={t('sidebar.filterSaved')}
-          value={filter}
-          onChange={(e) => setFilter(e.target.value)}
-        />
+      <SidebarFilterBar value={filter} placeholder={t('sidebar.filterSaved')} onChange={setFilter}>
         <button
           type="button"
           className="btn btn-sm sidebar-filter-btn"
@@ -262,7 +254,7 @@ export function SavedQueriesPanel({ onOpenSavedQuery }: SavedQueriesPanelProps) 
         >
           <SlidersHorizontal className="icon-xs" />
         </button>
-      </div>
+      </SidebarFilterBar>
 
       {(savedQueries?.length ?? 0) === 0 ? (
         <div className="empty-state">
