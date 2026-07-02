@@ -76,6 +76,18 @@ export interface QueryResult {
   streaming?: boolean;
 }
 
+// Structured form of a failed query (see database.QueryError).
+export interface QueryError {
+  message: string;
+  code?: string;
+  detail?: string;
+  hint?: string;
+  // 1-based char offset into the failing statement (Postgres only).
+  position?: number;
+  severity?: string;
+  cancelled?: boolean;
+}
+
 // Monotonic, contiguous per-stream counter (meta=0, then each rows/result/done) used to replay events
 // in order: server mode can deliver them reordered over the WebSocket. See useQueryStreamEvents.ts.
 export interface QueryStreamMetaPayload {
@@ -108,6 +120,7 @@ export interface QueryStreamResultPayload {
   result?: QueryResult | null;
   statement?: string;
   error?: string;
+  errorInfo?: QueryError | null;
 }
 
 // Terminates a run. resultCount is how many result sets were emitted; error is a batch-level
@@ -119,6 +132,7 @@ export interface QueryStreamDonePayload {
   connectionId: string;
   resultCount: number;
   error?: string;
+  errorInfo?: QueryError | null;
 }
 
 export interface EditorTab {
@@ -171,6 +185,7 @@ export type TxnState = 'idle' | 'active' | 'error';
 export interface ResultSet {
   result: QueryResult | null;
   error: string | null;
+  errorInfo?: QueryError | null;
   statement?: string;
 }
 
@@ -179,6 +194,7 @@ export interface TabSessionState {
   // single-result readers keep working; results holds every set for the current run.
   result: QueryResult | null;
   resultError: string | null;
+  resultErrorInfo: QueryError | null;
   results: ResultSet[];
   activeResultIndex: number;
   runStreamId?: string;
@@ -191,6 +207,7 @@ export interface TabSessionState {
 export const emptyTabSession = (): TabSessionState => ({
   result: null,
   resultError: null,
+  resultErrorInfo: null,
   results: [],
   activeResultIndex: 0,
   focusedRow: null,

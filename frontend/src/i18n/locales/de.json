@@ -93,6 +93,10 @@
     "renameQueryFailed": "Abfrage konnte nicht umbenannt werden",
     "noConnection": "Keine Verbindung ausgewählt",
     "couldNotConnect": "Verbindung fehlgeschlagen",
+    "queryFailed": "Abfrage fehlgeschlagen",
+    "jumpToError": "Zur Fehlerstelle springen",
+    "detailLabel": "Detail",
+    "hintLabel": "Hinweis",
     "unknown": "Unbekannter Fehler"
   },
   "toast": {
@@ -313,7 +317,10 @@
     "schema": "Fehler im Schema-Browser",
     "history": "Fehler im Verlauf-Panel",
     "saved": "Fehler im Panel Gespeicherte Abfragen",
-    "queries": "Fehler im Abfragen-Panel"
+    "queries": "Fehler im Abfragen-Panel",
+    "editor": "Editor-Fehler",
+    "results": "Fehler bei den Ergebnissen",
+    "tableView": "Fehler in der Tabellenansicht"
   },
   "dialog": {
     "confirmTitle": "Bestätigen",

@@ -1,8 +1,7 @@
 import { useCallback, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '@/shared/lib/api';
-import { appError } from '@/shared/lib/appDialog';
-import { appToast } from '@/shared/lib/appToast';
+import { appToast, toastError } from '@/shared/lib/appToast';
 import {
   buildExport,
   EXPORT_FORMATS,
@@ -147,7 +146,7 @@ export function useGridCopyExport(inputs: CopyExportInputs): GridCopyExport {
       await api.saveTextFile(path, text);
       appToast.success(t('toast.savedFile', { fileName: path.split(/[/\\]/).pop() ?? path }));
     } catch (e) {
-      void appError(e, t('errors.exportFailed'));
+      toastError(e, t('errors.exportFailed'));
     } finally {
       setExportBusy(false);
     }

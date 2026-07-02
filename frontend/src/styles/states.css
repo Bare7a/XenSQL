@@ -25,11 +25,11 @@
 
 .error-state-card {
   display: flex;
-  align-items: flex-start;
-  gap: var(--space-12);
+  flex-direction: column;
+  gap: var(--space-6);
   width: 100%;
   max-width: 40rem;
-  padding: var(--space-16) var(--space-18);
+  padding: var(--space-10) var(--space-12);
   border: 1px solid color-mix(in srgb, var(--danger) 35%, var(--border));
   border-radius: var(--radius);
   background: color-mix(in srgb, var(--danger) 7%, var(--bg-panel));
@@ -37,15 +37,21 @@
 
 .error-state-icon {
   flex-shrink: 0;
-  margin-top: var(--space-1);
   color: var(--danger);
 }
 
-.error-state-body {
+.error-state-header {
   display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
-  min-width: 0;
+  align-items: center;
+  gap: var(--space-8);
+}
+
+.error-state-header-actions {
+  flex-shrink: 0;
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
 }
 
 .error-state-title {
@@ -53,6 +59,64 @@
   font-size: var(--text-md);
   font-weight: 600;
   color: var(--danger);
+}
+
+.error-state-code {
+  flex-shrink: 0;
+  padding: 0 var(--space-6);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--danger);
+  background: color-mix(in srgb, var(--danger) 14%, transparent);
+  border-radius: var(--radius-sm);
+}
+
+.error-state-copy {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  padding: var(--space-4);
+  color: var(--text-muted);
+  border-radius: var(--radius-sm);
+}
+
+.error-state-copy:hover {
+  color: var(--text);
+  background: var(--bg-hover);
+}
+
+.error-state-meta {
+  margin: 0;
+  max-height: 20vh;
+  overflow: auto;
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+  white-space: pre-wrap;
+  word-break: break-word;
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+.error-state-meta-label {
+  font-weight: 600;
+  color: var(--text);
+}
+
+.error-state-hint .error-state-meta-label {
+  color: var(--accent);
+}
+
+.error-state-action {
+  color: var(--danger);
+  background: color-mix(in srgb, var(--danger) 12%, transparent);
+  border-color: color-mix(in srgb, var(--danger) 40%, transparent);
+}
+
+.error-state-action:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--danger) 20%, transparent);
+  border-color: color-mix(in srgb, var(--danger) 55%, transparent);
 }
 
 .error-state-message {

@@ -15,7 +15,7 @@ export function AppToastLayer() {
         <div
           key={toast.id}
           className={`app-toast app-toast-${toast.kind}`}
-          role="status"
+          role={toast.kind === 'error' ? 'alert' : 'status'}
           data-testid={`toast-${toast.kind}`}
         >
           <span className="app-toast-message">{toast.message}</span>

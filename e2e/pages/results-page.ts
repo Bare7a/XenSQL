@@ -32,6 +32,29 @@ export class ResultsPage {
     return this.active.locator('.results-header');
   }
 
+  // ── Error state ────────────────────────────────────────────────────────────
+  get errorCard(): Locator {
+    return this.active.locator('.error-state-card');
+  }
+
+  /** Driver error-code chip (absent for cancellations). */
+  get errorCode(): Locator {
+    return this.active.locator('.error-state-code');
+  }
+
+  get errorMessage(): Locator {
+    return this.active.locator('.error-state-message');
+  }
+
+  /** Postgres HINT line. */
+  get errorHint(): Locator {
+    return this.active.locator('.error-state-hint');
+  }
+
+  get jumpToErrorButton(): Locator {
+    return this.errorCard.getByRole('button', { name: 'Jump to error' });
+  }
+
   async sortByColumn(column: string): Promise<void> {
     await this.grid.locator(`th[data-col="${column}"] .results-sort-chev`).click();
   }

@@ -1,6 +1,6 @@
 import { ClipboardCopy, Columns3, Download } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { appError } from '@/shared/lib/appDialog';
+import { toastError } from '@/shared/lib/appToast';
 import { EXPORT_FORMATS, type ExportFormat } from '@/shared/lib/exportResult';
 import { exportFormatLabel } from '@/shared/lib/grid';
 
@@ -85,7 +85,7 @@ export function GridToolbar({
           type="button"
           className="btn btn-sm"
           disabled={exportBusy}
-          onClick={() => void onCopy().catch((e) => void appError(e, t('errors.copyFailed')))}
+          onClick={() => void onCopy().catch((e) => toastError(e, t('errors.copyFailed')))}
           data-tooltip={t('tooltip.copyResults')}
         >
           <ClipboardCopy className="icon-xs" /> {t('common.copy')}

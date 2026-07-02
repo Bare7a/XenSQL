@@ -1,5 +1,6 @@
 import { useCallback } from 'react';
 import { api } from '@/shared/lib/api';
+import { formatError } from '@/shared/lib/normalize';
 import { useStoreActions, useTabs } from '@/store/selectors';
 
 export function useTransactionActions() {
@@ -18,7 +19,7 @@ export function useTransactionActions() {
         return true;
       } catch (e) {
         // Begin failed - no transaction was opened, so leave txnState as-is and surface why.
-        updateTabSession(tabId, { resultError: String(e) });
+        updateTabSession(tabId, { resultError: formatError(e) });
         return false;
       }
     },
@@ -34,7 +35,7 @@ export function useTransactionActions() {
         await api.commitTransaction(tabId);
         ok = true;
       } catch (e) {
-        updateTabSession(tabId, { resultError: String(e) });
+        updateTabSession(tabId, { resultError: formatError(e) });
       } finally {
         updateTabSession(tabId, { txnState: 'idle' });
       }
@@ -50,7 +51,7 @@ export function useTransactionActions() {
         await api.rollbackTransaction(tabId);
         ok = true;
       } catch (e) {
-        updateTabSession(tabId, { resultError: String(e) });
+        updateTabSession(tabId, { resultError: formatError(e) });
       } finally {
         updateTabSession(tabId, { txnState: 'idle' });
       }

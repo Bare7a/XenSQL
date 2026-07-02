@@ -24,8 +24,8 @@ export default defineConfig({
   reporter: process.env.CI
     ? [['github'], ['html', { open: 'never' }]]
     : [['list'], ['html', { open: 'never' }]],
-  timeout: 120_000,
-  expect: { timeout: 15_000 },
+  timeout: 10_000,
+  expect: { timeout: 5_000 },
   use: {
     baseURL,
     trace: 'on-first-retry',
@@ -42,7 +42,7 @@ export default defineConfig({
     command: 'npm run e2e:server',
     url: `${baseURL}/health`,
     reuseExistingServer: !process.env.CI,
-    timeout: 300_000,
+    timeout: 60_000,
     stdout: 'pipe',
     stderr: 'pipe',
     env: {

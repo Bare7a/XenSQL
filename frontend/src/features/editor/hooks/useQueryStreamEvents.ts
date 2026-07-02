@@ -6,11 +6,18 @@ import { api } from '@/shared/lib/api';
 import { useAppStore } from '@/store/appStore';
 import type {
   ConnectionStatus,
+  QueryError,
   QueryStreamDonePayload,
   QueryStreamMetaPayload,
   QueryStreamResultPayload,
   QueryStreamRowsPayload,
 } from '@/types';
+
+// Prefer the backend's cancelled flag; sniff the message only if it's absent.
+function isCancelled(error: string | undefined, info: QueryError | null | undefined): boolean {
+  if (info) return !!info.cancelled;
+  return !!error && /cancel/i.test(error);
+}
 
 // query:stream:* events for one run (streamId): meta starts a result set, rows are rAF-coalesced into
 // it, result finalises it, done ends the run. A run can carry several result sets (multiple statements
@@ -94,11 +101,20 @@ export function useQueryStreamEvents(onConnectionStatusChange: (status: Connecti
       reorder.ingest(payload.streamId, payload.seq, false, () => {
         // Flush buffered rows before finalise so the row count can't snap ahead of visible rows.
         flushNow();
-        const { tabId, streamId, resultIndex, result, statement, error } = payload;
-        const cancelled = !!error && /cancel/i.test(error);
+        const { tabId, streamId, resultIndex, result, statement, error, errorInfo } = payload;
+        const cancelled = isCancelled(error, errorInfo);
         const displayError = error ? (cancelled ? tRef.current('dialog.queryCancelled') : error) : null;
+        const displayInfo = error && !cancelled ? (errorInfo ?? null) : null;
         const store = useAppStore.getState();
-        store.finalizeResultSet(tabId, streamId, resultIndex, result ?? null, statement ?? null, displayError);
+        store.finalizeResultSet(
+          tabId,
+          streamId,
+          resultIndex,
+          result ?? null,
+          statement ?? null,
+          displayError,
+          displayInfo,
+        );
         // Inside an open transaction, a failed statement flips it to 'error' (only commit/rollback
         // clears it); a success clears back to 'active'. Cancels and non-transaction tabs are left alone.
         const txnState = store.getTabSession(tabId).txnState;
@@ -118,11 +134,12 @@ export function useQueryStreamEvents(onConnectionStatusChange: (status: Connecti
         flushNow();
         buffers.delete(payload.tabId);
 
-        const { tabId, streamId, connectionId, resultCount, error } = payload;
-        const cancelled = !!error && /cancel/i.test(error);
+        const { tabId, streamId, connectionId, resultCount, error, errorInfo } = payload;
+        const cancelled = isCancelled(error, errorInfo);
         const displayError = error ? (cancelled ? tRef.current('dialog.queryCancelled') : error) : null;
+        const displayInfo = error && !cancelled ? (errorInfo ?? null) : null;
         const store = useAppStore.getState();
-        store.finishRun(tabId, streamId, resultCount, displayError, {
+        store.finishRun(tabId, streamId, resultCount, displayError, displayInfo, {
           connectionId,
           markConnected: !error,
         });

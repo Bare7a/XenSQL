@@ -55,6 +55,8 @@ const ResultsPaneTab = memo(function ResultsPaneTab({
     }
   }, [dataBrowser, onRefreshTable, connectionId, tabId]);
 
+  const activeSet = session.results[session.activeResultIndex];
+
   return (
     <div className={`tab-results-layer${isActive ? ' tab-layer-active' : ''}`}>
       <ResultTabs results={session.results} activeIndex={session.activeResultIndex} onSelect={handleSelectResult} />
@@ -65,6 +67,8 @@ const ResultsPaneTab = memo(function ResultsPaneTab({
         connectionId={connectionId}
         result={session.result}
         error={session.resultError}
+        errorInfo={session.resultErrorInfo}
+        errorStatement={activeSet?.statement ?? null}
         readOnly={readOnly}
         tableMode={dataBrowser || undefined}
         isActive={isActive}

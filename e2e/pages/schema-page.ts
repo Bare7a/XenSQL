@@ -54,6 +54,7 @@ export class SchemaPage {
   /** Open the data browser (table view) for a table via its "Browse data" action. */
   async browseTable(table: string): Promise<void> {
     const row = await this.revealTable(table);
+    await row.hover();
     await row.getByTestId('schema-table-browse').click();
     await this.page.locator('.table-view-pane').waitFor({ state: 'visible', timeout: 30_000 });
   }

@@ -63,18 +63,20 @@ type QueryStreamResultEvent struct {
 	Result       *database.QueryResult `json:"result,omitempty"`
 	Statement    string                `json:"statement,omitempty"`
 	Error        string                `json:"error,omitempty"`
+	ErrorInfo    *database.QueryError  `json:"errorInfo,omitempty"`
 }
 
 // QueryStreamDoneEvent terminates a run. ResultCount is how many result sets were emitted; Error is
 // a batch-level failure (e.g. a connection couldn't be acquired) - per-statement errors arrive on
 // the result event instead.
 type QueryStreamDoneEvent struct {
-	Seq          int    `json:"seq"`
-	TabID        string `json:"tabId"`
-	StreamID     string `json:"streamId"`
-	ConnectionID string `json:"connectionId"`
-	ResultCount  int    `json:"resultCount"`
-	Error        string `json:"error,omitempty"`
+	Seq          int                  `json:"seq"`
+	TabID        string               `json:"tabId"`
+	StreamID     string               `json:"streamId"`
+	ConnectionID string               `json:"connectionId"`
+	ResultCount  int                  `json:"resultCount"`
+	Error        string               `json:"error,omitempty"`
+	ErrorInfo    *database.QueryError `json:"errorInfo,omitempty"`
 }
 
 const queryStreamBatchSize = 5000
@@ -115,6 +117,7 @@ func (a *App) emitStreamResult(tabID, streamID, connectionID string, resultIndex
 	}
 	if err != nil {
 		payload.Error = err.Error()
+		payload.ErrorInfo = database.ClassifyError(err)
 	}
 	a.emit("query:stream:result", payload)
 }
@@ -129,6 +132,7 @@ func (a *App) emitStreamDone(tabID, streamID, connectionID string, resultCount i
 	}
 	if err != nil {
 		payload.Error = err.Error()
+		payload.ErrorInfo = database.ClassifyError(err)
 	}
 	a.emit("query:stream:done", payload)
 }

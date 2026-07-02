@@ -2,8 +2,7 @@ import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Modal } from '@/shared/components/Modal';
 import { api } from '@/shared/lib/api';
-import { appError } from '@/shared/lib/appDialog';
-import { appToast } from '@/shared/lib/appToast';
+import { appToast, toastError } from '@/shared/lib/appToast';
 import { buildExport, EXPORT_FORMATS, type ExportFormat } from '@/shared/lib/exportResult';
 import { exportFormatLabel } from '@/shared/lib/grid';
 import type { QueryResult } from '@/types';
@@ -83,7 +82,7 @@ export function ExportResultsDialog({
       appToast.success(t('toast.exportCopied'));
       onClose();
     } catch (e) {
-      void appError(e, t('errors.copyFailed'));
+      toastError(e, t('errors.copyFailed'));
     } finally {
       setBusy(false);
     }
@@ -102,7 +101,7 @@ export function ExportResultsDialog({
       appToast.success(t('toast.savedFile', { fileName }));
       onClose();
     } catch (e) {
-      void appError(e, t('errors.exportFailed'));
+      toastError(e, t('errors.exportFailed'));
     } finally {
       setBusy(false);
     }

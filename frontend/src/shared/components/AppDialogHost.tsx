@@ -24,7 +24,7 @@ export function AppDialogHost() {
         onClose={() => current.resolve()}
         size="sm"
         role="alertdialog"
-        ariaDescribedById={opts.description ? 'app-dialog-desc' : undefined}
+        ariaDescribedById={opts.description ? 'app-dialog-desc' : opts.detail ? 'app-dialog-detail' : undefined}
       >
         <div className="modal-body">
           {opts.description && (
@@ -32,7 +32,11 @@ export function AppDialogHost() {
               {opts.description}
             </p>
           )}
-          {opts.detail && <pre className="modal-detail">{opts.detail}</pre>}
+          {opts.detail && (
+            <pre className="modal-detail" id="app-dialog-detail">
+              {opts.detail}
+            </pre>
+          )}
         </div>
         <div className="modal-footer">
           <button type="button" className="btn btn-primary" onClick={() => current.resolve()}>

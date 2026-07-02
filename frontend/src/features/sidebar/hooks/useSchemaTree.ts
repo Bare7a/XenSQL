@@ -154,6 +154,11 @@ export function useSchemaTree({ connId, connConnected, schemaList, schemaSearch 
     [expandedTables, fetchTableColumns],
   );
 
+  // Drop a stale error on connection switch (sync, so it can't wipe loadSchema's later async error).
+  useEffect(() => {
+    setSchemaError('');
+  }, [connId]);
+
   // Load schema once per connection, then reuse the store cache so tab switches don't re-fetch.
   // The refresh button calls loadSchema directly to force a reload. (ConnectionSwitcher owns the connect step.)
   useEffect(() => {

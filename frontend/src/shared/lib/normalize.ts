@@ -141,10 +141,30 @@ export function normalizeSavedQueries(data: unknown): SavedQuery[] {
   }));
 }
 
+// Wails delivers a Go error as `new Error(<json>)` with body {"message",...}; unwrap to the message.
+function unwrapErrorEnvelope(raw: string): string {
+  let msg = raw.trim();
+  for (let depth = 0; depth < 5; depth++) {
+    if (!(msg.startsWith('{') && msg.endsWith('}'))) break;
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(msg);
+    } catch {
+      break;
+    }
+    const inner = (parsed as { message?: unknown })?.message;
+    if (typeof inner !== 'string' || inner.trim() === '') break;
+    msg = inner.trim();
+  }
+  return msg;
+}
+
 export function formatError(err: unknown): string {
   if (err == null) return t('errors.unknown');
-  if (typeof err === 'string') return err;
-  if (err instanceof Error) return err.message;
-  if (typeof err === 'object' && 'message' in err) return String((err as { message: unknown }).message);
-  return String(err);
+  let raw: string;
+  if (typeof err === 'string') raw = err;
+  else if (err instanceof Error) raw = err.message;
+  else if (typeof err === 'object' && 'message' in err) raw = String((err as { message: unknown }).message);
+  else raw = String(err);
+  return unwrapErrorEnvelope(raw);
 }

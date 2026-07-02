@@ -180,4 +180,22 @@ describe('formatError', () => {
     expect(formatError(new Error('nope'))).toBe('nope');
     expect(formatError({ message: 'huh' })).toBe('huh');
   });
+
+  it('unwraps the Wails JSON error envelope to its inner message', () => {
+    const envelope = JSON.stringify({
+      message: 'failed to connect: database "Schemes2" does not exist (SQLSTATE 3D000)',
+      cause: null,
+      kind: 'RuntimeError',
+    });
+    const expected = 'failed to connect: database "Schemes2" does not exist (SQLSTATE 3D000)';
+    // Whether raw string or wrapped in an Error, we get the message.
+    expect(formatError(envelope)).toBe(expected);
+    expect(formatError(new Error(envelope))).toBe(expected);
+  });
+
+  it('leaves plain messages and non-envelope JSON-ish text untouched', () => {
+    expect(formatError('relation "x" does not exist')).toBe('relation "x" does not exist');
+    // Not an envelope (no string .message) - must not be mangled.
+    expect(formatError('{"foo":1}')).toBe('{"foo":1}');
+  });
 });
