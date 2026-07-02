@@ -75,6 +75,21 @@
   color: var(--danger);
 }
 
+.sidebar-error-banner-copy {
+  flex-shrink: 0;
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  padding: var(--space-2);
+  color: var(--text-muted);
+  border-radius: var(--radius-sm);
+}
+
+.sidebar-error-banner-copy:hover {
+  color: var(--text);
+  background: var(--bg-hover);
+}
+
 .sidebar-error-banner-title {
   font-size: var(--text-xs);
   font-weight: 600;

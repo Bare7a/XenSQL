@@ -25,11 +25,11 @@
 
 .error-state-card {
   display: flex;
-  align-items: flex-start;
-  gap: var(--space-12);
+  flex-direction: column;
+  gap: var(--space-6);
   width: 100%;
   max-width: 40rem;
-  padding: var(--space-16) var(--space-18);
+  padding: var(--space-10) var(--space-12);
   border: 1px solid color-mix(in srgb, var(--danger) 35%, var(--border));
   border-radius: var(--radius);
   background: color-mix(in srgb, var(--danger) 7%, var(--bg-panel));
@@ -37,18 +37,18 @@
 
 .error-state-icon {
   flex-shrink: 0;
-  margin-top: var(--space-1);
   color: var(--danger);
 }
 
-.error-state-body {
+.error-state-header {
   display: flex;
-  flex-direction: column;
-  gap: var(--space-6);
-  min-width: 0;
+  align-items: center;
+  gap: var(--space-8);
 }
 
-.error-state-header {
+.error-state-header-actions {
+  flex-shrink: 0;
+  margin-left: auto;
   display: flex;
   align-items: center;
   gap: var(--space-8);
@@ -73,6 +73,20 @@
   border-radius: var(--radius-sm);
 }
 
+.error-state-copy {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  padding: var(--space-4);
+  color: var(--text-muted);
+  border-radius: var(--radius-sm);
+}
+
+.error-state-copy:hover {
+  color: var(--text);
+  background: var(--bg-hover);
+}
+
 .error-state-meta {
   margin: 0;
   max-height: 20vh;
@@ -92,12 +106,6 @@
 
 .error-state-hint .error-state-meta-label {
   color: var(--accent);
-}
-
-.error-state-actions {
-  display: flex;
-  gap: var(--space-8);
-  margin-top: var(--space-4);
 }
 
 .error-state-action {

@@ -1,4 +1,4 @@
-import { CircleAlert, Loader2, Plug, RefreshCw, Search } from 'lucide-react';
+import { CircleAlert, Copy, Loader2, Plug, RefreshCw, Search } from 'lucide-react';
 import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { buildQualifiedTable } from '@/features/editor/lib/sqlIdentifiers';
@@ -191,6 +191,15 @@ export function SchemaPanel({ onOpenQuery, onBrowseTable, onOpenConnectionTab }:
           <div className="sidebar-error-banner-head">
             <CircleAlert className="icon-xs sidebar-error-banner-icon" aria-hidden />
             <span className="sidebar-error-banner-title">{t('errors.generic')}</span>
+            <button
+              type="button"
+              className="sidebar-error-banner-copy"
+              data-tooltip={t('common.copy')}
+              aria-label={t('common.copy')}
+              onClick={() => void copyText(schemaError)}
+            >
+              <Copy className="icon-xs" />
+            </button>
           </div>
           <span className="sidebar-error-banner-text">{schemaError}</span>
         </div>
