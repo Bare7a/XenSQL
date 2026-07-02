@@ -119,17 +119,17 @@ func TestE2EReadOnlyConnection(t *testing.T) {
 		// Row-level mutators must refuse directly too.
 		if err := a.UpdateRow(roSaved.ID, database.RowUpdate{
 			Schema: e.browseSchema, Table: table,
-			PrimaryKey: map[string]interface{}{"id": 1},
-			Changes:    map[string]interface{}{"name": "x"},
+			PrimaryKey: map[string]any{"id": 1},
+			Changes:    map[string]any{"name": "x"},
 		}); err == nil {
 			t.Error("UpdateRow on read-only connection should be blocked")
 		}
-		if _, err := a.InsertRow(roSaved.ID, e.browseSchema, table, map[string]interface{}{"name": "x"}); err == nil {
+		if _, err := a.InsertRow(roSaved.ID, e.browseSchema, table, map[string]any{"name": "x"}); err == nil {
 			t.Error("InsertRow on read-only connection should be blocked")
 		}
 		if _, err := a.DeleteRows(roSaved.ID, database.RowDelete{
 			Schema: e.browseSchema, Table: table,
-			PrimaryKeys: []map[string]interface{}{{"id": 1}},
+			PrimaryKeys: []map[string]any{{"id": 1}},
 		}); err == nil {
 			t.Error("DeleteRows on read-only connection should be blocked")
 		}

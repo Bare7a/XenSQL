@@ -32,7 +32,7 @@ export function getEffectiveEditorFontSize(): number {
   return readStoredEditorFontSize();
 }
 
-export function applyEditorFontSize(size: number): number {
+function applyEditorFontSize(size: number): number {
   const next = clampFontSize(size);
   try {
     settings.setItem(STORAGE_KEY, String(next));
@@ -60,7 +60,7 @@ export function subscribeEditorFontSizeChanged(listener: FontSizeListener): () =
   return () => listeners.delete(listener);
 }
 
-export function editorLineHeight(fontSize: number): number {
+function editorLineHeight(fontSize: number): number {
   return fontSize + 7;
 }
 

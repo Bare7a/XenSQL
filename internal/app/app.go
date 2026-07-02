@@ -11,7 +11,6 @@ import (
 	_ "xensql/internal/database/mysql"
 	_ "xensql/internal/database/postgres"
 	_ "xensql/internal/database/sqlite"
-	"xensql/internal/paths"
 	"xensql/internal/service"
 	"xensql/internal/storage"
 )
@@ -32,10 +31,6 @@ type App struct {
 
 	pendingMu   sync.Mutex
 	pendingFile string
-
-	// streamSeqs tags each query:stream:* event with a per-StreamID sequence number so the frontend
-	// can reorder events the server-mode WebSocket may deliver out of order. Created lazily per run.
-	streamSeqs sync.Map
 }
 
 func NewApp() *App {
@@ -128,19 +123,6 @@ func (a *App) ServiceShutdown() error {
 	}
 	a.pool.CloseAll()
 	return nil
-}
-
-func (a *App) GetDataDir() string {
-	return paths.DataDir()
-}
-
-func (a *App) SupportedDrivers() []string {
-	types := database.SupportedDrivers()
-	out := make([]string, len(types))
-	for i, t := range types {
-		out[i] = string(t)
-	}
-	return out
 }
 
 func (a *App) FormatSQL(sql string) string {

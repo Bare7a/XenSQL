@@ -47,7 +47,7 @@ export interface ParsedQuery {
   ctes: string[]; // CTE names from a leading WITH clause (offered like tables in FROM/JOIN)
 }
 
-export function resolveTableName(
+function resolveTableName(
   tableName: string,
   schemaHint: string | undefined,
   tables: TableInfo[],
@@ -70,7 +70,7 @@ export function resolveTableName(
   return { schema, table: match?.name ?? tableName };
 }
 
-export function parseTableRef(
+function parseTableRef(
   part1: string,
   part2: string | undefined,
   tables: TableInfo[],

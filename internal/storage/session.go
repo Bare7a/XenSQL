@@ -1,8 +1,6 @@
 package storage
 
 import (
-	"encoding/json"
-	"os"
 	"path/filepath"
 	"sync"
 )
@@ -39,12 +37,11 @@ type SessionStore struct {
 
 func NewSessionStore(configDir string) (*SessionStore, error) {
 	s := &SessionStore{path: filepath.Join(configDir, "editor_session.json")}
-	if data, err := os.ReadFile(s.path); err == nil {
-		if json.Unmarshal(data, &s.data) != nil {
-			s.data = EditorSession{}
-			backupCorruptFile(s.path)
-		}
+	data, err := loadJSONFile[EditorSession](s.path)
+	if err != nil {
+		return nil, err
 	}
+	s.data = data
 	if s.data.Tabs == nil {
 		s.data.Tabs = []EditorTab{}
 	}
@@ -70,9 +67,5 @@ func (s *SessionStore) Save(session EditorSession) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.data = session
-	data, err := json.MarshalIndent(session, "", "  ")
-	if err != nil {
-		return err
-	}
-	return writeFileAtomic(s.path, data, 0o600)
+	return saveJSONFile(s.path, session)
 }

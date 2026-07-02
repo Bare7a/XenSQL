@@ -16,6 +16,7 @@ import { findStatementAtRunLine } from '@/features/editor/lib/sqlStatements';
 import { subscribeLanguageChanged } from '@/i18n';
 import { ContextMenu } from '@/shared/components/ContextMenu';
 import { useAppTheme } from '@/shared/hooks/useAppTheme';
+import { useMeasuredHeight } from '@/shared/hooks/useMeasuredHeight';
 import { clearQueryErrorMarkers } from '@/shared/lib/jumpToError';
 import { subscribeShortcutsChanged } from '@/shared/lib/shortcuts';
 import type { ColumnInfo, DriverType, EditorCursorState, SchemaInfo, TableInfo, TxnState } from '@/types';
@@ -98,8 +99,7 @@ export const SqlEditor = memo(function SqlEditor({
   const editorOptions = useMemo(() => ({ ...STATIC_EDITOR_OPTIONS, ...monacoFontOptions(fontSize) }), [fontSize]);
   const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
   const monacoRef = useRef<Monaco | null>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [editorHeight, setEditorHeight] = useState(300);
+  const [containerRef, editorHeight] = useMeasuredHeight<HTMLDivElement>(300);
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
   const completionProviderRef = useRef<{ dispose: () => void } | null>(null);
   const contextMenuCleanupRef = useRef<(() => void) | null>(null);
@@ -138,19 +138,6 @@ export const SqlEditor = memo(function SqlEditor({
   cursorStateRef.current = cursorState;
   isQueryRunningRef.current = isQueryRunning;
   onRunRef.current = onRun;
-
-  useEffect(() => {
-    const el = containerRef.current;
-    if (!el) return;
-    const measure = () => {
-      const height = el.clientHeight;
-      if (height > 0) setEditorHeight(height);
-    };
-    measure();
-    const observer = new ResizeObserver(measure);
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, [tabId]);
 
   const runQuery = useCallback(
     (selectedOnly: boolean) => {

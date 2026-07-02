@@ -66,8 +66,8 @@ func portableDataDir(goos, exeDir string) string {
 // macAppBundleParent returns the dir containing the bundle when exeDir is a
 // ".../Foo.app/Contents/MacOS".
 func macAppBundleParent(exeDir string) (parent string, ok bool) {
-	contents := filepath.Dir(exeDir)   // <...>/Foo.app/Contents
-	bundle := filepath.Dir(contents)   // <...>/Foo.app
+	contents := filepath.Dir(exeDir) // <...>/Foo.app/Contents
+	bundle := filepath.Dir(contents) // <...>/Foo.app
 	if filepath.Base(exeDir) == "MacOS" &&
 		filepath.Base(contents) == "Contents" &&
 		strings.HasSuffix(bundle, ".app") {

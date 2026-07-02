@@ -1,4 +1,4 @@
-import { expect, test } from '../fixtures';
+import { expect, test } from '@support/fixtures';
 
 test.describe('App shell', () => {
   test('loads the application shell', async ({ app, page }) => {
@@ -15,11 +15,11 @@ test.describe('App shell', () => {
     await expect(app.sidebar).toBeVisible();
   });
 
-  test('opens and closes the JSON viewer', async ({ app }) => {
-    await expect(app.jsonViewer).toBeHidden();
+  test('opens and closes the JSON viewer', async ({ app, jsonViewer }) => {
+    await expect(jsonViewer.panel).toBeHidden();
     await app.toggleJsonViewer();
-    await expect(app.jsonViewer).toBeVisible();
+    await expect(jsonViewer.panel).toBeVisible();
     await app.toggleJsonViewer();
-    await expect(app.jsonViewer).toBeHidden();
+    await expect(jsonViewer.panel).toBeHidden();
   });
 });

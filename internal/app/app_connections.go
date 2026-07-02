@@ -75,13 +75,9 @@ func (a *App) TestConnection(cfg database.ConnectionConfig) error {
 }
 
 func (a *App) Connect(id string) error {
-	store, err := a.requireStore()
+	cfg, err := a.getConnection(id)
 	if err != nil {
 		return err
-	}
-	cfg, ok := store.GetConnection(id)
-	if !ok {
-		return errNotFound("connection")
 	}
 	database.NormalizeConnectionConfig(&cfg)
 	if err := database.ValidateConnectionConfig(cfg); err != nil {

@@ -64,7 +64,7 @@ export function selectedRowsEdgeClasses(row: number, col: number, selectedRows: 
   return classes.join(' ');
 }
 
-export function selectedColsEdgeClasses(row: number, col: number, selectedCols: Set<number>, rowCount: number): string {
+function selectedColsEdgeClasses(row: number, col: number, selectedCols: Set<number>, rowCount: number): string {
   if (!selectedCols.has(col)) return '';
   const classes = ['cell-range-selected'];
   if (row === 0) classes.push('cell-range-edge-top');

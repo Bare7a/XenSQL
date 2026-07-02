@@ -1,4 +1,4 @@
-import { type ReactNode, useEffect, useMemo, useRef, useState } from 'react';
+import { type ReactNode, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { isSavedQueryOpenInTabs } from '@/features/editor/lib/savedQueryTab';
 import { iconForEditorTab, iconForQuickSearchKind } from '@/features/editor/lib/tabKindIcon';
@@ -78,8 +78,13 @@ function highlightLabel(text: string, ranges: [number, number][]): ReactNode {
   return nodes;
 }
 
-export function QuickSearchDialog({
-  open,
+// Mounted only while open, so each opening starts from fresh state (empty query, first item active).
+export function QuickSearchDialog({ open, ...contentProps }: Props) {
+  if (!open) return null;
+  return <QuickSearchContent {...contentProps} />;
+}
+
+function QuickSearchContent({
   tabs,
   tables,
   savedQueries,
@@ -89,22 +94,13 @@ export function QuickSearchDialog({
   onOpenTable,
   onOpenSavedQuery,
   onOpenConnectionInNewTab,
-}: Props) {
+}: Omit<Props, 'open'>) {
   const { t } = useTranslation();
   const [query, setQuery] = useState('');
-  const [activeIdx, setActiveIdx] = useState(0);
-  const inputRef = useRef<HTMLInputElement | null>(null);
+  const [activeIdxRaw, setActiveIdxRaw] = useState(0);
   const debouncedQuery = useDebouncedValue(query, 50);
 
-  useEffect(() => {
-    if (!open) return;
-    setQuery('');
-    setActiveIdx(0);
-    inputRef.current?.focus();
-  }, [open]);
-
   const items = useMemo<QuickItem[]>(() => {
-    if (!open) return [];
     const q = debouncedQuery.trim().toLowerCase();
     const empty = q === '';
 
@@ -188,12 +184,10 @@ export function QuickSearchDialog({
 
     out.sort((a, b) => rankOf(b) - rankOf(a));
     return out.slice(0, MAX_ITEMS);
-  }, [open, debouncedQuery, tabs, tables, savedQueries, connections]);
+  }, [debouncedQuery, tabs, tables, savedQueries, connections]);
 
-  useEffect(() => {
-    if (!open) return;
-    if (activeIdx > items.length - 1) setActiveIdx(Math.max(0, items.length - 1));
-  }, [open, activeIdx, items.length]);
+  // Results can shrink under the cursor while typing - clamp at render instead of syncing state.
+  const activeIdx = Math.min(activeIdxRaw, Math.max(0, items.length - 1));
 
   const openItem = (item: QuickItem) => {
     if (item.type === 'tab') onSelectTab(item.tab);
@@ -202,8 +196,6 @@ export function QuickSearchDialog({
     else onOpenConnectionInNewTab(item.conn);
     onClose();
   };
-
-  if (!open) return null;
 
   return (
     // biome-ignore lint/a11y/noStaticElementInteractions: backdrop click-to-dismiss is a redundant convenience; the dialog closes via Escape (handled in onKeyDown below).
@@ -220,12 +212,12 @@ export function QuickSearchDialog({
           }
           if (e.key === 'ArrowDown') {
             e.preventDefault();
-            setActiveIdx((i) => Math.min(items.length - 1, i + 1));
+            setActiveIdxRaw(Math.min(items.length - 1, activeIdx + 1));
             return;
           }
           if (e.key === 'ArrowUp') {
             e.preventDefault();
-            setActiveIdx((i) => Math.max(0, i - 1));
+            setActiveIdxRaw(Math.max(0, activeIdx - 1));
             return;
           }
           if (e.key === 'Enter') {
@@ -237,7 +229,8 @@ export function QuickSearchDialog({
       >
         <div className="quick-search-input-row">
           <input
-            ref={inputRef}
+            // biome-ignore lint/a11y/noAutofocus: command-palette input; focusing it on open is the expected behavior.
+            autoFocus
             className="quick-search-input"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
@@ -259,7 +252,7 @@ export function QuickSearchDialog({
                   type="button"
                   className={`quick-search-item${idx === activeIdx ? ' active' : ''}`}
                   aria-label={item.detail ? `${kind}: ${item.label}, ${item.detail}` : `${kind}: ${item.label}`}
-                  onMouseEnter={() => setActiveIdx(idx)}
+                  onMouseEnter={() => setActiveIdxRaw(idx)}
                   onClick={() => openItem(item)}
                 >
                   <Icon className="quick-search-icon icon-sm" style={{ color: item.color }} aria-hidden />

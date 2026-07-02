@@ -8,10 +8,6 @@ export class QueriesPage {
     this.page = page;
   }
 
-  async open(): Promise<void> {
-    await this.showSaved();
-  }
-
   async showSaved(): Promise<void> {
     await this.page.locator('.sidebar-tabs').getByRole('button', { name: 'Saved' }).click();
   }
@@ -61,20 +57,6 @@ export class QueriesPage {
     return this.page
       .locator('.sidebar-list .sidebar-entry-title')
       .evaluateAll((els) => els.map((el) => (el.textContent ?? '').trim()));
-  }
-
-  // ── Scope (lives in the filter popover; pick the connection / all menu item) ─
-  async setScope(name: 'This connection' | 'All connections'): Promise<void> {
-    await this.filterMenuButton.click();
-    await this.page.getByRole('menuitem', { name, exact: true }).click();
-  }
-
-  async setSavedScope(name: 'This connection' | 'All connections'): Promise<void> {
-    await this.setScope(name);
-  }
-
-  async setHistoryScope(name: 'This connection' | 'All connections'): Promise<void> {
-    await this.setScope(name);
   }
 
   // ── Saved-query actions (Queries → Saved) ──────────────────────────────────

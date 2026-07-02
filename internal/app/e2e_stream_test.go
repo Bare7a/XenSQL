@@ -23,7 +23,7 @@ type streamCapture struct {
 	cols    []string
 	types   []string
 	batches int
-	rows    [][]interface{}
+	rows    [][]any
 }
 
 func (c *streamCapture) opts(batchSize int) database.StreamOpts {
@@ -34,7 +34,7 @@ func (c *streamCapture) opts(batchSize int) database.StreamOpts {
 			defer c.mu.Unlock()
 			c.cols, c.types = cols, types
 		},
-		OnBatch: func(batch [][]interface{}) error {
+		OnBatch: func(batch [][]any) error {
 			c.mu.Lock()
 			defer c.mu.Unlock()
 			c.batches++
@@ -117,9 +117,9 @@ func TestE2EQueryTableStream(t *testing.T) {
 // scriptCapture records the per-result-set callbacks of a script run (ScriptSink).
 type scriptCapture struct {
 	mu      sync.Mutex
-	metas   map[int][]string        // resultIndex -> columns
-	rows    map[int][][]interface{} // resultIndex -> rows
-	results []scriptResult          // in OnResult order
+	metas   map[int][]string // resultIndex -> columns
+	rows    map[int][][]any  // resultIndex -> rows
+	results []scriptResult   // in OnResult order
 }
 
 type scriptResult struct {
@@ -128,7 +128,7 @@ type scriptResult struct {
 }
 
 func newScriptCapture() *scriptCapture {
-	return &scriptCapture{metas: map[int][]string{}, rows: map[int][][]interface{}{}}
+	return &scriptCapture{metas: map[int][]string{}, rows: map[int][][]any{}}
 }
 
 func (c *scriptCapture) sink(batchSize int) database.ScriptSink {
@@ -139,7 +139,7 @@ func (c *scriptCapture) sink(batchSize int) database.ScriptSink {
 			defer c.mu.Unlock()
 			c.metas[idx] = cols
 		},
-		OnBatch: func(idx int, rows [][]interface{}) error {
+		OnBatch: func(idx int, rows [][]any) error {
 			c.mu.Lock()
 			defer c.mu.Unlock()
 			c.rows[idx] = append(c.rows[idx], rows...)

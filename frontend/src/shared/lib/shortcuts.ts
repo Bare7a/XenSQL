@@ -127,7 +127,7 @@ export const APP_SHORTCUTS: ShortcutDef[] = [
 ];
 
 const STORAGE_KEY = STORAGE_KEYS.shortcuts;
-export const SHORTCUTS_CHANGED_EVENT = 'xensql-shortcuts-changed';
+const SHORTCUTS_CHANGED_EVENT = 'xensql-shortcuts-changed';
 
 const isMac = typeof navigator !== 'undefined' && /Mac|iPhone|iPod|iPad/i.test(navigator.platform);
 
@@ -160,7 +160,7 @@ function writeOverrides(overrides: OverrideMap) {
   window.dispatchEvent(new CustomEvent(SHORTCUTS_CHANGED_EVENT));
 }
 
-export function getShortcutDef(id: string): ShortcutDef | undefined {
+function getShortcutDef(id: string): ShortcutDef | undefined {
   return APP_SHORTCUTS.find((s) => s.id === id);
 }
 

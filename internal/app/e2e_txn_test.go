@@ -13,7 +13,7 @@ import (
 // streaming batch path does via batchExecutor.
 func execOnTab(t *testing.T, a *App, connID, tabID, sql string) {
 	t.Helper()
-	exec, release, err := a.batchExecutor(tabID, connID, testCtx())
+	exec, release, err := a.batchExecutor(testCtx(), tabID, connID)
 	if err != nil {
 		t.Fatalf("batchExecutor: %v", err)
 	}

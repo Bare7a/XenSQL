@@ -1,7 +1,6 @@
 package storage
 
 import (
-	"encoding/json"
 	"os"
 	"path/filepath"
 	"sync"
@@ -16,11 +15,17 @@ type ConnectionFolder struct {
 	Name string `json:"name"`
 }
 
+// connectionsFile is the on-disk shape of connections.json.
+type connectionsFile struct {
+	Connections []database.ConnectionConfig `json:"connections"`
+	Folders     []ConnectionFolder          `json:"folders"`
+}
+
 type Store struct {
 	mu          sync.RWMutex
 	path        string
-	Connections []database.ConnectionConfig `json:"connections"`
-	Folders     []ConnectionFolder          `json:"folders"`
+	connections []database.ConnectionConfig
+	folders     []ConnectionFolder
 }
 
 func NewStore(configDir string) (*Store, error) {
@@ -28,52 +33,37 @@ func NewStore(configDir string) (*Store, error) {
 		return nil, err
 	}
 	s := &Store{path: filepath.Join(configDir, "connections.json")}
-	if err := s.load(); err != nil && !os.IsNotExist(err) {
+	file, err := loadJSONFile[connectionsFile](s.path)
+	if err != nil {
 		return nil, err
 	}
-	s.normalizeSlices()
+	s.connections = file.Connections
+	s.folders = file.Folders
+	if s.connections == nil {
+		s.connections = []database.ConnectionConfig{}
+	}
+	if s.folders == nil {
+		s.folders = []ConnectionFolder{}
+	}
 	return s, nil
 }
 
-func (s *Store) normalizeSlices() {
-	if s.Connections == nil {
-		s.Connections = []database.ConnectionConfig{}
-	}
-	if s.Folders == nil {
-		s.Folders = []ConnectionFolder{}
-	}
-}
+func connectionID(c database.ConnectionConfig) string { return c.ID }
 
-func (s *Store) load() error {
-	data, err := os.ReadFile(s.path)
-	if err != nil {
-		return err
-	}
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	if err := json.Unmarshal(data, s); err != nil {
-		// Corrupt file: back it up and start empty instead of failing startup, matching the other stores.
-		backupCorruptFile(s.path)
-		s.Connections = nil
-		s.Folders = nil
-		return nil
-	}
-	s.normalizeSlices()
-	return nil
-}
+func folderID(f ConnectionFolder) string { return f.ID }
 
 func (s *Store) ListConnections() []database.ConnectionConfig {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
-	out := make([]database.ConnectionConfig, len(s.Connections))
-	copy(out, s.Connections)
+	out := make([]database.ConnectionConfig, len(s.connections))
+	copy(out, s.connections)
 	return out
 }
 
 func (s *Store) GetConnection(id string) (database.ConnectionConfig, bool) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
-	for _, c := range s.Connections {
+	for _, c := range s.connections {
 		if c.ID == id {
 			return c, true
 		}
@@ -90,65 +80,53 @@ func (s *Store) SaveConnection(cfg database.ConnectionConfig) (database.Connecti
 	if cfg.Color == "" {
 		cfg.Color = "#3b82f6"
 	}
-	found := false
-	for i, c := range s.Connections {
-		if c.ID == cfg.ID {
-			s.Connections[i] = cfg
-			found = true
-			break
-		}
-	}
-	if !found {
-		s.Connections = append(s.Connections, cfg)
-	}
-	return cfg, s.saveUnlocked()
+	s.connections = upsertByID(s.connections, cfg.ID, cfg, connectionID)
+	return cfg, s.saveLocked()
 }
 
 func (s *Store) DeleteConnection(id string) (bool, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	for i, c := range s.Connections {
-		if c.ID == id {
-			s.Connections = append(s.Connections[:i], s.Connections[i+1:]...)
-			return true, s.saveUnlocked()
-		}
+	var found bool
+	if s.connections, found = removeByID(s.connections, id, connectionID); !found {
+		return false, nil
 	}
-	return false, nil
+	return true, s.saveLocked()
 }
 
 // Unknown IDs are silently skipped; connections absent from orderedIDs are appended in their prior order.
 func (s *Store) ReorderConnections(orderedIDs []string) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	if len(s.Connections) == 0 {
+	if len(s.connections) == 0 {
 		return nil
 	}
-	byID := make(map[string]database.ConnectionConfig, len(s.Connections))
-	for _, c := range s.Connections {
+	byID := make(map[string]database.ConnectionConfig, len(s.connections))
+	for _, c := range s.connections {
 		byID[c.ID] = c
 	}
-	reordered := make([]database.ConnectionConfig, 0, len(s.Connections))
-	seen := make(map[string]bool, len(s.Connections))
+	reordered := make([]database.ConnectionConfig, 0, len(s.connections))
+	seen := make(map[string]bool, len(s.connections))
 	for _, id := range orderedIDs {
 		if c, ok := byID[id]; ok {
 			reordered = append(reordered, c)
 			seen[id] = true
 		}
 	}
-	for _, c := range s.Connections {
+	for _, c := range s.connections {
 		if !seen[c.ID] {
 			reordered = append(reordered, c)
 		}
 	}
-	s.Connections = reordered
-	return s.saveUnlocked()
+	s.connections = reordered
+	return s.saveLocked()
 }
 
 func (s *Store) ListFolders() []ConnectionFolder {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
-	out := make([]ConnectionFolder, len(s.Folders))
-	copy(out, s.Folders)
+	out := make([]ConnectionFolder, len(s.folders))
+	copy(out, s.folders)
 	return out
 }
 
@@ -158,41 +136,23 @@ func (s *Store) SaveFolder(f ConnectionFolder) (ConnectionFolder, error) {
 	if f.ID == "" {
 		f.ID = uuid.NewString()
 	}
-	found := false
-	for i, folder := range s.Folders {
-		if folder.ID == f.ID {
-			s.Folders[i] = f
-			found = true
-			break
-		}
-	}
-	if !found {
-		s.Folders = append(s.Folders, f)
-	}
-	return f, s.saveUnlocked()
+	s.folders = upsertByID(s.folders, f.ID, f, folderID)
+	return f, s.saveLocked()
 }
 
 func (s *Store) DeleteFolder(id string) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	for i, f := range s.Folders {
-		if f.ID == id {
-			s.Folders = append(s.Folders[:i], s.Folders[i+1:]...)
-			break
+	s.folders, _ = removeByID(s.folders, id, folderID)
+	for i := range s.connections {
+		if s.connections[i].FolderID == id {
+			s.connections[i].FolderID = ""
 		}
 	}
-	for i := range s.Connections {
-		if s.Connections[i].FolderID == id {
-			s.Connections[i].FolderID = ""
-		}
-	}
-	return s.saveUnlocked()
+	return s.saveLocked()
 }
 
-func (s *Store) saveUnlocked() error {
-	data, err := json.MarshalIndent(s, "", "  ")
-	if err != nil {
-		return err
-	}
-	return writeFileAtomic(s.path, data, 0o600)
+// saveLocked persists the store; callers must hold the write lock.
+func (s *Store) saveLocked() error {
+	return saveJSONFile(s.path, connectionsFile{Connections: s.connections, Folders: s.folders})
 }

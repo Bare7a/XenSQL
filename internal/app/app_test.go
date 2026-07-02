@@ -221,33 +221,6 @@ func TestAppSavedQueries(t *testing.T) {
 	}
 }
 
-func TestAppQueryTable(t *testing.T) {
-	a := appForTest(t)
-	saved, err := a.SaveConnection(sqliteConn(t))
-	if err != nil {
-		t.Fatalf("save: %v", err)
-	}
-
-	if _, err := a.ExecuteQuery(saved.ID, "CREATE TABLE items (id INTEGER PRIMARY KEY, name TEXT)"); err != nil {
-		t.Fatalf("create: %v", err)
-	}
-	if _, err := a.ExecuteQuery(saved.ID, "INSERT INTO items VALUES (1, 'apple')"); err != nil {
-		t.Fatalf("insert: %v", err)
-	}
-
-	result, err := a.QueryTable(saved.ID, database.TableDataRequest{
-		Schema: "main",
-		Table:  "items",
-		Limit:  10,
-	})
-	if err != nil {
-		t.Fatalf("query table: %v", err)
-	}
-	if result.RowCount != 1 || result.TableName != "items" || len(result.PrimaryKeys) != 1 {
-		t.Fatalf("unexpected result: %+v", result)
-	}
-}
-
 func TestAppMutations(t *testing.T) {
 	a := appForTest(t)
 	saved, err := a.SaveConnection(sqliteConn(t))
@@ -259,7 +232,7 @@ func TestAppMutations(t *testing.T) {
 		t.Fatalf("create: %v", err)
 	}
 
-	row, err := a.InsertRow(saved.ID, "main", "things", map[string]interface{}{"id": int64(1), "label": "first"})
+	row, err := a.InsertRow(saved.ID, "main", "things", map[string]any{"id": int64(1), "label": "first"})
 	if err != nil {
 		t.Fatalf("insert: %v", err)
 	}
@@ -274,8 +247,8 @@ func TestAppMutations(t *testing.T) {
 	if err := a.UpdateRow(saved.ID, database.RowUpdate{
 		Schema:     "main",
 		Table:      "things",
-		PrimaryKey: map[string]interface{}{"id": int64(1)},
-		Changes:    map[string]interface{}{"label": "updated"},
+		PrimaryKey: map[string]any{"id": int64(1)},
+		Changes:    map[string]any{"label": "updated"},
 	}); err != nil {
 		t.Fatalf("update: %v", err)
 	}
@@ -283,7 +256,7 @@ func TestAppMutations(t *testing.T) {
 	n, err := a.DeleteRows(saved.ID, database.RowDelete{
 		Schema:      "main",
 		Table:       "things",
-		PrimaryKeys: []map[string]interface{}{{"id": int64(1)}},
+		PrimaryKeys: []map[string]any{{"id": int64(1)}},
 	})
 	if err != nil {
 		t.Fatalf("delete: %v", err)

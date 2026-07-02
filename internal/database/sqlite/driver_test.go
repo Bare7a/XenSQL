@@ -132,7 +132,7 @@ func TestSessionExecuteAndTableLifecycle(t *testing.T) {
 		t.Fatalf("id should be marked primary, got %+v", idCol)
 	}
 
-	row, err := s.InsertRow(ctx, "main", "users", map[string]interface{}{
+	row, err := s.InsertRow(ctx, "main", "users", map[string]any{
 		"name":  "alice",
 		"score": 9.5,
 	})
@@ -165,8 +165,8 @@ func TestSessionExecuteAndTableLifecycle(t *testing.T) {
 	if err := s.UpdateRow(ctx, database.RowUpdate{
 		Schema:     "main",
 		Table:      "users",
-		PrimaryKey: map[string]interface{}{"id": r2.Rows[0][0]},
-		Changes:    map[string]interface{}{"score": 10.0},
+		PrimaryKey: map[string]any{"id": r2.Rows[0][0]},
+		Changes:    map[string]any{"score": 10.0},
 	}); err != nil {
 		t.Fatalf("update: %v", err)
 	}
@@ -174,7 +174,7 @@ func TestSessionExecuteAndTableLifecycle(t *testing.T) {
 	n, err := s.DeleteRows(ctx, database.RowDelete{
 		Schema:      "main",
 		Table:       "users",
-		PrimaryKeys: []map[string]interface{}{{"id": r2.Rows[0][0]}},
+		PrimaryKeys: []map[string]any{{"id": r2.Rows[0][0]}},
 	})
 	if err != nil {
 		t.Fatalf("delete: %v", err)
@@ -193,8 +193,8 @@ func TestUpdateRowWithoutPrimaryKeyFails(t *testing.T) {
 	if err := s.UpdateRow(ctx, database.RowUpdate{
 		Schema:     "main",
 		Table:      "k",
-		PrimaryKey: map[string]interface{}{"a": 1},
-		Changes:    map[string]interface{}{"b": "x"},
+		PrimaryKey: map[string]any{"a": 1},
+		Changes:    map[string]any{"b": "x"},
 	}); err == nil {
 		t.Fatal("expected error for table without primary key")
 	}
@@ -283,19 +283,19 @@ func TestReadOnlySessionRejectsDestructiveSQL(t *testing.T) {
 	if err := ro.UpdateRow(ctx, database.RowUpdate{
 		Schema:     "main",
 		Table:      "t",
-		PrimaryKey: map[string]interface{}{"id": 1},
-		Changes:    map[string]interface{}{"name": "b"},
+		PrimaryKey: map[string]any{"id": 1},
+		Changes:    map[string]any{"name": "b"},
 	}); err == nil {
 		t.Error("UpdateRow on read-only session should be rejected")
 	}
 	if _, err := ro.DeleteRows(ctx, database.RowDelete{
 		Schema:      "main",
 		Table:       "t",
-		PrimaryKeys: []map[string]interface{}{{"id": 1}},
+		PrimaryKeys: []map[string]any{{"id": 1}},
 	}); err == nil {
 		t.Error("DeleteRows on read-only session should be rejected")
 	}
-	if _, err := ro.InsertRow(ctx, "main", "t", map[string]interface{}{"name": "c"}); err == nil {
+	if _, err := ro.InsertRow(ctx, "main", "t", map[string]any{"name": "c"}); err == nil {
 		t.Error("InsertRow on read-only session should be rejected")
 	}
 

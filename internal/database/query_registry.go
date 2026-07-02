@@ -2,6 +2,7 @@ package database
 
 import (
 	"context"
+	"database/sql"
 	"strconv"
 	"sync"
 )
@@ -58,6 +59,26 @@ func (r *QueryRegistry) SetKill(connectionID string, kill func()) {
 		rq.kill = kill
 	}
 	r.mu.Unlock()
+}
+
+// RegisterServerKill wires a server-side cancel for the query about to run on conn: it resolves the
+// connection's server id via probeSQL (e.g. pg_backend_pid) and registers kill(id) with the query
+// registry carried by ctx. A ctx without a connection id or registry is a no-op.
+func RegisterServerKill(ctx context.Context, conn *sql.Conn, probeSQL string, kill func(serverID int64)) error {
+	connID, ok := ConnectionIDFromContext(ctx)
+	if !ok {
+		return nil
+	}
+	reg := QueryRegistryFromContext(ctx)
+	if reg == nil {
+		return nil
+	}
+	var id int64
+	if err := conn.QueryRowContext(ctx, probeSQL).Scan(&id); err != nil {
+		return err
+	}
+	reg.SetKill(connID, func() { kill(id) })
+	return nil
 }
 
 func (r *QueryRegistry) Cancel(connectionID string) bool {

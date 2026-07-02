@@ -3,7 +3,7 @@ import type { editor, languages, Position } from 'monaco-editor';
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { MONACO_FONT_METRICS_OPTIONS } from '@/features/editor/lib/monacoFontMetrics';
 import { getMonacoThemeName, setupMonacoBeforeMount } from '@/features/editor/lib/monacoTheme';
-import { formatSqlIdentifier } from '@/features/editor/lib/sqlCompletion';
+import { formatSqlIdentifier } from '@/features/editor/lib/sqlQuoting';
 import { matchScore, rank } from '@/features/editor/lib/sqlSuggestions';
 import { useAppTheme } from '@/shared/hooks/useAppTheme';
 import { useUiZoom } from '@/shared/hooks/useUiZoom';

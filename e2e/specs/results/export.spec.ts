@@ -1,5 +1,5 @@
-import { expect, test } from '../fixtures';
-import { POSTGRES } from '../support/databases';
+import { POSTGRES } from '@support/databases';
+import { expect, test } from '@support/fixtures';
 
 // Covers the "Export as" dialog UI only. "Save to file" (native OS dialog) and
 // "Copy to clipboard" (Wails clipboard) aren't driven here.

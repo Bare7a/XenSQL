@@ -1,8 +1,6 @@
 package storage
 
 import (
-	"encoding/json"
-	"os"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -20,14 +18,15 @@ type SavedQueriesStore struct {
 	queries []database.SavedQuery
 }
 
+func savedQueryID(q database.SavedQuery) string { return q.ID }
+
 func NewSavedQueriesStore(configDir string) (*SavedQueriesStore, error) {
 	s := &SavedQueriesStore{path: filepath.Join(configDir, "saved_queries.json")}
-	if data, err := os.ReadFile(s.path); err == nil {
-		if json.Unmarshal(data, &s.queries) != nil {
-			s.queries = nil
-			backupCorruptFile(s.path)
-		}
+	queries, err := loadJSONFile[[]database.SavedQuery](s.path)
+	if err != nil {
+		return nil, err
 	}
+	s.queries = queries
 	if s.queries == nil {
 		s.queries = []database.SavedQuery{}
 	}
@@ -62,40 +61,20 @@ func (s *SavedQueriesStore) Save(q database.SavedQuery) (database.SavedQuery, er
 	if q.CreatedAt == "" {
 		q.CreatedAt = now
 	}
-	found := false
-	for i, existing := range s.queries {
-		if existing.ID == q.ID {
-			s.queries[i] = q
-			found = true
-			break
-		}
-	}
-	if !found {
-		s.queries = append(s.queries, q)
-	}
-	return q, s.persist()
+	s.queries = upsertByID(s.queries, q.ID, q, savedQueryID)
+	return q, s.saveLocked()
 }
 
 func (s *SavedQueriesStore) Delete(id string) (bool, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	for i, q := range s.queries {
-		if q.ID == id {
-			s.queries = append(s.queries[:i], s.queries[i+1:]...)
-			return true, s.persist()
-		}
+	var found bool
+	if s.queries, found = removeByID(s.queries, id, savedQueryID); !found {
+		return false, nil
 	}
-	return false, nil
+	return true, s.saveLocked()
 }
 
-func (s *SavedQueriesStore) persist() error {
-	queries := s.queries
-	if queries == nil {
-		queries = []database.SavedQuery{}
-	}
-	data, err := json.MarshalIndent(queries, "", "  ")
-	if err != nil {
-		return err
-	}
-	return writeFileAtomic(s.path, data, 0o600)
+func (s *SavedQueriesStore) saveLocked() error {
+	return saveJSONFile(s.path, s.queries)
 }

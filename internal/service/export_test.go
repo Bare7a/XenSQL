@@ -11,7 +11,7 @@ import (
 func sampleResult() *database.QueryResult {
 	return &database.QueryResult{
 		Columns:   []string{"id", "name", "score"},
-		Rows:      [][]interface{}{{int64(1), "alice", 9.5}, {int64(2), nil, 7.0}},
+		Rows:      [][]any{{int64(1), "alice", 9.5}, {int64(2), nil, 7.0}},
 		TableName: "players",
 	}
 }
@@ -21,7 +21,7 @@ func TestExportJSON(t *testing.T) {
 	if err != nil {
 		t.Fatalf("export: %v", err)
 	}
-	var decoded []map[string]interface{}
+	var decoded []map[string]any
 	if err := json.Unmarshal([]byte(got), &decoded); err != nil {
 		t.Fatalf("json unmarshal: %v", err)
 	}
@@ -85,7 +85,7 @@ func TestExportSQLFallsBackToResultsTableName(t *testing.T) {
 func TestExportSQLBooleanKeywords(t *testing.T) {
 	r := &database.QueryResult{
 		Columns:   []string{"active"},
-		Rows:      [][]interface{}{{true}, {false}},
+		Rows:      [][]any{{true}, {false}},
 		TableName: "flags",
 	}
 	got, err := ExportResult(r, "sql")
@@ -100,7 +100,7 @@ func TestExportSQLBooleanKeywords(t *testing.T) {
 func TestExportJSONPreservesColumnOrder(t *testing.T) {
 	r := &database.QueryResult{
 		Columns: []string{"name", "id"}, // deliberately non-alphabetical
-		Rows:    [][]interface{}{{"alice", int64(1)}},
+		Rows:    [][]any{{"alice", int64(1)}},
 	}
 	got, err := ExportResult(r, "json")
 	if err != nil {
@@ -138,7 +138,7 @@ func TestExportHasNoTrailingNewline(t *testing.T) {
 func TestExportSQLEscapesSingleQuotes(t *testing.T) {
 	r := &database.QueryResult{
 		Columns:   []string{"name"},
-		Rows:      [][]interface{}{{"O'Reilly"}},
+		Rows:      [][]any{{"O'Reilly"}},
 		TableName: "authors",
 	}
 	got, err := ExportResult(r, "sql")
@@ -166,7 +166,7 @@ func TestExportMarkdown(t *testing.T) {
 func TestExportMarkdownEscapesPipes(t *testing.T) {
 	r := &database.QueryResult{
 		Columns: []string{"name"},
-		Rows:    [][]interface{}{{"foo|bar"}},
+		Rows:    [][]any{{"foo|bar"}},
 	}
 	got, err := ExportResult(r, "markdown")
 	if err != nil {
@@ -180,7 +180,7 @@ func TestExportMarkdownEscapesPipes(t *testing.T) {
 func TestExportMarkdownEscapesPipesInHeader(t *testing.T) {
 	r := &database.QueryResult{
 		Columns: []string{"a|b", "x"},
-		Rows:    [][]interface{}{{"1", "2"}},
+		Rows:    [][]any{{"1", "2"}},
 	}
 	got, err := ExportResult(r, "markdown")
 	if err != nil {
@@ -195,7 +195,7 @@ func TestExportMarkdownEscapesPipesInHeader(t *testing.T) {
 func TestExportSQLEscapesIdentifiers(t *testing.T) {
 	r := &database.QueryResult{
 		Columns:   []string{`wei"rd`},
-		Rows:      [][]interface{}{{int64(1)}},
+		Rows:      [][]any{{int64(1)}},
 		TableName: `tab"le`,
 	}
 	got, err := ExportResult(r, "sql")
@@ -210,7 +210,7 @@ func TestExportSQLEscapesIdentifiers(t *testing.T) {
 func TestExportSQLUnsignedInteger(t *testing.T) {
 	r := &database.QueryResult{
 		Columns:   []string{"n"},
-		Rows:      [][]interface{}{{uint64(18446744073709551615)}},
+		Rows:      [][]any{{uint64(18446744073709551615)}},
 		TableName: "t",
 	}
 	got, err := ExportResult(r, "sql")
@@ -226,7 +226,7 @@ func TestExportSQLUnsignedInteger(t *testing.T) {
 func TestExportCSVDefusesFormulaInjection(t *testing.T) {
 	r := &database.QueryResult{
 		Columns: []string{"v"},
-		Rows:    [][]interface{}{{"=1+1"}, {"@SUM(A1)"}, {"-5"}, {"plain"}},
+		Rows:    [][]any{{"=1+1"}, {"@SUM(A1)"}, {"-5"}, {"plain"}},
 	}
 	got, err := ExportResult(r, "csv")
 	if err != nil {
@@ -250,7 +250,7 @@ func TestExportCSVDefusesFormulaInjection(t *testing.T) {
 func TestExportMarkdownFlattensCarriageReturns(t *testing.T) {
 	r := &database.QueryResult{
 		Columns: []string{"v"},
-		Rows:    [][]interface{}{{"a\r\nb"}, {"c\rd"}},
+		Rows:    [][]any{{"a\r\nb"}, {"c\rd"}},
 	}
 	got, err := ExportResult(r, "markdown")
 	if err != nil {

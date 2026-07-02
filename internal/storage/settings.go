@@ -1,8 +1,6 @@
 package storage
 
 import (
-	"encoding/json"
-	"os"
 	"path/filepath"
 	"sync"
 )
@@ -16,15 +14,14 @@ type SettingsStore struct {
 }
 
 func NewSettingsStore(configDir string) (*SettingsStore, error) {
-	s := &SettingsStore{
-		path:   filepath.Join(configDir, "settings.json"),
-		values: map[string]string{},
+	s := &SettingsStore{path: filepath.Join(configDir, "settings.json")}
+	values, err := loadJSONFile[map[string]string](s.path)
+	if err != nil {
+		return nil, err
 	}
-	if data, err := os.ReadFile(s.path); err == nil {
-		if json.Unmarshal(data, &s.values) != nil || s.values == nil {
-			s.values = map[string]string{}
-			backupCorruptFile(s.path)
-		}
+	s.values = values
+	if s.values == nil { // covers both a missing file and a literal JSON null
+		s.values = map[string]string{}
 	}
 	return s, nil
 }
@@ -44,7 +41,7 @@ func (s *SettingsStore) Set(key, value string) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.values[key] = value
-	return s.persist()
+	return s.saveLocked()
 }
 
 func (s *SettingsStore) Delete(key string) error {
@@ -54,14 +51,10 @@ func (s *SettingsStore) Delete(key string) error {
 		return nil
 	}
 	delete(s.values, key)
-	return s.persist()
+	return s.saveLocked()
 }
 
-// persist writes the current map atomically. Callers must hold the write lock.
-func (s *SettingsStore) persist() error {
-	data, err := json.MarshalIndent(s.values, "", "  ")
-	if err != nil {
-		return err
-	}
-	return writeFileAtomic(s.path, data, 0o600)
+// saveLocked persists the current map atomically; callers must hold the write lock.
+func (s *SettingsStore) saveLocked() error {
+	return saveJSONFile(s.path, s.values)
 }

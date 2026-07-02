@@ -13,7 +13,7 @@ func TestReorderConnections(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	s.Connections = []database.ConnectionConfig{
+	s.connections = []database.ConnectionConfig{
 		{ID: "a", Name: "A"},
 		{ID: "b", Name: "B"},
 		{ID: "c", Name: "C"},

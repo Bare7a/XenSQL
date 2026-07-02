@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"sync/atomic"
 
 	"xensql/internal/database"
 )
@@ -45,11 +44,11 @@ type QueryStreamMetaEvent struct {
 }
 
 type QueryStreamRowsEvent struct {
-	Seq         int             `json:"seq"`
-	TabID       string          `json:"tabId"`
-	StreamID    string          `json:"streamId"`
-	ResultIndex int             `json:"resultIndex"`
-	Rows        [][]interface{} `json:"rows"`
+	Seq         int     `json:"seq"`
+	TabID       string  `json:"tabId"`
+	StreamID    string  `json:"streamId"`
+	ResultIndex int     `json:"resultIndex"`
+	Rows        [][]any `json:"rows"`
 }
 
 // QueryStreamResultEvent finalizes one result set within a run. Result carries metadata only; rows
@@ -81,12 +80,28 @@ type QueryStreamDoneEvent struct {
 
 const queryStreamBatchSize = 5000
 
-func (a *App) emitStreamMeta(tabID, streamID, connectionID string, resultIndex int, columns, columnTypes []string, schemaName, tableName string) {
-	a.emit("query:stream:meta", QueryStreamMetaEvent{
-		Seq:          a.nextStreamSeq(streamID),
-		TabID:        tabID,
-		StreamID:     streamID,
-		ConnectionID: connectionID,
+// streamEmitter emits the query:stream:* events for one run, tagging each with the run's ids and a
+// contiguous sequence number. All emits for a run happen on its goroutine, so seq needs no locking.
+type streamEmitter struct {
+	app          *App
+	tabID        string
+	streamID     string
+	connectionID string
+	seq          int
+}
+
+func (e *streamEmitter) nextSeq() int {
+	seq := e.seq
+	e.seq++
+	return seq
+}
+
+func (e *streamEmitter) meta(resultIndex int, columns, columnTypes []string, schemaName, tableName string) {
+	e.app.emit("query:stream:meta", QueryStreamMetaEvent{
+		Seq:          e.nextSeq(),
+		TabID:        e.tabID,
+		StreamID:     e.streamID,
+		ConnectionID: e.connectionID,
 		ResultIndex:  resultIndex,
 		Columns:      columns,
 		ColumnTypes:  columnTypes,
@@ -95,22 +110,22 @@ func (a *App) emitStreamMeta(tabID, streamID, connectionID string, resultIndex i
 	})
 }
 
-func (a *App) emitStreamRows(tabID, streamID string, resultIndex int, rows [][]interface{}) {
-	a.emit("query:stream:rows", QueryStreamRowsEvent{
-		Seq:         a.nextStreamSeq(streamID),
-		TabID:       tabID,
-		StreamID:    streamID,
+func (e *streamEmitter) rows(resultIndex int, rows [][]any) {
+	e.app.emit("query:stream:rows", QueryStreamRowsEvent{
+		Seq:         e.nextSeq(),
+		TabID:       e.tabID,
+		StreamID:    e.streamID,
 		ResultIndex: resultIndex,
 		Rows:        rows,
 	})
 }
 
-func (a *App) emitStreamResult(tabID, streamID, connectionID string, resultIndex int, result *database.QueryResult, statement string, err error) {
+func (e *streamEmitter) result(resultIndex int, result *database.QueryResult, statement string, err error) {
 	payload := QueryStreamResultEvent{
-		Seq:          a.nextStreamSeq(streamID),
-		TabID:        tabID,
-		StreamID:     streamID,
-		ConnectionID: connectionID,
+		Seq:          e.nextSeq(),
+		TabID:        e.tabID,
+		StreamID:     e.streamID,
+		ConnectionID: e.connectionID,
 		ResultIndex:  resultIndex,
 		Result:       result,
 		Statement:    statement,
@@ -119,22 +134,22 @@ func (a *App) emitStreamResult(tabID, streamID, connectionID string, resultIndex
 		payload.Error = err.Error()
 		payload.ErrorInfo = database.ClassifyError(err)
 	}
-	a.emit("query:stream:result", payload)
+	e.app.emit("query:stream:result", payload)
 }
 
-func (a *App) emitStreamDone(tabID, streamID, connectionID string, resultCount int, err error) {
+func (e *streamEmitter) done(resultCount int, err error) {
 	payload := QueryStreamDoneEvent{
-		Seq:          a.nextStreamSeq(streamID),
-		TabID:        tabID,
-		StreamID:     streamID,
-		ConnectionID: connectionID,
+		Seq:          e.nextSeq(),
+		TabID:        e.tabID,
+		StreamID:     e.streamID,
+		ConnectionID: e.connectionID,
 		ResultCount:  resultCount,
 	}
 	if err != nil {
 		payload.Error = err.Error()
 		payload.ErrorInfo = database.ClassifyError(err)
 	}
-	a.emit("query:stream:done", payload)
+	e.app.emit("query:stream:done", payload)
 }
 
 func (a *App) ExecuteQuery(connectionID, sql string) (*database.QueryResult, error) {
@@ -169,10 +184,10 @@ func (a *App) ExecuteQueryStream(connectionID, tabID, sql string) error {
 // the tab's open transaction if there is one, otherwise on a freshly pinned connection so session
 // state and multi-statement scripts behave.
 func (a *App) runBatchStream(tabID, connectionID string, statements []string) {
-	a.streamRun(tabID, connectionID, func(streamID string, queryCtx context.Context) {
-		exec, release, err := a.batchExecutor(tabID, connectionID, queryCtx)
+	a.streamRun(tabID, connectionID, func(em *streamEmitter, queryCtx context.Context) {
+		exec, release, err := a.batchExecutor(queryCtx, tabID, connectionID)
 		if err != nil {
-			a.emitStreamDone(tabID, streamID, connectionID, 0, err)
+			em.done(0, err)
 			return
 		}
 		if release != nil {
@@ -189,17 +204,17 @@ func (a *App) runBatchStream(tabID, connectionID string, statements []string) {
 		sink := database.ScriptSink{
 			BatchSize: queryStreamBatchSize,
 			OnMeta: func(idx int, cols, types []string) {
-				a.emitStreamMeta(tabID, streamID, connectionID, idx, cols, types, "", "")
+				em.meta(idx, cols, types, "", "")
 			},
-			OnBatch: func(idx int, rows [][]interface{}) error {
-				a.emitStreamRows(tabID, streamID, idx, rows)
+			OnBatch: func(idx int, rows [][]any) error {
+				em.rows(idx, rows)
 				return nil
 			},
 			OnResult: func(idx int, summary *database.QueryResult, statement string, err error) {
 				resultCount = idx + 1
 				err = queryErr(err)
 				hist = append(hist, histEntry{statement, summary, err})
-				a.emitStreamResult(tabID, streamID, connectionID, idx, summary, statement, err)
+				em.result(idx, summary, statement, err)
 			},
 		}
 		// Per-statement errors are reported via the result event above, so the terminal done carries
@@ -209,13 +224,13 @@ func (a *App) runBatchStream(tabID, connectionID string, statements []string) {
 		for _, h := range hist {
 			a.recordHistory(connectionID, h.stmt, h.summary, h.err)
 		}
-		a.emitStreamDone(tabID, streamID, connectionID, resultCount, nil)
+		em.done(resultCount, nil)
 	})
 }
 
 // batchExecutor returns the connection to run a script on: the tab's open transaction (no release),
 // or a freshly pinned connection (release closes it).
-func (a *App) batchExecutor(tabID, connectionID string, ctx context.Context) (database.PinnedConn, func(), error) {
+func (a *App) batchExecutor(ctx context.Context, tabID, connectionID string) (database.PinnedConn, func(), error) {
 	if txn, ok := a.txns.Get(tabID); ok {
 		return txn, nil, nil
 	}
@@ -245,20 +260,6 @@ func (a *App) CancelQuery(connectionID string) bool {
 	return a.queries.Cancel(connectionID)
 }
 
-func (a *App) QueryTable(connectionID string, req database.TableDataRequest) (*database.QueryResult, error) {
-	s, err := a.sessionFor(connectionID)
-	if err != nil {
-		return nil, err
-	}
-	if req.Limit <= 0 {
-		req.Limit = 100
-	}
-	_, queryCtx, end := a.queryContext(connectionID)
-	defer end()
-	result, err := s.QueryTable(queryCtx, req)
-	return result, queryErr(err)
-}
-
 func (a *App) QueryTableStream(connectionID, tabID string, req database.TableDataRequest) error {
 	if tabID == "" {
 		return fmt.Errorf("tab id is required")
@@ -266,26 +267,26 @@ func (a *App) QueryTableStream(connectionID, tabID string, req database.TableDat
 	if req.Limit <= 0 {
 		req.Limit = 100
 	}
-	a.streamRun(tabID, connectionID, func(streamID string, queryCtx context.Context) {
+	a.streamRun(tabID, connectionID, func(em *streamEmitter, queryCtx context.Context) {
 		s, err := a.sessionFor(connectionID)
 		if err != nil {
-			a.emitStreamDone(tabID, streamID, connectionID, 0, err)
+			em.done(0, err)
 			return
 		}
 		opts := database.StreamOpts{
 			BatchSize: queryStreamBatchSize,
 			OnMeta: func(cols, types []string) {
-				a.emitStreamMeta(tabID, streamID, connectionID, 0, cols, types, req.Schema, req.Table)
+				em.meta(0, cols, types, req.Schema, req.Table)
 			},
-			OnBatch: func(batch [][]interface{}) error {
-				a.emitStreamRows(tabID, streamID, 0, batch)
+			OnBatch: func(batch [][]any) error {
+				em.rows(0, batch)
 				return nil
 			},
 		}
 		// A table browse is always a single result set (index 0).
 		result, err := s.QueryTableStream(queryCtx, req, opts)
-		a.emitStreamResult(tabID, streamID, connectionID, 0, result, "", queryErr(err))
-		a.emitStreamDone(tabID, streamID, connectionID, 1, nil)
+		em.result(0, result, "", queryErr(err))
+		em.done(1, nil)
 	})
 	return nil
 }
@@ -295,28 +296,20 @@ func (a *App) QueryTableStream(connectionID, tabID string, req database.TableDat
 // followed by a terminal done. Registering synchronously keeps cancel order and stream-id order
 // matched: a query started later supersedes - and gets a higher id than - one started earlier, even
 // if their goroutines are scheduled out of order.
-func (a *App) streamRun(tabID, connectionID string, fn func(streamID string, queryCtx context.Context)) {
+func (a *App) streamRun(tabID, connectionID string, fn func(em *streamEmitter, queryCtx context.Context)) {
 	streamID, queryCtx, end := a.queryContext(connectionID)
+	em := &streamEmitter{app: a, tabID: tabID, streamID: streamID, connectionID: connectionID}
 	go func() {
 		defer end()
-		// Drop the counter after this run's emits (LIFO: runs after the panic-path done below).
-		defer a.streamSeqs.Delete(streamID)
 		// Recover panics at the goroutine boundary; surface them as a terminal done error so the UI
 		// shows them instead of the process crashing.
 		defer func() {
 			if r := recover(); r != nil {
-				a.emitStreamDone(tabID, streamID, connectionID, 0, fmt.Errorf("query panicked: %v", r))
+				em.done(0, fmt.Errorf("query panicked: %v", r))
 			}
 		}()
-		fn(streamID, queryCtx)
+		fn(em, queryCtx)
 	}()
-}
-
-// nextStreamSeq returns the next 0-based per-StreamID sequence number. Emits within a run are
-// sequential (one goroutine), so the counter stays contiguous.
-func (a *App) nextStreamSeq(streamID string) int {
-	v, _ := a.streamSeqs.LoadOrStore(streamID, &atomic.Uint64{})
-	return int(v.(*atomic.Uint64).Add(1) - 1)
 }
 
 func (a *App) UpdateRow(connectionID string, upd database.RowUpdate) error {
@@ -341,7 +334,7 @@ func (a *App) DeleteRows(connectionID string, del database.RowDelete) (int64, er
 	return s.DeleteRows(a.ctx, del)
 }
 
-func (a *App) InsertRow(connectionID, schema, table string, values map[string]interface{}) (map[string]interface{}, error) {
+func (a *App) InsertRow(connectionID, schema, table string, values map[string]any) (map[string]any, error) {
 	if err := a.assertWritableConnection(connectionID); err != nil {
 		return nil, err
 	}

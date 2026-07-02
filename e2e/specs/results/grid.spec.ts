@@ -1,15 +1,10 @@
-import { expect, test } from '../fixtures';
-import { POSTGRES, uniqueIdent } from '../support/databases';
+import { POSTGRES } from '@support/databases';
+import { expect, test } from '@support/fixtures';
 
 test.describe('Results grid', () => {
-  test('sorts a column ascending then descending', async ({ app, connections, editor, results }) => {
-    const t = uniqueIdent('e2e_sort');
+  test('sorts a column ascending then descending', async ({ connections, editor, results, seed }) => {
     await connections.createAndConnect(POSTGRES);
-
-    await editor.run(`CREATE TABLE ${t} (id INTEGER PRIMARY KEY, name VARCHAR(50));`);
-    await app.expectStatementApplied();
-    await editor.run(`INSERT INTO ${t} (id, name) VALUES (1, 'Charlie'), (2, 'Alice'), (3, 'Bob');`);
-    await app.expectStatementApplied();
+    const t = await seed.table('e2e_sort', { insert: `(id, name) VALUES (1, 'Charlie'), (2, 'Alice'), (3, 'Bob')` });
 
     await editor.run(`SELECT id, name FROM ${t};`);
     await results.waitForRows();

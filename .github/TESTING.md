@@ -180,6 +180,29 @@ npx playwright install chromium
 npm run e2e
 ```
 
+### Suite layout
+
+```
+e2e/
+  playwright.config.ts    config; starts the app via `npm run e2e:server`
+  global-setup.ts         brings the database stack up if it isn't already
+  e2e-server.mjs          builds the frontend, then runs `go run -tags server ./cmd/e2e-server`
+  pages/                  page objects, one per app surface
+  support/
+    fixtures.ts           the `test` every spec imports: page-object fixtures + `seed`
+    databases.ts          the driver matrix (POSTGRES / MYSQL / MARIADB / SQLITE)
+    seed.ts               Seeder: create + populate a uniquely-named table through the UI
+  specs/                  grouped by surface: editor/, results/, sidebar/, table-view/,
+                          plus app-shell and connections at the root
+```
+
+Specs import shared code via the `@support/*` alias (see `tsconfig.json`), so nesting
+depth never changes an import. Tests that need data use the `seed` fixture —
+`seed.table()` creates (and optionally fills) a uniquely-named table via the editor,
+`seed.browseTable()` additionally opens it in the data browser. The default seeded
+schema is `(id INTEGER PRIMARY KEY, name VARCHAR(50))`; keep seed SQL portable, since
+the matrix suites replay it on all four drivers.
+
 ### What's covered
 
 - **Connections** - add, test, connect, disconnect, edit, delete, drag-reorder

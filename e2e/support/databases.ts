@@ -75,11 +75,3 @@ export const ALL_DATABASES: DbConfig[] = [POSTGRES, MYSQL, MARIADB, SQLITE];
 
 /** Network drivers only (host/port based). */
 export const NETWORK_DATABASES: DbConfig[] = [POSTGRES, MYSQL, MARIADB];
-
-let counter = 0;
-
-/** Short, SQL-safe identifier (e.g. table names), unique within a run. */
-export function uniqueIdent(prefix = 'e2e'): string {
-  counter += 1;
-  return `${prefix}_${Date.now().toString(36)}_${counter}`.toLowerCase();
-}

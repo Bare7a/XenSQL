@@ -46,11 +46,6 @@ export class TableViewPage {
   }
 
   // ── Cells / rows / headers ───────────────────────────────────────────────
-  /** Cell by id (original row/col indices); fine while nothing is sorted/hidden. */
-  cell(row: number, colIdx: number): Locator {
-    return this.grid.locator(`#tableview-cell-${row}-${colIdx}`);
-  }
-
   /** Cell by on-screen position (survives sorting). */
   cellAt(row: number, colPos: number): Locator {
     return this.grid.locator(`td[data-row="${row}"][data-col-pos="${colPos}"]`);

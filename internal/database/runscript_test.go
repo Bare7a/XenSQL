@@ -27,7 +27,7 @@ func memConn(t *testing.T) (*sql.Conn, func()) {
 type capturedSet struct {
 	index   int
 	cols    []string
-	rows    [][]interface{}
+	rows    [][]any
 	summary *QueryResult
 	stmt    string
 	err     error
@@ -46,7 +46,7 @@ func captureSink(sets *[]*capturedSet) ScriptSink {
 	}
 	return ScriptSink{
 		OnMeta: func(idx int, cols, _ []string) { get(idx).cols = cols },
-		OnBatch: func(idx int, rows [][]interface{}) error {
+		OnBatch: func(idx int, rows [][]any) error {
 			s := get(idx)
 			s.rows = append(s.rows, rows...)
 			return nil

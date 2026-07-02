@@ -1,7 +1,7 @@
-import { expect, test } from '../fixtures';
-import { ALL_DATABASES, POSTGRES } from '../support/databases';
+import { ALL_DATABASES, POSTGRES } from '@support/databases';
+import { expect, test } from '@support/fixtures';
 
-test.describe('Queries', () => {
+test.describe('Query execution', () => {
   // A SELECT round-trips through the real backend, per driver.
   for (const db of ALL_DATABASES) {
     test(`runs a simple query: ${db.label}`, async ({ connections, editor, results }) => {

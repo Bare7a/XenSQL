@@ -1,4 +1,4 @@
-export const EDITABLE_SELECTOR = 'input, textarea, select, [contenteditable="true"]';
+const EDITABLE_SELECTOR = 'input, textarea, select, [contenteditable="true"]';
 
 /** Nested inside grid DOM but should not receive grid keyboard shortcuts (e.g. cell viewer). */
 export const GRID_KEYBOARD_SUPPRESS_SELECTOR = '.monaco-editor, .modal-overlay';

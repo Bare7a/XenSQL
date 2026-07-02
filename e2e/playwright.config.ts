@@ -31,18 +31,22 @@ export default defineConfig({
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
-    // Opt-in `PW_SLOWMO=400` slows each action to follow a headed run; no-op headless.
-    launchOptions: { slowMo: process.env.PW_SLOWMO ? Number(process.env.PW_SLOWMO) : undefined },
+    launchOptions: {
+      // Opt-in `PW_SLOWMO=400` slows each action to follow a headed run; no-op headless.
+      slowMo: process.env.PW_SLOWMO ? Number(process.env.PW_SLOWMO) : undefined,
+      // Opt-in for sandboxes that can't spawn Chromium helper processes (e.g. agent sandboxes).
+      args: process.env.PW_SINGLE_PROCESS ? ['--single-process', '--no-zygote'] : [],
+    },
   },
   // Brings the database stack up before any test connects.
   globalSetup: './global-setup.ts',
   // Builds frontend then starts the server-mode binary; build + first WSL module
-  // download can be slow, hence the generous timeout.
+  // download or a cold Go build cache can be slow, hence the generous timeout.
   webServer: {
     command: 'npm run e2e:server',
     url: `${baseURL}/health`,
     reuseExistingServer: !process.env.CI,
-    timeout: 60_000,
+    timeout: 120_000,
     stdout: 'pipe',
     stderr: 'pipe',
     env: {

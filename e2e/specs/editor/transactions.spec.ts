@@ -1,14 +1,11 @@
-import { expect, test } from '../fixtures';
-import { ALL_DATABASES, uniqueIdent } from '../support/databases';
+import { ALL_DATABASES } from '@support/databases';
+import { expect, test } from '@support/fixtures';
 
 test.describe('Transactions', () => {
   for (const db of ALL_DATABASES) {
-    test(`rolls back and commits: ${db.label}`, async ({ app, connections, editor, results }) => {
-      const t = uniqueIdent('e2e_txn');
+    test(`rolls back and commits: ${db.label}`, async ({ app, connections, editor, results, seed }) => {
       await connections.createAndConnect(db);
-
-      await editor.run(`CREATE TABLE ${t} (id INTEGER PRIMARY KEY, name VARCHAR(50));`);
-      await app.expectStatementApplied();
+      const t = await seed.table('e2e_txn');
 
       // Rollback discards the insert.
       await editor.beginTransaction();

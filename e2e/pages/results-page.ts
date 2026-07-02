@@ -14,10 +14,6 @@ export class ResultsPage {
     this.resultTabs = this.active.locator('.result-tabs');
   }
 
-  async waitForGrid(): Promise<void> {
-    await expect(this.grid).toBeVisible({ timeout: 30_000 });
-  }
-
   /** Wait until result rows are rendered. */
   async waitForRows(): Promise<void> {
     await expect(this.grid.locator('td[data-row]').first()).toBeVisible({ timeout: 30_000 });
@@ -26,10 +22,6 @@ export class ResultsPage {
   /** Cell text at a visual row (0-based) and column position (0-based). */
   cell(row: number, colPos: number): Locator {
     return this.grid.locator(`td[data-row="${row}"][data-col-pos="${colPos}"]`);
-  }
-
-  headerCount(): Locator {
-    return this.active.locator('.results-header');
   }
 
   // ── Error state ────────────────────────────────────────────────────────────
@@ -119,10 +111,6 @@ export class ResultsPage {
 
   get exportRowsGroup(): Locator {
     return this.page.locator('#export-rows-group');
-  }
-
-  get exportColsGroup(): Locator {
-    return this.page.locator('#export-cols-group');
   }
 
   get exportSummary(): Locator {

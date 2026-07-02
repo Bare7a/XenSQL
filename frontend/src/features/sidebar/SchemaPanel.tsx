@@ -1,9 +1,10 @@
-import { CircleAlert, Copy, Loader2, Plug, RefreshCw, Search } from 'lucide-react';
+import { CircleAlert, Copy, Loader2, Plug, RefreshCw } from 'lucide-react';
 import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { buildQualifiedTable } from '@/features/editor/lib/sqlIdentifiers';
 import { tableKey, tableMatchesSearch, useSchemaTree } from '@/features/sidebar/hooks/useSchemaTree';
 import { SchemaTreeNode } from '@/features/sidebar/SchemaTreeNode';
+import { SidebarFilterBar } from '@/features/sidebar/SidebarFilterBar';
 import { ContextMenu } from '@/shared/components/ContextMenu';
 import { useContextMenu } from '@/shared/hooks/useContextMenu';
 import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue';
@@ -165,16 +166,12 @@ export function SchemaPanel({ onOpenQuery, onBrowseTable, onOpenConnectionTab }:
 
   return (
     <>
-      <div className="sidebar-filter">
-        <Search className="sidebar-filter-icon" aria-hidden />
-        <input
-          type="search"
-          className="sidebar-filter-input"
-          placeholder={t('sidebar.searchTablesColumns')}
-          value={tableSearch}
-          onChange={(e) => setTableSearch(e.target.value)}
-          disabled={!connId || !connConnected}
-        />
+      <SidebarFilterBar
+        value={tableSearch}
+        placeholder={t('sidebar.searchTablesColumns')}
+        onChange={setTableSearch}
+        disabled={!connId || !connConnected}
+      >
         <button
           type="button"
           className="btn btn-sm sidebar-filter-btn"
@@ -184,7 +181,7 @@ export function SchemaPanel({ onOpenQuery, onBrowseTable, onOpenConnectionTab }:
         >
           <RefreshCw className={cx('icon-xs', loadingSchema && 'spin')} />
         </button>
-      </div>
+      </SidebarFilterBar>
 
       {schemaError && (
         <div className="sidebar-error-banner" role="alert">

@@ -50,7 +50,7 @@ export function unquoteIdent(raw: string): string {
 
 // Common SQL keywords that are also plausible identifier names; inserting them unquoted from
 // autocomplete (e.g. a column literally named `order`) would be a syntax error.
-export const QUOTE_FORCING_KEYWORDS = new Set([
+const QUOTE_FORCING_KEYWORDS = new Set([
   ...ALIAS_STOP_WORDS,
   'table',
   'column',

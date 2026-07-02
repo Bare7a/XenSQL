@@ -1,15 +1,11 @@
-import { expect, test } from '../fixtures';
-import { POSTGRES, uniqueIdent } from '../support/databases';
+import { POSTGRES } from '@support/databases';
+import { expect, test } from '@support/fixtures';
 
-test.describe('Sidebar', () => {
-  test('filters the schema browser by name', async ({ app, connections, editor, schema }) => {
-    const keep = uniqueIdent('e2e_keep');
-    const other = uniqueIdent('e2e_other');
+test.describe('Sidebar filtering', () => {
+  test('filters the schema browser by name', async ({ app, connections, schema, seed }) => {
     await connections.createAndConnect(POSTGRES);
-    await editor.run(`CREATE TABLE ${keep} (id INTEGER PRIMARY KEY);`);
-    await app.expectStatementApplied();
-    await editor.run(`CREATE TABLE ${other} (id INTEGER PRIMARY KEY);`);
-    await app.expectStatementApplied();
+    const keep = await seed.table('e2e_keep', { columns: '(id INTEGER PRIMARY KEY)' });
+    const other = await seed.table('e2e_other', { columns: '(id INTEGER PRIMARY KEY)' });
 
     await schema.refresh();
     await schema.revealTable(keep); // expand schema so its tables load
@@ -35,7 +31,6 @@ test.describe('Sidebar', () => {
     await editor.setSql('SELECT 2 AS apple;');
     await editor.saveQueryToLibrary('Apple query');
 
-    await queries.open();
     await queries.showSaved();
 
     await queries.filterSaved('Apple');
@@ -57,7 +52,6 @@ test.describe('Sidebar', () => {
     await editor.run('SELECT 222 AS beta;');
     await results.waitForRows();
 
-    await queries.open();
     await queries.showHistory();
 
     await queries.filterHistory('111');

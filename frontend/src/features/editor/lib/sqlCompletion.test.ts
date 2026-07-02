@@ -2,15 +2,13 @@ import { describe, expect, it } from 'vitest';
 import {
   bindingsNeedingColumns,
   buildCompletionItems,
-  type CompletionContext,
-  clauseBodyStart,
-  columnCacheKey,
   completionReplaceRange,
-  identifierNeedsQuote,
-  isOrderOrGroupContext,
-  parseQueryContext,
 } from '@/features/editor/lib/sqlCompletion';
+import { clauseBodyStart, isOrderOrGroupContext } from '@/features/editor/lib/sqlCompletionContext';
+import { parseQueryContext } from '@/features/editor/lib/sqlQueryParse';
+import { columnCacheKey, identifierNeedsQuote } from '@/features/editor/lib/sqlQuoting';
 import { currentStatementStart, parseSqlStatements } from '@/features/editor/lib/sqlStatements';
+import type { CompletionContext } from '@/features/editor/lib/sqlSuggestions';
 import type { ColumnInfo, DriverType, SchemaInfo, TableInfo } from '@/types';
 
 const schemas: SchemaInfo[] = [{ name: 'public' }];

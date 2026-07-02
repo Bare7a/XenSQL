@@ -3,8 +3,8 @@ import type { editor } from 'monaco-editor';
 import * as monaco from 'monaco-editor/esm/vs/editor/editor.api';
 import type { AppTheme } from '@/shared/lib/theme';
 
-export const XENSQL_MONACO_THEME_DARK = 'xensql-dark';
-export const XENSQL_MONACO_THEME_LIGHT = 'xensql-light';
+const XENSQL_MONACO_THEME_DARK = 'xensql-dark';
+const XENSQL_MONACO_THEME_LIGHT = 'xensql-light';
 
 const DARK_SQL_KEYWORD = '569CD6';
 const LIGHT_SQL_KEYWORD = '0000FF';
@@ -102,7 +102,7 @@ export function syncMonacoEditorView(ed: editor.IStandaloneCodeEditor, theme: st
   });
 }
 
-export function ensureXenSqlMonacoThemes(monaco: Monaco): void {
+function ensureXenSqlMonacoThemes(monaco: Monaco): void {
   monaco.editor.defineTheme(XENSQL_MONACO_THEME_DARK, {
     base: 'vs-dark',
     inherit: true,

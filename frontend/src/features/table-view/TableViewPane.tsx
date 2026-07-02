@@ -2,23 +2,19 @@ import { Filter, Minus, Plus, RefreshCw, Search } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { SqlConditionInput } from '@/features/editor/SqlConditionInput';
-import type { PasteCellEdit } from '@/features/table-view/lib/tableViewClipboard';
-import { mergeTablePage, primaryKeyKey, rowPrimaryKey, TABLE_PAGE_SIZE } from '@/features/table-view/lib/tableViewRows';
+import { useTableViewPendingMutations } from '@/features/table-view/hooks/useTableViewPendingMutations';
+import { mergeTablePage, TABLE_PAGE_SIZE } from '@/features/table-view/lib/tableViewRows';
 import { TableViewAddRowDialog } from '@/features/table-view/TableViewAddRowDialog';
 import { type TableSortDir, TableViewGrid } from '@/features/table-view/TableViewGrid';
 import { ErrorState } from '@/shared/components/ErrorState';
 import { api } from '@/shared/lib/api';
 import { appError } from '@/shared/lib/appDialog';
-import { appToast } from '@/shared/lib/appToast';
 import { formatError } from '@/shared/lib/normalize';
 import { useAppStore } from '@/store/appStore';
-import type { DriverType, EditorTab, TableViewPendingState, TableViewSessionState } from '@/types';
-import { emptyTableViewPending, tableViewStateFrom } from '@/types';
+import type { DriverType, EditorTab, TableViewSessionState } from '@/types';
+import { tableViewStateFrom } from '@/types';
 
 const sameStrings = (a: string[], b: string[]) => a.length === b.length && a.every((v, i) => v === b[i]);
-
-// Cap each direction so a long editing session can't grow the snapshot stacks without bound.
-const HISTORY_LIMIT = 100;
 
 interface Props {
   tab: EditorTab;
@@ -71,70 +67,17 @@ export function TableViewPane({ tab, driver, readOnly, isActive, running, onFocu
     [tab.id, tv.schema, tv.table, updateTabSession],
   );
 
-  // Undo/redo stacks of whole pending snapshots. They live in refs (no re-render needed) and, because
-  // the pane stays mounted per tab, survive tab switches - matching pending's in-memory lifetime.
-  const undoStackRef = useRef<TableViewPendingState[]>([]);
-  const redoStackRef = useRef<TableViewPendingState[]>([]);
-
-  const readPending = useCallback(
-    (): TableViewPendingState =>
-      useAppStore.getState().tabSession[tab.id]?.tableViewState?.pending ?? emptyTableViewPending(),
-    [tab.id],
-  );
-
-  const clearPending = useCallback(() => {
-    // Applying, resetting, or reloading the dataset makes prior snapshots reference rows that may no
-    // longer exist - drop the history alongside the pending changes.
-    undoStackRef.current = [];
-    redoStackRef.current = [];
-    persistState({ pending: emptyTableViewPending() });
-  }, [persistState]);
-
-  // Every history-recording mutation funnels through here: push the prior state, drop the redo
-  // branch, then commit. Paste records a single entry by computing the whole next state up front.
-  const commitPending = useCallback(
-    (prev: TableViewPendingState, next: TableViewPendingState) => {
-      undoStackRef.current.push(prev);
-      if (undoStackRef.current.length > HISTORY_LIMIT) undoStackRef.current.shift();
-      redoStackRef.current = [];
-      persistState({ pending: next });
-    },
-    [persistState],
-  );
-
-  const undo = useCallback(() => {
-    const prev = undoStackRef.current.pop();
-    if (prev === undefined) return;
-    redoStackRef.current.push(readPending());
-    persistState({ pending: prev });
-  }, [readPending, persistState]);
-
-  const redo = useCallback(() => {
-    const next = redoStackRef.current.pop();
-    if (next === undefined) return;
-    undoStackRef.current.push(readPending());
-    persistState({ pending: next });
-  }, [readPending, persistState]);
-
-  // Deleted rows' pending edits are discarded in handleApply - exclude them from editCount.
-  const deleteCount = state.pending.deletes.length;
-  const deleteSet = new Set(state.pending.deletes);
-  const editCount = Object.keys(state.pending.edits).filter((key) => !deleteSet.has(key)).length;
-  const hasPending = editCount > 0 || deleteCount > 0;
-
-  // PK values mapping to more than one loaded row (view / non-unique PK); editing by such a key would
-  // hit every match, so it's blocked.
-  const ambiguousKeys = useMemo(() => {
-    if (!state.primaryKeys.length) return new Set<string>();
-    const counts = new Map<string, number>();
-    for (const row of state.rows) {
-      const key = primaryKeyKey(rowPrimaryKey(row, state.columns, state.primaryKeys));
-      counts.set(key, (counts.get(key) ?? 0) + 1);
-    }
-    const dups = new Set<string>();
-    for (const [key, n] of counts) if (n > 1) dups.add(key);
-    return dups;
-  }, [state.rows, state.columns, state.primaryKeys]);
+  const {
+    undo,
+    redo,
+    clearPending,
+    handleCellEdit,
+    handlePasteCells,
+    handleToggleDeleteRow,
+    editCount,
+    deleteCount,
+    hasPending,
+  } = useTableViewPendingMutations({ tabId: tab.id, readOnly, state, persistState });
 
   const fetchPage = useCallback(
     async (opts: {
@@ -280,97 +223,6 @@ export function TableViewPane({ tab, driver, readOnly, isActive, running, onFocu
     if (running || !state.hasMore || hasPending) return;
     void fetchPage({ offset: state.rows.length, replace: false });
   }, [running, state.hasMore, hasPending, state.rows.length, fetchPage]);
-
-  const handleCellEdit = useCallback(
-    (rowIdx: number, col: string, value: string | null) => {
-      if (readOnly || !state.primaryKeys.length) return;
-
-      const colIdx = state.columns.indexOf(col);
-      const origRaw = colIdx >= 0 ? state.rows[rowIdx]?.[colIdx] : undefined;
-      const orig = origRaw == null ? null : String(origRaw);
-      const next = value == null ? null : String(value);
-
-      const pk = rowPrimaryKey(state.rows[rowIdx], state.columns, state.primaryKeys);
-      const key = primaryKeyKey(pk);
-      if (ambiguousKeys.has(key)) {
-        appToast.error(t('tableView.ambiguousRow'));
-        return;
-      }
-      const edits = { ...state.pending.edits };
-      const rowEdits = { ...(edits[key] ?? {}) };
-
-      if (next === orig) delete rowEdits[col];
-      else rowEdits[col] = value;
-
-      if (Object.keys(rowEdits).length === 0) delete edits[key];
-      else edits[key] = rowEdits;
-
-      commitPending(state.pending, { ...state.pending, edits });
-    },
-    [readOnly, state.primaryKeys, state.columns, state.rows, state.pending, ambiguousKeys, commitPending, t],
-  );
-
-  // Apply a batch of pasted cells as one undoable step. Mirrors handleCellEdit's reconcile (revert
-  // detection, ambiguous-key blocking) per cell, then commits the combined result once.
-  const handlePasteCells = useCallback(
-    (cellEdits: PasteCellEdit[]) => {
-      if (readOnly || !state.primaryKeys.length || cellEdits.length === 0) return;
-      const edits = { ...state.pending.edits };
-      let changed = false;
-      let blockedAmbiguous = false;
-
-      for (const { rowIdx, col, value } of cellEdits) {
-        const row = state.rows[rowIdx];
-        if (!row) continue;
-        const colIdx = state.columns.indexOf(col);
-        if (colIdx < 0) continue;
-        const key = primaryKeyKey(rowPrimaryKey(row, state.columns, state.primaryKeys));
-        if (ambiguousKeys.has(key)) {
-          blockedAmbiguous = true;
-          continue;
-        }
-        const origRaw = row[colIdx];
-        const orig = origRaw == null ? null : String(origRaw);
-        const next = value == null ? null : String(value);
-        const rowEdits = { ...(edits[key] ?? {}) };
-        const hadCol = Reflect.has(rowEdits, col);
-        const prevVal = hadCol ? (rowEdits[col] == null ? null : String(rowEdits[col])) : undefined;
-
-        if (next === orig) {
-          if (!hadCol) continue; // already at original - nothing to revert
-          delete rowEdits[col];
-        } else {
-          if (hadCol && prevVal === next) continue; // identical edit already recorded
-          rowEdits[col] = value;
-        }
-        if (Object.keys(rowEdits).length === 0) delete edits[key];
-        else edits[key] = rowEdits;
-        changed = true;
-      }
-
-      if (blockedAmbiguous) appToast.error(t('tableView.ambiguousRow'));
-      if (!changed) return;
-      commitPending(state.pending, { ...state.pending, edits });
-    },
-    [readOnly, state.primaryKeys, state.columns, state.rows, state.pending, ambiguousKeys, commitPending, t],
-  );
-
-  const handleToggleDeleteRow = useCallback(
-    (rowIdx: number) => {
-      if (readOnly || !state.primaryKeys.length) return;
-      const pk = rowPrimaryKey(state.rows[rowIdx], state.columns, state.primaryKeys);
-      const key = primaryKeyKey(pk);
-      if (ambiguousKeys.has(key)) {
-        appToast.error(t('tableView.ambiguousRow'));
-        return;
-      }
-      const deletes = new Set(state.pending.deletes);
-      if (deletes.has(key)) deletes.delete(key);
-      else deletes.add(key);
-      commitPending(state.pending, { ...state.pending, deletes: [...deletes] });
-    },
-    [readOnly, state.primaryKeys, state.columns, state.rows, state.pending, ambiguousKeys, commitPending, t],
-  );
 
   const handleRefresh = useCallback(() => {
     if (running || applying) return;

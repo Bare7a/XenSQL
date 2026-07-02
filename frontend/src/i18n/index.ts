@@ -6,7 +6,7 @@ import en from '@/i18n/locales/en.json';
 import { mirrorBootSetting, settings } from '@/shared/lib/settingsStore';
 import { STORAGE_KEYS } from '@/shared/lib/storageKeys';
 
-export const LANGUAGE_STORAGE_KEY = STORAGE_KEYS.language;
+const LANGUAGE_STORAGE_KEY = STORAGE_KEYS.language;
 
 export const SUPPORTED_LANGUAGES = [
   { code: 'en', nativeName: 'English' },
@@ -16,9 +16,9 @@ export const SUPPORTED_LANGUAGES = [
 
 export type AppLanguage = (typeof SUPPORTED_LANGUAGES)[number]['code'];
 
-export const DEFAULT_LANGUAGE: AppLanguage = 'en';
+const DEFAULT_LANGUAGE: AppLanguage = 'en';
 
-export function readStoredLanguage(): AppLanguage {
+function readStoredLanguage(): AppLanguage {
   try {
     const value = settings.getItem(LANGUAGE_STORAGE_KEY);
     if (value === 'en' || value === 'de' || value === 'bg') return value;
@@ -73,5 +73,3 @@ export function initI18n(): void {
   // Re-sync the localStorage boot cache to the authoritative Go value on startup.
   mirrorBootSetting(LANGUAGE_STORAGE_KEY, lang);
 }
-
-export default i18n;
