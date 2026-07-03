@@ -80,6 +80,7 @@ const ResultsPaneTab = memo(function ResultsPaneTab({
         session.results.map((set, i) => {
           const setActive = i === session.activeResultIndex;
           return (
+            // biome-ignore lint/suspicious/noArrayIndexKey: sets never reorder within a run; runKey remounts them on a new run
             <div key={`${runKey}-${i}`} className={`result-set-layer${setActive ? ' tab-layer-active' : ''}`}>
               <ResultsGrid
                 connectionId={connectionId}
