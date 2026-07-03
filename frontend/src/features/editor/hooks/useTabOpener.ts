@@ -10,7 +10,7 @@ import {
   useStoreActions,
   useTabs,
 } from '@/store/selectors';
-import { type EditorTab, emptyTableViewPending } from '@/types';
+import { type EditorTab, tableViewStateFrom } from '@/types';
 
 export function useTabOpener(setConnPickerOpen: (open: boolean) => void) {
   const { t } = useTranslation();
@@ -92,19 +92,7 @@ export function useTabOpener(setConnPickerOpen: (open: boolean) => void) {
       };
       addTab(tab);
       updateTabSession(tab.id, {
-        tableViewState: {
-          schema,
-          table,
-          filter: '',
-          orderBy: null,
-          orderDir: 'ASC',
-          rows: [],
-          columns: [],
-          columnTypes: [],
-          primaryKeys: [],
-          hasMore: false,
-          pending: emptyTableViewPending(),
-        },
+        tableViewState: tableViewStateFrom({ schema, table }),
         dataBrowser: { schema, table },
         result: null,
         resultError: null,

@@ -396,8 +396,12 @@ function App() {
                   </div>
                 ) : null,
               )}
-              {activeTab && !activeTab.tableView && (
-                <>
+              {queryTabs.length > 0 && (
+                <div
+                  className={`tab-workspace-layer query-workspace-layer${
+                    activeTab && !activeTab.tableView ? ' tab-layer-active' : ''
+                  }`}
+                >
                   <ErrorBoundary label={t('errorBoundary.editor')} resetKey={activeTabId}>
                     <EditorPane
                       tabs={queryTabs}
@@ -432,7 +436,7 @@ function App() {
                       />
                     </ErrorBoundary>
                   </div>
-                </>
+                </div>
               )}
             </div>
           )}

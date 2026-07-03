@@ -59,10 +59,11 @@ export function useAppInit() {
   }, [setConnections, setFolders, setTabs, setActiveTab, setConnected]);
 
   useEffect(() => {
+    // Skip identical payloads: the interval fires unconditionally and streaming churns tabSession.
+    let lastSaved = '';
     const save = () => {
       const { tabs, activeTabId, tabSession } = useAppStore.getState();
-      // Fold each table-view tab's live (applied) filter + sort back into its persisted tableView ref
-      // so a restart restores them alongside schema/table.
+      // Fold each table-view tab's live filter/sort/hidden columns into its persisted ref so a restart restores them.
       const tabsToSave = tabs.map((tab) => {
         if (!tab.tableView) return tab;
         const live = tabSession[tab.id]?.tableViewState;
@@ -74,14 +75,33 @@ export function useAppInit() {
             filter: live.filter,
             orderBy: live.orderBy,
             orderDir: live.orderDir,
+            hiddenColumns: live.hiddenColumns,
           },
         };
       });
-      api.saveEditorSession({ tabs: tabsToSave, activeTab: activeTabId || '' }).catch(() => {});
+      const session = { tabs: tabsToSave, activeTab: activeTabId || '' };
+      const serialized = JSON.stringify(session);
+      if (serialized === lastSaved) return;
+      lastSaved = serialized;
+      api.saveEditorSession(session).catch(() => {});
     };
+    // Desktop quit doesn't reliably fire beforeunload, so also save on store changes: debounced,
+    // except tab open/close saves immediately so a quick quit can't restore a stale tab list.
+    let debounce: ReturnType<typeof setTimeout> | undefined;
+    const unsubscribe = useAppStore.subscribe((s, prev) => {
+      if (s.tabs === prev.tabs && s.activeTabId === prev.activeTabId && s.tabSession === prev.tabSession) return;
+      clearTimeout(debounce);
+      if (s.tabs.length !== prev.tabs.length) {
+        save();
+        return;
+      }
+      debounce = setTimeout(save, 1000);
+    });
     const id = setInterval(save, 5000);
     window.addEventListener('beforeunload', save);
     return () => {
+      unsubscribe();
+      clearTimeout(debounce);
       clearInterval(id);
       window.removeEventListener('beforeunload', save);
     };

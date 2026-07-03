@@ -6,11 +6,12 @@ import (
 )
 
 type TableViewRef struct {
-	Schema   string `json:"schema"`
-	Table    string `json:"table"`
-	Filter   string `json:"filter,omitempty"`
-	OrderBy  string `json:"orderBy,omitempty"`
-	OrderDir string `json:"orderDir,omitempty"`
+	Schema        string   `json:"schema"`
+	Table         string   `json:"table"`
+	Filter        string   `json:"filter,omitempty"`
+	OrderBy       string   `json:"orderBy,omitempty"`
+	OrderDir      string   `json:"orderDir,omitempty"`
+	HiddenColumns []string `json:"hiddenColumns,omitempty"`
 }
 
 type EditorTab struct {

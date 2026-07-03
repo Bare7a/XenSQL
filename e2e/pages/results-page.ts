@@ -4,13 +4,16 @@ import { expect, type Locator, type Page } from '@playwright/test';
 export class ResultsPage {
   readonly page: Page;
   readonly active: Locator;
+  /** The visible result-set layer; sibling sets stay mounted but hidden. */
+  readonly activeSet: Locator;
   readonly grid: Locator;
   readonly resultTabs: Locator;
 
   constructor(page: Page) {
     this.page = page;
     this.active = page.locator('.tab-results-layer.tab-layer-active');
-    this.grid = this.active.getByTestId('results-grid');
+    this.activeSet = this.active.locator('.result-set-layer.tab-layer-active');
+    this.grid = this.activeSet.getByTestId('results-grid');
     this.resultTabs = this.active.locator('.result-tabs');
   }
 
@@ -26,21 +29,21 @@ export class ResultsPage {
 
   // ── Error state ────────────────────────────────────────────────────────────
   get errorCard(): Locator {
-    return this.active.locator('.error-state-card');
+    return this.activeSet.locator('.error-state-card');
   }
 
   /** Driver error-code chip (absent for cancellations). */
   get errorCode(): Locator {
-    return this.active.locator('.error-state-code');
+    return this.activeSet.locator('.error-state-code');
   }
 
   get errorMessage(): Locator {
-    return this.active.locator('.error-state-message');
+    return this.activeSet.locator('.error-state-message');
   }
 
   /** Postgres HINT line. */
   get errorHint(): Locator {
-    return this.active.locator('.error-state-hint');
+    return this.activeSet.locator('.error-state-hint');
   }
 
   get jumpToErrorButton(): Locator {
@@ -49,6 +52,20 @@ export class ResultsPage {
 
   async sortByColumn(column: string): Promise<void> {
     await this.grid.locator(`th[data-col="${column}"] .results-sort-chev`).click();
+  }
+
+  /** Toolbar "Columns (visible/total)" picker button. */
+  get columnsButton(): Locator {
+    return this.activeSet.getByRole('button', { name: /Columns \(\d+\/\d+\)/ });
+  }
+
+  async toggleColumnVisibility(column: string): Promise<void> {
+    await this.columnsButton.click();
+    await this.activeSet
+      .locator('.column-picker-item')
+      .filter({ has: this.page.locator('span', { hasText: new RegExp(`^${column}$`) }) })
+      .click();
+    await this.activeSet.locator('.column-picker-backdrop').click();
   }
 
   resultTab(index: number): Locator {
@@ -96,7 +113,7 @@ export class ResultsPage {
 
   /** Toolbar " · {rows} × {cols} selected" indicator (only shown for multi-cell selections). */
   selectionCount(): Locator {
-    return this.active.locator('.results-selection-count');
+    return this.activeSet.locator('.results-selection-count');
   }
 
   // ── Export ───────────────────────────────────────────────────────────────
@@ -118,7 +135,7 @@ export class ResultsPage {
   }
 
   async openExportDialog(): Promise<void> {
-    await this.active.getByRole('button', { name: 'Export as' }).click();
+    await this.activeSet.getByRole('button', { name: 'Export as' }).click();
     await expect(this.exportDialog).toBeVisible();
   }
 

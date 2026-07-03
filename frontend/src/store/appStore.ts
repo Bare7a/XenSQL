@@ -202,7 +202,13 @@ export const useAppStore = create<AppState>((set, get) => ({
       if (live) {
         closed = {
           ...existing,
-          tableView: { ...existing.tableView, filter: live.filter, orderBy: live.orderBy, orderDir: live.orderDir },
+          tableView: {
+            ...existing.tableView,
+            filter: live.filter,
+            orderBy: live.orderBy,
+            orderDir: live.orderDir,
+            hiddenColumns: live.hiddenColumns,
+          },
         };
       }
     }

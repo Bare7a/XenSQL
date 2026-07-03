@@ -10,6 +10,7 @@ import { useTableViewPendingCells } from '@/features/table-view/hooks/useTableVi
 import type { PasteCellEdit } from '@/features/table-view/lib/tableViewClipboard';
 import { buildTableViewExportResult } from '@/features/table-view/lib/tableViewExport';
 import { TableViewCell } from '@/features/table-view/TableViewCell';
+import { ColumnPicker } from '@/shared/components/ColumnPicker';
 import { ContextMenu } from '@/shared/components/ContextMenu';
 import { ExportResultsDialog } from '@/shared/components/ExportResultsDialog';
 import { GridHeaderRow } from '@/shared/components/GridHeaderRow';
@@ -47,6 +48,8 @@ interface Props {
   loading: boolean;
   hasMore: boolean;
   isActive: boolean;
+  initialHiddenColumns?: string[];
+  onHiddenColumnsChange?: (cols: string[]) => void;
   onSortChange: (col: string) => void;
   onCellEdit: (rowIdx: number, col: string, value: string | null) => void;
   onPasteCells: (edits: PasteCellEdit[]) => void;
@@ -75,6 +78,8 @@ export const TableViewGrid = memo(function TableViewGrid({
   loading,
   hasMore,
   isActive,
+  initialHiddenColumns,
+  onHiddenColumnsChange,
   onSortChange,
   onCellEdit,
   onPasteCells,
@@ -96,6 +101,7 @@ export const TableViewGrid = memo(function TableViewGrid({
   // external copy makes the clipboard text no longer match.
   const lastCopyRef = useRef<CopiedCells | null>(null);
   const [editing, setEditing] = useState<{ row: number; col: number } | null>(null);
+  const [columnPickerOpen, setColumnPickerOpen] = useState(false);
   const [exportOpen, setExportOpen] = useState(false);
 
   const onFocusedRowChangeRef = useRef(onFocusedRowChange);
@@ -103,8 +109,23 @@ export const TableViewGrid = memo(function TableViewGrid({
   const onFocusedRowIndexChangeRef = useRef(onFocusedRowIndexChange);
   onFocusedRowIndexChangeRef.current = onFocusedRowIndexChange;
 
-  const cols = useGridColumns(columns, rows);
-  const { displayColumns, colIndices, columnIndexByName, colWidths, columnsSized, fitColumns, applyColumnWidth } = cols;
+  const cols = useGridColumns(columns, rows, {
+    initialHidden: initialHiddenColumns,
+    onHiddenChange: onHiddenColumnsChange,
+  });
+  const {
+    displayColumns,
+    colIndices,
+    columnIndexByName,
+    hiddenColumns,
+    toggleColumn,
+    showAllColumns,
+    hideAllColumns,
+    colWidths,
+    columnsSized,
+    fitColumns,
+    applyColumnWidth,
+  } = cols;
 
   const rowHeight = rowHeightForZoom(useUiZoom());
   const rowVirtualizer = useGridVirtualizer({
@@ -298,6 +319,7 @@ export const TableViewGrid = memo(function TableViewGrid({
     onRefresh,
   });
 
+  // Hidden columns are left alone - useGridColumns prunes them against the new column set.
   useEffect(() => {
     setCellRange(null);
     setSelectedRows(new Set());
@@ -404,6 +426,17 @@ export const TableViewGrid = memo(function TableViewGrid({
         selectionRows={selectionRowsCount}
         selectionCols={selectionColsCount}
         onFitColumns={fitColumns}
+        extraLeft={
+          <ColumnPicker
+            columns={columns}
+            hidden={hiddenColumns}
+            onToggle={toggleColumn}
+            onShowAll={showAllColumns}
+            onHideAll={hideAllColumns}
+            open={columnPickerOpen}
+            onOpenChange={setColumnPickerOpen}
+          />
+        }
         copyFormat={copyFormat}
         onFormatChange={setCopyFormat}
         exportBusy={exportBusy}

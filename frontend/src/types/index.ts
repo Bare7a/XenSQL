@@ -150,6 +150,7 @@ export interface EditorTab {
     filter?: string;
     orderBy?: string | null;
     orderDir?: 'ASC' | 'DESC';
+    hiddenColumns?: string[];
   };
 }
 
@@ -170,6 +171,7 @@ export interface TableViewSessionState {
   filter: string;
   orderBy: string | null;
   orderDir: 'ASC' | 'DESC';
+  hiddenColumns: string[];
   rows: unknown[][];
   columns: string[];
   columnTypes: string[];
@@ -226,6 +228,7 @@ export const tableViewStateFrom = (tv: NonNullable<EditorTab['tableView']>): Tab
   filter: tv.filter ?? '',
   orderBy: tv.orderBy ?? null,
   orderDir: tv.orderDir ?? 'ASC',
+  hiddenColumns: tv.hiddenColumns ?? [],
   rows: [],
   columns: [],
   columnTypes: [],

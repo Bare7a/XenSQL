@@ -116,6 +116,15 @@
   flex-wrap: wrap;
 }
 
+/* Growing meta text (e.g. the selection count) must not rewrap the toolbar and shift the grid under the cursor. */
+.results-header-meta {
+  flex: 1 1 0;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .results-header-actions {
   display: flex;
   flex-wrap: wrap;
