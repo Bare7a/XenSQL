@@ -53,4 +53,11 @@ export class TabsPage {
     await this.activeTab.getByRole('button', { name: 'Close Tab' }).click();
     await expect(this.tabs).toHaveCount(before - 1);
   }
+
+  /** Reopen the most recently closed tab with Ctrl+Shift+T. */
+  async reopenClosedTab(): Promise<void> {
+    const before = await this.count();
+    await this.page.keyboard.press('Control+Shift+T');
+    await expect(this.tabs).toHaveCount(before + 1);
+  }
 }

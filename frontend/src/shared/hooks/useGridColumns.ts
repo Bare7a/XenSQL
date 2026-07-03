@@ -20,11 +20,40 @@ export interface GridColumnsView {
   applyColumnWidth: (colPos: number, widthPx: number) => void;
 }
 
-export function useGridColumns(columns: string[], sortedRows: unknown[][]): GridColumnsView {
-  const [hiddenColumns, setHiddenColumns] = useState<Set<string>>(new Set());
+export interface GridColumnsOptions {
+  /** Seeds the hidden set on mount. */
+  initialHidden?: string[];
+  /** Fires on hidden-set changes (not the initial seed). */
+  onHiddenChange?: (hidden: string[]) => void;
+}
+
+export function useGridColumns(columns: string[], sortedRows: unknown[][], opts?: GridColumnsOptions): GridColumnsView {
+  const [hiddenColumns, setHiddenColumns] = useState<Set<string>>(() => new Set(opts?.initialHidden ?? []));
   const [colWidths, setColWidths] = useState<string[]>([]);
   // Columns the user drag-resized - preserved across re-samples so streaming doesn't snap them back.
   const userSizedRef = useRef<Set<number>>(new Set());
+
+  const onHiddenChangeRef = useRef(opts?.onHiddenChange);
+  onHiddenChangeRef.current = opts?.onHiddenChange;
+  const hiddenMountedRef = useRef(false);
+  useEffect(() => {
+    if (!hiddenMountedRef.current) {
+      hiddenMountedRef.current = true;
+      return;
+    }
+    onHiddenChangeRef.current?.(Array.from(hiddenColumns));
+  }, [hiddenColumns]);
+
+  // Drop hidden names no longer in the column set; skip while columns are empty (pre-stream/cleared).
+  useEffect(() => {
+    if (!columns.length) return;
+    setHiddenColumns((prev) => {
+      if (prev.size === 0) return prev;
+      const next = new Set<string>();
+      for (const c of columns) if (prev.has(c)) next.add(c);
+      return next.size === prev.size ? prev : next;
+    });
+  }, [columns]);
 
   const displayColumns = useMemo(() => columns.filter((c) => !hiddenColumns.has(c)), [columns, hiddenColumns]);
 

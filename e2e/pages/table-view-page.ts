@@ -151,6 +151,20 @@ export class TableViewPage {
     await this.waitForRows();
   }
 
+  /** Toolbar "Columns (visible/total)" picker button. */
+  get columnsButton(): Locator {
+    return this.pane.getByRole('button', { name: /Columns \(\d+\/\d+\)/ });
+  }
+
+  async toggleColumnVisibility(column: string): Promise<void> {
+    await this.columnsButton.click();
+    await this.pane
+      .locator('.column-picker-item')
+      .filter({ has: this.page.locator('span', { hasText: new RegExp(`^${column}$`) }) })
+      .click();
+    await this.pane.locator('.column-picker-backdrop').click();
+  }
+
   /** Scroll the grid to the bottom to trigger the next 100-row page load. */
   async scrollToBottom(): Promise<void> {
     await this.scroll.evaluate((el) => el.scrollTo(0, el.scrollHeight));

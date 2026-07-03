@@ -154,6 +154,7 @@ function ResultsGridImpl({
 
   useResultsFocusPublish({
     publishRef: publishFocusedRowRef,
+    isActive,
     result,
     columns,
     visibleColumns: displayColumns,
@@ -167,7 +168,8 @@ function ResultsGridImpl({
   const hasGrid = !error && result != null && columns.length > 0;
   const hasSelection = cellRange != null || selectedRows.size > 0 || selectedColumns.size > 0;
 
-  // Key on streamId (not rowCount/durationMs) so streaming row appends don't wipe selection/sort/focus.
+  // ResultsPane's run-scoped key remounts grids on a new run; this catches same-instance result swaps.
+  // Keyed on streamId (not rowCount/durationMs) so streaming row appends don't wipe selection/sort/focus.
   useEffect(() => {
     setSelectedRows(new Set());
     setSelectedColumns(new Set());

@@ -294,7 +294,9 @@
 
 .tab-editor-layer,
 .tab-results-layer,
-.table-view-layer {
+.table-view-layer,
+.query-workspace-layer,
+.result-set-layer {
   display: none;
   flex: 1;
   flex-direction: column;
@@ -304,6 +306,8 @@
 
 .tab-editor-layer.tab-layer-active,
 .tab-results-layer.tab-layer-active,
-.table-view-layer.tab-layer-active {
+.table-view-layer.tab-layer-active,
+.query-workspace-layer.tab-layer-active,
+.result-set-layer.tab-layer-active {
   display: flex;
 }

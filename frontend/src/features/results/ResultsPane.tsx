@@ -55,26 +55,48 @@ const ResultsPaneTab = memo(function ResultsPaneTab({
     }
   }, [dataBrowser, onRefreshTable, connectionId, tabId]);
 
-  const activeSet = session.results[session.activeResultIndex];
+  // One grid per result set, hidden via CSS, so per-set grid state survives result-tab switches.
+  const runKey = session.runStreamId ?? 'direct';
 
   return (
     <div className={`tab-results-layer${isActive ? ' tab-layer-active' : ''}`}>
       <ResultTabs results={session.results} activeIndex={session.activeResultIndex} onSelect={handleSelectResult} />
-      <ResultsGrid
-        // Remount on result-set switch: sets share a streamId, so a key change is what resets
-        // the grid's columns/selection/scroll between them.
-        key={session.activeResultIndex}
-        connectionId={connectionId}
-        result={session.result}
-        error={session.resultError}
-        errorInfo={session.resultErrorInfo}
-        errorStatement={activeSet?.statement ?? null}
-        readOnly={readOnly}
-        tableMode={dataBrowser || undefined}
-        isActive={isActive}
-        onRefresh={dataBrowser && onRefreshTable ? handleRefresh : undefined}
-        onFocusedRowChange={handleFocusedRowChange}
-      />
+      {session.results.length === 0 ? (
+        <div className="result-set-layer tab-layer-active">
+          <ResultsGrid
+            connectionId={connectionId}
+            result={session.result}
+            error={session.resultError}
+            errorInfo={session.resultErrorInfo}
+            errorStatement={null}
+            readOnly={readOnly}
+            tableMode={dataBrowser || undefined}
+            isActive={isActive}
+            onRefresh={dataBrowser && onRefreshTable ? handleRefresh : undefined}
+            onFocusedRowChange={handleFocusedRowChange}
+          />
+        </div>
+      ) : (
+        session.results.map((set, i) => {
+          const setActive = i === session.activeResultIndex;
+          return (
+            <div key={`${runKey}-${i}`} className={`result-set-layer${setActive ? ' tab-layer-active' : ''}`}>
+              <ResultsGrid
+                connectionId={connectionId}
+                result={set.result}
+                error={set.error}
+                errorInfo={set.errorInfo}
+                errorStatement={set.statement ?? null}
+                readOnly={readOnly}
+                tableMode={dataBrowser || undefined}
+                isActive={isActive && setActive}
+                onRefresh={dataBrowser && onRefreshTable ? handleRefresh : undefined}
+                onFocusedRowChange={handleFocusedRowChange}
+              />
+            </div>
+          );
+        })
+      )}
     </div>
   );
 });

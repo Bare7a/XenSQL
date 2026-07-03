@@ -6,6 +6,8 @@ type PublishFocusedRow = (globalIdx: number | null) => void;
 
 interface UseResultsFocusPublishOptions {
   publishRef: React.RefObject<PublishFocusedRow>;
+  /** Inactive grids stay mounted but must not drive the focused-row panel. */
+  isActive: boolean;
   result: QueryResult | null;
   columns: string[];
   visibleColumns: string[];
@@ -18,6 +20,7 @@ interface UseResultsFocusPublishOptions {
 
 export function useResultsFocusPublish({
   publishRef,
+  isActive,
   result,
   columns,
   visibleColumns,
@@ -29,9 +32,12 @@ export function useResultsFocusPublish({
 }: UseResultsFocusPublishOptions) {
   const onFocusedRowChangeRef = useRef(onFocusedRowChange);
   onFocusedRowChangeRef.current = onFocusedRowChange;
+  const isActiveRef = useRef(isActive);
+  isActiveRef.current = isActive;
 
   const publishFocusedRow = useCallback(
     (globalIdx: number | null) => {
+      if (!isActiveRef.current) return;
       if (globalIdx == null || !result) {
         onFocusedRowChangeRef.current?.(null);
         return;
@@ -44,8 +50,8 @@ export function useResultsFocusPublish({
   );
   publishRef.current = publishFocusedRow;
 
-  // Keyed on streamId so streaming row appends don't re-publish on every batch.
+  // streamId keeps streaming batches from re-publishing; isActive makes the panel follow result-tab switches.
   useEffect(() => {
-    if (focusedRowIdx != null) publishRef.current(focusedRowIdx);
-  }, [hiddenColumns, focusedRowIdx, streamId, publishRef]);
+    if (isActive) publishRef.current(focusedRowIdx);
+  }, [hiddenColumns, focusedRowIdx, streamId, isActive, publishRef]);
 }

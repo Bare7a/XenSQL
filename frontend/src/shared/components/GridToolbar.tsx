@@ -47,7 +47,7 @@ export function GridToolbar({
 
   return (
     <div className="results-header">
-      <span>
+      <span className="results-header-meta">
         {metaText}
         {loadingText ? ` · ${loadingText}` : ''}
         {showSelectionCount && (

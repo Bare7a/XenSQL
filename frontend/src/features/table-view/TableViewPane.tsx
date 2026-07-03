@@ -41,6 +41,7 @@ export function TableViewPane({ tab, driver, readOnly, isActive, running, onFocu
   const setRunningTab = useAppStore((s) => s.setRunningTab);
 
   const [filterDraft, setFilterDraft] = useState(session?.filter ?? '');
+  const initialFetchInFlightRef = useRef(false);
   const loadMetaRef = useRef<{ offset: number; replace: boolean }>({ offset: 0, replace: true });
   const lastMergedStreamIdRef = useRef<string | null>(null);
   const seenStreamStartRef = useRef<string | null>(null);
@@ -133,17 +134,22 @@ export function TableViewPane({ tab, driver, readOnly, isActive, running, onFocu
     ],
   );
 
+  // The in-flight guard keeps StrictMode's double-invoked mount effect from starting two streams;
+  // the registry cancels the older one, which can leave the pane empty until a manual refresh.
   useEffect(() => {
-    if (!isActive) return;
+    if (!isActive || initialFetchInFlightRef.current) return;
     const existing = useAppStore.getState().tabSession[tab.id]?.tableViewState;
     if (existing?.columns.length) return;
-    // Honor a restored filter (e.g. after an app restart) on the first load instead of resetting it.
+    initialFetchInFlightRef.current = true;
+    // Honor a restored filter/sort (e.g. after an app restart) on the first load instead of resetting.
     void fetchPage({
       offset: 0,
       replace: true,
       filter: existing?.filter ?? '',
       orderBy: existing?.orderBy ?? null,
       orderDir: existing?.orderDir ?? 'ASC',
+    }).finally(() => {
+      initialFetchInFlightRef.current = false;
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tab.id, isActive]);
@@ -203,6 +209,11 @@ export function TableViewPane({ tab, driver, readOnly, isActive, running, onFocu
       discardPending: true,
     });
   };
+
+  const handleHiddenColumnsChange = useCallback(
+    (cols: string[]) => persistState({ hiddenColumns: cols }),
+    [persistState],
+  );
 
   // Wrapped in useCallback so memo(TableViewGrid) holds across parent-only re-renders.
   const handleSortChange = useCallback(
@@ -343,6 +354,8 @@ export function TableViewPane({ tab, driver, readOnly, isActive, running, onFocu
             loading={running || applying}
             hasMore={state.hasMore && !hasPending}
             isActive={isActive}
+            initialHiddenColumns={state.hiddenColumns}
+            onHiddenColumnsChange={handleHiddenColumnsChange}
             onSortChange={handleSortChange}
             onCellEdit={handleCellEdit}
             onPasteCells={handlePasteCells}

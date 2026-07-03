@@ -130,6 +130,7 @@ export class TableViewRef {
     "filter"?: string;
     "orderBy"?: string;
     "orderDir"?: string;
+    "hiddenColumns"?: string[];
 
     /** Creates a new TableViewRef instance. */
     constructor($$source: Partial<TableViewRef> = {}) {
@@ -147,7 +148,11 @@ export class TableViewRef {
      * Creates a new TableViewRef instance from a string or object.
      */
     static createFrom($$source: any = {}): TableViewRef {
+        const $$createField5_0 = $$createType4;
         let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
+        if ("hiddenColumns" in $$parsedSource) {
+            $$parsedSource["hiddenColumns"] = $$createField5_0($$parsedSource["hiddenColumns"]);
+        }
         return new TableViewRef($$parsedSource as Partial<TableViewRef>);
     }
 }
@@ -157,3 +162,4 @@ const $$createType0 = EditorTab.createFrom;
 const $$createType1 = $Create.Array($$createType0);
 const $$createType2 = TableViewRef.createFrom;
 const $$createType3 = $Create.Nullable($$createType2);
+const $$createType4 = $Create.Array($Create.Any);
