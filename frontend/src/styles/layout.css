@@ -128,7 +128,6 @@
   --wails-draggable: no-drag;
 }
 
-/* Deltas over .app-title-bar-dropdown — must stay after it: equal specificity, source order wins. */
 .app-title-bar-menu-vertical {
   min-width: 12rem;
 }
@@ -137,7 +136,6 @@
   top: calc(-1 * var(--space-4));
   left: 100%;
   margin-left: var(--space-2);
-  /* 10rem clears the deepest row anchor at max zoom; the flyout hangs off its row, not the viewport top. */
   max-height: calc(100vh - 10rem);
   overflow-y: auto;
 }
