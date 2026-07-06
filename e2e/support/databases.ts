@@ -1,6 +1,5 @@
-// Database matrix the E2E suite runs against. Network drivers come from
-// docker-compose.yml; SQLite uses a file under e2e/XenSQL-data (relative to the
-// server cwd, which is the repo root both natively and under WSL).
+// Database matrix the E2E suite runs against. Network drivers come from docker-compose.yml
+// SQLite uses a file under e2e/XenSQL-data
 
 export type DriverKey = 'postgres' | 'mysql' | 'mariadb' | 'sqlite';
 

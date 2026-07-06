@@ -2,8 +2,7 @@
 // its bindings served over HTTP/WebSocket, with no native window. This is what the
 // Playwright E2E suite drives - a real browser talks to the real app.
 //
-// Built with the "server" tag. Server mode doesn't compile on Windows yet, so there the
-// launcher (e2e/e2e-server.mjs) runs it through WSL; on Linux/macOS and CI it runs natively:
+// Built with the "server" tag:
 //
 //	go run -tags server ./cmd/e2e-server
 //

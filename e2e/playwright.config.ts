@@ -40,8 +40,8 @@ export default defineConfig({
   },
   // Brings the database stack up before any test connects.
   globalSetup: './global-setup.ts',
-  // Builds frontend then starts the server-mode binary; build + first WSL module
-  // download or a cold Go build cache can be slow, hence the generous timeout.
+  // Builds frontend then starts the server-mode binary; the frontend build plus
+  // a cold Go build cache can be slow, hence the generous timeout.
   webServer: {
     command: 'npm run e2e:server',
     url: `${baseURL}/health`,

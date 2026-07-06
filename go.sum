@@ -52,10 +52,8 @@ github.com/stretchr/testify v1.3.0/go.mod h1:M5WIy9Dh21IEIfnGCwXGc5bZfKNJtfHm1UV
 github.com/stretchr/testify v1.7.0/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/h/Wwjteg=
 github.com/stretchr/testify v1.11.1 h1:7s2iGBzp5EwR7/aIZr8ao5+dra3wiQyKjjFuvgVKu7U=
 github.com/stretchr/testify v1.11.1/go.mod h1:wZwfW3scLgRK+23gO65QZefKpKQRnfz6sD981Nm4B6U=
-github.com/wailsapp/wails/v3 v3.0.0-alpha2.111 h1:MKx1nOnhnDuEGrRBmtxLOJq1NERwailu2cI4BvzWhi4=
-github.com/wailsapp/wails/v3 v3.0.0-alpha2.111/go.mod h1:wrdvmyeCsB/K3YqJDoH8E3MwcN8NXAMnEFaDTW46w60=
-github.com/wailsapp/wails/webview2 v1.0.27 h1:wjgAi/I8BBZ7kUGU8um3XF3ILEfzr96Q2Q1G4GPjMns=
-github.com/wailsapp/wails/webview2 v1.0.27/go.mod h1:zdM4jcO1IaC61RiJL5F1BzgoqBHFIdacz8gPr5exr0o=
+github.com/wailsapp/wails/v3 v3.0.0-alpha2.115 h1:AwVincOURTpVeSNWAdZ9/xXnfrsHCBtt6ry9I5L8SZM=
+github.com/wailsapp/wails/v3 v3.0.0-alpha2.115/go.mod h1:74WH2FScMsgucZvHHvv7eOefDXCm/CjuIxqhhZgPhKg=
 golang.org/x/mod v0.37.0 h1:vF1DjpVEshcIqoEaauuHebaLk1O1forxjxBaVn884JQ=
 golang.org/x/mod v0.37.0/go.mod h1:m8S8VeM9r4dzDwjrKO0a1sZP3YjeMamRRlD+fmR2Q/0=
 golang.org/x/sync v0.21.0 h1:HLII4xRRTtCRkxYp4HNFF0Js/Og6q2i++KXbg0gHCwM=

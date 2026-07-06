@@ -150,8 +150,6 @@ across **PostgreSQL**, **MySQL**, **MariaDB**, and **SQLite**.
 
 - Everything from [API E2E (Go)](#api-end-to-end-tests-go) (Docker/Podman stack)
 - Node.js 24+
-- On Windows: WSL (server mode does not compile natively on Windows yet; the
-  launcher runs the Go binary through WSL)
 
 ### Run it
 
