@@ -1,3 +1,4 @@
+import { isMac } from '@/shared/lib/platform';
 import { settings } from '@/shared/lib/settingsStore';
 import { STORAGE_KEYS } from '@/shared/lib/storageKeys';
 
@@ -129,8 +130,6 @@ export const APP_SHORTCUTS: ShortcutDef[] = [
 const STORAGE_KEY = STORAGE_KEYS.shortcuts;
 const SHORTCUTS_CHANGED_EVENT = 'xensql-shortcuts-changed';
 
-const isMac = typeof navigator !== 'undefined' && /Mac|iPhone|iPod|iPad/i.test(navigator.platform);
-
 // Prevents global dispatcher from firing actions while the Shortcuts dialog records a new binding
 let capturingBinding = false;
 
@@ -231,6 +230,7 @@ export function formatBinding(binding: KeyBinding): string {
     if (binding.ctrl) parts.push('⌃');
     if (binding.alt) parts.push('⌥');
     if (binding.shift) parts.push('⇧');
+    // if (binding.ctrl) parts.push('⌘');
     parts.push(formatKeyLabel(binding.key));
     return parts.join('');
   }

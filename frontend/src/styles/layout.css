@@ -31,6 +31,16 @@
   padding-left: var(--space-10);
 }
 
+.platform-mac .app-title-bar {
+  height: 32px;
+  min-height: 32px;
+  padding-top: 2px;
+}
+
+.platform-mac .app-title-bar-left {
+  padding-left: 80px;
+}
+
 .app-title-bar-logo {
   width: var(--space-18);
   height: var(--space-18);
@@ -59,6 +69,51 @@
   background: var(--bg-hover);
 }
 
+.app-title-bar-menu-icon {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 24px;
+  padding: 0 8px;
+  font-size: 13px;
+}
+
+.app-title-bar-menu-icon .app-title-bar-logo {
+  width: 18px;
+  height: 18px;
+}
+
+.app-title-bar-menu-name {
+  font-weight: 600;
+  color: var(--text);
+}
+
+.app-title-bar-submenu {
+  position: relative;
+}
+
+.app-title-bar-submenu-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-8);
+  width: 100%;
+  padding: var(--space-7) var(--space-14);
+  font-size: var(--text-sm);
+  color: var(--text);
+  cursor: default;
+}
+
+.app-title-bar-submenu-row:hover,
+.app-title-bar-submenu-row.open {
+  background: var(--bg-hover);
+}
+
+.app-title-bar-submenu-caret {
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
 .app-title-bar-dropdown {
   position: absolute;
   top: calc(100% + var(--space-2));
@@ -71,6 +126,20 @@
   box-shadow: var(--shadow-overlay);
   z-index: var(--z-menu);
   --wails-draggable: no-drag;
+}
+
+/* Deltas over .app-title-bar-dropdown — must stay after it: equal specificity, source order wins. */
+.app-title-bar-menu-vertical {
+  min-width: 12rem;
+}
+
+.app-title-bar-flyout {
+  top: calc(-1 * var(--space-4));
+  left: 100%;
+  margin-left: var(--space-2);
+  /* 10rem clears the deepest row anchor at max zoom; the flyout hangs off its row, not the viewport top. */
+  max-height: calc(100vh - 10rem);
+  overflow-y: auto;
 }
 
 .app-title-bar-dropdown-separator {

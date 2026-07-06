@@ -3,6 +3,7 @@ package main
 import (
 	"embed"
 	"os"
+	"runtime"
 
 	"github.com/wailsapp/wails/v3/pkg/application"
 	"github.com/wailsapp/wails/v3/pkg/events"
@@ -88,11 +89,16 @@ func main() {
 		Title:            "XenSQL",
 		MinWidth:         800,
 		MinHeight:        600,
-		Frameless:        true,
 		EnableFileDrop:   true,
 		URL:              "/",
 		BackgroundType:   application.BackgroundTypeSolid,
 		BackgroundColour: application.RGBA{Red: 15, Green: 17, Blue: 23, Alpha: 255},
+	}
+
+	if runtime.GOOS == "darwin" {
+		opts.Mac.TitleBar = application.MacTitleBarHidden
+	} else {
+		opts.Frameless = true
 	}
 
 	// Restore size/position/state from the last session, or the default on first run.

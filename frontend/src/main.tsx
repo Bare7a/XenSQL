@@ -12,6 +12,7 @@ import App from '@/App';
 import { initMonaco } from '@/features/editor/lib/monacoSetup';
 import { initI18n } from '@/i18n';
 import { loadAppFonts } from '@/shared/lib/appFonts';
+import { isMac } from '@/shared/lib/platform';
 import { hydrateSettings } from '@/shared/lib/settingsStore';
 import { initTheme } from '@/shared/lib/theme';
 import { initUiZoom } from '@/shared/lib/uiZoom';
@@ -23,6 +24,7 @@ async function bootstrap() {
 
   initI18n();
   initTheme();
+  document.documentElement.classList.toggle('platform-mac', isMac);
   const uiZoomPx = initUiZoom();
 
   // Keep the index.html splash visible until fonts are ready so Monaco never
