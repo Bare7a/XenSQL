@@ -2,8 +2,7 @@
 //
 //   1. Reset the dedicated E2E data directory (this process owns it for the run).
 //   2. Build the frontend and stage it into cmd/e2e-server/dist for embedding.
-//   3. Start the server-mode binary - native on Linux/macOS/CI, via WSL on Windows
-//      (server mode does not compile natively on Windows yet).
+//   3. Start the server-mode binary.
 //
 // Playwright waits on GET /health, so this just starts the server in the foreground.
 import { execSync, spawn } from 'node:child_process';
@@ -59,20 +58,6 @@ function stageDist() {
 function startServer() {
   console.log(`[e2e-server] starting server mode on ${serverHost}:${serverPort}`);
 
-  if (process.platform === 'win32') {
-    // Server mode does not build natively on Windows; run via WSL.
-    const wslRoot = toWslPath(rootDir);
-    const wslData = toWslPath(dataDir);
-    const shellCmd = [
-      `cd ${shellQuote(wslRoot)}`,
-      `export XENSQL_DATA_DIR=${shellQuote(wslData)}`,
-      `export WAILS_SERVER_HOST=${shellQuote(serverHost)}`,
-      `export WAILS_SERVER_PORT=${shellQuote(serverPort)}`,
-      'go run -tags server ./cmd/e2e-server',
-    ].join(' && ');
-    return spawn('wsl', ['-e', 'bash', '-lc', shellCmd], { stdio: 'inherit' });
-  }
-
   return spawn('go', ['run', '-tags', 'server', './cmd/e2e-server'], {
     cwd: rootDir,
     stdio: 'inherit',
@@ -83,12 +68,4 @@ function startServer() {
       WAILS_SERVER_PORT: serverPort,
     },
   });
-}
-
-function toWslPath(windowsPath) {
-  return execSync(`wsl wslpath -u "${windowsPath.replace(/\\/g, '/')}"`, { encoding: 'utf8' }).trim();
-}
-
-function shellQuote(value) {
-  return `'${String(value).replace(/'/g, `'\\''`)}'`;
 }
