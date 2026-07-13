@@ -8,7 +8,7 @@ import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue';
 import { rowActivateKeyDown, useListKeyboardNav } from '@/shared/hooks/useListKeyboardNav';
 import { api } from '@/shared/lib/api';
 import { appAlert, appConfirm, appError, appPrompt } from '@/shared/lib/appDialog';
-import { appToast } from '@/shared/lib/appToast';
+import { appToast, toastError } from '@/shared/lib/appToast';
 import { formatRelativeTime, type TimeBucket, timeBucket } from '@/shared/lib/relativeTime';
 import { refreshSavedQueries } from '@/shared/lib/savedQueriesSync';
 import { oneLinePreview } from '@/shared/lib/sqlPreview';
@@ -129,7 +129,10 @@ export function HistoryPanel({ onOpenQuery }: HistoryPanelProps) {
       openMenu(e, [
         { label: t('sidebar.openQuery'), action: () => onOpenQuery(connectionId, sql) },
         { label: t('sidebar.saveAsQuery'), action: () => void saveAsQuery(connectionId, sql) },
-        { label: t('sidebar.copySql'), action: () => void api.copyToClipboard(sql) },
+        {
+          label: t('sidebar.copySql'),
+          action: () => void api.copyToClipboard(sql).catch((e) => toastError(e, t('errors.copyFailed'))),
+        },
         { label: '', action: () => {}, separator: true },
         { label: t('common.delete'), action: () => void deleteHistoryEntry(id) },
       ]);

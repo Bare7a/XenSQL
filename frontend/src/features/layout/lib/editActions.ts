@@ -1,4 +1,5 @@
 import { loader } from '@monaco-editor/react';
+import { readClipboardText } from '@/shared/lib/clipboard';
 
 type Editor = import('monaco-editor').editor.ICodeEditor;
 
@@ -81,7 +82,7 @@ async function runOnMonaco(target: HTMLElement, action: EditAction) {
   editor.focus();
   if (action === 'paste') {
     try {
-      const text = await navigator.clipboard.readText();
+      const text = await readClipboardText();
       if (!text) return;
       editor.trigger('menu', 'paste', { text });
     } catch {
@@ -96,7 +97,7 @@ async function runOnNative(target: HTMLElement, action: EditAction) {
   target.focus();
   if (action === 'paste') {
     try {
-      const text = await navigator.clipboard.readText();
+      const text = await readClipboardText();
       if (!text) return;
       document.execCommand('insertText', false, text);
     } catch {

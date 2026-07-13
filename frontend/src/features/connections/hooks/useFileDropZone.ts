@@ -1,15 +1,14 @@
 import { Events } from '@wailsio/runtime';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 
 const SQLITE_EXTENSIONS = /\.(sqlite3?|db|s3db|sl3)$/i;
 
-// Wails drop handler for SQLite files; dispatches xensql:open-sqlite CustomEvent so connections layer can subscribe without coupling to drop state.
-export function useFileDropZone(): { fileDragOver: boolean } {
-  const [fileDragOver, setFileDragOver] = useState(false);
-
+// Wails drop handler for SQLite files; dispatches xensql:open-sqlite CustomEvent so connections layer
+// can subscribe without coupling to drop state. Drag-over feedback is CSS-only: the Wails runtime
+// toggles `file-drop-target-active` on <body> (the data-file-drop-target) while files hover.
+export function useFileDropZone(): void {
   useEffect(() => {
-    const unsubDrop = Events.On('files-dropped', (e) => {
-      setFileDragOver(false);
+    return Events.On('files-dropped', (e) => {
       const paths = (e.data as string[]) ?? [];
       const sqlitePaths = paths.filter((p) => SQLITE_EXTENSIONS.test(p));
       if (sqlitePaths.length === 0) return;
@@ -18,32 +17,5 @@ export function useFileDropZone(): { fileDragOver: boolean } {
       const name = fileName.replace(/\.[^.]+$/, '');
       window.dispatchEvent(new CustomEvent('xensql:open-sqlite', { detail: { filePath, name } }));
     });
-
-    const onDragOver = (e: DragEvent) => {
-      if (e.dataTransfer?.types.includes('Files')) {
-        e.preventDefault();
-        setFileDragOver(true);
-      }
-    };
-    const onDragLeave = (e: DragEvent) => {
-      // dragleave also fires on child-element crossings; relatedTarget null means truly left the window.
-      if (e.relatedTarget === null || !(e.currentTarget as Node)?.contains(e.relatedTarget as Node)) {
-        setFileDragOver(false);
-      }
-    };
-    const onDrop = () => setFileDragOver(false);
-
-    window.addEventListener('dragover', onDragOver);
-    window.addEventListener('dragleave', onDragLeave);
-    window.addEventListener('drop', onDrop);
-
-    return () => {
-      unsubDrop();
-      window.removeEventListener('dragover', onDragOver);
-      window.removeEventListener('dragleave', onDragLeave);
-      window.removeEventListener('drop', onDrop);
-    };
   }, []);
-
-  return { fileDragOver };
 }

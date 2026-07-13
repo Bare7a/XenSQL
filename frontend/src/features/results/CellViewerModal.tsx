@@ -21,7 +21,7 @@ import { Modal } from '@/shared/components/Modal';
 import { useAppTheme } from '@/shared/hooks/useAppTheme';
 import { useMeasuredHeight } from '@/shared/hooks/useMeasuredHeight';
 import { api } from '@/shared/lib/api';
-import { appToast } from '@/shared/lib/appToast';
+import { appToast, toastError } from '@/shared/lib/appToast';
 
 interface Props {
   column: string;
@@ -128,8 +128,12 @@ export function CellViewerModal({ column, value, isNull, onClose, onSave, onSetN
 
   const copy = async () => {
     const text = editorRef.current?.getValue() ?? content;
-    await api.copyToClipboard(text);
-    appToast.success(t('toast.copiedClipboard'));
+    try {
+      await api.copyToClipboard(text);
+      appToast.success(t('toast.copiedClipboard'));
+    } catch (e) {
+      toastError(e, t('errors.copyFailed'));
+    }
   };
 
   const kindLabel = (k: ContentKind) => t(kindLabelKey(k));

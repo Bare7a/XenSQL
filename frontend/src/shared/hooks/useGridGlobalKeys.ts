@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { GRID_KEYBOARD_SUPPRESS_SELECTOR, isEditableTarget, isInsideGrid } from '@/shared/lib/dom';
+import { shortcutKey } from '@/shared/lib/keyboard';
 
 interface UseGridGlobalKeysOptions {
   tableWrapRef: React.RefObject<HTMLDivElement | null>;
@@ -26,7 +27,7 @@ export function useGridGlobalKeys({ tableWrapRef, selectAllCells }: UseGridGloba
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
-      if (!(e.ctrlKey || e.metaKey) || e.key.toLowerCase() !== 'a') return;
+      if (!(e.ctrlKey || e.metaKey) || shortcutKey(e).toLowerCase() !== 'a') return;
       if (isEditableTarget(e.target, GRID_KEYBOARD_SUPPRESS_SELECTOR)) return;
       if (isEditableTarget(document.activeElement, GRID_KEYBOARD_SUPPRESS_SELECTOR)) return;
       if (!isInsideGrid(e.target, document.activeElement, tableWrapRef.current)) return;

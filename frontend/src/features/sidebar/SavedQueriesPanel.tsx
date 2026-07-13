@@ -20,6 +20,7 @@ import { rowActivateKeyDown, useListKeyboardNav } from '@/shared/hooks/useListKe
 import { usePinnedQueries } from '@/shared/hooks/usePinnedQueries';
 import { api } from '@/shared/lib/api';
 import { appConfirm, appError } from '@/shared/lib/appDialog';
+import { toastError } from '@/shared/lib/appToast';
 import { refreshSavedQueries } from '@/shared/lib/savedQueriesSync';
 import { oneLinePreview } from '@/shared/lib/sqlPreview';
 import { readStoredString, STORAGE_KEYS, writeStoredString } from '@/shared/lib/storageKeys';
@@ -193,7 +194,10 @@ export function SavedQueriesPanel({ onOpenSavedQuery }: SavedQueriesPanelProps) 
         },
         { label: t('common.rename'), action: () => setRenameTarget(item) },
         { label: t('sidebar.duplicate'), action: () => void duplicate(item) },
-        { label: t('sidebar.copySql'), action: () => void api.copyToClipboard(item.sql ?? '') },
+        {
+          label: t('sidebar.copySql'),
+          action: () => void api.copyToClipboard(item.sql ?? '').catch((e) => toastError(e, t('errors.copyFailed'))),
+        },
         { label: '', action: () => {}, separator: true },
         { label: t('common.delete'), action: () => void deleteSaved(item.id) },
       ]);

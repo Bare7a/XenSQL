@@ -1,3 +1,4 @@
+import { shortcutKey } from '@/shared/lib/keyboard';
 import { isMac } from '@/shared/lib/platform';
 import { settings } from '@/shared/lib/settingsStore';
 import { STORAGE_KEYS } from '@/shared/lib/storageKeys';
@@ -258,12 +259,13 @@ export function matchesBinding(e: KeyboardEvent, binding: KeyBinding): boolean {
   if (wantMod !== hasMod) return false;
   if (!!binding.shift !== e.shiftKey) return false;
   if (!!binding.alt !== e.altKey) return false;
-  return eventKeyMatchesBinding(e.key, binding.key);
+  return eventKeyMatchesBinding(shortcutKey(e), binding.key);
 }
 
 export function bindingFromKeyboardEvent(e: KeyboardEvent): KeyBinding | null {
   if (['Control', 'Shift', 'Alt', 'Meta'].includes(e.key)) return null;
-  const key = e.key === 'Tab' ? 'Tab' : e.key === 'Enter' ? 'Enter' : e.key.length === 1 ? e.key.toLowerCase() : e.key;
+  const raw = shortcutKey(e);
+  const key = raw === 'Tab' ? 'Tab' : raw === 'Enter' ? 'Enter' : raw.length === 1 ? raw.toLowerCase() : raw;
   return {
     key,
     ctrl: e.ctrlKey || e.metaKey,

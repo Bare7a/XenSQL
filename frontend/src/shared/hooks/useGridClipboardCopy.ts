@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 
 import { isEditableTarget, isInsideGrid } from '@/shared/lib/dom';
+import { shortcutKey } from '@/shared/lib/keyboard';
 
 export interface ClipboardCopyContext {
   selectedRows: Set<number>;
@@ -65,7 +66,7 @@ export function useGridClipboardCopy(options: UseGridClipboardCopyOptions) {
         return;
       }
 
-      if (!(e.ctrlKey || e.metaKey) || e.key.toLowerCase() !== 'c') return;
+      if (!(e.ctrlKey || e.metaKey) || shortcutKey(e).toLowerCase() !== 'c') return;
       if (isEditableTarget(e.target, extraEditableSelectors)) return;
 
       const { rows, cols } = selectionRef.current;

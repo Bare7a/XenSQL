@@ -22,6 +22,7 @@ export function useConnectionDnD({ reorderConnections, moveToFolder }: DnDOption
       setDropFolderId(null);
     },
     onDragOver: (e: React.DragEvent) => {
+      if (e.dataTransfer.types.includes('Files')) return;
       e.preventDefault();
       e.dataTransfer.dropEffect = 'move';
       if (dropConnId !== c.id) setDropConnId(c.id);
@@ -30,6 +31,7 @@ export function useConnectionDnD({ reorderConnections, moveToFolder }: DnDOption
       if (dropConnId === c.id) setDropConnId(null);
     },
     onDrop: (e: React.DragEvent) => {
+      if (e.dataTransfer.types.includes('Files')) return;
       e.preventDefault();
       const fromId = e.dataTransfer.getData('text/plain');
       if (fromId && fromId !== c.id) reorderConnections(fromId, c.id);
@@ -40,6 +42,7 @@ export function useConnectionDnD({ reorderConnections, moveToFolder }: DnDOption
 
   const folderDropProps = (f: { id: string }) => ({
     onDragOver: (e: React.DragEvent) => {
+      if (e.dataTransfer.types.includes('Files')) return;
       e.preventDefault();
       e.dataTransfer.dropEffect = 'move';
       if (dropFolderId !== f.id) setDropFolderId(f.id);
@@ -48,6 +51,7 @@ export function useConnectionDnD({ reorderConnections, moveToFolder }: DnDOption
       if (dropFolderId === f.id) setDropFolderId(null);
     },
     onDrop: (e: React.DragEvent) => {
+      if (e.dataTransfer.types.includes('Files')) return;
       e.preventDefault();
       const fromId = e.dataTransfer.getData('text/plain');
       if (fromId) void moveToFolder(fromId, f.id);
