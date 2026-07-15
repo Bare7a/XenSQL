@@ -133,10 +133,14 @@ func (a *App) ExportResult(result database.QueryResult, format string) (string, 
 	return service.ExportResult(&result, format)
 }
 
-func (a *App) CopyToClipboard(text string) {
-	if a.app != nil {
-		a.app.Clipboard.SetText(text)
+func (a *App) CopyToClipboard(text string) error {
+	if a.app == nil {
+		return fmt.Errorf("clipboard unavailable")
 	}
+	if !a.app.Clipboard.SetText(text) {
+		return fmt.Errorf("clipboard write failed")
+	}
+	return nil
 }
 
 func errNotFound(what string) error {

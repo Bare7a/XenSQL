@@ -90,12 +90,14 @@ export const EditorTabBar = memo(
               }}
               onDragEnd={onDragEnd}
               onDragOver={(e) => {
+                if (e.dataTransfer.types.includes('Files')) return;
                 e.preventDefault();
                 e.dataTransfer.dropEffect = 'move';
                 if (dropTabId !== tab.id) onDragOverTab(tab.id);
               }}
               onDragLeave={() => onDragLeaveTab(tab.id)}
               onDrop={(e) => {
+                if (e.dataTransfer.types.includes('Files')) return;
                 e.preventDefault();
                 const fromId = e.dataTransfer.getData('text/plain');
                 if (fromId) onReorder(fromId, tab.id);

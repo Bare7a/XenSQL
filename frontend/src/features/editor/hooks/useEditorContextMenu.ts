@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { format } from 'sql-formatter';
 import type { ContextMenuItem } from '@/shared/components/ContextMenu';
 import { api } from '@/shared/lib/api';
+import { readClipboardText } from '@/shared/lib/clipboard';
 
 export function useEditorContextMenu(
   editorRef: RefObject<editor.IStandaloneCodeEditor | null>,
@@ -41,8 +42,7 @@ export function useEditorContextMenu(
         const ed = editorRef.current;
         if (!ed) return;
         ed.focus();
-        navigator.clipboard
-          .readText()
+        readClipboardText()
           .then((text) => {
             if (!text) return;
             ed.trigger('ctx', 'paste', { text });

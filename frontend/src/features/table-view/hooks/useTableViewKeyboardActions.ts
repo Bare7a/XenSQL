@@ -1,4 +1,3 @@
-import { Clipboard } from '@wailsio/runtime';
 import { useEffect, useRef } from 'react';
 import {
   computePasteEdits,
@@ -6,8 +5,10 @@ import {
   parseClipboardGrid,
 } from '@/features/table-view/lib/tableViewClipboard';
 import type { CopiedCells } from '@/shared/hooks/useGridCopyExport';
+import { readClipboardText } from '@/shared/lib/clipboard';
 import { isEditableTarget, isInsideGrid } from '@/shared/lib/dom';
 import type { CellRange } from '@/shared/lib/gridCellRange';
+import { shortcutKey } from '@/shared/lib/keyboard';
 
 interface UseTableViewKeyboardActionsOptions {
   isActive: boolean;
@@ -61,14 +62,6 @@ export function useTableViewKeyboardActions({
   useEffect(() => {
     if (!isActive) return;
 
-    const readClipboardText = async (): Promise<string> => {
-      try {
-        return await Clipboard.Text();
-      } catch {
-        return navigator.clipboard.readText();
-      }
-    };
-
     const resolvePasteTarget = (): { row: number; colPos: number } | null => {
       // Anchor at the top-left of an active selection (so a destination range pastes from its corner,
       // not the drag end); fall back to the focused cell when nothing is range-selected.
@@ -83,7 +76,7 @@ export function useTableViewKeyboardActions({
       const isF5 = e.key === 'F5';
       if (!isF5 && !(e.ctrlKey || e.metaKey)) return;
 
-      const key = e.key.toLowerCase();
+      const key = shortcutKey(e).toLowerCase();
       if (!isInsideGrid(e.target, document.activeElement, tableWrapRef.current, '.table-view-grid')) return;
 
       // F5 or Ctrl+R refreshes the page (preventDefault stops the WebView from reloading).

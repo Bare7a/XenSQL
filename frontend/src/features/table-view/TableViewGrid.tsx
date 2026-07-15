@@ -23,6 +23,7 @@ import { useGridCore } from '@/shared/hooks/useGridCore';
 import { useGridSelectionView } from '@/shared/hooks/useGridSelectionView';
 import { useGridVirtualizer } from '@/shared/hooks/useGridVirtualizer';
 import { useUiZoom } from '@/shared/hooks/useUiZoom';
+import { toastError } from '@/shared/lib/appToast';
 import {
   type FocusCol,
   handleGridArrowKey,
@@ -297,6 +298,7 @@ export const TableViewGrid = memo(function TableViewGrid({
     selectionRef,
     focusRef,
     copy: copySelectionToClipboard,
+    onCopyError: (err) => toastError(err, t('errors.copyFailed')),
     shouldCopy: ({ selectedRows: selRows, selectedColumns: selCols, focusedRow, focusedColPos, inGrid }) =>
       inGrid && (selRows.size > 0 || selCols.size > 0 || (focusedRow != null && focusedColPos >= 0)),
   });

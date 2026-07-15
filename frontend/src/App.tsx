@@ -133,7 +133,7 @@ function App() {
   useHorizontalWheelScroll(editorTabsRef);
 
   const appInfo = useAppInfo();
-  const { fileDragOver } = useFileDropZone();
+  useFileDropZone();
   useOpenSqliteEvents();
   useUpdateNotification();
 
@@ -320,14 +320,12 @@ function App() {
         onToggleJsonPanel={jsonPanelVisible.toggle}
       />
 
-      {fileDragOver && (
-        <div className="file-drop-overlay">
-          <div className="file-drop-overlay-content">
-            <Database className="icon-3xl" />
-            <span>{t('connection.dropSqlite')}</span>
-          </div>
+      <div className="file-drop-overlay" aria-hidden="true">
+        <div className="file-drop-overlay-content">
+          <Database className="icon-3xl" />
+          <span>{t('connection.dropSqlite')}</span>
         </div>
-      )}
+      </div>
 
       <div className="app-body">
         {sidebarVisible.value && (

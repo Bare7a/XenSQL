@@ -4,11 +4,16 @@
   position: fixed;
   inset: 0;
   z-index: var(--z-menu);
-  display: flex;
+  display: none;
   align-items: center;
   justify-content: center;
   background: var(--bg-overlay);
   pointer-events: none;
+}
+
+/* The Wails runtime toggles this class on <body> while files hover the data-file-drop-target. */
+body.file-drop-target-active .file-drop-overlay {
+  display: flex;
 }
 
 .file-drop-overlay-content {
