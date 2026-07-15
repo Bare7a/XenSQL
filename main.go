@@ -11,8 +11,10 @@ import (
 	"github.com/wailsapp/wails/v3/pkg/updater/providers/github"
 
 	"xensql/internal/app"
+	"xensql/internal/appmenu"
 	"xensql/internal/paths"
 	"xensql/internal/windowstate"
+	"xensql/internal/windowtheme"
 )
 
 //go:embed all:frontend/dist
@@ -85,21 +87,35 @@ func main() {
 		println("Warning: updater init:", perr.Error())
 	}
 
-	opts := application.WebviewWindowOptions{
-		Title:            "XenSQL",
-		MinWidth:         800,
-		MinHeight:        600,
-		EnableFileDrop:   true,
-		URL:              "/",
-		BackgroundType:   application.BackgroundTypeSolid,
-		BackgroundColour: application.RGBA{Red: 15, Green: 17, Blue: 23, Alpha: 255},
+	svc.SetDesktopMode(true)
+
+	// mac menus live in the system menu bar; set pre-Run, installed once running.
+	if runtime.GOOS == "darwin" {
+		nativeMenu := appmenu.Build(svc.EmitMenuAction)
+		wailsApp.Menu.Set(nativeMenu.Root())
+		svc.SetNativeMenu(nativeMenu)
 	}
 
-	if runtime.GOOS == "darwin" {
-		opts.Mac.TitleBar = application.MacTitleBarHidden
-	} else {
+	opts := application.WebviewWindowOptions{
+		Title:          "XenSQL",
+		MinWidth:       800,
+		MinHeight:      600,
+		EnableFileDrop: true,
+		URL:            "/",
+		BackgroundType: application.BackgroundTypeSolid,
+	}
+
+	// Windows/Linux: frameless — the in-page title bar is the single-bar chrome.
+	if runtime.GOOS != "darwin" {
 		opts.Frameless = true
 	}
+
+	// Colour the window chrome to the saved app theme.
+	var prefs map[string]string
+	if settings != nil {
+		prefs = settings.GetAll()
+	}
+	windowtheme.Configure(&opts, windowtheme.Load(prefs))
 
 	// Restore size/position/state from the last session, or the default on first run.
 	var saved windowstate.State
@@ -115,6 +131,11 @@ func main() {
 	if settings != nil {
 		svc.SetWindowStateFlush(windowstate.Track(window, settings))
 	}
+
+	// Recolour the window chrome when the frontend persists a theme change.
+	svc.SetOnSettingChanged(func(key, value string) {
+		windowtheme.Update(window, key, value)
+	})
 
 	window.OnWindowEvent(events.Common.WindowFilesDropped, func(e *application.WindowEvent) {
 		wailsApp.Event.Emit("files-dropped", e.Context().DroppedFiles())

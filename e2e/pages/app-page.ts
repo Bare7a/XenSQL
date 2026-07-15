@@ -30,19 +30,10 @@ export class AppPage {
 
   private async toggleViaViewMenu(itemName: string): Promise<void> {
     const item = this.page.getByRole('menuitemcheckbox', { name: itemName });
-    // macOS has no top-level View trigger: a single icon menu opens a vertical
-    // File/Edit/View/Help list, and the View row's flyout holds the toggle items.
-    const macTrigger = this.page.locator('.app-title-bar-menu-icon');
-    const isMacMenu = (await macTrigger.count()) > 0;
-    const trigger = isMacMenu ? macTrigger : this.viewTrigger();
+    const trigger = this.viewTrigger();
     // The trigger toggles the menu, so a click can race (open then closed); retry until visible.
     for (let attempt = 0; attempt < 3 && !(await item.isVisible().catch(() => false)); attempt++) {
       await trigger.click();
-      if (isMacMenu) {
-        const viewRow = this.page.getByRole('menuitem', { name: 'View', exact: true });
-        await viewRow.waitFor({ state: 'visible', timeout: 2_000 }).catch(() => {});
-        if (await viewRow.isVisible().catch(() => false)) await viewRow.click();
-      }
       await item.waitFor({ state: 'visible', timeout: 2_000 }).catch(() => {});
     }
     await item.click();
