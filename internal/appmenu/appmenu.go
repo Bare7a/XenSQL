@@ -55,7 +55,7 @@ func Build(emit func(id string)) *Menu {
 	file.AddSeparator()
 	m.item(file, "quickSearch", "Quick Search", "cmdorctrl+p", emit)
 
-	// Edit and Window roles act on the webview via the responder chain — no wiring.
+	// Edit and Window roles act on the webview via the responder chain - no wiring.
 	m.root.AddRole(application.EditMenu)
 
 	view := m.root.AddSubmenu("View")

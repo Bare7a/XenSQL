@@ -10,6 +10,7 @@ import {
   MIN_EDITOR_FONT_SIZE,
   resetEditorFontSize,
 } from '@/features/editor/lib/editorFontSize';
+import { useFullscreenToggle } from '@/features/layout/hooks/useFullscreenToggle';
 import { MenuStepperRow } from '@/features/layout/MenuStepperRow';
 import { type AppLanguage, changeLanguage, SUPPORTED_LANGUAGES } from '@/i18n';
 import { useAppLanguage } from '@/shared/hooks/useAppLanguage';
@@ -52,6 +53,7 @@ export function ViewMenuContent({
   const fontSize = useEditorFontSize();
   const uiZoomPx = useUiZoom();
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const toggleFullscreen = useFullscreenToggle();
 
   useEffect(() => {
     void Window.IsFullscreen().then(setIsFullscreen);
@@ -66,15 +68,8 @@ export function ViewMenuContent({
     onCloseMenu();
   };
 
-  const handleToggleFullscreen = async () => {
-    const isFs = await Window.IsFullscreen();
-    if (isFs) {
-      Window.UnFullscreen();
-      setIsFullscreen(false);
-    } else {
-      Window.Fullscreen();
-      setIsFullscreen(true);
-    }
+  const handleToggleFullscreen = () => {
+    void toggleFullscreen();
     onCloseMenu();
   };
 
@@ -172,7 +167,7 @@ export function ViewMenuContent({
         className="menu-check-row"
         role="menuitemcheckbox"
         aria-checked={isFullscreen}
-        onClick={() => void handleToggleFullscreen()}
+        onClick={handleToggleFullscreen}
       >
         <span className="menu-check-label">{t('menu.toggleFullscreen')}</span>
         <span className="menu-check-shortcut">{formatBinding(getEffectiveBinding('toggleFullscreen'))}</span>

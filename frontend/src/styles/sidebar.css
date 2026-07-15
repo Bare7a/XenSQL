@@ -20,7 +20,7 @@
   color: var(--text-muted);
 }
 
-/* Saved-query name: one line, ellipsis — never wraps the row tall. */
+/* Saved-query name: one line, ellipsis - never wraps the row tall. */
 .sidebar-entry-title {
   flex: 1;
   min-width: 0;

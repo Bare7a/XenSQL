@@ -62,10 +62,6 @@ export function Connect(id: string): $CancellablePromise<void> {
     return $Call.ByID(1546757449, id);
 }
 
-export function CopyToClipboard(text: string): $CancellablePromise<void> {
-    return $Call.ByID(2467530889, text);
-}
-
 export function DeleteConnection(id: string): $CancellablePromise<boolean> {
     return $Call.ByID(3337158526, id);
 }
@@ -267,13 +263,6 @@ export function SaveSavedQuery(q: database$0.SavedQuery): $CancellablePromise<da
 
 export function SaveTextFile(path: string, content: string): $CancellablePromise<void> {
     return $Call.ByID(3576490577, path, content);
-}
-
-/**
- * SetDesktopMode marks this process as the desktop app; the e2e/server binary never sets it.
- */
-export function SetDesktopMode(on: boolean): $CancellablePromise<void> {
-    return $Call.ByID(2312492798, on);
 }
 
 /**
