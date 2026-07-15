@@ -6,7 +6,6 @@ import {
   ClearQueryHistory,
   CommitTransaction,
   Connect,
-  CopyToClipboard,
   DeleteConnection,
   DeleteFolder,
   DeleteQueryHistoryEntry,
@@ -43,6 +42,7 @@ import {
   TestConnection,
   UpdateRow,
 } from '@bindings/xensql/internal/app/app';
+import { writeClipboardText } from '@/shared/lib/clipboard';
 import {
   normalizeColumns,
   normalizeHistory,
@@ -116,7 +116,7 @@ export const api = {
     SaveEditorSession(session as never),
   formatSQL: (sql: string): Promise<string> => Promise.resolve(FormatSQL(sql)),
   exportResult: (result: QueryResult, format: string): Promise<string> => cast(ExportResult(result as never, format)),
-  copyToClipboard: (text: string): Promise<void> => CopyToClipboard(text),
+  copyToClipboard: (text: string): Promise<void> => writeClipboardText(text),
   pickExportSavePath: (ext: string): Promise<string> => PickExportSavePath(ext),
   saveTextFile: (path: string, content: string): Promise<void> => SaveTextFile(path, content),
   getAppInfo: (): Promise<import('@/shared/lib/appInfo').AppInfo> => cast(GetAppInfo()),

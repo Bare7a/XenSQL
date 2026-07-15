@@ -80,7 +80,7 @@ jobs:
           mkdir -p dist
           # Auto-updater asset
           tar -C bin -czf "dist/XenSQL-linux-amd64.tar.gz" XenSQL
-          # Manual downloads (updater skips — no GOOS/GOARCH in filenames)
+          # Manual downloads (updater skips - no GOOS/GOARCH in filenames)
           cp bin/XenSQL bin/XenSQL.deb bin/XenSQL.rpm bin/XenSQL.pkg.tar.zst bin/xensql-x86_64.AppImage dist/
 
       - name: Install NSIS

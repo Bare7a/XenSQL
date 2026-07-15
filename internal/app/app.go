@@ -31,7 +31,6 @@ type App struct {
 	windowStateFlush func()
 	onSettingChanged func(key, value string)
 	nativeMenu       *appmenu.Menu
-	desktopMode      bool
 
 	pendingMu   sync.Mutex
 	pendingFile string
@@ -84,13 +83,8 @@ func (a *App) SetOnSettingChanged(fn func(key, value string)) {
 	a.onSettingChanged = fn
 }
 
-// SetDesktopMode marks this process as the desktop app; the e2e/server binary never sets it.
-func (a *App) SetDesktopMode(on bool) {
-	a.desktopMode = on
-}
-
 func (a *App) IsDesktopMode() bool {
-	return a.desktopMode
+	return application.System.IsDesktop()
 }
 
 func (a *App) emit(name string, data any) {
@@ -149,16 +143,6 @@ func (a *App) FormatSQL(sql string) string {
 
 func (a *App) ExportResult(result database.QueryResult, format string) (string, error) {
 	return service.ExportResult(&result, format)
-}
-
-func (a *App) CopyToClipboard(text string) error {
-	if a.app == nil {
-		return fmt.Errorf("clipboard unavailable")
-	}
-	if !a.app.Clipboard.SetText(text) {
-		return fmt.Errorf("clipboard write failed")
-	}
-	return nil
 }
 
 func errNotFound(what string) error {

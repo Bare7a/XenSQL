@@ -195,7 +195,7 @@ e2e/
 ```
 
 Specs import shared code via the `@support/*` alias (see `tsconfig.json`), so nesting
-depth never changes an import. Tests that need data use the `seed` fixture —
+depth never changes an import. Tests that need data use the `seed` fixture -
 `seed.table()` creates (and optionally fills) a uniquely-named table via the editor,
 `seed.browseTable()` additionally opens it in the data browser. The default seeded
 schema is `(id INTEGER PRIMARY KEY, name VARCHAR(50))`; keep seed SQL portable, since

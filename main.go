@@ -3,7 +3,6 @@ package main
 import (
 	"embed"
 	"os"
-	"runtime"
 
 	"github.com/wailsapp/wails/v3/pkg/application"
 	"github.com/wailsapp/wails/v3/pkg/events"
@@ -73,6 +72,15 @@ func main() {
 		},
 	})
 
+	// macOS delivers Finder opens as Apple Events, never argv or a second
+	// instance; pending covers launch, the emit covers a running app.
+	wailsApp.Event.OnApplicationEvent(events.Common.ApplicationOpenedWithFile, func(e *application.ApplicationEvent) {
+		if f := app.FindSQLiteArg([]string{e.Context().Filename()}); f != "" {
+			svc.SetPendingFile(f)
+			svc.EmitOpenSQLite(f)
+		}
+	})
+
 	// In-app updates from GitHub Releases. application.New already wired the
 	// helper-mode hook, so the built-in window's "Restart & Apply" just works.
 	if ghProvider, perr := github.New(github.Config{
@@ -87,10 +95,8 @@ func main() {
 		println("Warning: updater init:", perr.Error())
 	}
 
-	svc.SetDesktopMode(true)
-
 	// mac menus live in the system menu bar; set pre-Run, installed once running.
-	if runtime.GOOS == "darwin" {
+	if application.System.IsPlatform(application.PlatformMacOS) {
 		nativeMenu := appmenu.Build(svc.EmitMenuAction)
 		wailsApp.Menu.Set(nativeMenu.Root())
 		svc.SetNativeMenu(nativeMenu)
@@ -102,11 +108,10 @@ func main() {
 		MinHeight:      600,
 		EnableFileDrop: true,
 		URL:            "/",
-		BackgroundType: application.BackgroundTypeSolid,
 	}
 
-	// Windows/Linux: frameless — the in-page title bar is the single-bar chrome.
-	if runtime.GOOS != "darwin" {
+	// Windows/Linux: frameless - the in-page title bar is the single-bar chrome.
+	if !application.System.IsPlatform(application.PlatformMacOS) {
 		opts.Frameless = true
 	}
 

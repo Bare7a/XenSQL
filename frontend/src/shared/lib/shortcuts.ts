@@ -228,10 +228,10 @@ function formatKeyLabel(key: string): string {
 export function formatBinding(binding: KeyBinding): string {
   const parts: string[] = [];
   if (isMac) {
-    if (binding.ctrl) parts.push('⌃');
+    // binding.ctrl means CmdOrCtrl, so mac renders ⌘ to match the native menu.
     if (binding.alt) parts.push('⌥');
     if (binding.shift) parts.push('⇧');
-    // if (binding.ctrl) parts.push('⌘');
+    if (binding.ctrl) parts.push('⌘');
     parts.push(formatKeyLabel(binding.key));
     return parts.join('');
   }

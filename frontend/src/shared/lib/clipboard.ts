@@ -1,10 +1,13 @@
 import { Clipboard } from '@wailsio/runtime';
+import { isDesktop } from '@/shared/lib/platform';
 
-/** Wails clipboard first (no permission gate); browser API as the server/dev-mode fallback. */
+/** Wails clipboard on desktop (no permission gate); navigator otherwise - the runtime hits the server's clipboard. */
 export async function readClipboardText(): Promise<string> {
-  try {
-    return await Clipboard.Text();
-  } catch {
-    return navigator.clipboard.readText();
-  }
+  if (isDesktop()) return Clipboard.Text();
+  return navigator.clipboard.readText();
+}
+
+export async function writeClipboardText(text: string): Promise<void> {
+  if (isDesktop()) return Clipboard.SetText(text);
+  return navigator.clipboard.writeText(text);
 }
