@@ -42,3 +42,20 @@ export function useFileDropZone(): void {
     };
   }, []);
 }
+
+// Waiting for this PR to be merged and released in Wails: https://github.com/wailsapp/wails/pull/5779/changes
+// To Use the following code instead:
+
+// export function useFileDropZone(): void {
+//   useEffect(() => {
+//     return Events.On('files-dropped', (e) => {
+//       const paths = (e.data as string[]) ?? [];
+//       const sqlitePaths = paths.filter((p) => SQLITE_EXTENSIONS.test(p));
+//       if (sqlitePaths.length === 0) return;
+//       const filePath = sqlitePaths[0];
+//       const fileName = filePath.split(/[/\\]/).pop() || '';
+//       const name = fileName.replace(/\.[^.]+$/, '');
+//       window.dispatchEvent(new CustomEvent('xensql:open-sqlite', { detail: { filePath, name } }));
+//     });
+//   }, []);
+// }
