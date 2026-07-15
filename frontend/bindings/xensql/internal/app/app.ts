@@ -7,6 +7,9 @@ import { Call as $Call, CancellablePromise as $CancellablePromise, Create as $Cr
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore: Unused imports
+import * as appmenu$0 from "../appmenu/models.js";
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore: Unused imports
 import * as database$0 from "../database/models.js";
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore: Unused imports
@@ -91,6 +94,10 @@ export function Disconnect(id: string): $CancellablePromise<void> {
     return $Call.ByID(3864830715, id);
 }
 
+export function EmitMenuAction(id: string): $CancellablePromise<void> {
+    return $Call.ByID(308134503, id);
+}
+
 export function EmitOpenSQLite(filePath: string): $CancellablePromise<void> {
     return $Call.ByID(46205330, filePath);
 }
@@ -161,6 +168,10 @@ export function InsertRow(connectionID: string, schema: string, table: string, v
 
 export function IsConnected(id: string): $CancellablePromise<boolean> {
     return $Call.ByID(1544907504, id);
+}
+
+export function IsDesktopMode(): $CancellablePromise<boolean> {
+    return $Call.ByID(3428830396);
 }
 
 export function ListColumns(connectionID: string, schema: string, table: string): $CancellablePromise<database$0.ColumnInfo[]> {
@@ -256,6 +267,24 @@ export function SaveSavedQuery(q: database$0.SavedQuery): $CancellablePromise<da
 
 export function SaveTextFile(path: string, content: string): $CancellablePromise<void> {
     return $Call.ByID(3576490577, path, content);
+}
+
+/**
+ * SetDesktopMode marks this process as the desktop app; the e2e/server binary never sets it.
+ */
+export function SetDesktopMode(on: boolean): $CancellablePromise<void> {
+    return $Call.ByID(2312492798, on);
+}
+
+/**
+ * SetNativeMenu hands over the macOS menu bar; its sync listener attaches in ServiceStartup.
+ */
+export function SetNativeMenu(menu: appmenu$0.Menu | null): $CancellablePromise<void> {
+    return $Call.ByID(3893583927, menu);
+}
+
+export function SetOnSettingChanged(fn: any): $CancellablePromise<void> {
+    return $Call.ByID(23377614, fn);
 }
 
 export function SetPendingFile(path: string): $CancellablePromise<void> {

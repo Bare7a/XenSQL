@@ -12,19 +12,18 @@ import App from '@/App';
 import { initMonaco } from '@/features/editor/lib/monacoSetup';
 import { initI18n } from '@/i18n';
 import { loadAppFonts } from '@/shared/lib/appFonts';
-import { isMac } from '@/shared/lib/platform';
+import { initPlatform } from '@/shared/lib/platform';
 import { hydrateSettings } from '@/shared/lib/settingsStore';
 import { initTheme } from '@/shared/lib/theme';
 import { initUiZoom } from '@/shared/lib/uiZoom';
 
-// Load settings from Go before init/render so theme/language/zoom are correct on
-// the first paint and read synchronously after.
+// Load settings and the desktop flag from Go before init/render so theme/
+// language/zoom and the chrome layout are correct on the first paint.
 async function bootstrap() {
-  await hydrateSettings();
+  await Promise.all([hydrateSettings(), initPlatform()]);
 
   initI18n();
   initTheme();
-  document.documentElement.classList.toggle('platform-mac', isMac);
   const uiZoomPx = initUiZoom();
 
   // Keep the index.html splash visible until fonts are ready so Monaco never

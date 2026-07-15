@@ -23,6 +23,7 @@ import { useAppInfo } from '@/features/layout/hooks/useAppInfo';
 import { useAppInit } from '@/features/layout/hooks/useAppInit';
 import { useFullscreenToggle } from '@/features/layout/hooks/useFullscreenToggle';
 import { useGlobalShortcuts } from '@/features/layout/hooks/useGlobalShortcuts';
+import { useNativeMenu } from '@/features/layout/hooks/useNativeMenu';
 import { usePersistedPanelWidth } from '@/features/layout/hooks/usePersistedPanelWidth';
 import { useUpdateNotification } from '@/features/layout/hooks/useUpdateNotification';
 import { useVerticalSplitter } from '@/features/layout/hooks/useVerticalSplitter';
@@ -41,6 +42,7 @@ import { ShortcutsDialog } from '@/shared/components/ShortcutsDialog';
 import { useHorizontalWheelScroll } from '@/shared/hooks/useHorizontalWheelScroll';
 import { usePersistedToggle } from '@/shared/hooks/usePersistedToggle';
 import { api } from '@/shared/lib/api';
+import { isMacDesktop } from '@/shared/lib/platform';
 import { STORAGE_KEYS } from '@/shared/lib/storageKeys';
 import { resetUiZoom, zoomUiIn, zoomUiOut } from '@/shared/lib/uiZoom';
 import {
@@ -293,6 +295,16 @@ function App() {
     [handleNewTabShortcut, handleCloseTab, reopenClosedTab, activeTabId],
   );
 
+  // On mac desktop the menus live in the system menu bar instead of AppTitleBar.
+  useNativeMenu({
+    enabled: isMacDesktop(),
+    sidebarOpen: sidebarVisible.value,
+    jsonPanelOpen: jsonPanelVisible.value,
+    onAction: handleMenuAction,
+    onToggleSidebar: sidebarVisible.toggle,
+    onToggleJsonPanel: jsonPanelVisible.toggle,
+  });
+
   const handleChangeSql = useCallback((tabId: string, sql: string) => updateTab(tabId, { sql }), [updateTab]);
   const handleRunForTab = useCallback(
     (tabId: string, sql: string) => void runQueryForTab(tabId, sql),
@@ -311,14 +323,16 @@ function App() {
   );
 
   return (
-    <div className="app-layout">
-      <AppTitleBar
-        onAction={handleMenuAction}
-        sidebarOpen={sidebarVisible.value}
-        onToggleSidebar={sidebarVisible.toggle}
-        jsonPanelOpen={jsonPanelVisible.value}
-        onToggleJsonPanel={jsonPanelVisible.toggle}
-      />
+    <div className={`app-layout${isMacDesktop() ? ' app-layout-native-titlebar' : ''}`}>
+      {!isMacDesktop() && (
+        <AppTitleBar
+          onAction={handleMenuAction}
+          sidebarOpen={sidebarVisible.value}
+          onToggleSidebar={sidebarVisible.toggle}
+          jsonPanelOpen={jsonPanelVisible.value}
+          onToggleJsonPanel={jsonPanelVisible.toggle}
+        />
+      )}
 
       <div className="file-drop-overlay" aria-hidden="true">
         <div className="file-drop-overlay-content">

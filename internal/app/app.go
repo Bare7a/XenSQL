@@ -7,6 +7,7 @@ import (
 
 	"github.com/wailsapp/wails/v3/pkg/application"
 
+	"xensql/internal/appmenu"
 	"xensql/internal/database"
 	_ "xensql/internal/database/mysql"
 	_ "xensql/internal/database/postgres"
@@ -28,6 +29,9 @@ type App struct {
 	settings     *storage.SettingsStore
 
 	windowStateFlush func()
+	onSettingChanged func(key, value string)
+	nativeMenu       *appmenu.Menu
+	desktopMode      bool
 
 	pendingMu   sync.Mutex
 	pendingFile string
@@ -67,12 +71,26 @@ func (a *App) SettingsStore() *storage.SettingsStore {
 func (a *App) ServiceStartup(ctx context.Context, _ application.ServiceOptions) error {
 	a.ctx = ctx
 	a.app = application.Get()
+	a.listenNativeMenuSync()
 	a.startBackgroundUpdateCheck()
 	return nil
 }
 
 func (a *App) SetWindowStateFlush(flush func()) {
 	a.windowStateFlush = flush
+}
+
+func (a *App) SetOnSettingChanged(fn func(key, value string)) {
+	a.onSettingChanged = fn
+}
+
+// SetDesktopMode marks this process as the desktop app; the e2e/server binary never sets it.
+func (a *App) SetDesktopMode(on bool) {
+	a.desktopMode = on
+}
+
+func (a *App) IsDesktopMode() bool {
+	return a.desktopMode
 }
 
 func (a *App) emit(name string, data any) {

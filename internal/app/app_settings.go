@@ -14,7 +14,13 @@ func (a *App) SetSetting(key, value string) error {
 	if a.settings == nil {
 		return fmt.Errorf("settings store unavailable")
 	}
-	return a.settings.Set(key, value)
+	if err := a.settings.Set(key, value); err != nil {
+		return err
+	}
+	if a.onSettingChanged != nil {
+		a.onSettingChanged(key, value)
+	}
+	return nil
 }
 
 func (a *App) DeleteSetting(key string) error {

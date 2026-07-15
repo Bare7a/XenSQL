@@ -1,11 +1,11 @@
 import { Application, Window } from '@wailsio/runtime';
-import { ChevronRight, Minus, Square, X } from 'lucide-react';
+import { Minus, Square, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import xensqlIcon from '@/assets/images/xensql-icon.png';
 import { type EditAction, runEditAction } from '@/features/layout/lib/editActions';
 import { ViewMenuContent } from '@/features/layout/ViewMenuContent';
-import { isMac } from '@/shared/lib/platform';
+import { isDesktop, isMac } from '@/shared/lib/platform';
 import { formatBinding, getEffectiveBinding, type KeyBinding } from '@/shared/lib/shortcuts';
 
 export type AppMenuAction = 'about' | 'shortcuts' | 'tips' | 'newTab' | 'closeTab' | 'reopenClosedTab' | 'quickSearch';
@@ -48,10 +48,6 @@ type MenuRow =
   | { key: string; separator: true }
   | { key: string; label: string; shortcut?: string; onSelect: () => void; keepFocus?: boolean };
 
-// Delay before hover switches an already-open flyout, so a diagonal pointer path
-// from a row into its flyout can cross sibling rows without losing the target.
-const SUB_SWITCH_DELAY_MS = 50;
-
 interface Props {
   onAction: (action: AppMenuAction) => void;
   sidebarOpen: boolean;
@@ -62,31 +58,13 @@ interface Props {
 
 export function AppTitleBar({ onAction, sidebarOpen, onToggleSidebar, jsonPanelOpen, onToggleJsonPanel }: Props) {
   const { t } = useTranslation();
-  // Windows/Linux: the open top-level menu. macOS: 'app' = icon menu open, a MenuId = its flyout showing.
-  const [open, setOpen] = useState<MenuId | 'app' | null>(null);
+  const [open, setOpen] = useState<MenuId | null>(null);
   const barRef = useRef<HTMLDivElement>(null);
-  const subSwitchTimer = useRef<number | null>(null);
-
-  const cancelSubSwitch = () => {
-    if (subSwitchTimer.current !== null) {
-      window.clearTimeout(subSwitchTimer.current);
-      subSwitchTimer.current = null;
-    }
-  };
+  // Windows/Linux desktop: this bar is the frameless window's chrome.
+  const windowChrome = isDesktop() && !isMac;
 
   const closeAll = () => {
-    cancelSubSwitch();
     setOpen(null);
-  };
-
-  const hoverSub = (id: MenuId) => {
-    cancelSubSwitch();
-    if (open === id) return;
-    if (open === 'app') {
-      setOpen(id);
-      return;
-    }
-    subSwitchTimer.current = window.setTimeout(() => setOpen(id), SUB_SWITCH_DELAY_MS);
   };
 
   const onTitleBarDoubleClick = (e: React.MouseEvent) => {
@@ -103,13 +81,6 @@ export function AppTitleBar({ onAction, sidebarOpen, onToggleSidebar, jsonPanelO
     window.addEventListener('mousedown', close);
     return () => window.removeEventListener('mousedown', close);
   }, [open]);
-
-  useEffect(
-    () => () => {
-      if (subSwitchTimer.current !== null) window.clearTimeout(subSwitchTimer.current);
-    },
-    [],
-  );
 
   const renderRows = (rows: MenuRow[]) =>
     rows.map((row) =>
@@ -133,7 +104,6 @@ export function AppTitleBar({ onAction, sidebarOpen, onToggleSidebar, jsonPanelO
       ),
     );
 
-  // Menu contents, shared by the Windows/Linux dropdowns and the macOS flyouts.
   const fileContent = renderRows(
     (isMac ? FILE_MENU_ROWS.filter((r) => !r.macHidden) : FILE_MENU_ROWS).map((row) =>
       'separator' in row
@@ -196,83 +166,36 @@ export function AppTitleBar({ onAction, sidebarOpen, onToggleSidebar, jsonPanelO
 
   return (
     // biome-ignore lint/a11y/noStaticElementInteractions: OS-style window title bar; double-click-to-maximize mirrors native window chrome and is also available via the window-control buttons.
-    <div ref={barRef} className="app-title-bar app-title-bar-drag" onDoubleClick={onTitleBarDoubleClick}>
+    <div
+      ref={barRef}
+      className={`app-title-bar${windowChrome ? ' app-title-bar-chrome' : ''}`}
+      onDoubleClick={windowChrome ? onTitleBarDoubleClick : undefined}
+    >
       <div className="app-title-bar-left">
-        {isMac ? (
-          <div className="app-title-bar-menu">
+        <img src={xensqlIcon} alt="XenSQL" className="app-title-bar-logo" />
+        {MENUS.map((m) => (
+          <div key={m.id} className="app-title-bar-menu">
             <button
               type="button"
-              className={`app-title-bar-menu-trigger app-title-bar-menu-icon${open ? ' open' : ''}`}
-              style={{ '--wails-draggable': 'no-drag' } as React.CSSProperties}
+              className={`app-title-bar-menu-trigger${open === m.id ? ' open' : ''}`}
               aria-haspopup="menu"
-              aria-expanded={open !== null}
-              onClick={() => (open ? closeAll() : setOpen('app'))}
+              aria-expanded={open === m.id}
+              onMouseEnter={() => {
+                if (open) setOpen(m.id);
+              }}
+              onClick={() => setOpen((cur) => (cur === m.id ? null : m.id))}
             >
-              <img src={xensqlIcon} alt="" className="app-title-bar-logo" />
-              <span className="app-title-bar-menu-name">XenSQL</span>
+              {t(m.labelKey)}
             </button>
-            {open && (
-              <div className="app-title-bar-dropdown app-title-bar-menu-vertical" role="menu">
-                {MENUS.map((m) => (
-                  <div key={m.id} className="app-title-bar-submenu">
-                    <button
-                      type="button"
-                      className={`app-title-bar-submenu-row${open === m.id ? ' open' : ''}`}
-                      role="menuitem"
-                      aria-haspopup="menu"
-                      aria-expanded={open === m.id}
-                      onMouseEnter={() => hoverSub(m.id)}
-                      onClick={() => {
-                        cancelSubSwitch();
-                        setOpen(m.id);
-                      }}
-                    >
-                      <span>{t(m.labelKey)}</span>
-                      <ChevronRight className="icon-2xs app-title-bar-submenu-caret" strokeWidth={2} />
-                    </button>
-                    {open === m.id && (
-                      <div
-                        className="app-title-bar-dropdown app-title-bar-flyout"
-                        role="menu"
-                        onMouseEnter={cancelSubSwitch}
-                      >
-                        {m.content}
-                      </div>
-                    )}
-                  </div>
-                ))}
+            {open === m.id && (
+              <div className="app-title-bar-dropdown" role="menu">
+                {m.content}
               </div>
             )}
           </div>
-        ) : (
-          <>
-            <img src={xensqlIcon} alt="XenSQL" className="app-title-bar-logo" />
-            {MENUS.map((m) => (
-              <div key={m.id} className="app-title-bar-menu">
-                <button
-                  type="button"
-                  className={`app-title-bar-menu-trigger${open === m.id ? ' open' : ''}`}
-                  style={{ '--wails-draggable': 'no-drag' } as React.CSSProperties}
-                  aria-haspopup="menu"
-                  aria-expanded={open === m.id}
-                  onMouseEnter={() => {
-                    if (open) setOpen(m.id);
-                  }}
-                  onClick={() => setOpen((cur) => (cur === m.id ? null : m.id))}
-                >
-                  {t(m.labelKey)}
-                </button>
-                {open === m.id && (
-                  <div className="app-title-bar-dropdown" role="menu">
-                    {m.content}
-                  </div>
-                )}
-              </div>
-            ))}
-          </>
-        )}
+        ))}
       </div>
-      {!isMac && (
+      {windowChrome && (
         <div className="app-title-bar-controls">
           <button
             type="button"
