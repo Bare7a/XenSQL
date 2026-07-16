@@ -70,6 +70,84 @@ describe('parseSqlStatements', () => {
     const out = parseSqlStatements('SELECT 1');
     expect(out).toEqual([{ text: 'SELECT 1', runLine: 1, start: 0, end: 8 }]);
   });
+
+  it('tracks run lines across many statements (incremental line counting)', () => {
+    const sql = Array.from({ length: 50 }, (_, i) => `SELECT ${i};`).join('\n');
+    const out = parseSqlStatements(sql);
+    expect(out.map((s) => s.runLine)).toEqual(Array.from({ length: 50 }, (_, i) => i + 1));
+  });
+});
+
+describe('parseSqlStatements dialects', () => {
+  it("mysql: backslash-escaped quote ('it\\'s') does not end the string", () => {
+    const sql = String.raw`SELECT 'it\'s a; test'; SELECT 2`;
+    expect(parseSqlStatements(sql, 'mysql')).toHaveLength(2);
+  });
+
+  it('mysql: # starts a line comment', () => {
+    expect(parseSqlStatements('SELECT 1 # ; not a split\n; SELECT 2', 'mysql')).toHaveLength(2);
+    // ...but not for postgres, where # is an operator.
+    expect(parseSqlStatements("SELECT x # y FROM t; SELECT ';'", 'postgres')).toHaveLength(2);
+  });
+
+  it('mysql: $ is an identifier character, not a dollar quote', () => {
+    expect(parseSqlStatements('SELECT a$tag$ FROM t; SELECT b$tag$ FROM u', 'mysql')).toHaveLength(2);
+  });
+
+  it('postgres: block comments nest', () => {
+    const sql = '/* outer /* inner */ ; still comment */ SELECT 1';
+    expect(parseSqlStatements(sql, 'postgres')).toHaveLength(1);
+    expect(parseSqlStatements(sql, 'postgres')[0].text).toContain('SELECT 1');
+  });
+
+  it("postgres: E'...' honors backslash escapes", () => {
+    const sql = String.raw`SELECT E'a\'b; not a split'; SELECT 2`;
+    expect(parseSqlStatements(sql, 'postgres')).toHaveLength(2);
+    expect(parseSqlStatements(sql)).toHaveLength(2); // E-prefix is unambiguous in every dialect
+  });
+
+  it("sqlite/default: backslash is a plain character ('a\\' closes the string)", () => {
+    const sql = String.raw`SELECT 'path\'; SELECT 2`;
+    expect(parseSqlStatements(sql, 'sqlite')).toHaveLength(2);
+  });
+});
+
+describe('mysql DELIMITER support', () => {
+  const proc = [
+    'DELIMITER //',
+    'CREATE PROCEDURE p()',
+    'BEGIN',
+    '  SELECT 1;',
+    '  SELECT 2;',
+    'END//',
+    'DELIMITER ;',
+    'SELECT 3;',
+  ].join('\n');
+
+  it('does not split on ; inside the procedure body and strips the custom terminator', () => {
+    const out = parseSqlStatements(proc, 'mysql');
+    expect(out.map((s) => s.text)).toEqual(['CREATE PROCEDURE p()\nBEGIN\n  SELECT 1;\n  SELECT 2;\nEND', 'SELECT 3;']);
+  });
+
+  it('places run glyphs on the real statements, not the DELIMITER lines', () => {
+    expect(parseSqlStatements(proc, 'mysql').map((s) => s.runLine)).toEqual([2, 8]);
+  });
+
+  it('supports $$ as a custom delimiter', () => {
+    const sql = 'DELIMITER $$\nCREATE TRIGGER t BEFORE INSERT ON x FOR EACH ROW BEGIN SET @a = 1; END$$\nDELIMITER ;';
+    const out = parseSqlStatements(sql, 'mysql');
+    expect(out).toHaveLength(1);
+    expect(out[0].text.endsWith('END')).toBe(true);
+  });
+
+  it('requires DELIMITER at the start of a line', () => {
+    expect(parseSqlStatements('SELECT delimiter FROM t; SELECT 2', 'mysql')).toHaveLength(2);
+  });
+
+  it('does not treat DELIMITER as a client command on other drivers', () => {
+    // Without client delimiters the body semicolons split as usual.
+    expect(parseSqlStatements(proc, 'postgres').length).toBeGreaterThan(2);
+  });
 });
 
 describe('findStatementAtRunLine', () => {

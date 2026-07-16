@@ -59,7 +59,7 @@ func (b *SessionBase) Execute(ctx context.Context, sqlText string) (*QueryResult
 
 func (b *SessionBase) ExecuteStream(ctx context.Context, sqlText string, opts StreamOpts) (*QueryResult, error) {
 	if b.ReadOnly {
-		if err := AssertReadOnlySQL(sqlText); err != nil {
+		if err := AssertReadOnlySQLFor(b.Driver, sqlText); err != nil {
 			return nil, err
 		}
 	}

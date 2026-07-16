@@ -175,7 +175,13 @@ func (a *App) ExecuteQueryStream(connectionID, tabID, sql string) error {
 	if err := a.guardExecute(connectionID, sql); err != nil {
 		return err
 	}
-	a.runBatchStream(tabID, connectionID, database.SplitStatements(sql))
+	// Split with the connection's dialect so boundaries match the editor's run-glyphs
+	// (MySQL # comments, \' escapes and DELIMITER; Postgres nested comments and E'…').
+	s, err := a.sessionFor(connectionID)
+	if err != nil {
+		return err
+	}
+	a.runBatchStream(tabID, connectionID, database.SplitStatements(s.DriverType(), sql))
 	return nil
 }
 
@@ -251,7 +257,7 @@ func (a *App) guardExecute(connectionID, sql string) error {
 		return err
 	}
 	if cfg.ReadOnly {
-		return database.AssertReadOnlySQL(sql)
+		return database.AssertReadOnlySQLFor(cfg.Driver, sql)
 	}
 	return nil
 }

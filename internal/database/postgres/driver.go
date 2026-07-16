@@ -159,15 +159,22 @@ func (s *Session) ListColumns(ctx context.Context, schema, table string) ([]data
 				WHERE con.conrelid = c.oid AND con.contype = 'p'
 				  AND a.attnum = ANY (con.conkey)
 			),
-			EXISTS (
-				SELECT 1 FROM pg_catalog.pg_constraint con
-				WHERE con.conrelid = c.oid AND con.contype = 'f'
-				  AND a.attnum = ANY (con.conkey)
-			)
+			COALESCE(fk.reftable, ''),
+			COALESCE(fk.refcolumn, '')
 		FROM pg_catalog.pg_attribute a
 		JOIN pg_catalog.pg_class c ON a.attrelid = c.oid
 		JOIN pg_catalog.pg_namespace n ON c.relnamespace = n.oid
 		LEFT JOIN pg_catalog.pg_attrdef ad ON a.attrelid = ad.adrelid AND a.attnum = ad.adnum
+		LEFT JOIN LATERAL (
+			SELECT ref.relname AS reftable, refatt.attname AS refcolumn
+			FROM pg_catalog.pg_constraint con
+			JOIN pg_catalog.pg_class ref ON ref.oid = con.confrelid
+			JOIN pg_catalog.pg_attribute refatt ON refatt.attrelid = con.confrelid
+				AND refatt.attnum = con.confkey[array_position(con.conkey, a.attnum)]
+			WHERE con.conrelid = c.oid AND con.contype = 'f'
+			  AND a.attnum = ANY (con.conkey)
+			LIMIT 1
+		) fk ON true
 		WHERE n.nspname = $1 AND c.relname = $2
 		  AND a.attnum > 0 AND NOT a.attisdropped
 		ORDER BY a.attnum`, s.SchemaOr(schema), table)
@@ -178,18 +185,20 @@ func (s *Session) ListColumns(ctx context.Context, schema, table string) ([]data
 	var cols []database.ColumnInfo
 	for rows.Next() {
 		var name, dtype string
-		var nullable, isPK, isFK bool
-		var def string
-		if err := rows.Scan(&name, &dtype, &nullable, &def, &isPK, &isFK); err != nil {
+		var nullable, isPK bool
+		var def, fkTable, fkColumn string
+		if err := rows.Scan(&name, &dtype, &nullable, &def, &isPK, &fkTable, &fkColumn); err != nil {
 			return nil, err
 		}
 		cols = append(cols, database.ColumnInfo{
-			Name:       name,
-			DataType:   dtype,
-			IsNullable: nullable,
-			IsPrimary:  isPK,
-			IsForeign:  isFK,
-			DefaultVal: def,
+			Name:          name,
+			DataType:      dtype,
+			IsNullable:    nullable,
+			IsPrimary:     isPK,
+			IsForeign:     fkTable != "",
+			ForeignTable:  fkTable,
+			ForeignColumn: fkColumn,
+			DefaultVal:    def,
 		})
 	}
 	return cols, rows.Err()

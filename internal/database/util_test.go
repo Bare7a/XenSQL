@@ -186,3 +186,26 @@ func TestNowMsApproxNow(t *testing.T) {
 		t.Errorf("NowMs() = %d not in [%d, %d]", got, before, after)
 	}
 }
+
+func TestBuildSQLIsDeterministic(t *testing.T) {
+	values := map[string]any{"b": 2, "a": 1, "c": 3}
+	q, _, err := BuildInsertSQL(DriverPostgres, "public", "t", values)
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := `INSERT INTO "public"."t" ("a", "b", "c") VALUES ($1, $2, $3)`
+	if q != want {
+		t.Errorf("BuildInsertSQL not deterministic:\n got  %s\n want %s", q, want)
+	}
+	uq, args, err := BuildUpdateSQL(DriverPostgres, "public", "t", values, map[string]any{"id": 9}, []string{"id"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	uwant := `UPDATE "public"."t" SET "a" = $1, "b" = $2, "c" = $3 WHERE "id" = $4`
+	if uq != uwant {
+		t.Errorf("BuildUpdateSQL not deterministic:\n got  %s\n want %s", uq, uwant)
+	}
+	if len(args) != 4 || args[0] != 1 || args[1] != 2 || args[2] != 3 || args[3] != 9 {
+		t.Errorf("args misordered: %#v", args)
+	}
+}

@@ -100,3 +100,23 @@ func TestIsReadOnlySQLPragma(t *testing.T) {
 		}
 	}
 }
+
+func TestIsReadOnlySQLForDriverComments(t *testing.T) {
+	// A MySQL # comment mentioning a write keyword must not block the read.
+	mysqlRead := "SELECT 1 # insert note to self\nFROM t"
+	if !IsReadOnlySQLFor(DriverMySQL, mysqlRead) {
+		t.Errorf("mysql # comment should not block a read: %q", mysqlRead)
+	}
+	// The driver-less classifier stays conservative (blocks it).
+	if IsReadOnlySQL(mysqlRead) {
+		t.Errorf("driver-less classifier should stay conservative for %q", mysqlRead)
+	}
+	// On Postgres # is an operator; stripping to end-of-line would hide the DELETE.
+	pgWrite := "SELECT a # b; DELETE FROM t"
+	if IsReadOnlySQLFor(DriverPostgres, pgWrite) {
+		t.Errorf("postgres # operator must not hide a write: %q", pgWrite)
+	}
+	if IsReadOnlySQLFor(DriverMySQL, "SELECT 1; # note\nDROP TABLE t") {
+		t.Error("a write after a mysql # comment must still be caught")
+	}
+}

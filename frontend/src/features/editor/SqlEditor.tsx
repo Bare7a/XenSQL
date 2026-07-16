@@ -9,7 +9,9 @@ import { useEditorFontSize } from '@/features/editor/hooks/useEditorFontSize';
 import { useJumpToError } from '@/features/editor/hooks/useJumpToError';
 import { useRunGlyphs } from '@/features/editor/hooks/useRunGlyphs';
 import { useSidebarInsert } from '@/features/editor/hooks/useSidebarInsert';
+import { useSqlDiagnostics } from '@/features/editor/hooks/useSqlDiagnostics';
 import { createSqlCompletionProvider } from '@/features/editor/lib/createSqlCompletionProvider';
+import { createSqlHoverProvider } from '@/features/editor/lib/createSqlHoverProvider';
 import { monacoFontOptions } from '@/features/editor/lib/editorFontSize';
 import { getMonacoThemeName, setupMonacoBeforeMount } from '@/features/editor/lib/monacoTheme';
 import { findStatementAtRunLine } from '@/features/editor/lib/sqlStatements';
@@ -170,7 +172,8 @@ export const SqlEditor = memo(function SqlEditor({
     }
   }, []);
 
-  const { updateRunGlyphs, statementsRef } = useRunGlyphs(editorRef, monacoRef, sql, languageRevision);
+  const { updateRunGlyphs, statementsRef } = useRunGlyphs(editorRef, monacoRef, sql, languageRevision, driver);
+  useSqlDiagnostics(editorRef, monacoRef, sql, allTables, schemas, driver);
 
   const { bindEditorActions } = useEditorActions({
     editorRef,
@@ -198,7 +201,7 @@ export const SqlEditor = memo(function SqlEditor({
     if (!monaco || !ed) return;
 
     completionProviderRef.current?.dispose();
-    completionProviderRef.current = monaco.languages.registerCompletionItemProvider(
+    const completion = monaco.languages.registerCompletionItemProvider(
       'sql',
       createSqlCompletionProvider(monaco, ed, () => {
         const {
@@ -211,6 +214,19 @@ export const SqlEditor = memo(function SqlEditor({
         return { schemas: s, allTables: at, tablesBySchema: tbs, onLoadColumns: loadCols, driver: drv };
       }),
     );
+    const hover = monaco.languages.registerHoverProvider(
+      'sql',
+      createSqlHoverProvider(ed, () => {
+        const { schemas: s, allTables: at, onLoadColumns: loadCols, driver: drv } = completionCtxRef.current;
+        return { schemas: s, allTables: at, onLoadColumns: loadCols, driver: drv };
+      }),
+    );
+    completionProviderRef.current = {
+      dispose: () => {
+        completion.dispose();
+        hover.dispose();
+      },
+    };
   }, [isActive]);
 
   const handleEditorMount = (ed: editor.IStandaloneCodeEditor, monaco: Monaco) => {

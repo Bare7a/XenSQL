@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildQualifiedTable, quoteIdent } from '@/features/editor/lib/sqlIdentifiers';
+import { buildQualifiedTable, quoteIdent } from '@/features/editor/lib/sqlQuoting';
 
 describe('quoteIdent', () => {
   it('uses double quotes for postgres and sqlite', () => {

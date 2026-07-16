@@ -4,7 +4,7 @@ import {
   buildCompletionItems,
   completionReplaceRange,
 } from '@/features/editor/lib/sqlCompletion';
-import { clauseBodyStart, isOrderOrGroupContext } from '@/features/editor/lib/sqlCompletionContext';
+import { analyzeSqlCursor } from '@/features/editor/lib/sqlContext';
 import { parseQueryContext } from '@/features/editor/lib/sqlQueryParse';
 import { columnCacheKey, identifierNeedsQuote } from '@/features/editor/lib/sqlQuoting';
 import { currentStatementStart, parseSqlStatements } from '@/features/editor/lib/sqlStatements';
@@ -76,17 +76,20 @@ describe('columns appear right after a clause keyword (no trailing space)', () =
   }
 
   it('also covers HAVING, FROM and UPDATE … SET', () => {
-    expect(clauseBodyStart('SELECT * FROM users GROUP BY x HAVING')).toBe('filter');
-    expect(clauseBodyStart('SELECT * FROM')).toBe('table');
-    expect(clauseBodyStart('SELECT * FROM users JOIN')).toBe('table');
-    expect(clauseBodyStart('UPDATE users SET')).toBe('set');
+    const slot = (sql: string) => analyzeSqlCursor(sql, 'postgres').slot;
+    expect(slot('SELECT * FROM users GROUP BY x HAVING').kind).toBe('filter-start');
+    expect(slot('SELECT * FROM')).toMatchObject({ kind: 'table', leadingSpace: true });
+    expect(slot('SELECT * FROM users JOIN')).toMatchObject({ kind: 'table', leadingSpace: true });
+    expect(slot('UPDATE users SET')).toMatchObject({ kind: 'set-column', leadingSpace: true });
   });
 
   it('does not mistake identifiers ending in a keyword for the keyword', () => {
     // `brand`/`elsewhere`/`person` end in AND/WHERE/ON but are not keywords.
-    expect(clauseBodyStart('SELECT brand')).toBeNull();
-    expect(clauseBodyStart('SELECT elsewhere')).toBeNull();
-    expect(clauseBodyStart('SELECT * FROM person')).toBeNull();
+    const slot = (sql: string) => analyzeSqlCursor(sql, 'postgres').slot;
+    expect(slot('SELECT brand').kind).toBe('general');
+    expect(slot('SELECT elsewhere').kind).toBe('general');
+    // A partial table name after FROM is a prefix filter, never a butted clause keyword.
+    expect(slot('SELECT * FROM person')).toMatchObject({ kind: 'table', prefix: 'person', leadingSpace: false });
   });
 });
 
@@ -122,8 +125,8 @@ describe('ORDER BY / GROUP BY suggest columns', () => {
   });
 
   it('stops once a terminating clause follows the BY list', () => {
-    expect(isOrderOrGroupContext('SELECT * FROM users GROUP BY id HAVING ')).toBe(false);
-    expect(isOrderOrGroupContext('SELECT * FROM users ORDER BY id LIMIT ')).toBe(false);
+    expect(analyzeSqlCursor('SELECT * FROM users GROUP BY id HAVING ', 'postgres').slot.kind).not.toBe('order-group');
+    expect(analyzeSqlCursor('SELECT * FROM users ORDER BY id LIMIT ', 'postgres').slot.kind).toBe('limit');
   });
 });
 
@@ -151,11 +154,17 @@ describe('existing contexts are unchanged', () => {
 
   it('suggests value columns after a comparison operator', () => {
     expect(columnLabels('SELECT * FROM users WHERE id = ')).toEqual(expect.arrayContaining(ALL_COLS));
-    expect(clauseBodyStart('SELECT * FROM users WHERE id =')).toBeNull();
+    expect(analyzeSqlCursor('SELECT * FROM users WHERE id =', 'postgres').slot.kind).toBe('value');
   });
 
   it('suggests columns in UPDATE … SET', () => {
     expect(columnLabels('UPDATE users SET ')).toEqual(expect.arrayContaining(ALL_COLS));
+  });
+
+  it('after a completed SET assignment offers WHERE, and columns again after a comma', () => {
+    expect(columnLabels('UPDATE users SET name = 1 ')).toEqual([]);
+    expect(labelsOf('UPDATE users SET name = 1 ')).toContain('WHERE');
+    expect(columnLabels('UPDATE users SET name = 1, ')).toEqual(expect.arrayContaining(ALL_COLS));
   });
 
   it('resolves dotted alias columns in WHERE', () => {
@@ -537,6 +546,330 @@ describe('CTE names from a leading WITH', () => {
     expect(items).toHaveLength(100); // still capped
     expect(items.map((i) => i.label)).toContain('asd');
     expect(items[0].label).toBe('asd'); // and ranked first (tier 0)
+  });
+});
+
+describe('INSERT INTO column list', () => {
+  it('suggests the target table’s columns inside the paren', () => {
+    expect(columnLabels('INSERT INTO users (')).toEqual(expect.arrayContaining(ALL_COLS));
+    expect(columnLabels('INSERT INTO public.users (')).toEqual(expect.arrayContaining(ALL_COLS));
+  });
+
+  it('filters by the typed prefix and omits already-listed columns', () => {
+    expect(columnLabels('INSERT INTO users (id, em')).toEqual(['email']);
+    expect(columnLabels('INSERT INTO users (id, ')).toEqual(['email', 'name']);
+  });
+
+  it('does not offer columns in the VALUES paren', () => {
+    expect(columnLabels('INSERT INTO users (id) VALUES (')).toEqual([]);
+  });
+
+  it('loads the target table’s columns (bindingsNeedingColumns)', () => {
+    const text = 'INSERT INTO users (';
+    const parsed = parseQueryContext(text, tables, schemas, 'postgres');
+    const needed = bindingsNeedingColumns(text, parsed, { tables, schemas, driver: 'postgres' });
+    expect(needed.map((b) => columnCacheKey(b.schema, b.table))).toEqual(['public.users']);
+  });
+});
+
+describe('no completions inside comments', () => {
+  it('offers nothing while typing a line comment', () => {
+    expect(labelsOf('SELECT * FROM users -- WHERE ')).toEqual([]);
+    expect(labelsOf('SELECT * FROM users -- sel')).toEqual([]);
+  });
+
+  it('offers nothing inside an unterminated block comment', () => {
+    expect(labelsOf('SELECT * FROM users /* WHERE ')).toEqual([]);
+  });
+
+  it('recovers after the comment closes', () => {
+    expect(labelsOf('SELECT * FROM users /* note */ ')).toEqual(expect.arrayContaining(['WHERE', 'JOIN']));
+  });
+
+  it('requests no column loads while in a comment', () => {
+    const text = 'SELECT * FROM users -- WHERE ';
+    const parsed = parseQueryContext(text, tables, schemas, 'postgres');
+    expect(bindingsNeedingColumns(text, parsed, { tables, schemas, driver: 'postgres' })).toEqual([]);
+  });
+});
+
+describe('clause detection ignores comment/string contents', () => {
+  it('a WHERE inside a comment does not create a filter context', () => {
+    expect(columnLabels('SELECT * FROM users /* WHERE */ ')).toEqual([]);
+  });
+
+  it('a quoted string containing = does not create a value context', () => {
+    expect(labelsOf("SELECT * FROM users WHERE note = 'a = b' ")).toEqual(expect.arrayContaining(['AND', 'OR']));
+  });
+});
+
+describe('the 100-item cap keeps the best-ranked matches', () => {
+  it('a prefix match listed last still survives the cap', () => {
+    // 150 substring matches fill the list; the lone prefix match (rank 0) must not be sliced off.
+    const manyTables: TableInfo[] = [
+      ...Array.from({ length: 150 }, (_, i) => ({ schema: 'public', name: `also_tbl_${i}`, type: 'table' })),
+      { schema: 'public', name: 'tbl_exact', type: 'table' },
+    ];
+    const text = 'SELECT * FROM tbl';
+    const ctx: CompletionContext = {
+      schemas,
+      tables: manyTables,
+      columns: [],
+      tablesBySchema: { public: manyTables },
+      columnsByTable: {},
+      driver: 'postgres',
+    };
+    const items = buildCompletionItems({
+      ctx,
+      text,
+      position: text.length,
+      parsed: parseQueryContext(text, manyTables, schemas, 'postgres'),
+    });
+    expect(items).toHaveLength(100);
+    expect(items[0].label).toBe('tbl_exact');
+  });
+});
+
+describe('filter operators are offered per dialect', () => {
+  const whereCol = 'SELECT * FROM users WHERE name ';
+
+  it('offers the negated common operators in WHERE for every driver', () => {
+    for (const driver of ['postgres', 'mysql', 'sqlite'] as const) {
+      expect(labelsOf(whereCol, driver)).toEqual(expect.arrayContaining(['LIKE', 'NOT LIKE', 'NOT IN', 'NOT BETWEEN']));
+    }
+  });
+
+  it('offers ILIKE / NOT ILIKE / SIMILAR TO only on postgres', () => {
+    expect(labelsOf(whereCol, 'postgres')).toEqual(expect.arrayContaining(['ILIKE', 'NOT ILIKE', 'SIMILAR TO']));
+    expect(labelsOf(whereCol, 'mysql')).not.toContain('ILIKE');
+    expect(labelsOf(whereCol, 'sqlite')).not.toContain('ILIKE');
+  });
+
+  it('offers REGEXP / RLIKE only on mysql and GLOB only on sqlite', () => {
+    expect(labelsOf(whereCol, 'mysql')).toEqual(expect.arrayContaining(['REGEXP', 'RLIKE']));
+    expect(labelsOf(whereCol, 'postgres')).not.toContain('REGEXP');
+    expect(labelsOf(whereCol, 'sqlite')).toEqual(expect.arrayContaining(['GLOB']));
+    expect(labelsOf(whereCol, 'postgres')).not.toContain('GLOB');
+    expect(labelsOf(whereCol, 'mysql')).not.toContain('GLOB');
+  });
+
+  it('matches ILIKE while typing it', () => {
+    expect(labelsOf('SELECT * FROM users WHERE name ILI', 'postgres')).toContain('ILIKE');
+    expect(labelsOf('SELECT * FROM users WHERE name NOT L', 'postgres')).toContain('NOT LIKE');
+  });
+
+  it('offers them in ON and HAVING clauses too', () => {
+    expect(labelsOf('SELECT * FROM users u JOIN orders o ON u.id ', 'postgres')).toContain('ILIKE');
+    expect(labelsOf('SELECT * FROM users GROUP BY name HAVING name ', 'postgres')).toContain('ILIKE');
+  });
+
+  it('does not offer them outside a filter clause', () => {
+    expect(labelsOf('SELECT * FROM users ', 'postgres')).not.toContain('ILIKE');
+    expect(labelsOf('SELECT * FROM users ', 'postgres')).not.toContain('NOT LIKE');
+  });
+
+  it('suggests columns after ILIKE, like after LIKE', () => {
+    expect(columnLabels('SELECT * FROM users WHERE name ILIKE ')).toEqual(expect.arrayContaining(ALL_COLS));
+    expect(columnLabels('SELECT * FROM users WHERE name SIMILAR TO ')).toEqual(expect.arrayContaining(ALL_COLS));
+  });
+
+  it('offers IS [NOT] DISTINCT FROM only on postgres and MATCH only on sqlite', () => {
+    expect(labelsOf(whereCol, 'postgres')).toEqual(
+      expect.arrayContaining(['IS DISTINCT FROM', 'IS NOT DISTINCT FROM']),
+    );
+    expect(labelsOf(whereCol, 'mysql')).not.toContain('IS DISTINCT FROM');
+    expect(labelsOf(whereCol, 'sqlite')).not.toContain('IS DISTINCT FROM');
+    expect(labelsOf(whereCol, 'sqlite')).toEqual(expect.arrayContaining(['MATCH']));
+    expect(labelsOf(whereCol, 'postgres')).not.toContain('MATCH');
+    expect(labelsOf(whereCol, 'mysql')).not.toContain('MATCH');
+  });
+});
+
+describe('driver-specific statement keywords', () => {
+  it('gates statement starters per driver', () => {
+    const pg = labelsOf('', 'postgres');
+    expect(pg).toEqual(expect.arrayContaining(['TRUNCATE TABLE', 'VACUUM', 'EXPLAIN']));
+    expect(pg).not.toEqual(expect.arrayContaining(['REPLACE INTO', 'PRAGMA', 'SHOW TABLES']));
+
+    const my = labelsOf('', 'mysql');
+    expect(my).toEqual(expect.arrayContaining(['TRUNCATE TABLE', 'REPLACE INTO', 'SHOW TABLES', 'SHOW DATABASES']));
+    expect(my).not.toEqual(expect.arrayContaining(['PRAGMA', 'VACUUM']));
+
+    const lite = labelsOf('', 'sqlite');
+    expect(lite).toEqual(expect.arrayContaining(['PRAGMA', 'VACUUM', 'REPLACE INTO', 'EXPLAIN']));
+    expect(lite).not.toEqual(expect.arrayContaining(['TRUNCATE TABLE', 'SHOW TABLES']));
+  });
+
+  it('keeps dialect starters out of the middle of a statement', () => {
+    expect(labelsOf('SELECT * FROM users ', 'sqlite')).not.toEqual(expect.arrayContaining(['PRAGMA', 'VACUUM']));
+    expect(labelsOf('SELECT * FROM users ', 'mysql')).not.toContain('SHOW TABLES');
+    expect(labelsOf('SELECT * FROM users ', 'postgres')).not.toContain('EXPLAIN');
+  });
+
+  it('offers FULL JOIN everywhere but mysql, CROSS JOIN everywhere', () => {
+    expect(labelsOf('SELECT * FROM users ', 'postgres')).toEqual(expect.arrayContaining(['FULL JOIN', 'CROSS JOIN']));
+    expect(labelsOf('SELECT * FROM users ', 'sqlite')).toContain('FULL JOIN');
+    expect(labelsOf('SELECT * FROM users ', 'mysql')).not.toContain('FULL JOIN');
+    expect(labelsOf('SELECT * FROM users ', 'mysql')).toContain('CROSS JOIN');
+  });
+
+  it('offers RETURNING for postgres/sqlite writes, never for mysql', () => {
+    for (const sql of ['DELETE FROM users ', 'UPDATE users SET name = 1 ', 'INSERT INTO users (id) VALUES (1) ']) {
+      expect(labelsOf(sql, 'postgres')).toContain('RETURNING');
+      expect(labelsOf(sql, 'sqlite')).toContain('RETURNING');
+      expect(labelsOf(sql, 'mysql')).not.toContain('RETURNING');
+    }
+    expect(labelsOf('SELECT * FROM users ', 'postgres')).not.toContain('RETURNING');
+  });
+
+  it('offers the right upsert clause after INSERT … VALUES', () => {
+    const sql = 'INSERT INTO users (id) VALUES (1) ';
+    expect(labelsOf(sql, 'postgres')).toContain('ON CONFLICT');
+    expect(labelsOf(sql, 'sqlite')).toContain('ON CONFLICT');
+    expect(labelsOf(sql, 'mysql')).toContain('ON DUPLICATE KEY UPDATE');
+    expect(labelsOf(sql, 'mysql')).not.toContain('ON CONFLICT');
+    expect(labelsOf(sql, 'postgres')).not.toContain('ON DUPLICATE KEY UPDATE');
+    // Not before the VALUES/SELECT body exists.
+    expect(labelsOf('INSERT INTO users ', 'postgres')).not.toContain('ON CONFLICT');
+  });
+
+  it('offers DEFAULT as a value except on sqlite', () => {
+    expect(labelsOf('UPDATE users SET name = ', 'postgres')).toContain('DEFAULT');
+    expect(labelsOf('UPDATE users SET name = ', 'mysql')).toContain('DEFAULT');
+    expect(labelsOf('UPDATE users SET name = ', 'sqlite')).not.toContain('DEFAULT');
+  });
+});
+
+describe('IS DISTINCT FROM does not act as a table source', () => {
+  it('suggests columns, not the table list, after the operator', () => {
+    const sql = 'SELECT * FROM users WHERE id IS DISTINCT FROM ';
+    expect(columnLabels(sql)).toEqual(expect.arrayContaining(ALL_COLS));
+    expect(labelsOf(sql)).not.toContain('orders');
+  });
+
+  it('suggests columns right after typing the keyword (no trailing space)', () => {
+    const sql = 'SELECT * FROM users WHERE id IS DISTINCT FROM';
+    expect(columnLabels(sql)).toEqual(expect.arrayContaining(ALL_COLS));
+    expect(insertFor(sql, 'email')).toBe(' email');
+    expect(labelsOf(sql)).not.toContain('orders');
+  });
+
+  it('leaves a real FROM/JOIN table slot untouched', () => {
+    expect(labelsOf('SELECT DISTINCT id FROM ')).toEqual(expect.arrayContaining(['users', 'orders']));
+  });
+});
+
+describe('FK-aware JOIN ON suggestions', () => {
+  const fkTables: TableInfo[] = [
+    { schema: 'public', name: 'users', type: 'table' },
+    { schema: 'public', name: 'orders', type: 'table' },
+  ];
+  const fkCols: Record<string, ColumnInfo[]> = {
+    'public.users': [{ name: 'id', dataType: 'int', isNullable: false, isPrimary: true, isForeign: false }],
+    'public.orders': [
+      { name: 'id', dataType: 'int', isNullable: false, isPrimary: true, isForeign: false },
+      {
+        name: 'user_id',
+        dataType: 'int',
+        isNullable: false,
+        isPrimary: false,
+        isForeign: true,
+        foreignTable: 'users',
+        foreignColumn: 'id',
+      },
+    ],
+  };
+  const fkComplete = (text: string) => {
+    const parsed = parseQueryContext(text, fkTables, schemas, 'postgres');
+    const columnsByTable: Record<string, ColumnInfo[]> = {};
+    for (const ref of bindingsNeedingColumns(text, parsed, { tables: fkTables, schemas, driver: 'postgres' })) {
+      const key = columnCacheKey(ref.schema, ref.table);
+      columnsByTable[key] = fkCols[key] ?? [];
+    }
+    const ctx: CompletionContext = {
+      schemas,
+      tables: fkTables,
+      columns: [],
+      tablesBySchema: { public: fkTables },
+      columnsByTable,
+      driver: 'postgres',
+    };
+    return buildCompletionItems({ ctx, text, position: text.length, parsed });
+  };
+
+  it('offers the FK join condition first, right after ON', () => {
+    const items = fkComplete('SELECT * FROM users JOIN orders ON ');
+    expect(items[0].label).toBe('orders.user_id = users.id');
+    expect(items[0].detail).toBe('foreign key');
+  });
+
+  it('uses aliases in the condition when present', () => {
+    const items = fkComplete('SELECT * FROM users u JOIN orders o ON ');
+    expect(items[0].label).toBe('o.user_id = u.id');
+  });
+
+  it('space-prefixes the condition when the caret butts against ON', () => {
+    const items = fkComplete('SELECT * FROM users JOIN orders ON');
+    expect(items[0].insertText).toBe(' orders.user_id = users.id');
+  });
+
+  it('does not offer join conditions away from ON', () => {
+    const labels = fkComplete('SELECT * FROM users JOIN orders ON orders.user_id = users.id WHERE ').map(
+      (i) => i.label,
+    );
+    expect(labels.some((l) => l.includes('='))).toBe(false);
+  });
+});
+
+describe('CTE and derived-table columns', () => {
+  it('parses CTE projections (explicit list, AS aliases, qualified names)', () => {
+    const parsed = parseQueryContext(
+      'WITH recent AS (SELECT u.id, email AS mail, count(*) AS n FROM users u) SELECT * FROM recent',
+      tables,
+      schemas,
+      'postgres',
+    );
+    expect(parsed.virtualColumns.get('recent')).toEqual(['id', 'mail', 'n']);
+
+    const explicit = parseQueryContext('WITH r (a, b) AS (SELECT 1, 2) SELECT * FROM r', tables, schemas, 'postgres');
+    expect(explicit.virtualColumns.get('r')).toEqual(['a', 'b']);
+  });
+
+  it('completes cte. with the projected columns', () => {
+    const labels = labelsOf('WITH recent AS (SELECT id, email AS mail FROM users) SELECT * FROM recent WHERE recent.');
+    expect(labels).toEqual(['id', 'mail']);
+  });
+
+  it('offers CTE columns unqualified in WHERE once the CTE is referenced', () => {
+    const sql = 'WITH recent AS (SELECT id, email AS mail FROM users) SELECT * FROM recent WHERE ';
+    expect(labelsOf(sql)).toEqual(expect.arrayContaining(['mail']));
+    // Declared but unreferenced CTEs stay out of scope.
+    const unref = 'WITH recent AS (SELECT email AS mail FROM users) SELECT * FROM orders WHERE ';
+    expect(labelsOf(unref)).not.toContain('mail');
+  });
+
+  it('binds a derived-table alias and its projection', () => {
+    const sql = 'SELECT * FROM (SELECT id, name AS label FROM users) sub WHERE sub.';
+    expect(labelsOf(sql)).toEqual(['id', 'label']);
+    const parsed = parseQueryContext(sql, tables, schemas, 'postgres');
+    expect(parsed.virtualColumns.get('sub')).toEqual(['id', 'label']);
+  });
+
+  it('continues the FROM comma list after a derived table', () => {
+    const parsed = parseQueryContext('SELECT * FROM (SELECT 1 AS x) sub, orders WHERE ', tables, schemas, 'postgres');
+    expect(parsed.queryTables.map((t) => t.table)).toContain('orders');
+    expect(parsed.virtualColumns.get('sub')).toEqual(['x']);
+  });
+
+  it('yields no columns for an opaque projection (SELECT *) without crashing', () => {
+    expect(labelsOf('WITH r AS (SELECT * FROM users) SELECT * FROM r WHERE r.')).toEqual([]);
+  });
+
+  it('never asks the backend for a virtual relation’s columns', () => {
+    const sql = 'WITH recent AS (SELECT id FROM users) SELECT * FROM recent WHERE ';
+    const parsed = parseQueryContext(sql, tables, schemas, 'postgres');
+    const needed = bindingsNeedingColumns(sql, parsed, { tables, schemas, driver: 'postgres' });
+    expect(needed.map((b) => b.table)).not.toContain('recent');
   });
 });
 

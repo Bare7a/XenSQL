@@ -16,10 +16,10 @@ import "C"
 
 import "github.com/wailsapp/wails/v3/pkg/application"
 
-// The transparent title bar shows the NSWindow background colour; the window
-// appearance keeps the native title text legible on it.
+// The transparent title bar shows the NSWindow background colour; the title
+// text is hidden so only the traffic lights remain.
 func configureOS(opts *application.WebviewWindowOptions, p colours, dark bool) {
-	opts.Mac.TitleBar = application.MacTitleBar{AppearsTransparent: true}
+	opts.Mac.TitleBar = application.MacTitleBar{AppearsTransparent: true, HideTitle: true}
 	opts.Mac.Appearance = application.NSAppearanceNameAqua
 	if dark {
 		opts.Mac.Appearance = application.NSAppearanceNameDarkAqua

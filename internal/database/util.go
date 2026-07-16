@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"regexp"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -20,7 +21,7 @@ var returningRe = regexp.MustCompile(`(?i)\bRETURNING\b`)
 
 // Mask comments/strings first so a literal like VALUES('RETURNING') doesn't misroute a write.
 func hasReturningClause(upper string) bool {
-	return returningRe.MatchString(maskStringLiterals(stripSQLComments(upper)))
+	return returningRe.MatchString(maskStringLiterals(stripSQLComments(upper, false)))
 }
 
 // ScanRows collects every row into a single QueryResult. Honours ctx cancellation so a UI Cancel
@@ -279,9 +280,9 @@ func BuildUpdateSQL(driver DriverType, schema, table string, changes, pkValues m
 	sets := make([]string, 0, len(changes))
 	args := make([]any, 0, len(changes)+len(pkCols))
 	idx := 1
-	for col, val := range changes {
+	for _, col := range sortedKeys(changes) {
 		sets = append(sets, fmt.Sprintf("%s = %s", QuoteIdent(driver, col), Placeholder(driver, idx)))
-		args = append(args, val)
+		args = append(args, changes[col])
 		idx++
 	}
 	where := make([]string, 0, len(pkCols))
@@ -311,6 +312,17 @@ func BuildDeleteSQL(driver DriverType, schema, table string, pkCols []string, pk
 		tableRef(driver, schema, table),
 		strings.Join(where, " AND "))
 	return q, args, nil
+}
+
+// sortedKeys makes generated SQL deterministic: map iteration order is random per run, which
+// defeats server-side prepared-statement caches and makes logs/tests unstable.
+func sortedKeys(m map[string]any) []string {
+	keys := make([]string, 0, len(m))
+	for k := range m {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	return keys
 }
 
 // requirePKValues ensures every primary-key column has a value, so a WHERE clause can never
@@ -346,10 +358,10 @@ func BuildInsertSQL(driver DriverType, schema, table string, values map[string]a
 	placeholders := make([]string, 0, len(values))
 	args := make([]any, 0, len(values))
 	idx := 1
-	for col, val := range values {
+	for _, col := range sortedKeys(values) {
 		cols = append(cols, QuoteIdent(driver, col))
 		placeholders = append(placeholders, Placeholder(driver, idx))
-		args = append(args, val)
+		args = append(args, values[col])
 		idx++
 	}
 	q := fmt.Sprintf("INSERT INTO %s (%s) VALUES (%s)",

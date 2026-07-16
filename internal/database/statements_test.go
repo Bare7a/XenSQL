@@ -44,9 +44,84 @@ func TestSplitStatements(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := SplitStatements(tt.in)
+			got := SplitStatements("", tt.in)
 			if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("SplitStatements(%q)\n  got  %#v\n  want %#v", tt.in, got, tt.want)
+			}
+		})
+	}
+}
+
+// Mirrors the frontend dialect tests (sqlStatements.test.ts); the two scanners must agree on
+// statement boundaries.
+func TestSplitStatementsDialects(t *testing.T) {
+	tests := []struct {
+		name   string
+		driver DriverType
+		in     string
+		want   []string
+	}{
+		{
+			"mysql: backslash-escaped quote does not end the string",
+			DriverMySQL,
+			`SELECT 'it\'s a; test'; SELECT 2`,
+			[]string{`SELECT 'it\'s a; test'`, "SELECT 2"},
+		},
+		{
+			"mysql: # starts a line comment",
+			DriverMySQL,
+			"SELECT 1 # ; not a split\n; SELECT 2",
+			[]string{"SELECT 1 # ; not a split", "SELECT 2"},
+		},
+		{
+			"mysql: $ is an identifier character, not a dollar quote",
+			DriverMySQL,
+			"SELECT a$tag$ FROM t; SELECT b$tag$ FROM u",
+			[]string{"SELECT a$tag$ FROM t", "SELECT b$tag$ FROM u"},
+		},
+		{
+			"mysql: comment-only # chunk is dropped",
+			DriverMySQL,
+			"# just a note\nSELECT 1;",
+			[]string{"# just a note\nSELECT 1"},
+		},
+		{
+			"postgres: block comments nest",
+			DriverPostgres,
+			"/* outer /* inner */ ; still comment */ SELECT 1",
+			[]string{"/* outer /* inner */ ; still comment */ SELECT 1"},
+		},
+		{
+			"postgres: E'…' honours backslash escapes",
+			DriverPostgres,
+			`SELECT E'a\'b; not a split'; SELECT 2`,
+			[]string{`SELECT E'a\'b; not a split'`, "SELECT 2"},
+		},
+		{
+			"sqlite: backslash is a plain character",
+			DriverSQLite,
+			`SELECT 'path\'; SELECT 2`,
+			[]string{`SELECT 'path\'`, "SELECT 2"},
+		},
+		{
+			"mysql: DELIMITER keeps procedure bodies whole and strips the terminator",
+			DriverMySQL,
+			"DELIMITER //\nCREATE PROCEDURE p()\nBEGIN\n  SELECT 1;\n  SELECT 2;\nEND//\nDELIMITER ;\nSELECT 3;",
+			[]string{"CREATE PROCEDURE p()\nBEGIN\n  SELECT 1;\n  SELECT 2;\nEND", "SELECT 3"},
+		},
+		{
+			"mysql: DELIMITER only counts at the start of a line",
+			DriverMySQL,
+			"SELECT delimiter FROM t; SELECT 2",
+			[]string{"SELECT delimiter FROM t", "SELECT 2"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := SplitStatements(tt.driver, tt.in)
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("SplitStatements(%s, %q)\n  got  %#v\n  want %#v", tt.driver, tt.in, got, tt.want)
 			}
 		})
 	}

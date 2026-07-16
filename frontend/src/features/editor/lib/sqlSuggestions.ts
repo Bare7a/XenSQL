@@ -1,4 +1,4 @@
-import { type ClauseBodyKind, isValueContext } from '@/features/editor/lib/sqlCompletionContext';
+import type { StatementShape } from '@/features/editor/lib/sqlContext';
 import type { QueryTableRef, TableBinding } from '@/features/editor/lib/sqlQueryParse';
 import { columnCacheKey, formatSqlIdentifier } from '@/features/editor/lib/sqlQuoting';
 import type { ColumnInfo, DriverType, SchemaInfo, TableInfo } from '@/types';
@@ -23,123 +23,114 @@ export interface CompletionItem {
   sortText?: string; // lower lex = higher in list
 }
 
-const SQL_KEYWORDS = [
-  'SELECT',
-  'FROM',
-  'WHERE',
-  'JOIN',
-  'LEFT JOIN',
-  'RIGHT JOIN',
-  'INNER JOIN',
-  'ON',
-  'GROUP BY',
-  'ORDER BY',
-  'HAVING',
-  'LIMIT',
-  'OFFSET',
-  'INSERT INTO',
-  'VALUES',
-  'UPDATE',
-  'SET',
-  'DELETE',
-  'CREATE TABLE',
-  'ALTER TABLE',
-  'DROP TABLE',
-  'AND',
-  'OR',
-  'NOT',
-  'IN',
-  'LIKE',
-  'BETWEEN',
-  'IS NULL',
-  'IS NOT NULL',
-  'AS',
-  'DISTINCT',
-  'CASE',
-  'WHEN',
-  'THEN',
-  'ELSE',
-  'END',
-  'UNION',
-  'UNION ALL',
-  'EXISTS',
-  'CAST',
-  'ASC',
-  'DESC',
-  'NULL',
+// One rule per keyword: where it parses (gate over the statement shape), which engines have it,
+// and whether it survives inside a WHERE clause (operators and clause tails do; SELECT-list
+// keywords don't).
+interface KeywordRule {
+  kw: string;
+  drivers?: readonly DriverType[];
+  whereOk?: boolean;
+  gate?: (s: StatementShape) => boolean;
+}
+
+const atStart = (s: StatementShape) => s.atStatementStart;
+const joinable = (s: StatementShape) => s.joinable;
+const inFilterClause = (s: StatementShape) => s.inFilterClause;
+
+const KEYWORD_RULES: readonly KeywordRule[] = [
+  // Statement starters.
+  { kw: 'SELECT', gate: atStart },
+  { kw: 'INSERT INTO', gate: atStart },
+  { kw: 'UPDATE', gate: atStart },
+  { kw: 'DELETE', gate: atStart },
+  { kw: 'CREATE TABLE', gate: atStart },
+  { kw: 'ALTER TABLE', gate: atStart },
+  { kw: 'DROP TABLE', gate: atStart },
+  { kw: 'EXPLAIN', gate: atStart },
+  { kw: 'TRUNCATE TABLE', drivers: ['postgres', 'mysql'], gate: atStart },
+  { kw: 'REPLACE INTO', drivers: ['mysql', 'sqlite'], gate: atStart },
+  { kw: 'VACUUM', drivers: ['postgres', 'sqlite'], gate: atStart },
+  { kw: 'PRAGMA', drivers: ['sqlite'], gate: atStart },
+  { kw: 'SHOW TABLES', drivers: ['mysql'], gate: atStart },
+  { kw: 'SHOW DATABASES', drivers: ['mysql'], gate: atStart },
+
+  // Clause structure.
+  { kw: 'FROM', gate: (s) => !s.hasFrom },
+  { kw: 'WHERE', gate: (s) => !s.inWhere },
+  { kw: 'JOIN', gate: joinable },
+  { kw: 'LEFT JOIN', gate: joinable },
+  { kw: 'RIGHT JOIN', gate: joinable },
+  { kw: 'INNER JOIN', gate: joinable },
+  { kw: 'CROSS JOIN', gate: joinable },
+  { kw: 'FULL JOIN', drivers: ['postgres', 'sqlite'], gate: joinable },
+  { kw: 'ON', gate: (s) => s.hasJoin },
+  { kw: 'GROUP BY', whereOk: true, gate: (s) => s.hasFrom && !s.groupBySeen },
+  { kw: 'ORDER BY', whereOk: true, gate: (s) => s.hasFrom && !s.orderBySeen },
+  { kw: 'HAVING', gate: (s) => s.groupBySeen },
+  { kw: 'LIMIT', whereOk: true },
+  { kw: 'OFFSET', whereOk: true },
+  { kw: 'VALUES', gate: (s) => s.hasInsert },
+  { kw: 'SET', gate: (s) => s.hasUpdate },
+  { kw: 'UNION' },
+  { kw: 'UNION ALL' },
+
+  // Expression keywords.
+  { kw: 'AND', whereOk: true },
+  { kw: 'OR', whereOk: true },
+  { kw: 'NOT', whereOk: true },
+  { kw: 'IN', whereOk: true },
+  { kw: 'LIKE', whereOk: true },
+  { kw: 'BETWEEN', whereOk: true },
+  { kw: 'IS NULL', whereOk: true },
+  { kw: 'IS NOT NULL', whereOk: true },
+  { kw: 'EXISTS', whereOk: true },
+  { kw: 'NULL', whereOk: true },
+  { kw: 'AS' },
+  { kw: 'DISTINCT' },
+  { kw: 'CAST' },
+  { kw: 'CASE' },
+  { kw: 'WHEN', gate: (s) => s.hasCase },
+  { kw: 'THEN', gate: (s) => s.hasCase },
+  { kw: 'ELSE', gate: (s) => s.hasCase },
+  { kw: 'END', gate: (s) => s.hasCase },
+
+  // Filter/pattern operators; the dialect ones only exist (or only behave sanely) on their engine.
+  { kw: 'NOT LIKE', whereOk: true, gate: inFilterClause },
+  { kw: 'NOT IN', whereOk: true, gate: inFilterClause },
+  { kw: 'NOT BETWEEN', whereOk: true, gate: inFilterClause },
+  { kw: 'ILIKE', drivers: ['postgres'], whereOk: true, gate: inFilterClause },
+  { kw: 'NOT ILIKE', drivers: ['postgres'], whereOk: true, gate: inFilterClause },
+  { kw: 'SIMILAR TO', drivers: ['postgres'], whereOk: true, gate: inFilterClause },
+  { kw: 'IS DISTINCT FROM', drivers: ['postgres'], whereOk: true, gate: inFilterClause },
+  { kw: 'IS NOT DISTINCT FROM', drivers: ['postgres'], whereOk: true, gate: inFilterClause },
+  { kw: 'REGEXP', drivers: ['mysql'], whereOk: true, gate: inFilterClause },
+  { kw: 'RLIKE', drivers: ['mysql'], whereOk: true, gate: inFilterClause },
+  { kw: 'GLOB', drivers: ['sqlite'], whereOk: true, gate: inFilterClause },
+  { kw: 'MATCH', drivers: ['sqlite'], whereOk: true, gate: inFilterClause },
+
+  // Write-statement tails.
+  { kw: 'RETURNING', drivers: ['postgres', 'sqlite'], whereOk: true, gate: (s) => s.returningSlot },
+  { kw: 'ON CONFLICT', drivers: ['postgres', 'sqlite'], whereOk: true, gate: (s) => s.insertBody },
+  { kw: 'ON DUPLICATE KEY UPDATE', drivers: ['mysql'], whereOk: true, gate: (s) => s.insertBody },
 ];
 
-const JOIN_KEYWORDS = new Set([
-  'JOIN',
-  'LEFT JOIN',
-  'RIGHT JOIN',
-  'INNER JOIN',
-  'FULL JOIN',
-  'CROSS JOIN',
-  'OUTER JOIN',
-]);
-
-const ORDER_KEYWORDS = new Set(['ASC', 'DESC', 'ORDER BY']);
-
-const VALUE_LITERALS = ['NULL', 'TRUE', 'FALSE', 'DEFAULT'];
-
-// Keywords that can only begin a statement - offered just at the statement start, never mid-query.
-const STATEMENT_STARTERS = new Set([
-  'SELECT',
-  'INSERT INTO',
-  'UPDATE',
-  'DELETE',
-  'CREATE TABLE',
-  'ALTER TABLE',
-  'DROP TABLE',
-]);
-
-export function keywordsForContext(before: string): string[] {
-  const afterOrderBy = /\bORDER\s+BY\s+[^;]*$/i.test(before);
-  const afterGroupBy = /\bGROUP\s+BY\s+[^;]*$/i.test(before);
-  const inWhere = /\bWHERE\b/i.test(before);
-  const hasFrom = /\bFROM\b/i.test(before);
-  const inSelectList = /\bSELECT\s+[^;]*$/i.test(before) && !hasFrom;
-  // Only an optional leading word remains → we're at the very start of the statement.
-  const atStatementStart = /^\s*[\w]*$/.test(before);
-
-  let allowed = SQL_KEYWORDS.filter((kw) => {
-    if (ORDER_KEYWORDS.has(kw) && !afterOrderBy) return false;
-    if (kw === 'GROUP BY' || kw === 'HAVING') {
-      if (!afterGroupBy && !inSelectList) return false;
-    }
-    if (JOIN_KEYWORDS.has(kw)) {
-      if (!hasFrom || inWhere || isValueContext(before)) return false;
-    }
-    if (kw === 'FROM' && hasFrom) return false;
-    if (kw === 'WHERE' && inWhere) return false;
-    // Clause keywords that only belong with their statement/construct.
-    if (STATEMENT_STARTERS.has(kw) && !atStatementStart) return false;
-    if (kw === 'ON' && !/\bJOIN\b/i.test(before)) return false;
-    if (kw === 'VALUES' && !/\bINSERT\b/i.test(before)) return false;
-    if (kw === 'SET' && !/\bUPDATE\b/i.test(before)) return false;
-    if ((kw === 'WHEN' || kw === 'THEN' || kw === 'ELSE' || kw === 'END') && !/\bCASE\b/i.test(before)) {
-      return false;
-    }
-    return true;
-  });
-
-  if (inWhere && !isValueContext(before)) {
-    const whereOps = new Set(['AND', 'OR', 'NOT', 'IN', 'LIKE', 'BETWEEN', 'IS NULL', 'IS NOT NULL', 'EXISTS', 'NULL']);
-    allowed = allowed.filter((kw) => whereOps.has(kw) || kw.startsWith('IS '));
+export function keywordsForShape(shape: StatementShape, driver?: DriverType): string[] {
+  const out: string[] = [];
+  for (const r of KEYWORD_RULES) {
+    if (r.drivers && (!driver || !r.drivers.includes(driver))) continue;
+    if (shape.inWhere && !r.whereOk) continue;
+    if (r.gate && !r.gate(shape)) continue;
+    out.push(r.kw);
   }
-
-  return allowed;
+  return out;
 }
 
 // -1 = no match, 0 = starts-with, 1 = substring. Strips leading quote from partial quoted identifier before matching.
 export function matchScore(label: string, lcPrefix: string): number {
   if (!lcPrefix) return 0;
   let needle = lcPrefix;
-  if (needle.length > 0) {
-    const first = needle[0];
-    if (first === '"' || first === "'" || first === '`') needle = needle.slice(1);
-  }
+  const first = needle[0];
+  if (first === '"' || first === "'" || first === '`') needle = needle.slice(1);
   if (!needle) return 0;
   const lc = label.toLowerCase();
   if (lc.startsWith(needle)) return 0;
@@ -162,8 +153,63 @@ export function columnDetail(c: ColumnInfo): string {
   return c.dataType;
 }
 
-// CTE names declared in a leading WITH clause, offered like tables in the FROM/JOIN slot. (We
-// don't know a CTE's columns without parsing its body, so only the name is suggested.)
+export function keywordItem(kw: string, lcPrefix: string): CompletionItem | null {
+  const score = matchScore(kw, lcPrefix);
+  if (score < 0) return null;
+  return { label: kw, kind: 'keyword', insertText: kw, sortText: rank(4, score, kw) };
+}
+
+function pushColumnItems(
+  items: CompletionItem[],
+  cols: ColumnInfo[],
+  tier: 0 | 1,
+  lcPrefix: string,
+  driver: DriverType,
+  seen?: Set<string>,
+): void {
+  for (const c of cols) {
+    const key = c.name.toLowerCase();
+    if (seen?.has(key)) continue;
+    const score = matchScore(c.name, lcPrefix);
+    if (score < 0) continue;
+    seen?.add(key);
+    items.push({
+      label: c.name,
+      kind: 'field',
+      detail: columnDetail(c),
+      insertText: formatSqlIdentifier(c.name, driver),
+      sortText: rank(tier, score, c.name),
+    });
+  }
+}
+
+// Projected columns of a CTE or derived-table alias - names only, no schema types to show.
+export function suggestVirtualColumns(
+  names: string[],
+  lcPrefix: string,
+  driver: DriverType,
+  detail: string,
+): CompletionItem[] {
+  const items: CompletionItem[] = [];
+  const seen = new Set<string>();
+  for (const name of names) {
+    const key = name.toLowerCase();
+    if (seen.has(key)) continue;
+    const score = matchScore(name, lcPrefix);
+    if (score < 0) continue;
+    seen.add(key);
+    items.push({
+      label: name,
+      kind: 'field',
+      detail,
+      insertText: formatSqlIdentifier(name, driver),
+      sortText: rank(0, score, name),
+    });
+  }
+  return items;
+}
+
+// CTE names declared in a leading WITH clause, offered like tables in the FROM/JOIN slot.
 export function suggestCteItems(ctes: string[], lcPrefix: string, driver: DriverType): CompletionItem[] {
   const items: CompletionItem[] = [];
   const seen = new Set<string>();
@@ -179,8 +225,7 @@ export function suggestCteItems(ctes: string[], lcPrefix: string, driver: Driver
       detail: 'CTE',
       insertText: formatSqlIdentifier(name, driver),
       filterText: formatSqlIdentifier(name, driver),
-      // Tier 0 (query-local): ranks above the table list; callers also list CTEs first so they
-      // survive buildCompletionItems' 100-item slice.
+      // Tier 0 (query-local): ranks above the table list so it survives the 100-item cap.
       sortText: rank(0, score, name),
     });
   }
@@ -289,24 +334,13 @@ export function suggestColumnsFromBindings(
     const tk = columnCacheKey(binding.schema, binding.table);
     if (seenTables.has(tk)) continue;
     seenTables.add(tk);
-    for (const c of ctx.columnsByTable[tk] || []) {
-      const key = c.name.toLowerCase();
-      if (seen.has(key)) continue;
-      const score = matchScore(c.name, lcPrefix);
-      if (score < 0) continue;
-      seen.add(key);
-      items.push({
-        label: c.name,
-        kind: 'field',
-        detail: columnDetail(c),
-        insertText: formatSqlIdentifier(c.name, ctx.driver),
-        sortText: rank(0, score, c.name),
-      });
-    }
+    pushColumnItems(items, ctx.columnsByTable[tk] || [], 0, lcPrefix, ctx.driver, seen);
   }
 
   return items;
 }
+
+const VALUE_LITERALS = ['NULL', 'TRUE', 'FALSE', 'DEFAULT'];
 
 export function suggestValueItems(
   ctx: CompletionContext,
@@ -322,32 +356,23 @@ export function suggestValueItems(
   items.push(...suggestQueryTableRefs(ctx, queryTables, lcPrefix));
 
   for (const lit of VALUE_LITERALS) {
-    const score = matchScore(lit, lcPrefix);
-    if (score < 0) continue;
-    items.push({ label: lit, kind: 'keyword', insertText: lit, sortText: rank(4, score, lit) });
+    // SQLite has no DEFAULT expression (`SET x = DEFAULT` doesn't parse there).
+    if (lit === 'DEFAULT' && ctx.driver === 'sqlite') continue;
+    const item = keywordItem(lit, lcPrefix);
+    if (item) items.push(item);
   }
-
-  const addColumns = (cols: ColumnInfo[], tier: 0 | 1) => {
-    for (const c of cols) {
-      const key = c.name.toLowerCase();
-      if (seenCols.has(key)) continue;
-      const score = matchScore(c.name, lcPrefix);
-      if (score < 0) continue;
-      seenCols.add(key);
-      items.push({
-        label: c.name,
-        kind: 'field',
-        detail: columnDetail(c),
-        insertText: formatSqlIdentifier(c.name, ctx.driver),
-        sortText: rank(tier, score, c.name),
-      });
-    }
-  };
 
   for (const binding of bindings.values()) {
-    addColumns(ctx.columnsByTable[columnCacheKey(binding.schema, binding.table)] || [], 0);
+    pushColumnItems(
+      items,
+      ctx.columnsByTable[columnCacheKey(binding.schema, binding.table)] || [],
+      0,
+      lcPrefix,
+      ctx.driver,
+      seenCols,
+    );
   }
-  addColumns(ctx.columns, 1);
+  pushColumnItems(items, ctx.columns, 1, lcPrefix, ctx.driver, seenCols);
 
   return items;
 }
@@ -358,58 +383,12 @@ export function suggestColumnsForTable(
   lcPrefix: string,
 ): CompletionItem[] {
   const key = columnCacheKey(binding.schema, binding.table);
-  const cols = ctx.columnsByTable[key] || ctx.columns;
   const items: CompletionItem[] = [];
-  for (const c of cols) {
-    const score = matchScore(c.name, lcPrefix);
-    if (score < 0) continue;
-    items.push({
-      label: c.name,
-      kind: 'field',
-      detail: columnDetail(c),
-      insertText: formatSqlIdentifier(c.name, ctx.driver),
-      sortText: rank(0, score, c.name),
-    });
-  }
+  pushColumnItems(items, ctx.columnsByTable[key] || ctx.columns, 0, lcPrefix, ctx.driver);
   return items;
 }
 
-// In the LIMIT/OFFSET tail the only sensible completion is OFFSET - and only once LIMIT already
-// has a value and OFFSET isn't present yet. Otherwise (typing the number, or after OFFSET) nothing.
-export function suggestLimitOffset(before: string, lcPrefix: string): CompletionItem[] {
-  if (!/\bLIMIT\b\s+(?:\d+|ALL\b)/i.test(before)) return [];
-  if (/\bOFFSET\b/i.test(before)) return [];
-  const score = matchScore('OFFSET', lcPrefix);
-  if (score < 0) return [];
-  return [{ label: 'OFFSET', kind: 'keyword', insertText: 'OFFSET', sortText: rank(4, score, 'OFFSET') }];
-}
-
-// clauseBodyStart caret butts against the keyword; without a space `email` inserts as `WHEREemail`.
-function withLeadingSpace(items: CompletionItem[]): CompletionItem[] {
+// Clause-start caret butts against the keyword; without a space `email` inserts as `WHEREemail`.
+export function withLeadingSpace(items: CompletionItem[]): CompletionItem[] {
   return items.map((item) => ({ ...item, insertText: ` ${item.insertText}` }));
-}
-
-export function suggestClauseBody(
-  ctx: CompletionContext,
-  kind: ClauseBodyKind,
-  queryTables: QueryTableRef[],
-  bindings: Map<string, TableBinding>,
-  ctes: string[] = [],
-): CompletionItem[] {
-  if (kind === 'table') {
-    // CTEs first so they aren't dropped by the 100-item slice when the schema has many tables.
-    return withLeadingSpace([
-      ...suggestCteItems(ctes, '', ctx.driver),
-      ...suggestTables(ctx, ''),
-      ...suggestSchemas(ctx, ''),
-    ]);
-  }
-  if (kind === 'set') {
-    return withLeadingSpace(suggestColumnsFromBindings(ctx, bindings, ''));
-  }
-
-  return withLeadingSpace([
-    ...suggestQueryTableRefs(ctx, queryTables, ''),
-    ...suggestColumnsFromBindings(ctx, bindings, ''),
-  ]);
 }

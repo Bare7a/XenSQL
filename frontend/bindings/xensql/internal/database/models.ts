@@ -11,6 +11,8 @@ export class ColumnInfo {
     "isNullable": boolean;
     "isPrimary": boolean;
     "isForeign": boolean;
+    "foreignTable"?: string;
+    "foreignColumn"?: string;
     "defaultVal"?: string;
 
     /** Creates a new ColumnInfo instance. */

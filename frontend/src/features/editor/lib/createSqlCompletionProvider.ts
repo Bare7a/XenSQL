@@ -67,7 +67,7 @@ export function createSqlCompletionProvider(
       const offset = model.getOffsetAt(position);
       // Scope to the current statement so clause context and table bindings don't leak across `;`.
       const { start: statementStart, end: statementEnd } = currentStatementRange(
-        parseSqlStatements(text),
+        parseSqlStatements(text, driver),
         offset,
         text.length,
       );
@@ -76,16 +76,11 @@ export function createSqlCompletionProvider(
       // Parse only the current statement; loadCols is cached per connection.
       const parsed = parseQueryContext(text.slice(statementStart, statementEnd), allTables, schemas, driver);
       const columnsByTable: Record<string, ColumnInfo[]> = {};
-      for (const ref of bindingsNeedingColumns(textBefore, parsed, {
-        tables: allTables,
-        schemas,
-        driver,
-      })) {
-        const key = columnCacheKey(ref.schema, ref.table);
-        if (!columnsByTable[key]) {
-          columnsByTable[key] = await loadCols(ref.schema, ref.table);
-        }
-      }
+      await Promise.all(
+        bindingsNeedingColumns(textBefore, parsed, { tables: allTables, schemas, driver }).map(async (ref) => {
+          columnsByTable[columnCacheKey(ref.schema, ref.table)] = await loadCols(ref.schema, ref.table);
+        }),
+      );
 
       const ctx: CompletionContext = {
         schemas,
@@ -98,10 +93,12 @@ export function createSqlCompletionProvider(
 
       const word = model.getWordUntilPosition(position);
       const items = buildCompletionItems({ ctx, text, position: offset, parsed, statementStart });
-      const range = completionReplaceRange(position, textBefore, {
-        startColumn: word.startColumn,
-        endColumn: word.endColumn,
-      });
+      const range = completionReplaceRange(
+        position,
+        textBefore,
+        { startColumn: word.startColumn, endColumn: word.endColumn },
+        driver,
+      );
       return {
         suggestions: items.map((item) => toMonacoCompletion(item, monaco, range)),
       };

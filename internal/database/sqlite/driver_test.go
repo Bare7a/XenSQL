@@ -89,6 +89,9 @@ func TestListColumnsMarksForeignKeys(t *testing.T) {
 	if fk, ok := byName["author_id"]; !ok || !fk.IsForeign {
 		t.Fatalf("author_id should be marked foreign, got %+v", byName["author_id"])
 	}
+	if fk := byName["author_id"]; fk.ForeignTable != "authors" || fk.ForeignColumn != "id" {
+		t.Errorf("author_id should reference authors(id), got %+v", fk)
+	}
 	if byName["author_id"].IsPrimary {
 		t.Errorf("author_id should not be marked primary, got %+v", byName["author_id"])
 	}

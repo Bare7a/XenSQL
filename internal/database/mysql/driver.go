@@ -150,13 +150,22 @@ func (s *Session) ListTables(ctx context.Context, schema string) ([]database.Tab
 func (s *Session) ListColumns(ctx context.Context, schema, table string) ([]database.ColumnInfo, error) {
 	rows, err := s.DB.QueryContext(ctx, `
 		SELECT c.COLUMN_NAME, c.DATA_TYPE, c.IS_NULLABLE, COALESCE(c.COLUMN_DEFAULT, ''), c.COLUMN_KEY,
-			EXISTS (
-				SELECT 1 FROM information_schema.KEY_COLUMN_USAGE k
+			COALESCE((
+				SELECT k.REFERENCED_TABLE_NAME FROM information_schema.KEY_COLUMN_USAGE k
 				WHERE k.TABLE_SCHEMA = c.TABLE_SCHEMA
 				  AND k.TABLE_NAME = c.TABLE_NAME
 				  AND k.COLUMN_NAME = c.COLUMN_NAME
 				  AND k.REFERENCED_TABLE_NAME IS NOT NULL
-			)
+				LIMIT 1
+			), ''),
+			COALESCE((
+				SELECT k.REFERENCED_COLUMN_NAME FROM information_schema.KEY_COLUMN_USAGE k
+				WHERE k.TABLE_SCHEMA = c.TABLE_SCHEMA
+				  AND k.TABLE_NAME = c.TABLE_NAME
+				  AND k.COLUMN_NAME = c.COLUMN_NAME
+				  AND k.REFERENCED_TABLE_NAME IS NOT NULL
+				LIMIT 1
+			), '')
 		FROM information_schema.COLUMNS c
 		WHERE c.TABLE_SCHEMA = ? AND c.TABLE_NAME = ?
 		ORDER BY c.ORDINAL_POSITION`, s.SchemaOr(schema), table)
@@ -166,18 +175,19 @@ func (s *Session) ListColumns(ctx context.Context, schema, table string) ([]data
 	defer rows.Close()
 	var cols []database.ColumnInfo
 	for rows.Next() {
-		var name, dtype, nullable, def, colKey string
-		var fk int
-		if err := rows.Scan(&name, &dtype, &nullable, &def, &colKey, &fk); err != nil {
+		var name, dtype, nullable, def, colKey, fkTable, fkColumn string
+		if err := rows.Scan(&name, &dtype, &nullable, &def, &colKey, &fkTable, &fkColumn); err != nil {
 			return nil, err
 		}
 		cols = append(cols, database.ColumnInfo{
-			Name:       name,
-			DataType:   dtype,
-			IsNullable: strings.EqualFold(nullable, "YES"),
-			IsPrimary:  colKey == "PRI",
-			IsForeign:  fk != 0,
-			DefaultVal: def,
+			Name:          name,
+			DataType:      dtype,
+			IsNullable:    strings.EqualFold(nullable, "YES"),
+			IsPrimary:     colKey == "PRI",
+			IsForeign:     fkTable != "",
+			ForeignTable:  fkTable,
+			ForeignColumn: fkColumn,
+			DefaultVal:    def,
 		})
 	}
 	return cols, rows.Err()

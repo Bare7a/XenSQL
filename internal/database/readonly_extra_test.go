@@ -124,7 +124,7 @@ func TestSplitSQLStatementsHandlesQuotes(t *testing.T) {
 
 func TestStripSQLCommentsKeepsStrings(t *testing.T) {
 	in := `SELECT '-- not a comment', 1 -- real comment` + "\nFROM t"
-	out := stripSQLComments(in)
+	out := stripSQLComments(in, false)
 	if !contains(out, `'-- not a comment'`) {
 		t.Fatalf("string contents should survive, got %q", out)
 	}
