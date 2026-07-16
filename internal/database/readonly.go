@@ -65,7 +65,12 @@ var deniedFirstKeywords = map[string]bool{
 }
 
 func AssertReadOnlySQL(sql string) error {
-	if IsReadOnlySQL(sql) {
+	return AssertReadOnlySQLFor("", sql)
+}
+
+// AssertReadOnlySQLFor classifies with the driver's comment syntax (a MySQL # comment must not block a read).
+func AssertReadOnlySQLFor(driver DriverType, sql string) error {
+	if IsReadOnlySQLFor(driver, sql) {
 		return nil
 	}
 	return ErrReadOnly
@@ -99,7 +104,13 @@ func ValidateTableFilter(filter string) error {
 // Backslash treated as literal - safe for Postgres (standard_conforming_strings) and SQLite;
 // MySQL `\'` only ever exposes more content to the scanner, never less.
 func IsReadOnlySQL(sql string) bool {
-	cleaned := maskStringLiterals(stripSQLComments(sql))
+	return IsReadOnlySQLFor("", sql)
+}
+
+// IsReadOnlySQLFor strips # comments only for MySQL - on Postgres # is an operator, and stripping
+// to end-of-line could hide a following write from the classifier.
+func IsReadOnlySQLFor(driver DriverType, sql string) bool {
+	cleaned := maskStringLiterals(stripSQLComments(sql, driver == DriverMySQL))
 	for _, stmt := range splitSQLStatements(cleaned) {
 		if !isReadOnlyStatement(stmt) {
 			return false
@@ -195,15 +206,15 @@ func maskStringLiterals(sql string) string {
 	return b.String()
 }
 
-// Removes -- and /* */ comments, preserving string/dollar-quoted spans so a marker inside one isn't stripped.
-func stripSQLComments(sql string) string {
+// Removes -- and /* */ comments (and, when hashLineComments, MySQL `#` comments), preserving
+// string/dollar-quoted spans so a marker inside one isn't stripped.
+func stripSQLComments(sql string, hashLineComments bool) string {
 	var b strings.Builder
 	b.Grow(len(sql))
 	for i := 0; i < len(sql); {
 		ch := sql[i]
 		switch {
-		case ch == '-' && i+1 < len(sql) && sql[i+1] == '-':
-			i += 2
+		case (ch == '-' && i+1 < len(sql) && sql[i+1] == '-') || (ch == '#' && hashLineComments):
 			for i < len(sql) && sql[i] != '\n' {
 				i++
 			}

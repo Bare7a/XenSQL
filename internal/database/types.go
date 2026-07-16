@@ -33,12 +33,14 @@ type ConnectionConfig struct {
 }
 
 type ColumnInfo struct {
-	Name       string `json:"name"`
-	DataType   string `json:"dataType"`
-	IsNullable bool   `json:"isNullable"`
-	IsPrimary  bool   `json:"isPrimary"`
-	IsForeign  bool   `json:"isForeign"`
-	DefaultVal string `json:"defaultVal,omitempty"`
+	Name          string `json:"name"`
+	DataType      string `json:"dataType"`
+	IsNullable    bool   `json:"isNullable"`
+	IsPrimary     bool   `json:"isPrimary"`
+	IsForeign     bool   `json:"isForeign"`
+	ForeignTable  string `json:"foreignTable,omitempty"`
+	ForeignColumn string `json:"foreignColumn,omitempty"`
+	DefaultVal    string `json:"defaultVal,omitempty"`
 }
 
 type TableInfo struct {

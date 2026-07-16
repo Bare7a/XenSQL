@@ -168,7 +168,7 @@ func TestE2EMultiStatementScript(t *testing.T) {
 		defer pc.Close()
 
 		script := "SELECT 1 AS a; SELECT 'x' AS b, 'y' AS c"
-		stmts := database.SplitStatements(script)
+		stmts := database.SplitStatements(s.DriverType(), script)
 		if len(stmts) != 2 {
 			t.Fatalf("SplitStatements gave %d statements, want 2: %+v", len(stmts), stmts)
 		}

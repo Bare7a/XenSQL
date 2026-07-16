@@ -28,6 +28,10 @@ export interface ColumnInfo {
   isNullable: boolean;
   isPrimary: boolean;
   isForeign: boolean;
+  // FK target when isForeign; foreignColumn may be empty when the FK implicitly references the
+  // target's primary key (SQLite).
+  foreignTable?: string;
+  foreignColumn?: string;
   defaultVal?: string;
 }
 

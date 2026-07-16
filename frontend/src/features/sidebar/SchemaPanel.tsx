@@ -1,7 +1,7 @@
 import { CircleAlert, Copy, Loader2, Plug, RefreshCw } from 'lucide-react';
 import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { buildQualifiedTable } from '@/features/editor/lib/sqlIdentifiers';
+import { buildQualifiedTable } from '@/features/editor/lib/sqlQuoting';
 import { tableKey, tableMatchesSearch, useSchemaTree } from '@/features/sidebar/hooks/useSchemaTree';
 import { SchemaTreeNode } from '@/features/sidebar/SchemaTreeNode';
 import { SidebarFilterBar } from '@/features/sidebar/SidebarFilterBar';

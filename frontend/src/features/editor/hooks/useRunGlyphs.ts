@@ -3,12 +3,14 @@ import type { editor } from 'monaco-editor';
 import { type RefObject, useCallback, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { parseSqlStatements, type SqlStatement } from '@/features/editor/lib/sqlStatements';
+import type { DriverType } from '@/types';
 
 export function useRunGlyphs(
   editorRef: RefObject<editor.IStandaloneCodeEditor | null>,
   monacoRef: RefObject<Monaco | null>,
   sql: string,
   languageRevision: number,
+  driver: DriverType,
 ) {
   const { t } = useTranslation();
   const runGlyphDecorationsRef = useRef<editor.IEditorDecorationsCollection | null>(null);
@@ -16,7 +18,7 @@ export function useRunGlyphs(
 
   const updateRunGlyphs = useCallback(
     (ed: editor.IStandaloneCodeEditor, monaco: Monaco, text: string) => {
-      const statements = parseSqlStatements(text);
+      const statements = parseSqlStatements(text, driver);
       statementsRef.current = statements;
 
       const decorations = statements.map((stmt) => ({
@@ -34,7 +36,7 @@ export function useRunGlyphs(
         runGlyphDecorationsRef.current.set(decorations);
       }
     },
-    [t],
+    [t, driver],
   );
 
   useEffect(() => {

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '@/shared/lib/api';
+import { invalidateColumnCache } from '@/shared/lib/columnCache';
 import { formatError } from '@/shared/lib/normalize';
 import { readStoredJson, STORAGE_KEYS, writeStoredJson } from '@/shared/lib/storageKeys';
 import { useSchemas, useStoreActions, useTablesMap } from '@/store/selectors';
@@ -61,10 +62,11 @@ export function useSchemaTree({ connId, connConnected, schemaList, schemaSearch 
       }
       setLoadingSchema(true);
       setSchemaError('');
-      // Full (re)load: forget prior fetch markers so expanded nodes re-hydrate fresh.
+      // Full (re)load: forget fetch markers and the editor's column cache.
       loadedTablesRef.current.clear();
       loadedColumnsRef.current.clear();
       setTableColumns({});
+      invalidateColumnCache(connectionId);
 
       try {
         const bundle = await api.loadSchemaData(connectionId);

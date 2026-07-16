@@ -1,5 +1,23 @@
-import { quoteIdent } from '@/features/editor/lib/sqlIdentifiers';
 import type { DriverType } from '@/types';
+
+// Matches Go database.QuoteIdent.
+export function quoteIdent(driver: DriverType, ident: string): string {
+  switch (driver) {
+    case 'postgres':
+      return `"${ident.replace(/"/g, '""')}"`;
+    case 'mysql':
+      return `\`${ident.replace(/`/g, '``')}\``;
+    default:
+      return `"${ident.replace(/"/g, '""')}"`;
+  }
+}
+
+export function buildQualifiedTable(driver: DriverType, schema: string, table: string): string {
+  if (!schema || schema === 'main') {
+    return quoteIdent(driver, table);
+  }
+  return `${quoteIdent(driver, schema)}.${quoteIdent(driver, table)}`;
+}
 
 export const ALIAS_STOP_WORDS = new Set([
   'on',
@@ -50,7 +68,7 @@ export function unquoteIdent(raw: string): string {
 
 // Common SQL keywords that are also plausible identifier names; inserting them unquoted from
 // autocomplete (e.g. a column literally named `order`) would be a syntax error.
-const QUOTE_FORCING_KEYWORDS = new Set([
+export const QUOTE_FORCING_KEYWORDS = new Set([
   ...ALIAS_STOP_WORDS,
   'table',
   'column',
@@ -86,6 +104,12 @@ const QUOTE_FORCING_KEYWORDS = new Set([
   'is',
   'in',
   'like',
+  'ilike',
+  'similar',
+  'regexp',
+  'rlike',
+  'glob',
+  'match',
   'between',
   'exists',
   'distinct',

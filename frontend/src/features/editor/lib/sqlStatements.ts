@@ -1,3 +1,14 @@
+import {
+  findBlockCommentEnd,
+  findLineCommentEnd,
+  findQuoteEnd,
+  isEscapeStringPrefix,
+  lexOptionsFor,
+  type SqlLexOptions,
+  skipDollarQuoted,
+} from '@/features/editor/lib/sqlText';
+import type { DriverType } from '@/types';
+
 export interface SqlStatement {
   text: string; // includes trailing semicolon when present
   runLine: number; // 1-based line of the first non-whitespace character (used for the run glyph)
@@ -5,62 +16,9 @@ export interface SqlStatement {
   end: number; // offset just past the statement (exclusive)
 }
 
-function lineColumnAt(text: string, offset: number): { line: number; column: number } {
-  let line = 1;
-  let column = 1;
-  for (let i = 0; i < offset && i < text.length; i++) {
-    if (text[i] === '\n') {
-      line++;
-      column = 1;
-    } else {
-      column++;
-    }
-  }
-  return { line, column };
-}
-
 const WHITESPACE_RE = /\s/;
 
-function skipLineComment(text: string, i: number, end: number): number {
-  i += 2;
-  while (i < end && text[i] !== '\n') i++;
-  return i;
-}
-
-function skipBlockComment(text: string, i: number, end: number): number {
-  i += 2;
-  while (i < end - 1 && !(text[i] === '*' && text[i + 1] === '/')) i++;
-  return Math.min(i + 2, end);
-}
-
-// doubleEscape: '' / "" are embedded quotes (SQL convention); backticks don't double-escape.
-function skipQuoted(text: string, i: number, quote: string, doubleEscape: boolean, end: number): number {
-  i++;
-  while (i < end) {
-    if (text[i] === quote) {
-      if (doubleEscape && text[i + 1] === quote) {
-        i += 2;
-        continue;
-      }
-      i++;
-      return i;
-    }
-    i++;
-  }
-  return i;
-}
-
-function skipDollarQuoted(text: string, i: number, end: number): number {
-  // Tags never start with a digit, so `$1$` is a placeholder between two `$`, not a quote delimiter.
-  const tagMatch = text.slice(i).match(/^\$(?:[A-Za-z_][A-Za-z0-9_]*)?\$/);
-  if (!tagMatch) return i + 1;
-  const tag = tagMatch[0];
-  i += tag.length;
-  const close = text.indexOf(tag, i);
-  return close === -1 ? end : close + tag.length;
-}
-
-function firstCodeOffset(text: string, from: number, to: number): number {
+function firstCodeOffset(text: string, from: number, to: number, opts: SqlLexOptions): number {
   let i = from;
   while (i < to) {
     const ch = text[i];
@@ -69,12 +27,16 @@ function firstCodeOffset(text: string, from: number, to: number): number {
       i++;
       continue;
     }
-    if (ch === '-' && text[i + 1] === '-') {
-      i = skipLineComment(text, i, to);
+    if ((ch === '-' && text[i + 1] === '-') || (ch === '#' && opts.hashLineComments)) {
+      const nl = findLineCommentEnd(text, i + (ch === '#' ? 1 : 2));
+      if (nl === -1 || nl >= to) return -1;
+      i = nl;
       continue;
     }
     if (ch === '/' && text[i + 1] === '*') {
-      i = skipBlockComment(text, i, to);
+      const close = findBlockCommentEnd(text, i, opts.nestedBlockComments);
+      if (close === -1) return -1;
+      i = close;
       continue;
     }
     return i;
@@ -82,27 +44,44 @@ function firstCodeOffset(text: string, from: number, to: number): number {
   return -1;
 }
 
-export function parseSqlStatements(sql: string): SqlStatement[] {
+// mysql-client `DELIMITER xx` line: switches the terminator so procedure bodies can contain `;`.
+const DELIMITER_LINE_RE = /DELIMITER[ \t]+(\S+)[ \t]*(?:\r?\n|$)/iy;
+
+export function parseSqlStatements(sql: string, driver?: DriverType): SqlStatement[] {
+  const opts = lexOptionsFor(driver);
+  const clientDelimiters = driver === 'mysql';
   const statements: SqlStatement[] = [];
   const len = sql.length;
   let stmtStart = 0;
+  let delimiter = ';';
   let i = 0;
 
-  const pushStatement = (endExclusive: number, includeSemicolon: boolean) => {
-    const sliceEnd = includeSemicolon ? endExclusive + 1 : endExclusive;
+  // Statements are pushed in source order, so lineAt scans incrementally instead of from offset 0.
+  let lineScanPos = 0;
+  let lineScanLine = 1;
+  const lineAt = (offset: number): number => {
+    for (let p = lineScanPos; p < offset; p++) {
+      if (sql.charCodeAt(p) === 10) lineScanLine++;
+    }
+    lineScanPos = offset;
+    return lineScanLine;
+  };
+
+  // text covers [stmtStart, contentEnd); the statement's region extends to sliceEnd. For `;` both
+  // include the terminator; a custom delimiter is excluded from text (the server never sees it).
+  const pushStatement = (contentEnd: number, sliceEnd: number) => {
     const start = stmtStart;
-    const raw = sql.slice(start, sliceEnd);
-    const text = raw.trim();
+    const text = sql.slice(start, contentEnd).trim();
     if (!text) {
       stmtStart = sliceEnd;
       return;
     }
-    const codeAt = firstCodeOffset(sql, start, sliceEnd);
+    const codeAt = firstCodeOffset(sql, start, contentEnd, opts);
     if (codeAt < 0) {
       stmtStart = sliceEnd;
       return;
     }
-    statements.push({ text, runLine: lineColumnAt(sql, codeAt).line, start, end: sliceEnd });
+    statements.push({ text, runLine: lineAt(codeAt), start, end: sliceEnd });
     stmtStart = sliceEnd;
   };
 
@@ -110,33 +89,52 @@ export function parseSqlStatements(sql: string): SqlStatement[] {
     const ch = sql[i];
     const next = sql[i + 1];
 
-    if (ch === '-' && next === '-') {
-      i = skipLineComment(sql, i, len);
+    if (clientDelimiters && (ch === 'd' || ch === 'D')) {
+      DELIMITER_LINE_RE.lastIndex = i;
+      const m = DELIMITER_LINE_RE.exec(sql);
+      // Only when DELIMITER is the first thing on its line (matching the mysql client).
+      if (m && sql.slice(sql.lastIndexOf('\n', i - 1) + 1, i).trim() === '') {
+        pushStatement(i, i); // anything pending stays its own (unterminated) statement
+        delimiter = m[1];
+        i += m[0].length;
+        stmtStart = i;
+        continue;
+      }
+    }
+
+    if ((ch === '-' && next === '-') || (ch === '#' && opts.hashLineComments)) {
+      const nl = findLineCommentEnd(sql, i + (ch === '#' ? 1 : 2));
+      i = nl === -1 ? len : nl;
       continue;
     }
     if (ch === '/' && next === '*') {
-      i = skipBlockComment(sql, i, len);
+      const close = findBlockCommentEnd(sql, i, opts.nestedBlockComments);
+      i = close === -1 ? len : close;
       continue;
     }
     if (ch === "'") {
-      i = skipQuoted(sql, i, "'", true, len);
+      const close = findQuoteEnd(sql, i, ch, true, opts.backslashEscapes || isEscapeStringPrefix(sql, i));
+      i = close === -1 ? len : close;
       continue;
     }
     if (ch === '"') {
-      i = skipQuoted(sql, i, '"', true, len);
+      const close = findQuoteEnd(sql, i, ch, true, opts.backslashEscapes && opts.doubleQuoteStrings);
+      i = close === -1 ? len : close;
       continue;
     }
     if (ch === '`') {
-      i = skipQuoted(sql, i, '`', false, len);
+      const close = findQuoteEnd(sql, i, ch, true, false);
+      i = close === -1 ? len : close;
       continue;
     }
-    if (ch === '$') {
+    if (ch === '$' && opts.dollarQuotes) {
       i = skipDollarQuoted(sql, i, len);
       continue;
     }
-    if (ch === ';') {
-      pushStatement(i, true);
-      i++;
+    if (delimiter === ';' ? ch === ';' : sql.startsWith(delimiter, i)) {
+      if (delimiter === ';') pushStatement(i + 1, i + 1);
+      else pushStatement(i, i + delimiter.length);
+      i += delimiter.length;
       continue;
     }
 
@@ -145,9 +143,9 @@ export function parseSqlStatements(sql: string): SqlStatement[] {
 
   const trailing = sql.slice(stmtStart).trim();
   if (trailing) {
-    const codeAt = firstCodeOffset(sql, stmtStart, len);
+    const codeAt = firstCodeOffset(sql, stmtStart, len, opts);
     if (codeAt >= 0) {
-      statements.push({ text: trailing, runLine: lineColumnAt(sql, codeAt).line, start: stmtStart, end: len });
+      statements.push({ text: trailing, runLine: lineAt(codeAt), start: stmtStart, end: len });
     }
   }
 

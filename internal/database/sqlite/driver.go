@@ -119,27 +119,35 @@ func (s *Session) ListColumns(ctx context.Context, schema, table string) ([]data
 		if err := rows.Scan(&cid, &name, &ctype, &notnull, &dflt, &pk); err != nil {
 			return nil, err
 		}
+		fk := fkCols[name]
 		cols = append(cols, database.ColumnInfo{
-			Name:       name,
-			DataType:   ctype,
-			IsNullable: notnull == 0,
-			IsPrimary:  pk > 0,
-			IsForeign:  fkCols[name],
-			DefaultVal: dflt.String,
+			Name:          name,
+			DataType:      ctype,
+			IsNullable:    notnull == 0,
+			IsPrimary:     pk > 0,
+			IsForeign:     fk.table != "",
+			ForeignTable:  fk.table,
+			ForeignColumn: fk.column,
+			DefaultVal:    dflt.String,
 		})
 	}
 	return cols, rows.Err()
 }
 
-// foreignKeyColumns returns the set of local column names that participate in a foreign key.
-// PRAGMA table_info doesn't expose foreign keys, so they come from PRAGMA foreign_key_list.
-func (s *Session) foreignKeyColumns(ctx context.Context, table string) (map[string]bool, error) {
+type fkTarget struct {
+	table  string
+	column string
+}
+
+// foreignKeyColumns maps local column names to their FK target. PRAGMA table_info doesn't expose
+// foreign keys, so they come from PRAGMA foreign_key_list.
+func (s *Session) foreignKeyColumns(ctx context.Context, table string) (map[string]fkTarget, error) {
 	rows, err := s.DB.QueryContext(ctx, fmt.Sprintf("PRAGMA foreign_key_list(%s)", database.QuoteIdent(database.DriverSQLite, table)))
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	fks := make(map[string]bool)
+	fks := make(map[string]fkTarget)
 	for rows.Next() {
 		var id, seq int
 		var refTable, from string
@@ -148,7 +156,9 @@ func (s *Session) foreignKeyColumns(ctx context.Context, table string) (map[stri
 		if err := rows.Scan(&id, &seq, &refTable, &from, &to, &onUpdate, &onDelete, &matchType); err != nil {
 			return nil, err
 		}
-		fks[from] = true
+		if _, seen := fks[from]; !seen {
+			fks[from] = fkTarget{table: refTable, column: to.String}
+		}
 	}
 	return fks, rows.Err()
 }

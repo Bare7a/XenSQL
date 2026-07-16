@@ -35,12 +35,12 @@ func execSummary(res sql.Result, startMs int64) *QueryResult {
 	}
 }
 
-// runStatement executes one statement, routing row-returning SQL through the streaming scan and
-// everything else through Exec.
+// runStatement routes row-returning SQL (same predicate as the script path, so TABLE/VALUES/CALL
+// surface rows) through the streaming scan, everything else through Exec.
 func runStatement(ctx context.Context, conn *sql.Conn, driver DriverType, sqlText string, opts StreamOpts) (*QueryResult, error) {
 	start := NowMs()
 	upper := strings.ToUpper(StripLeadingComments(sqlText))
-	if IsSelectLike(driver, upper) || hasReturningClause(upper) {
+	if statementReturnsRows(driver, upper) {
 		return streamQueryRows(ctx, conn, sqlText, start, opts, &QueryResult{})
 	}
 	res, err := conn.ExecContext(ctx, sqlText)
@@ -193,7 +193,16 @@ func buildTableSelectSQL(driver DriverType, schema string, req TableDataRequest,
 		}
 		q += fmt.Sprintf(" ORDER BY %s %s", QuoteIdent(driver, orderBy), dir)
 	}
-	q += fmt.Sprintf(" LIMIT %d OFFSET %d", req.Limit, req.Offset)
+	// SQLite reads LIMIT -1 as "no limit" and Postgres rejects it; negative OFFSET errors everywhere.
+	limit := req.Limit
+	if limit <= 0 {
+		limit = 100
+	}
+	offset := req.Offset
+	if offset < 0 {
+		offset = 0
+	}
+	q += fmt.Sprintf(" LIMIT %d OFFSET %d", limit, offset)
 	return q
 }
 
@@ -266,8 +275,8 @@ func SelectRowByIntegerPK(ctx context.Context, db *sql.DB, driver DriverType, sc
 	if pk == "" {
 		return nil, false
 	}
-	query := fmt.Sprintf("SELECT * FROM %s WHERE %s = ? LIMIT 1",
-		tableRef(driver, schema, table), QuoteIdent(driver, pk))
+	query := fmt.Sprintf("SELECT * FROM %s WHERE %s = %s LIMIT 1",
+		tableRef(driver, schema, table), QuoteIdent(driver, pk), Placeholder(driver, 1))
 	return SelectSingleRow(ctx, db, query, id)
 }
 

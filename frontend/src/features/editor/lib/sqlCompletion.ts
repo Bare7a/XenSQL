@@ -1,42 +1,31 @@
 import {
-  clauseBodyStart,
-  type DotCompletion,
-  expectsExpression,
-  isColumnFilterContext,
-  isLimitOffsetContext,
-  isOrderOrGroupContext,
-  isUpdateSetColumnContext,
-  isValueContext,
-  matchTableContext,
-  parseDotCompletion,
-  sortDirectionAllowed,
-  updateSetColumnPrefix,
-  valueContextPrefix,
-} from '@/features/editor/lib/sqlCompletionContext';
+  analyzeSqlCursor,
+  type CursorSlot,
+  type SqlCursor,
+  type StatementShape,
+} from '@/features/editor/lib/sqlContext';
 import {
   type ParsedQuery,
   type QueryTableRef,
   resolveDotCompletion,
-  resolveQualifierToTable,
   type TableBinding,
 } from '@/features/editor/lib/sqlQueryParse';
 import { columnCacheKey, formatSqlIdentifier, unquoteIdent } from '@/features/editor/lib/sqlQuoting';
 import {
   type CompletionContext,
   type CompletionItem,
-  columnDetail,
-  keywordsForContext,
-  matchScore,
+  keywordItem,
+  keywordsForShape,
   rank,
-  suggestClauseBody,
   suggestColumnsForTable,
   suggestColumnsFromBindings,
   suggestCteItems,
-  suggestLimitOffset,
   suggestQueryTableRefs,
   suggestSchemas,
   suggestTables,
   suggestValueItems,
+  suggestVirtualColumns,
+  withLeadingSpace,
 } from '@/features/editor/lib/sqlSuggestions';
 import type { DriverType, SchemaInfo, TableInfo } from '@/types';
 
@@ -46,14 +35,15 @@ export interface BindingsNeedingColumnsCtx {
   driver: DriverType;
 }
 
+// Which tables' columns the completion at this position can show, so the provider prefetches exactly those.
 export function bindingsNeedingColumns(
   before: string,
   parsed: ParsedQuery,
   ctx?: BindingsNeedingColumnsCtx,
 ): TableBinding[] {
+  const { slot } = analyzeSqlCursor(before, ctx?.driver);
   const needed: TableBinding[] = [];
   const seen = new Set<string>();
-
   const add = (b: TableBinding | null) => {
     if (!b) return;
     const k = columnCacheKey(b.schema, b.table);
@@ -61,44 +51,50 @@ export function bindingsNeedingColumns(
     seen.add(k);
     needed.push(b);
   };
-
-  // clauseBodyStart position needs all in-scope columns; table position needs none (table list is known).
-  const body = clauseBodyStart(before);
-  if (body) {
-    if (body !== 'table') {
-      for (const ref of parsed.queryTables) add({ schema: ref.schema, table: ref.table });
+  // CTEs / derived-table aliases have no schema entry to load columns from.
+  const isVirtual = (name: string) => parsed.virtualColumns.has(name.toLowerCase());
+  const addQueryTables = () => {
+    for (const ref of parsed.queryTables) {
+      if (!isVirtual(ref.table)) add({ schema: ref.schema, table: ref.table });
     }
-    return needed;
-  }
-
-  if (isValueContext(before)) {
-    for (const b of parsed.bindings.values()) add(b);
-    if (seen.size === 0) {
-      for (const ref of parsed.queryTables) add({ schema: ref.schema, table: ref.table });
+  };
+  const addBindings = () => {
+    for (const b of parsed.bindings.values()) {
+      if (!isVirtual(b.table)) add(b);
     }
-    return needed;
-  }
+  };
 
-  if (isUpdateSetColumnContext(before) || isColumnFilterContext(before) || isOrderOrGroupContext(before)) {
-    for (const ref of parsed.queryTables) add({ schema: ref.schema, table: ref.table });
-    return needed;
-  }
-
-  const dot = parseDotCompletion(before);
-  if (dot) {
-    if (ctx) {
-      // Full resolution handles schema.table.column and tables outside the current FROM clause.
-      add(resolveDotCompletion(dot, parsed.bindings, ctx.tables, ctx.schemas, ctx.driver));
-    } else {
-      const qual = unquoteIdent(dot.segments[0]).toLowerCase();
-      const fromAlias = parsed.bindings.get(qual);
-      if (fromAlias) add(fromAlias);
+  switch (slot.kind) {
+    case 'none':
+    case 'table':
+    case 'limit':
+      return needed;
+    case 'dot': {
+      if (isVirtual(unquoteIdent(slot.segments[0]))) return needed;
+      if (ctx) {
+        // Full resolution handles schema.table.column and tables outside the current FROM clause.
+        add(resolveDotCompletion(slot, parsed.bindings, ctx.tables, ctx.schemas, ctx.driver));
+      } else {
+        const fromAlias = parsed.bindings.get(unquoteIdent(slot.segments[0]).toLowerCase());
+        if (fromAlias) add(fromAlias);
+      }
+      return needed;
     }
-    return needed;
+    case 'value':
+      addBindings();
+      if (seen.size === 0) addQueryTables();
+      return needed;
+    case 'filter-start':
+    case 'set-column':
+    case 'insert-columns':
+    case 'order-group':
+      addQueryTables();
+      return needed;
+    case 'general':
+      if (slot.inFilter) addQueryTables();
+      else addBindings();
+      return needed;
   }
-
-  for (const b of parsed.bindings.values()) add(b);
-  return needed;
 }
 
 export interface BuildCompletionInput {
@@ -116,270 +112,226 @@ function schemaTablesFor(ctx: CompletionContext, schemaName: string): TableInfo[
   );
 }
 
-function dotCompletionItems(
-  ctx: CompletionContext,
-  dot: DotCompletion,
-  bindings: Map<string, TableBinding>,
-): CompletionItem[] | null {
-  const tableRef = resolveDotCompletion(dot, bindings, ctx.tables, ctx.schemas, ctx.driver);
-  if (tableRef) return suggestColumnsForTable(ctx, tableRef, dot.prefix.toLowerCase());
+// `a.fk = b.pk` conditions after ON, from the joined tables' FK metadata (both directions).
+function fkJoinItems(ctx: CompletionContext, queryTables: QueryTableRef[]): CompletionItem[] {
+  const items: CompletionItem[] = [];
+  const refs = queryTables.filter(
+    (r, i, arr) => arr.findIndex((x) => x.schema === r.schema && x.table === r.table) === i,
+  );
+  const qualify = (ref: QueryTableRef, column: string) =>
+    `${formatSqlIdentifier(ref.alias ?? ref.table, ctx.driver)}.${formatSqlIdentifier(column, ctx.driver)}`;
 
-  if (dot.segments.length === 1) {
-    const schemaName = unquoteIdent(dot.segments[0]);
+  for (const from of refs) {
+    const cols = ctx.columnsByTable[columnCacheKey(from.schema, from.table)] || [];
+    for (const col of cols) {
+      if (!col.foreignTable || !col.foreignColumn) continue;
+      const target = refs.find((r) => r !== from && r.table.toLowerCase() === col.foreignTable?.toLowerCase());
+      if (!target) continue;
+      const expr = `${qualify(from, col.name)} = ${qualify(target, col.foreignColumn)}`;
+      items.push({
+        label: expr,
+        kind: 'field',
+        detail: 'foreign key',
+        insertText: expr,
+        sortText: rank(0, 0, expr),
+      });
+    }
+  }
+  return items;
+}
+
+function virtualDetail(parsed: ParsedQuery, nameLc: string): string {
+  return parsed.ctes.some((c) => c.toLowerCase() === nameLc) ? 'CTE column' : 'subquery column';
+}
+
+// Derived-table aliases are always in scope; CTEs only once referenced in FROM/JOIN.
+function inScopeVirtualColumnItems(ctx: CompletionContext, parsed: ParsedQuery, lcPrefix: string): CompletionItem[] {
+  const cteNames = new Set(parsed.ctes.map((c) => c.toLowerCase()));
+  const referenced = new Set(parsed.queryTables.map((t) => t.table.toLowerCase()));
+  const items: CompletionItem[] = [];
+  for (const [name, cols] of parsed.virtualColumns) {
+    if (cteNames.has(name) && !referenced.has(name)) continue;
+    items.push(...suggestVirtualColumns(cols, lcPrefix, ctx.driver, virtualDetail(parsed, name)));
+  }
+  return items;
+}
+
+function dotItems(
+  ctx: CompletionContext,
+  slot: Extract<CursorSlot, { kind: 'dot' }>,
+  parsed: ParsedQuery,
+): CompletionItem[] {
+  if (slot.segments.length === 1) {
+    const nameLc = unquoteIdent(slot.segments[0]).toLowerCase();
+    const virtual = parsed.virtualColumns.get(nameLc);
+    if (virtual) {
+      return suggestVirtualColumns(virtual, slot.prefix.toLowerCase(), ctx.driver, virtualDetail(parsed, nameLc));
+    }
+  }
+
+  const tableRef = resolveDotCompletion(slot, parsed.bindings, ctx.tables, ctx.schemas, ctx.driver);
+  if (tableRef) return suggestColumnsForTable(ctx, tableRef, slot.prefix.toLowerCase());
+
+  if (slot.segments.length === 1) {
+    const schemaName = unquoteIdent(slot.segments[0]);
     if (schemaTablesFor(ctx, schemaName).length > 0) {
-      return suggestTables(ctx, dot.prefix.toLowerCase(), schemaName);
+      return suggestTables(ctx, slot.prefix.toLowerCase(), schemaName);
     }
-  }
-  return null;
-}
-
-function orderGroupItems(
-  ctx: CompletionContext,
-  before: string,
-  queryTables: QueryTableRef[],
-  bindings: Map<string, TableBinding>,
-): CompletionItem[] {
-  const frag = before.match(/[\w"`]*$/)?.[0] ?? '';
-  const lcPrefix = unquoteIdent(frag).toLowerCase();
-  // Columns/tables only at the start of a sort term (after BY/comma), not after a finished one.
-  const items: CompletionItem[] = expectsExpression(before)
-    ? [...suggestQueryTableRefs(ctx, queryTables, lcPrefix), ...suggestColumnsFromBindings(ctx, bindings, lcPrefix)]
-    : [];
-  if (sortDirectionAllowed(before)) {
-    for (const kw of ['ASC', 'DESC']) {
-      const score = matchScore(kw, lcPrefix);
-      if (score >= 0) {
-        items.push({ label: kw, kind: 'keyword', insertText: kw, sortText: rank(4, score, kw) });
-      }
-    }
-  }
-  // After a finished term, continue to LIMIT/OFFSET (plus HAVING/ORDER BY when grouping).
-  if (!expectsExpression(before)) {
-    const re = /\b(ORDER|GROUP)\s+BY\b/gi;
-    let kind = '';
-    for (let mm = re.exec(before); mm !== null; mm = re.exec(before)) kind = mm[1].toUpperCase();
-    const trailing = kind === 'GROUP' ? ['HAVING', 'ORDER BY', 'LIMIT', 'OFFSET'] : ['LIMIT', 'OFFSET'];
-    for (const kw of trailing) {
-      const score = matchScore(kw, lcPrefix);
-      if (score >= 0) {
-        items.push({ label: kw, kind: 'keyword', insertText: kw, sortText: rank(4, score, kw) });
-      }
-    }
-  }
-  return items;
-}
-
-function bareWordItems(
-  ctx: CompletionContext,
-  before: string,
-  lcPrefix: string,
-  queryTables: QueryTableRef[],
-  bindings: Map<string, TableBinding>,
-): CompletionItem[] {
-  const items: CompletionItem[] = [];
-  const inFilter = isColumnFilterContext(before);
-  // Identifiers only when the preceding token expects one; keywords always flow through.
-  const wantExpr = expectsExpression(before);
-  if (inFilter && wantExpr) {
-    items.push(...suggestQueryTableRefs(ctx, queryTables, lcPrefix));
-    items.push(...suggestColumnsFromBindings(ctx, bindings, lcPrefix));
-  }
-
-  for (const kw of keywordsForContext(before)) {
-    const score = matchScore(kw, lcPrefix);
-    if (score < 0) continue;
-    items.push({
-      label: kw,
-      kind: 'keyword',
-      insertText: kw,
-      sortText: rank(4, score, kw),
-    });
-  }
-
-  if (wantExpr && /\bSELECT\s+[^;]*$/i.test(before) && !/\bFROM\b/i.test(before)) {
-    items.push(...suggestColumnsFromBindings(ctx, bindings, lcPrefix));
-  }
-  if (wantExpr && !/\bFROM\b/i.test(before) && !inFilter) {
-    items.push(...suggestSchemas(ctx, lcPrefix));
-  }
-  return items;
-}
-
-function qualifiedItems(
-  ctx: CompletionContext,
-  parts: string[],
-  lcPrefix: string,
-  bindings: Map<string, TableBinding>,
-): CompletionItem[] {
-  if (parts.length === 2) {
-    const qualifier = unquoteIdent(parts[0]);
-    const tableRef = resolveQualifierToTable(qualifier, bindings, ctx.tables, ctx.schemas, ctx.driver);
-    if (tableRef) return suggestColumnsForTable(ctx, tableRef, lcPrefix);
-
-    if (schemaTablesFor(ctx, qualifier).length > 0) {
-      return suggestTables(ctx, lcPrefix, qualifier);
-    }
-    return suggestSchemas(ctx, lcPrefix);
-  }
-
-  const schemaName = unquoteIdent(parts[0]);
-  const tableName = unquoteIdent(parts[1]);
-  const key = columnCacheKey(schemaName, tableName);
-  const cols = ctx.columnsByTable[key] || ctx.columns;
-  const items: CompletionItem[] = [];
-  for (const c of cols) {
-    const score = matchScore(c.name, lcPrefix);
-    if (score < 0) continue;
-    items.push({
-      label: c.name,
-      kind: 'field',
-      detail: columnDetail(c),
-      insertText: formatSqlIdentifier(c.name, ctx.driver),
-      sortText: rank(0, score, c.name),
-    });
-  }
-  return items;
-}
-
-function completionItems(input: BuildCompletionInput): CompletionItem[] {
-  const { ctx, text: textVal, position: posVal, parsed } = input;
-  const before = textVal.slice(input.statementStart ?? 0, posVal);
-  const { queryTables, bindings } = parsed;
-
-  const dot = parseDotCompletion(before);
-  if (dot) {
-    const fromDot = dotCompletionItems(ctx, dot, bindings);
-    if (fromDot) return fromDot;
-  }
-
-  const bodyKind = clauseBodyStart(before);
-  if (bodyKind) return suggestClauseBody(ctx, bodyKind, queryTables, bindings, parsed.ctes);
-
-  if (isUpdateSetColumnContext(before)) {
-    return suggestColumnsFromBindings(ctx, bindings, updateSetColumnPrefix(before));
-  }
-
-  if (isValueContext(before)) {
-    return suggestValueItems(ctx, queryTables, bindings, valueContextPrefix(before));
-  }
-
-  const tableCtx = matchTableContext(before);
-  if (tableCtx) {
-    // CTEs join the table list (not under a schema qualifier - CTEs aren't schemas), first so they
-    // survive the 100-item slice on a large schema.
-    return tableCtx.schemaPrefix
-      ? suggestTables(ctx, tableCtx.prefix, tableCtx.schemaPrefix)
-      : [...suggestCteItems(parsed.ctes, tableCtx.prefix, ctx.driver), ...suggestTables(ctx, tableCtx.prefix)];
-  }
-
-  if (isOrderOrGroupContext(before)) {
-    return orderGroupItems(ctx, before, queryTables, bindings);
-  }
-
-  // LIMIT/OFFSET take a number (+ optional OFFSET), not columns/tables/keywords.
-  if (isLimitOffsetContext(before)) {
-    return suggestLimitOffset(before, before.match(/[\w]+$/)?.[0].toLowerCase() ?? '');
-  }
-
-  const wordMatch = before.match(/[\w."`]*$/);
-  const word = wordMatch ? wordMatch[0] : '';
-  const parts = word.split('.');
-  const lcPrefix = parts[parts.length - 1].toLowerCase();
-
-  if (parts.length === 1) return bareWordItems(ctx, before, lcPrefix, queryTables, bindings);
-  if (parts.length === 2 || parts.length === 3) {
-    return qualifiedItems(ctx, parts, lcPrefix, bindings);
   }
   return [];
 }
 
+function tableSlotItems(ctx: CompletionContext, prefix: string, ctes: string[]): CompletionItem[] {
+  // CTEs lead (tier 0) so they survive the item cap on large schemas.
+  return [...suggestCteItems(ctes, prefix, ctx.driver), ...suggestTables(ctx, prefix), ...suggestSchemas(ctx, prefix)];
+}
+
+function orderGroupItems(
+  ctx: CompletionContext,
+  slot: Extract<CursorSlot, { kind: 'order-group' }>,
+  queryTables: QueryTableRef[],
+  bindings: Map<string, TableBinding>,
+): CompletionItem[] {
+  // Columns/tables only at the start of a sort term (after BY/comma), not after a finished one.
+  const items: CompletionItem[] = slot.expectsExpr
+    ? [
+        ...suggestQueryTableRefs(ctx, queryTables, slot.prefix),
+        ...suggestColumnsFromBindings(ctx, bindings, slot.prefix),
+      ]
+    : [];
+  const keywords = slot.directionAllowed ? ['ASC', 'DESC', ...slot.trailingKeywords] : slot.trailingKeywords;
+  for (const kw of keywords) {
+    const item = keywordItem(kw, slot.prefix);
+    if (item) items.push(item);
+  }
+  return items;
+}
+
+function generalItems(
+  ctx: CompletionContext,
+  slot: Extract<CursorSlot, { kind: 'general' }>,
+  shape: StatementShape,
+  parsed: ParsedQuery,
+): CompletionItem[] {
+  const { queryTables, bindings } = parsed;
+  const items: CompletionItem[] = [];
+  // Identifiers only when the preceding token expects one; keywords always flow through.
+  if (slot.inFilter && slot.expectsExpr) {
+    if (shape.afterOnKeyword && slot.prefix === '') items.push(...fkJoinItems(ctx, queryTables));
+    items.push(...suggestQueryTableRefs(ctx, queryTables, slot.prefix));
+    items.push(...suggestColumnsFromBindings(ctx, bindings, slot.prefix));
+    items.push(...inScopeVirtualColumnItems(ctx, parsed, slot.prefix));
+  }
+
+  for (const kw of keywordsForShape(shape, ctx.driver)) {
+    const item = keywordItem(kw, slot.prefix);
+    if (item) items.push(item);
+  }
+
+  if (slot.expectsExpr && shape.inSelectList) {
+    items.push(...suggestColumnsFromBindings(ctx, bindings, slot.prefix));
+  }
+  if (slot.expectsExpr && !shape.hasFrom && !slot.inFilter) {
+    items.push(...suggestSchemas(ctx, slot.prefix));
+  }
+  return items;
+}
+
+function completionItems(input: BuildCompletionInput, cursor: SqlCursor): CompletionItem[] {
+  const { ctx, parsed } = input;
+  const { slot, shape } = cursor;
+  const { queryTables, bindings } = parsed;
+
+  switch (slot.kind) {
+    case 'none':
+      return [];
+    case 'dot':
+      return dotItems(ctx, slot, parsed);
+    case 'table': {
+      const items = tableSlotItems(ctx, slot.prefix, parsed.ctes);
+      return slot.leadingSpace ? withLeadingSpace(items) : items;
+    }
+    case 'insert-columns': {
+      const used = new Set(slot.used);
+      return suggestColumnsFromBindings(ctx, bindings, slot.prefix).filter(
+        (item) => !used.has(item.label.toLowerCase()),
+      );
+    }
+    case 'set-column': {
+      const items = suggestColumnsFromBindings(ctx, bindings, slot.prefix);
+      return slot.leadingSpace ? withLeadingSpace(items) : items;
+    }
+    case 'filter-start':
+      return withLeadingSpace([
+        ...(shape.afterOnKeyword ? fkJoinItems(ctx, queryTables) : []),
+        ...suggestQueryTableRefs(ctx, queryTables, ''),
+        ...suggestColumnsFromBindings(ctx, bindings, ''),
+        ...inScopeVirtualColumnItems(ctx, parsed, ''),
+      ]);
+    case 'value':
+      return [
+        ...suggestValueItems(ctx, queryTables, bindings, slot.prefix),
+        ...inScopeVirtualColumnItems(ctx, parsed, slot.prefix),
+      ];
+    case 'order-group': {
+      const items = orderGroupItems(ctx, slot, queryTables, bindings);
+      if (slot.expectsExpr) items.push(...inScopeVirtualColumnItems(ctx, parsed, slot.prefix));
+      return slot.leadingSpace ? withLeadingSpace(items) : items;
+    }
+    case 'limit': {
+      const item = slot.offerOffset ? keywordItem('OFFSET', slot.prefix) : null;
+      return item ? [item] : [];
+    }
+    case 'general':
+      return generalItems(ctx, slot, shape, parsed);
+  }
+}
+
 export function buildCompletionItems(input: BuildCompletionInput): CompletionItem[] {
-  return completionItems(input).slice(0, 100);
-}
+  const before = input.text.slice(input.statementStart ?? 0, input.position);
+  const items = completionItems(input, analyzeSqlCursor(before, input.ctx.driver));
+  if (items.length <= 100) return items;
 
-// Length of the partial identifier under the caret (what the completion replaces). A leading quote
-// counts only when unclosed; matching `"[^"]*$` naively instead grabs from an earlier closing quote
-// (`"Users" WHERE ` → `" WHERE `), a bogus range that hid WHERE suggestions after a quoted table.
-function identifierFragmentLength(textBefore: string): number {
-  const line = textBefore.slice(textBefore.lastIndexOf('\n') + 1);
-  for (const q of ['"', '`']) {
-    if ((line.split(q).length - 1) % 2 === 1) return line.length - line.lastIndexOf(q);
+  // Keep the best-ranked 100: sortText leads with `${tier}${score}`, so bucketing on those two
+  // characters selects the top ranks without a full sort; Monaco re-sorts survivors by sortText.
+  const buckets = new Map<string, CompletionItem[]>();
+  for (const item of items) {
+    const key = (item.sortText ?? '99').slice(0, 2);
+    const bucket = buckets.get(key);
+    if (bucket) bucket.push(item);
+    else buckets.set(key, [item]);
   }
-  return line.match(/[\w]+$/)?.[0].length ?? 0;
-}
-
-function identifierFragmentRange(
-  position: { lineNumber: number; column: number },
-  textBefore: string,
-  fallback: { startColumn: number; endColumn: number },
-): { startLineNumber: number; endLineNumber: number; startColumn: number; endColumn: number } {
-  const fragLen = identifierFragmentLength(textBefore);
-  if (fragLen > 0) {
-    return {
-      startLineNumber: position.lineNumber,
-      endLineNumber: position.lineNumber,
-      startColumn: Math.max(1, position.column - fragLen),
-      endColumn: position.column,
-    };
+  const out: CompletionItem[] = [];
+  for (const key of [...buckets.keys()].sort()) {
+    for (const item of buckets.get(key) ?? []) {
+      out.push(item);
+      if (out.length === 100) return out;
+    }
   }
-  return {
-    startLineNumber: position.lineNumber,
-    endLineNumber: position.lineNumber,
-    startColumn: fallback.startColumn,
-    endColumn: fallback.endColumn,
-  };
+  return out;
 }
 
 export function completionReplaceRange(
   position: { lineNumber: number; column: number },
   textBefore: string,
   fallback: { startColumn: number; endColumn: number },
+  driver?: DriverType,
 ): { startLineNumber: number; endLineNumber: number; startColumn: number; endColumn: number } {
-  // clauseBodyStart: zero-width insert at caret; suggestClauseBody space-prefixes so it reads cleanly.
-  if (clauseBodyStart(textBefore)) {
-    return {
-      startLineNumber: position.lineNumber,
-      endLineNumber: position.lineNumber,
-      startColumn: position.column,
-      endColumn: position.column,
-    };
-  }
-  const dot = parseDotCompletion(textBefore);
-  if (dot) {
-    return {
-      startLineNumber: position.lineNumber,
-      endLineNumber: position.lineNumber,
-      startColumn: Math.max(1, position.column - dot.prefix.length),
-      endColumn: position.column,
-    };
-  }
-  if (isValueContext(textBefore)) {
-    // Cover any started quote + partial so accepting replaces `'ab` rather than appending to it.
-    const consumed = textBefore.match(/['"`]?[\w."`]*$/)?.[0].length ?? 0;
-    return {
-      startLineNumber: position.lineNumber,
-      endLineNumber: position.lineNumber,
-      startColumn: Math.max(1, position.column - consumed),
-      endColumn: position.column,
-    };
-  }
-  if (isUpdateSetColumnContext(textBefore)) {
-    const prefix = updateSetColumnPrefix(textBefore);
-    return {
-      startLineNumber: position.lineNumber,
-      endLineNumber: position.lineNumber,
-      startColumn: Math.max(1, position.column - prefix.length),
-      endColumn: position.column,
-    };
-  }
-  const tableCtx = matchTableContext(textBefore);
-  if (tableCtx) {
-    return {
-      startLineNumber: position.lineNumber,
-      endLineNumber: position.lineNumber,
-      startColumn: Math.max(1, position.column - tableCtx.prefix.length),
-      endColumn: position.column,
-    };
-  }
-  return identifierFragmentRange(position, textBefore, fallback);
+  const { slot } = analyzeSqlCursor(textBefore, driver);
+  const at = (startColumn: number, endColumn: number) => ({
+    startLineNumber: position.lineNumber,
+    endLineNumber: position.lineNumber,
+    startColumn,
+    endColumn,
+  });
+
+  // Clause-start slots insert space-prefixed at the caret; nothing gets replaced.
+  if ('leadingSpace' in slot && slot.leadingSpace) return at(position.column, position.column);
+  if (slot.kind === 'none') return at(fallback.startColumn, fallback.endColumn);
+
+  const replaceLen = 'replaceLen' in slot ? slot.replaceLen : 0;
+  if (replaceLen > 0) return at(Math.max(1, position.column - replaceLen), position.column);
+  // No partial word: general falls back to Monaco's word range, structured slots insert at the caret.
+  if (slot.kind === 'general') return at(fallback.startColumn, fallback.endColumn);
+  return at(position.column, position.column);
 }

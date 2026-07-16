@@ -36,6 +36,8 @@ export function normalizeColumns(data: unknown): ColumnInfo[] {
     isNullable?: boolean;
     isPrimary?: boolean;
     isForeign?: boolean;
+    foreignTable?: string;
+    foreignColumn?: string;
     defaultVal?: string;
   }>(data).map((c) => ({
     name: String(c?.name ?? ''),
@@ -43,6 +45,8 @@ export function normalizeColumns(data: unknown): ColumnInfo[] {
     isNullable: Boolean(c?.isNullable),
     isPrimary: Boolean(c?.isPrimary),
     isForeign: Boolean(c?.isForeign),
+    foreignTable: c?.foreignTable,
+    foreignColumn: c?.foreignColumn,
     defaultVal: c?.defaultVal,
   }));
 }

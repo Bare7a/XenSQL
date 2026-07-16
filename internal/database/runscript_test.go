@@ -72,7 +72,7 @@ func TestRunScriptMultipleStatements(t *testing.T) {
 		SELECT id, name FROM t ORDER BY id;
 		SELECT count(*) AS n FROM t;
 	`
-	stmts := SplitStatements(script)
+	stmts := SplitStatements(DriverSQLite, script)
 	if len(stmts) != 4 {
 		t.Fatalf("SplitStatements: want 4, got %d (%#v)", len(stmts), stmts)
 	}
@@ -106,7 +106,7 @@ func TestRunScriptStopsAtFirstError(t *testing.T) {
 	defer cleanup()
 
 	var sets []*capturedSet
-	stmts := SplitStatements("SELECT 1; SELECT bad syntax here; SELECT 2;")
+	stmts := SplitStatements(DriverSQLite, "SELECT 1; SELECT bad syntax here; SELECT 2;")
 	err := RunScript(context.Background(), conn, DriverSQLite, stmts, captureSink(&sets))
 	if err == nil {
 		t.Fatal("want RunScript to return the failing statement's error")

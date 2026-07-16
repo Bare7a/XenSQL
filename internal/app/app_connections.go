@@ -1,6 +1,9 @@
 package app
 
 import (
+	"context"
+	"time"
+
 	"xensql/internal/database"
 	"xensql/internal/storage"
 )
@@ -176,7 +179,10 @@ func (a *App) ListColumns(connectionID, schema, table string) ([]database.Column
 	if err != nil {
 		return nil, err
 	}
-	return s.ListColumns(a.ctx, schema, table)
+	// Completion/hover call this on cache misses; fail fast instead of wedging when the pool is saturated.
+	ctx, cancel := context.WithTimeout(a.ctx, 5*time.Second)
+	defer cancel()
+	return s.ListColumns(ctx, schema, table)
 }
 
 func (a *App) ListFolders() []storage.ConnectionFolder {
