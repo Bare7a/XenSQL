@@ -8,8 +8,7 @@ export interface SqlDiagnostic {
   message: string;
 }
 
-// Table references that don't resolve against the live schema - typos caught before the
-// round-trip to the server. CTE names are in scope by definition.
+// Unresolved table refs - typos caught before the server round-trip. CTE names are in scope by definition.
 export function collectSchemaDiagnostics(
   sql: string,
   tables: TableInfo[],

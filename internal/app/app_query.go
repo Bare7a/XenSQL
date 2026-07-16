@@ -175,8 +175,7 @@ func (a *App) ExecuteQueryStream(connectionID, tabID, sql string) error {
 	if err := a.guardExecute(connectionID, sql); err != nil {
 		return err
 	}
-	// Split with the connection's dialect so boundaries match the editor's run-glyphs
-	// (MySQL # comments, \' escapes and DELIMITER; Postgres nested comments and E'…').
+	// Split with the connection's dialect so boundaries match the editor's run-glyphs.
 	s, err := a.sessionFor(connectionID)
 	if err != nil {
 		return err

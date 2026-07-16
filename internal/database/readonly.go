@@ -68,8 +68,7 @@ func AssertReadOnlySQL(sql string) error {
 	return AssertReadOnlySQLFor("", sql)
 }
 
-// AssertReadOnlySQLFor applies the driver's comment syntax before classifying - on MySQL a `#`
-// comment mentioning a write keyword must not block a legitimate read.
+// AssertReadOnlySQLFor classifies with the driver's comment syntax (a MySQL # comment must not block a read).
 func AssertReadOnlySQLFor(driver DriverType, sql string) error {
 	if IsReadOnlySQLFor(driver, sql) {
 		return nil
@@ -108,9 +107,8 @@ func IsReadOnlySQL(sql string) bool {
 	return IsReadOnlySQLFor("", sql)
 }
 
-// IsReadOnlySQLFor is IsReadOnlySQL with the driver's comment syntax. `#` comments are stripped
-// only for MySQL: on Postgres `#` is an operator, and stripping to end-of-line there could hide
-// a following write statement from the classifier.
+// IsReadOnlySQLFor strips # comments only for MySQL - on Postgres # is an operator, and stripping
+// to end-of-line could hide a following write from the classifier.
 func IsReadOnlySQLFor(driver DriverType, sql string) bool {
 	cleaned := maskStringLiterals(stripSQLComments(sql, driver == DriverMySQL))
 	for _, stmt := range splitSQLStatements(cleaned) {

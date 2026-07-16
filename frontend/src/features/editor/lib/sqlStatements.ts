@@ -44,8 +44,7 @@ function firstCodeOffset(text: string, from: number, to: number, opts: SqlLexOpt
   return -1;
 }
 
-// mysql-client convention: a line reading `DELIMITER xx` switches the statement terminator so
-// procedure/trigger bodies can contain `;`. Consumes through the end of the line.
+// mysql-client `DELIMITER xx` line: switches the terminator so procedure bodies can contain `;`.
 const DELIMITER_LINE_RE = /DELIMITER[ \t]+(\S+)[ \t]*(?:\r?\n|$)/iy;
 
 export function parseSqlStatements(sql: string, driver?: DriverType): SqlStatement[] {

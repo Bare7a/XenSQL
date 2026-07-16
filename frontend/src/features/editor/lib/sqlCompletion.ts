@@ -112,8 +112,7 @@ function schemaTablesFor(ctx: CompletionContext, schemaName: string): TableInfo[
   );
 }
 
-// Ready-made `a.fk = b.pk` conditions right after ON, built from the FK metadata of the joined
-// tables (both directions). Ranked first - it's almost always the condition being typed.
+// `a.fk = b.pk` conditions after ON, from the joined tables' FK metadata (both directions).
 function fkJoinItems(ctx: CompletionContext, queryTables: QueryTableRef[]): CompletionItem[] {
   const items: CompletionItem[] = [];
   const refs = queryTables.filter(
@@ -145,8 +144,7 @@ function virtualDetail(parsed: ParsedQuery, nameLc: string): string {
   return parsed.ctes.some((c) => c.toLowerCase() === nameLc) ? 'CTE column' : 'subquery column';
 }
 
-// Virtual relations visible to unqualified column completion: derived-table aliases always
-// (they exist only in this FROM clause), CTEs only once actually referenced in FROM/JOIN.
+// Derived-table aliases are always in scope; CTEs only once referenced in FROM/JOIN.
 function inScopeVirtualColumnItems(ctx: CompletionContext, parsed: ParsedQuery, lcPrefix: string): CompletionItem[] {
   const cteNames = new Set(parsed.ctes.map((c) => c.toLowerCase()));
   const referenced = new Set(parsed.queryTables.map((t) => t.table.toLowerCase()));

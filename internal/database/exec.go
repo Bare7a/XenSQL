@@ -35,9 +35,8 @@ func execSummary(res sql.Result, startMs int64) *QueryResult {
 	}
 }
 
-// runStatement executes one statement, routing row-returning SQL through the streaming scan and
-// everything else through Exec. Uses the same predicate as the script path so TABLE/VALUES/CALL
-// statements surface their rows here too.
+// runStatement routes row-returning SQL (same predicate as the script path, so TABLE/VALUES/CALL
+// surface rows) through the streaming scan, everything else through Exec.
 func runStatement(ctx context.Context, conn *sql.Conn, driver DriverType, sqlText string, opts StreamOpts) (*QueryResult, error) {
 	start := NowMs()
 	upper := strings.ToUpper(StripLeadingComments(sqlText))
@@ -194,8 +193,7 @@ func buildTableSelectSQL(driver DriverType, schema string, req TableDataRequest,
 		}
 		q += fmt.Sprintf(" ORDER BY %s %s", QuoteIdent(driver, orderBy), dir)
 	}
-	// Clamp: SQLite treats LIMIT -1 as "no limit" (an accidental full-table page) and Postgres
-	// errors on it; a negative OFFSET is an error on every driver.
+	// SQLite reads LIMIT -1 as "no limit" and Postgres rejects it; negative OFFSET errors everywhere.
 	limit := req.Limit
 	if limit <= 0 {
 		limit = 100

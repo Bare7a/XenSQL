@@ -4,8 +4,7 @@ import { columnDetail } from '@/features/editor/lib/sqlSuggestions';
 import { isIdentLike, type SqlToken, tokenIdentText, tokenizeSql } from '@/features/editor/lib/sqlTokens';
 import type { ColumnInfo, DriverType, SchemaInfo, TableInfo } from '@/types';
 
-// What to show for the identifier under the pointer. Either an immediate answer (`lines`) or a
-// column lookup the caller resolves by loading the candidate tables' columns (cached).
+// Immediate answer (`lines`) or a column lookup the caller resolves via cached loads.
 export interface HoverQuery {
   start: number; // statement-relative span of the hovered token
   end: number;

@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect } from 'react';
 import { api } from '@/shared/lib/api';
+import { cachedColumns } from '@/shared/lib/columnCache';
 import { useAppStore } from '@/store/appStore';
 import type { ColumnInfo, EditorTab } from '@/types';
 
@@ -10,9 +11,6 @@ export function useSchemaPreloader(
 ): {
   loadColumnsForConnection: (connectionId: string) => (schema: string, table: string) => Promise<ColumnInfo[]>;
 } {
-  // Session-lifetime column cache keyed by `${connId}:${schema}.${table}`.
-  const columnsCacheRef = useRef<Record<string, ColumnInfo[]>>({});
-
   const loadSchemaForConnection = useCallback(async (connId: string) => {
     if (!connId) return;
     const { tables, setConnected, setSchemas, setTables } = useAppStore.getState();
@@ -42,15 +40,8 @@ export function useSchemaPreloader(
 
   const loadColumnsForConnection = useCallback(
     (connectionId: string) =>
-      async (schema: string, table: string): Promise<ColumnInfo[]> => {
-        const key = `${connectionId}:${schema}.${table}`;
-        const cached = columnsCacheRef.current[key];
-        if (cached?.length) return cached;
-        const cols = await api.listColumns(connectionId, schema, table);
-        // Don't cache []: a transient empty miss would hide completions until restart.
-        if (cols.length) columnsCacheRef.current[key] = cols;
-        return cols;
-      },
+      (schema: string, table: string): Promise<ColumnInfo[]> =>
+        cachedColumns(connectionId, schema, table, () => api.listColumns(connectionId, schema, table)),
     [],
   );
 

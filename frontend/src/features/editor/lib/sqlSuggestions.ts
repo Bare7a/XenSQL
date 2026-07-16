@@ -23,9 +23,7 @@ export interface CompletionItem {
   sortText?: string; // lower lex = higher in list
 }
 
-// One rule per keyword: where it parses (gate over the statement shape), which engines have it,
-// and whether it survives inside a WHERE clause (operators and clause tails do; SELECT-list
-// keywords don't).
+// One rule per keyword: shape gate, engines, and whether it survives inside WHERE.
 interface KeywordRule {
   kw: string;
   drivers?: readonly DriverType[];

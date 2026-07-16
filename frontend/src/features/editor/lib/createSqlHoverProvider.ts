@@ -42,7 +42,7 @@ export function createSqlHoverProvider(
       }
       if (query.columnLookup) {
         for (const binding of query.columnLookup.bindings) {
-          const cols = await onLoadColumns(binding.schema, binding.table);
+          const cols = await onLoadColumns(binding.schema, binding.table).catch(() => []);
           const col = cols.find((c) => c.name.toLowerCase() === query.columnLookup?.name);
           if (col) {
             return { range, contents: columnHoverLines(col, binding).map((value) => ({ value })) };

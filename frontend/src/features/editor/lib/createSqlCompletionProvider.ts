@@ -78,7 +78,7 @@ export function createSqlCompletionProvider(
       const columnsByTable: Record<string, ColumnInfo[]> = {};
       await Promise.all(
         bindingsNeedingColumns(textBefore, parsed, { tables: allTables, schemas, driver }).map(async (ref) => {
-          columnsByTable[columnCacheKey(ref.schema, ref.table)] = await loadCols(ref.schema, ref.table);
+          columnsByTable[columnCacheKey(ref.schema, ref.table)] = await loadCols(ref.schema, ref.table).catch(() => []);
         }),
       );
 

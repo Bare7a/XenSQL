@@ -34,8 +34,7 @@ const WS_RE = /\s/;
 const TWO_CHAR_OPS = new Set(['<=', '>=', '<>', '!=', '::', '||', ':=']);
 const PUNCT = new Set(['.', ',', '(', ')', ';']);
 
-// One linear pass. Dollar-quote delimiters ($tag$) are emitted as ops and their bodies tokenized
-// as ordinary SQL, so completion keeps working inside Postgres function bodies.
+// One pass; $tag$ delimiters are ops so dollar-quoted bodies stay tokenized (completion works inside them).
 export function tokenizeSql(text: string, driver?: DriverType): SqlToken[] {
   const opts = lexOptionsFor(driver);
   const len = text.length;

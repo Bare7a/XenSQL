@@ -314,8 +314,7 @@ func BuildDeleteSQL(driver DriverType, schema, table string, pkCols []string, pk
 	return q, args, nil
 }
 
-// sortedKeys makes generated SQL deterministic: map iteration order is random per run, which
-// defeats server-side prepared-statement caches and makes logs/tests unstable.
+// sortedKeys keeps generated SQL deterministic - map iteration order is random per run.
 func sortedKeys(m map[string]any) []string {
 	keys := make([]string, 0, len(m))
 	for k := range m {

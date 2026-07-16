@@ -5,8 +5,7 @@ import (
 	"strings"
 )
 
-// lexOptions are the dialect knobs for lexical scanning. The zero value is the conservative
-// common subset: no backslash escapes, no # comments, no nested block comments.
+// lexOptions are the dialect knobs; the zero value is the conservative common subset.
 type lexOptions struct {
 	hashLineComments    bool // MySQL `# ...`
 	backslashEscapes    bool // MySQL strings: 'it\'s', "a\"b"
@@ -27,20 +26,13 @@ func lexOptionsFor(driver DriverType) lexOptions {
 	}
 }
 
-// mysql-client convention: a line reading `DELIMITER xx` switches the statement terminator so
-// procedure/trigger bodies can contain `;`. Consumes through the end of the line.
+// mysql-client `DELIMITER xx` line: switches the terminator so procedure bodies can contain `;`.
 var delimiterLineRe = regexp.MustCompile(`(?i)^DELIMITER[ \t]+(\S+)[ \t]*(?:\r?\n|$)`)
 
-// SplitStatements splits a SQL script into individual executable statements with the driver's
-// lexical rules, ignoring semicolons inside comments, quoted text, and dollar-quoted bodies.
-// MySQL additionally honours `#` comments, backslash string escapes, and client `DELIMITER`
-// lines (the custom terminator and the DELIMITER lines themselves are excluded from the output);
-// Postgres honours nested block comments and E'…' escape strings. Comment-only and empty chunks
-// are dropped and terminators are excluded, so each returned string is ready to run on its own.
-//
-// This mirrors the frontend parseSqlStatements scanner (features/editor/lib/sqlStatements.ts +
-// sqlText.ts); keep the two in sync so the gutter run-glyphs and backend batch execution agree
-// on statement boundaries.
+// SplitStatements splits a script into runnable statements using the driver's lexical rules
+// (MySQL: # comments, backslash escapes, DELIMITER lines; Postgres: nested comments, E'…').
+// Terminators and comment-only chunks are dropped. Mirrors the frontend parseSqlStatements
+// scanner (features/editor/lib/sqlStatements.ts); keep the two in sync.
 func SplitStatements(driver DriverType, sql string) []string {
 	opts := lexOptionsFor(driver)
 	var out []string
@@ -116,8 +108,7 @@ func hasCode(s string, opts lexOptions) bool {
 	return false
 }
 
-// atLineStart reports whether only whitespace precedes s[i] on its line (matching the mysql
-// client, which only honours DELIMITER at the start of a line).
+// atLineStart: only whitespace precedes s[i] on its line (mysql honours DELIMITER at line start only).
 func atLineStart(s string, i int) bool {
 	j := strings.LastIndexByte(s[:i], '\n') + 1
 	return strings.TrimSpace(s[j:i]) == ""
@@ -131,8 +122,7 @@ func lineCommentEnd(s string, from, n int) int {
 	return n
 }
 
-// blockCommentEnd returns the index just past the closing `*/` (nesting-aware for Postgres),
-// or n when unterminated. i points at the opening `/*`.
+// blockCommentEnd: index past the closing `*/` (nesting-aware), or n when unterminated.
 func blockCommentEnd(s string, i, n int, nested bool) int {
 	i += 2
 	depth := 1
@@ -152,8 +142,7 @@ func blockCommentEnd(s string, i, n int, nested bool) int {
 	return n
 }
 
-// quoteEnd returns the index just past the closing quote, or n when unterminated. Doubled quotes
-// (” / "") are embedded quotes; backslashEscapes additionally consumes \x pairs (MySQL, E'…').
+// quoteEnd: index past the closing quote ('' doubling; optional \x escapes), or n when unterminated.
 func quoteEnd(s string, i int, quote byte, backslashEscapes bool, n int) int {
 	i++
 	for i < n {
@@ -173,8 +162,7 @@ func quoteEnd(s string, i int, quote byte, backslashEscapes bool, n int) int {
 	return i
 }
 
-// A standalone E/e right before the quote marks a Postgres escape string (E'a\'b'); backslash
-// escapes then apply regardless of dialect. `1e'…'` / `TABLE'…'` don't qualify.
+// Standalone E before the quote = Postgres escape string; `1e'…'` / `TABLE'…'` don't qualify.
 func isEscapeStringPrefix(s string, quoteIdx int) bool {
 	if quoteIdx < 1 {
 		return false

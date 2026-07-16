@@ -98,8 +98,7 @@ interface RawRef {
   last: number; // index of the ref's final consumed token
 }
 
-// `name[.name] [AS] [alias]` starting at token `at`. A bare alias must not be a reserved keyword
-// (else `FROM accounts JOIN …` would swallow JOIN as accounts' alias); quoted aliases always bind.
+// `name[.name] [AS] [alias]`; bare aliases must not be reserved words (JOIN after FROM is no alias).
 function readTableRef(tokens: SqlToken[], at: number, allowAlias: boolean): RawRef | null {
   if (!isIdentLike(tokens[at])) return null;
   const name1 = tokens[at];
@@ -144,8 +143,7 @@ function matchParen(tokens: SqlToken[], openIdx: number): number {
   return -1;
 }
 
-// Output column names of the SELECT inside tokens[start, end): explicit or trailing alias,
-// else the bare/qualified column name. Unaliased expressions and `*` contribute nothing.
+// Projected column names of the SELECT in tokens[start, end); unaliased expressions and `*` contribute nothing.
 function extractProjection(tokens: SqlToken[], start: number, end: number): string[] {
   const cols: string[] = [];
   let i = start;
@@ -202,8 +200,7 @@ function extractProjection(tokens: SqlToken[], start: number, end: number): stri
 
 const isPunctToken = (t: SqlToken | undefined, ch: string) => t !== undefined && t.kind === 'punct' && t.text === ch;
 
-// Names (and projected columns) from a leading WITH clause. Bodies are skipped balanced for the
-// name walk; the main pass still collects their inner FROM/JOIN refs.
+// CTE names + projections from a leading WITH; bodies skip balanced (inner refs come from the main pass).
 function collectCtes(tokens: SqlToken[], virtualColumns: Map<string, string[]>): string[] {
   const ctes: string[] = [];
   let i = nextCodeToken(tokens, -1);

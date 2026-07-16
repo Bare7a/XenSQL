@@ -6,8 +6,7 @@ import type { DriverType, SchemaInfo, TableInfo } from '@/types';
 
 const SCHEMA_MARKER_OWNER = 'xensql-schema';
 
-// Warns on table names missing from the connected schema. Debounced, and the ref under the
-// caret is skipped so the half-typed `FROM use` doesn't flicker while completing to `users`.
+// Warns on unknown table names; the ref under the caret is skipped so typing doesn't flicker.
 export function useSqlDiagnostics(
   editorRef: RefObject<editor.IStandaloneCodeEditor | null>,
   monacoRef: RefObject<Monaco | null>,

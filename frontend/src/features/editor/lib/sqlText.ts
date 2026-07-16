@@ -19,8 +19,7 @@ export function lexOptionsFor(driver?: DriverType): SqlLexOptions {
   };
 }
 
-// Index of the terminating '\n' (not part of the comment), or -1 when the comment runs to EOF.
-// `from` is the first character after the `--` / `#` marker.
+// Index of the terminating '\n', or -1 at EOF; `from` is the first char after the marker.
 export function findLineCommentEnd(text: string, from: number): number {
   const nl = text.indexOf('\n', from);
   return nl;
@@ -46,8 +45,7 @@ export function findBlockCommentEnd(text: string, from: number, nested: boolean)
   return -1;
 }
 
-// Index just past the closing quote, or -1 when unterminated. `from` points at the opening quote.
-// doubleEscape: '' (and "" / ``) is an embedded quote; backslashEscapes: \x is consumed as an escape.
+// Index past the closing quote ('' doubling; optional \x escapes), or -1 when unterminated.
 export function findQuoteEnd(
   text: string,
   from: number,
@@ -84,8 +82,7 @@ export function matchDollarTag(text: string, from: number): string | null {
   return DOLLAR_TAG_RE.exec(text)?.[0] ?? null;
 }
 
-// Next scan position: past the closed $tag$...$tag$, `end` when unterminated, or from+1 when the
-// `$` doesn't open a dollar quote at all.
+// Next scan position past the dollar quote; `end` when unterminated, from+1 when not a dollar quote.
 export function skipDollarQuoted(text: string, from: number, end: number): number {
   const tag = matchDollarTag(text, from);
   if (!tag) return from + 1;
@@ -93,8 +90,7 @@ export function skipDollarQuoted(text: string, from: number, end: number): numbe
   return close === -1 ? end : close + tag.length;
 }
 
-// A standalone E/e right before the quote marks a Postgres escape string (E'a\'b'); backslash
-// escapes then apply regardless of dialect. `1e'...'` / `TABLE'...'` don't qualify.
+// Standalone E before the quote = Postgres escape string; `1e'…'` / `TABLE'…'` don't qualify.
 export function isEscapeStringPrefix(text: string, quoteIdx: number): boolean {
   const prev = text[quoteIdx - 1];
   if (prev !== 'e' && prev !== 'E') return false;

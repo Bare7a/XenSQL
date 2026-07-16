@@ -20,8 +20,7 @@ export interface StatementShape {
   afterOnKeyword: boolean; // the caret sits right after a JOIN's ON - a join condition starts here
 }
 
-// What the caret sits in. `prefix` is the partial word being typed (unquoted, lowercased unless
-// noted) and `replaceLen` the raw character count the accepted suggestion should replace.
+// What the caret sits in: `prefix` = partial word (lowercased), `replaceLen` = raw chars to replace.
 export type CursorSlot =
   | { kind: 'none' } // inside a comment or a plain string literal
   | { kind: 'dot'; segments: string[]; prefix: string; replaceLen: number }
