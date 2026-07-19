@@ -1,0 +1,380 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>XenSQL - A fast, local-first SQL workbench</title>
+  <meta name="description" content="XenSQL is a fast, local-first SQL workbench for SQLite, PostgreSQL, and MySQL/MariaDB. No cloud, no accounts, no telemetry. Built with Go, Wails and React." />
+  <meta property="og:title" content="XenSQL - A fast, local-first SQL workbench" />
+  <meta property="og:description" content="Work with SQLite, PostgreSQL, and MySQL/MariaDB in a single fast desktop app that runs entirely on your machine." />
+  <meta property="og:type" content="website" />
+  <meta property="og:image" content="https://raw.githubusercontent.com/Bare7a/XenSQL/master/.github/screenshots/1.png" />
+  <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/Bare7a/XenSQL/master/build/appicon.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+  <script>
+    // Apply saved theme before first paint to avoid a flash
+    (function () {
+      try {
+        var t = localStorage.getItem("xensql-theme");
+        if (t === "light" || t === "dark") document.documentElement.dataset.theme = t;
+      } catch (e) {}
+    })();
+  </script>
+</head>
+<body>
+
+<header class="site-header">
+  <nav class="container nav">
+    <a class="brand" href="#top">
+      <img src="https://raw.githubusercontent.com/Bare7a/XenSQL/master/build/appicon.png" alt="XenSQL logo" width="32" height="32" />
+      <span><span class="accent">Xen</span>SQL</span>
+    </a>
+    <div class="nav-links">
+      <a href="#features">Features</a>
+      <a href="#screenshots">Screenshots</a>
+      <a href="#download">Download</a>
+      <a href="https://github.com/Bare7a/XenSQL" target="_blank" rel="noopener" class="nav-github">
+        <svg viewBox="0 0 16 16" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg>
+        <span>GitHub</span>
+      </a>
+      <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Toggle theme" title="Toggle dark / light theme">
+        <svg class="icon-sun" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32 1.41 1.41M2 12h2m16 0h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+        <svg class="icon-moon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+      </button>
+    </div>
+  </nav>
+</header>
+
+<main id="top">
+
+  <!-- Hero -->
+  <section class="hero">
+    <div class="container hero-inner">
+      <div class="hero-badges">
+        <span class="badge">Go 1.26+</span>
+        <span class="badge">Wails v3</span>
+        <span class="badge">React + TypeScript</span>
+        <span class="badge badge-license">GPL-3.0</span>
+      </div>
+      <h1>A fast, <span class="accent">local-first</span> SQL workbench</h1>
+      <p class="hero-sub">
+        No cloud. No accounts. No telemetry.<br />
+        Just a focused, native desktop tool for working with <br />
+        <strong>SQLite</strong>, <strong>PostgreSQL</strong> and <strong>MySQL&nbsp;/&nbsp;MariaDB</strong>.
+      </p>
+      <div class="hero-cta">
+        <a href="#download" class="btn btn-primary" id="hero-download">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          <span id="hero-download-label">Download</span>
+        </a>
+        <a href="https://github.com/Bare7a/XenSQL" target="_blank" rel="noopener" class="btn btn-secondary">View on GitHub</a>
+      </div>
+      <p class="hero-note">Free &amp; open source · Windows · macOS · Linux</p>
+      <div class="hero-shot">
+        <img src="https://raw.githubusercontent.com/Bare7a/XenSQL/master/.github/screenshots/1.png" alt="XenSQL editor with schema-aware autocomplete, streaming results grid, and JSON viewer" loading="eager" />
+      </div>
+    </div>
+  </section>
+
+  <!-- Highlights strip -->
+  <section class="strip">
+    <div class="container strip-inner">
+      <div class="strip-item"><span>🧳</span> Portable</div>
+      <div class="strip-item"><span>⚡</span> Fast startup</div>
+      <div class="strip-item"><span>🔒</span> Local-first</div>
+      <div class="strip-item"><span>🧠</span> Developer-focused</div>
+      <div class="strip-item"><span>🔄</span> Auto-updating</div>
+    </div>
+  </section>
+
+  <!-- Why -->
+  <section class="section">
+    <div class="container">
+      <h2>SQL tools are usually overkill. <span class="accent">Xen</span>SQL isn't.</h2>
+      <p class="section-sub">
+        Most SQL tools today are heavy Electron apps, cloud-connected by default, tied to subscriptions,
+        and overloaded with features you don't use. XenSQL focuses on one thing:
+        a fast, local environment for working with databases.
+      </p>
+      <div class="why-grid">
+        <div class="why-card">
+          <h3>⚡ Native, not Electron</h3>
+          <p>Built with Go and Wails v3, the UI runs in the OS webview - WebView2 on Windows, WebKit on macOS, WebKitGTK on Linux. No bundled Chromium.</p>
+        </div>
+        <div class="why-card">
+          <h3>🔒 Yours, entirely</h3>
+          <p>Everything runs and stays on your machine. No account, no sign-in, no telemetry - your connections and queries never leave your computer.</p>
+        </div>
+        <div class="why-card">
+          <h3>🧳 Portable by design</h3>
+          <p>All data lives in a single <code>XenSQL-data/</code> folder next to the executable. Move it to a USB stick or another PC and it just works.</p>
+        </div>
+        <div class="why-card">
+          <h3>🧪 Battle-tested</h3>
+          <p>Backed by an extensive Playwright end-to-end suite covering the editor, transactions, results grid, exports, schema explorer, and table editing against real PostgreSQL, MySQL, and MariaDB instances.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Databases -->
+  <section class="section section-alt">
+    <div class="container">
+      <h2>Supported databases</h2>
+      <div class="db-grid">
+        <div class="db-card">
+          <div class="db-name">🐘 PostgreSQL</div>
+          <ul>
+            <li>Read &amp; write + read-only mode</li>
+            <li>SSL: <code>require</code> / <code>verify-full</code></li>
+            <li>Powered by pgx</li>
+          </ul>
+        </div>
+        <div class="db-card">
+          <div class="db-name">🐬 MySQL / MariaDB</div>
+          <ul>
+            <li>Read &amp; write + read-only mode</li>
+            <li>TLS transport</li>
+            <li>Powered by go-sql-driver</li>
+          </ul>
+        </div>
+        <div class="db-card">
+          <div class="db-name">🪶 SQLite</div>
+          <ul>
+            <li>Read &amp; write + read-only mode</li>
+            <li>Local file with picker workflow</li>
+            <li>Pure-Go driver (modernc.org/sqlite)</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features -->
+  <section class="section" id="features">
+    <div class="container">
+      <h2>Everything you need. <span class="accent">Nothing you don't.</span></h2>
+      <div class="feature-grid">
+        <div class="feature-card">
+          <h3>🧠 SQL Editor</h3>
+          <p>Tabbed Monaco-powered workspace with session restore, smart schema-aware autocomplete, snippets, SQL formatting, gutter run icons, and remappable shortcuts.</p>
+        </div>
+        <div class="feature-card">
+          <h3>📜 Multi-statement scripts</h3>
+          <p>Run several <code>;</code>-separated statements at once on a single connection - temp tables, <code>SET</code>, and scripted transactions hold. Each result set gets its own tab.</p>
+        </div>
+        <div class="feature-card">
+          <h3>📌 Pinned transactions</h3>
+          <p>Run <code>BEGIN</code> / <code>COMMIT</code> / <code>ROLLBACK</code> as SQL or from the toolbar. Queries run inside the open transaction, per tab, until you commit or roll back.</p>
+        </div>
+        <div class="feature-card">
+          <h3>🌊 Streaming results</h3>
+          <p>Rows render as the driver yields them, in a virtualized grid that scrolls smoothly over thousands of rows. Stop long-running queries with one click.</p>
+        </div>
+        <div class="feature-card">
+          <h3>🗃️ Schema Explorer</h3>
+          <p>Tree view of schemas, tables, and columns with instant search. Double-click a table for a <code>SELECT</code>, Ctrl+double-click to browse and edit its data.</p>
+        </div>
+        <div class="feature-card">
+          <h3>✏️ Edit data in the grid</h3>
+          <p>Inline-edit cells, insert rows, and bulk-delete - no hand-written <code>UPDATE</code>. Changes are staged and applied on demand, guarded by primary keys and read-only mode.</p>
+        </div>
+        <div class="feature-card">
+          <h3>🔍 Cell &amp; JSON viewers</h3>
+          <p>A cell editor for large values - JSON, XML, HTML, or plain text with beautify/minify - plus a side JSON row viewer with filter and regex search.</p>
+        </div>
+        <div class="feature-card">
+          <h3>📤 One-click export</h3>
+          <p>CSV, JSON, Markdown, or SQL INSERT. Export all or selected rows and columns, copy to clipboard or save to file. Remembers your last format.</p>
+        </div>
+        <div class="feature-card">
+          <h3>📚 Query library &amp; history</h3>
+          <p>Save, rename, filter, and reuse queries with dirty-state tracking, plus per-connection history with success/error status and duration.</p>
+        </div>
+        <div class="feature-card">
+          <h3>🔌 Connection manager</h3>
+          <p>Create, test, and organize connections into drag-and-drop folders, with per-connection tab colors and a defense-in-depth read-only mode.</p>
+        </div>
+        <div class="feature-card">
+          <h3>⌨️ Keyboard-first</h3>
+          <p>Quick Search palette (<code>Ctrl+P</code>) jumps to connections, saved queries, history, and tabs. Every shortcut is remappable in the in-app editor.</p>
+        </div>
+        <div class="feature-card">
+          <h3>🌍 Polished UX</h3>
+          <p>Dark &amp; light themes, English / Deutsch / Български, frameless native title bar, window state persistence, and one-click auto-updates with changelogs.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Screenshots -->
+  <section class="section section-alt" id="screenshots">
+    <div class="container">
+      <h2>Screenshots</h2>
+      <p class="section-sub">Click any screenshot to view it full size.</p>
+      <div class="gallery">
+        <figure><img src="https://raw.githubusercontent.com/Bare7a/XenSQL/master/.github/screenshots/1.png" alt="SQL editor with autocomplete" loading="lazy" /><figcaption>Editor with smart autocomplete</figcaption></figure>
+        <figure><img src="https://raw.githubusercontent.com/Bare7a/XenSQL/master/.github/screenshots/2.png" alt="Transactions and multiple result tabs" loading="lazy" /><figcaption>Transactions &amp; multiple results</figcaption></figure>
+        <figure><img src="https://raw.githubusercontent.com/Bare7a/XenSQL/master/.github/screenshots/3.png" alt="Table data browsing" loading="lazy" /><figcaption>Table data</figcaption></figure>
+        <figure><img src="https://raw.githubusercontent.com/Bare7a/XenSQL/master/.github/screenshots/4.png" alt="Cell editor for large values" loading="lazy" /><figcaption>Cell editor</figcaption></figure>
+        <figure><img src="https://raw.githubusercontent.com/Bare7a/XenSQL/master/.github/screenshots/5.png" alt="Virtualized results grid" loading="lazy" /><figcaption>Grid</figcaption></figure>
+        <figure><img src="https://raw.githubusercontent.com/Bare7a/XenSQL/master/.github/screenshots/6.png" alt="Export dialog" loading="lazy" /><figcaption>Export</figcaption></figure>
+        <figure><img src="https://raw.githubusercontent.com/Bare7a/XenSQL/master/.github/screenshots/7.png" alt="Connection manager" loading="lazy" /><figcaption>Connections</figcaption></figure>
+        <figure><img src="https://raw.githubusercontent.com/Bare7a/XenSQL/master/.github/screenshots/8.png" alt="Quick Search palette" loading="lazy" /><figcaption>Quick Search</figcaption></figure>
+        <figure><img src="https://raw.githubusercontent.com/Bare7a/XenSQL/master/.github/screenshots/9.png" alt="Appearance settings" loading="lazy" /><figcaption>Appearance</figcaption></figure>
+      </div>
+    </div>
+  </section>
+
+  <!-- Download -->
+  <section class="section" id="download">
+    <div class="container">
+      <h2>Download</h2>
+      <p class="section-sub">
+        No account required - just download and run.
+      </p>
+      <div class="dl-grid">
+        <div class="dl-card" id="dl-windows">
+          <div class="dl-head">
+            <svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor" aria-hidden="true"><path d="M3 5.55 10.44 4.5v7.03H3V5.55Zm0 12.9 7.44 1.05v-6.96H3v5.91Zm8.26 1.17L21 21V12.54h-9.74v7.08Zm0-15.24v7.15H21V3l-9.74 1.38Z"/></svg>
+            <h3>Windows</h3>
+          </div>
+          <a class="btn btn-primary dl-main" href="https://github.com/Bare7a/XenSQL/releases/latest/download/XenSQL-windows-amd64.zip">Portable .zip</a>
+          <a class="btn btn-secondary dl-main" href="https://github.com/Bare7a/XenSQL/releases/latest/download/XenSQL-amd64-installer.exe">Installer .exe</a>
+          <div class="dl-other">
+            <span class="dl-other-title">Other options</span>
+            <ul>
+              <li><a href="https://github.com/Bare7a/XenSQL/releases/latest/download/XenSQL.exe">Standalone executable <span>.exe</span></a></li>
+            </ul>
+          </div>
+        </div>
+        <div class="dl-card" id="dl-macos">
+          <div class="dl-head">
+            <svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor" aria-hidden="true"><path d="M16.36 12.77c.02 2.4 2.1 3.2 2.12 3.21-.02.06-.33 1.14-1.1 2.25-.66.96-1.35 1.92-2.44 1.94-1.07.02-1.41-.63-2.63-.63-1.22 0-1.6.61-2.6.65-1.05.04-1.85-1.04-2.52-2-1.37-1.98-2.42-5.6-1.01-8.04.7-1.21 1.94-1.98 3.3-2 1.03-.02 2 .7 2.63.7.63 0 1.81-.86 3.05-.73.52.02 1.98.21 2.92 1.58-.08.05-1.74 1.02-1.72 3.07ZM14.35 6.9c.55-.67.93-1.6.83-2.53-.8.03-1.77.53-2.34 1.2-.51.59-.96 1.54-.84 2.45.89.07 1.8-.45 2.35-1.12Z"/></svg>
+            <h3>macOS</h3>
+          </div>
+          <a class="btn btn-primary dl-main" href="https://github.com/Bare7a/XenSQL/releases/latest/download/XenSQL-darwin-arm64.zip">Apple Silicon .zip</a>
+          <a class="btn btn-secondary dl-main" href="https://github.com/Bare7a/XenSQL/releases/latest/download/XenSQL-darwin-amd64.zip">Intel .zip</a>
+          <div class="dl-other">
+            <span class="dl-other-title">Other options</span>
+            <ul>
+              <li><a href="https://github.com/Bare7a/XenSQL/releases/latest/download/XenSQL-macos-universal.dmg">Disk image <span>.dmg</span></a></li>
+            </ul>
+          </div>
+        </div>
+        <div class="dl-card" id="dl-linux">
+          <div class="dl-head">
+            <svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor" aria-hidden="true"><path d="M12.5 2c-2.89 0-3.4 2.31-3.4 3.85 0 1.09.11 2.11-.36 3.15-.72 1.28-1.7 2.4-2.28 3.77-.42.98-.65 2.06-.51 3.13-.31.15-.55.44-.72.9-.24.68-.83.86-1.42 1.06-.32.11-.61.26-.75.6-.13.31-.05.68.06 1.06.15.53.12.74-.02 1.26-.07.28.05.54.31.66.61.28 1.55.28 2.24.5.76.24 1.5.62 2.31.62.75 0 1.31-.36 1.6-.9.72-.03 1.53-.23 2.44-.23.86 0 1.77.2 2.6.22.13.31.35.58.65.75.42.24.96.32 1.5.2.99-.21 1.83-1.01 2.67-1.42.56-.27 1.34-.4 1.72-.85.31-.37.24-.92-.13-1.31-.42-.44-.7-.9-.7-1.53 0-.44.09-.87-.03-1.24.28-1.9-.44-3.87-1.55-5.24-.85-1.05-1.94-1.79-2.28-3.13-.34-1.34.11-2.83-.62-4.24C15.34 2.66 14.11 2 12.5 2Z"/></svg>
+            <h3>Linux</h3>
+          </div>
+          <a class="btn btn-primary dl-main" href="https://github.com/Bare7a/XenSQL/releases/latest/download/XenSQL-linux-amd64.tar.gz">Portable .tar.gz</a>
+          <a class="btn btn-secondary dl-main" href="https://github.com/Bare7a/XenSQL/releases/latest/download/xensql-x86_64.AppImage">AppImage</a>
+          <div class="dl-other">
+            <span class="dl-other-title">Other options</span>
+            <ul>
+              <li><a href="https://github.com/Bare7a/XenSQL/releases/latest/download/XenSQL.deb">Debian / Ubuntu <span>.deb</span></a></li>
+              <li><a href="https://github.com/Bare7a/XenSQL/releases/latest/download/XenSQL.rpm">Fedora / RHEL <span>.rpm</span></a></li>
+              <li><a href="https://github.com/Bare7a/XenSQL/releases/latest/download/XenSQL.pkg.tar.zst">Arch <span>.pkg.tar.zst</span></a></li>
+              <li><a href="https://github.com/Bare7a/XenSQL/releases/latest/download/XenSQL">Standalone binary <span>XenSQL</span></a></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <p class="dl-all">
+        All builds and checksums are on the
+        <a href="https://github.com/Bare7a/XenSQL/releases/latest" target="_blank" rel="noopener">latest release page</a>.
+        Prefer to build it yourself? <code>wails3 task build</code> - see the
+        <a href="https://github.com/Bare7a/XenSQL#%EF%B8%8F-installation--development" target="_blank" rel="noopener">README</a>.
+      </p>
+    </div>
+  </section>
+
+  <!-- Portable -->
+  <section class="section section-alt">
+    <div class="container portable">
+      <div class="portable-text">
+        <h2>🧳 Portable by design</h2>
+        <p>
+          Everything lives in a single <code>XenSQL-data/</code> folder created right next to the
+          executable - connections, editor session, history, saved queries, and settings.
+          Move it to a USB stick, a network drive, or another PC and it just works.
+        </p>
+        <p>
+          If the app lives in a read-only location, it falls back to the OS per-user data
+          directory. You can always override the location with <code>XENSQL_DATA_DIR</code>.
+        </p>
+      </div>
+      <pre class="code-block"><code>XenSQL(.exe)
+XenSQL-data/
+  connections.json
+  editor_session.json
+  query_history.json
+  saved_queries.json
+  settings.json</code></pre>
+    </div>
+  </section>
+
+  <!-- Tech stack -->
+  <section class="section">
+    <div class="container">
+      <h2>Tech stack</h2>
+      <div class="stack-grid">
+        <a class="stack-item" href="https://go.dev/" target="_blank" rel="noopener"><strong>Go</strong><span>Backend</span></a>
+        <a class="stack-item" href="https://v3.wails.io/" target="_blank" rel="noopener"><strong>Wails v3</strong><span>Desktop</span></a>
+        <a class="stack-item" href="https://react.dev/" target="_blank" rel="noopener"><strong>React + TS</strong><span>UI</span></a>
+        <a class="stack-item" href="https://microsoft.github.io/monaco-editor/" target="_blank" rel="noopener"><strong>Monaco</strong><span>Editor</span></a>
+        <a class="stack-item" href="https://github.com/jackc/pgx" target="_blank" rel="noopener"><strong>pgx</strong><span>PostgreSQL</span></a>
+        <a class="stack-item" href="https://github.com/go-sql-driver/mysql" target="_blank" rel="noopener"><strong>go-sql-driver</strong><span>MySQL</span></a>
+        <a class="stack-item" href="https://pkg.go.dev/modernc.org/sqlite" target="_blank" rel="noopener"><strong>modernc.org/sqlite</strong><span>SQLite</span></a>
+        <a class="stack-item" href="https://tanstack.com/virtual" target="_blank" rel="noopener"><strong>TanStack Virtual</strong><span>Tables</span></a>
+        <a class="stack-item" href="https://zustand-demo.pmnd.rs/" target="_blank" rel="noopener"><strong>Zustand</strong><span>State</span></a>
+        <a class="stack-item" href="https://www.i18next.com/" target="_blank" rel="noopener"><strong>i18next</strong><span>i18n</span></a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Final CTA -->
+  <section class="section cta-final">
+    <div class="container">
+      <h2>Ready to try <span class="accent">Xen</span>SQL?</h2>
+      <p class="section-sub">Free, open source, and yours to keep - on Windows, macOS, and Linux.</p>
+      <div class="hero-cta">
+        <a href="#download" class="btn btn-primary">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Download now
+        </a>
+        <a href="https://github.com/Bare7a/XenSQL" target="_blank" rel="noopener" class="btn btn-secondary">Star on GitHub ⭐</a>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="site-footer">
+  <div class="container footer-inner">
+    <div class="footer-brand">
+      <img src="https://raw.githubusercontent.com/Bare7a/XenSQL/master/build/appicon.png" alt="" width="24" height="24" />
+      <span><span class="accent">Xen</span>SQL</span>
+    </div>
+    <div class="footer-links">
+      <a href="https://github.com/Bare7a/XenSQL" target="_blank" rel="noopener">GitHub</a>
+      <a href="https://github.com/Bare7a/XenSQL/releases" target="_blank" rel="noopener">Releases</a>
+      <a href="https://github.com/Bare7a/XenSQL/issues" target="_blank" rel="noopener">Issues</a>
+      <a href="https://github.com/Bare7a/XenSQL/blob/main/LICENSE" target="_blank" rel="noopener">GPL-3.0 License</a>
+    </div>
+  </div>
+</footer>
+
+<!-- Lightbox -->
+<div class="lightbox" id="lightbox" hidden>
+  <button class="lightbox-close" type="button" aria-label="Close">&times;</button>
+  <img src="" alt="" />
+  <p class="lightbox-caption"></p>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
