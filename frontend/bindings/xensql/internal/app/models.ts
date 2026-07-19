@@ -10,6 +10,7 @@ export class AppInfo {
     "version": string;
     "author": string;
     "email": string;
+    "website": string;
     "repository": string;
     "description": string;
 
@@ -26,6 +27,9 @@ export class AppInfo {
         }
         if (!("email" in $$source)) {
             this["email"] = "";
+        }
+        if (!("website" in $$source)) {
+            this["website"] = "";
         }
         if (!("repository" in $$source)) {
             this["repository"] = "";

@@ -94,7 +94,7 @@ func TestE2ETransactionRollback(t *testing.T) {
 }
 
 // TestE2ETransactionGuards checks the guard rails: a tab id is required, a tab can
-// only hold one transaction, commit needs an open transaction, and closing a tab
+// only hold one transaction, commit needs an open transaction and closing a tab
 // rolls back its open transaction.
 func TestE2ETransactionGuards(t *testing.T) {
 	forEachEngine(t, func(t *testing.T, a *App, e engine, connID string) {

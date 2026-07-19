@@ -4,7 +4,7 @@ export type TxnControlAction = 'begin' | 'commit' | 'rollback';
 
 // Classifies `sql` when it is exactly one transaction-control statement - BEGIN / START TRANSACTION
 // / COMMIT / ROLLBACK and their WORK/TRANSACTION variants - ignoring comments, surrounding
-// whitespace, and a single trailing semicolon. Returns null for anything else, so ordinary queries
+// whitespace and a single trailing semicolon. Returns null for anything else, so ordinary queries
 // (and a control keyword bundled with other statements, or `ROLLBACK TO SAVEPOINT ...`, which must
 // run inside the transaction rather than end it) fall through to normal execution.
 export function detectTransactionControl(sql: string): TxnControlAction | null {

@@ -36,7 +36,7 @@ services:
       timeout: 5s
       retries: 20
     tmpfs:
-      # Keep the data in RAM: faster, and nothing to clean up between runs.
+      # Keep the data in RAM: faster and nothing to clean up between runs.
       - /var/lib/postgresql/data
 
   mysql:

@@ -18,7 +18,7 @@ func queryTable(t *testing.T, a *App, connID string, req database.TableDataReque
 }
 
 // TestE2EQueryTable covers the Results Grid "browse table" path: pagination,
-// sorting, filtering, and the primary-key metadata that decides whether the grid
+// sorting, filtering and the primary-key metadata that decides whether the grid
 // is editable.
 func TestE2EQueryTable(t *testing.T) {
 	forEachEngine(t, func(t *testing.T, a *App, e engine, connID string) {
@@ -98,7 +98,7 @@ func TestE2EQueryTable(t *testing.T) {
 }
 
 // TestE2EGridEditing covers the no-SQL editing flow: InsertRow (which returns the
-// full row including the generated key), UpdateRow, and DeleteRows.
+// full row including the generated key), UpdateRow and DeleteRows.
 func TestE2EGridEditing(t *testing.T) {
 	forEachEngine(t, func(t *testing.T, a *App, e engine, connID string) {
 		table := uniqueTable("edit")

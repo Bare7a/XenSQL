@@ -82,7 +82,7 @@ func collectStream(run func(StreamOpts) (*QueryResult, error)) (*QueryResult, er
 }
 
 // ScanRowsStream is the single row-scan loop every read path funnels through: it normalizes
-// values, checks ctx periodically, and delivers rows to OnBatch in BatchSize chunks.
+// values, checks ctx periodically and delivers rows to OnBatch in BatchSize chunks.
 func ScanRowsStream(ctx context.Context, rows *sql.Rows, opts StreamOpts) (int64, error) {
 	batchSize := opts.BatchSize
 	if batchSize <= 0 {

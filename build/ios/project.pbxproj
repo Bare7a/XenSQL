@@ -176,7 +176,7 @@
 			buildSettings = {
 				INFOPLIST_FILE = main/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "com.bare7a.xensql";
+				PRODUCT_BUNDLE_IDENTIFIER = "eu.bare7a.xensql";
 				PRODUCT_NAME = "XenSQL";
 				CODE_SIGNING_ALLOWED = NO;
 				SDKROOT = iphoneos;
@@ -188,7 +188,7 @@
 			buildSettings = {
 				INFOPLIST_FILE = main/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "com.bare7a.xensql";
+				PRODUCT_BUNDLE_IDENTIFIER = "eu.bare7a.xensql";
 				PRODUCT_NAME = "XenSQL";
 				CODE_SIGNING_ALLOWED = NO;
 				SDKROOT = iphoneos;

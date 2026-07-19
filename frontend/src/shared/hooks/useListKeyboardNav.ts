@@ -57,7 +57,7 @@ export function useListKeyboardNav(): {
   return { onKeyDown };
 }
 
-// Activates a focusable row (role="button") on Enter/Space by triggering its onClick, and stops
+// Activates a focusable row (role="button") on Enter/Space by triggering its onClick and stops
 // propagation so an enclosing useListKeyboardNav container does not also fire Enter (double activation).
 export function rowActivateKeyDown(e: KeyboardEvent<HTMLElement>) {
   if (e.key === 'Enter' || e.key === ' ') {

@@ -19,9 +19,9 @@ export interface PasteCellEdit {
  * Parse clipboard text into a 2D grid of raw field strings.
  *
  * Delimiter detection prefers TAB - the de-facto spreadsheet clipboard format produced by Excel,
- * Google Sheets, and our own "text" export - and only falls back to comma (our default CSV copy
+ * Google Sheets and our own "text" export - and only falls back to comma (our default CSV copy
  * format) when no tab is present. Both delimiters are parsed quote-aware in the RFC-4180 style: a
- * field may be wrapped in double quotes to contain the delimiter or newlines, and `""` is an escaped
+ * field may be wrapped in double quotes to contain the delimiter or newlines and `""` is an escaped
  * quote. A single trailing blank line (from a trailing newline) is dropped.
  *
  * Empty fields are returned as `''`; NULL semantics are decided later in {@link computePasteEdits}.
@@ -79,7 +79,7 @@ export function parseClipboardGrid(text: string): string[][] {
 /**
  * Offset a parsed clipboard grid onto target cells anchored at (anchorRow, anchorColPos) in display
  * coordinates - e.g. a 3×3 copy pasted at B2 fills B2:D4. Cells that fall past the loaded rows or the
- * visible columns are dropped: we can't create rows here, and there's nothing to the right to fill.
+ * visible columns are dropped: we can't create rows here and there's nothing to the right to fill.
  *
  * Accepts the parsed clipboard (`string[][]`) or the captured copy buffer (`(string | null)[][]`,
  * NULLs preserved); a null or empty field both paste as NULL, matching single-cell paste.

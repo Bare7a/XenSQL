@@ -3,7 +3,7 @@ set -e
 
 # Build configuration
 APP_NAME="XenSQL"
-BUNDLE_ID="com.bare7a.xensql"
+BUNDLE_ID="eu.bare7a.xensql"
 VERSION="1.2.1"
 BUILD_NUMBER="1.2.1"
 BUILD_DIR="build/ios"

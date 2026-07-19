@@ -480,6 +480,7 @@
     "title": "Über {{name}}",
     "version": "Version",
     "createdBy": "Erstellt von",
+    "website": "Webseite",
     "repository": "Quellcode-Repository",
     "stack": "Erstellt mit Go, Wails, React und Monaco Editor.",
     "checkUpdates": "Nach Updates suchen"

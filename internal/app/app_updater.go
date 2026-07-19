@@ -37,7 +37,7 @@ func (a *App) startBackgroundUpdateCheck() {
 
 // runBackgroundUpdateCheck checks without opening any window. When a newer
 // release is found it emits "update-available" so the UI can show a dismissible
-// toast; offline, errored, up-to-date, and skipped cases all stay silent.
+// toast; offline, errored, up-to-date and skipped cases all stay silent.
 func (a *App) runBackgroundUpdateCheck() {
 	select {
 	case <-time.After(startupCheckDelay):

@@ -1,7 +1,8 @@
 {
   "name": "xensql-frontend",
   "private": true,
-  "version": "1.4.1",
+  "version": "1.4.2",
+  "homepage": "https://xensql.bare7a.eu",
   "type": "module",
   "scripts": {
     "dev": "vite",

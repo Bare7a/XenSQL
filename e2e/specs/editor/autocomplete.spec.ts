@@ -15,7 +15,7 @@ test.describe('Editor autocomplete', () => {
   });
 
   // SQLite so the test needs no database container.
-  test('suggests a seeded table, its columns, and the FK join condition', async ({
+  test('suggests a seeded table, its columns and the FK join condition', async ({
     connections,
     editor,
     schema,

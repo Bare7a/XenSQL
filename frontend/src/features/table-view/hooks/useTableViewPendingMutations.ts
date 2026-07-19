@@ -52,7 +52,7 @@ interface UseTableViewPendingMutationsArgs {
 }
 
 /**
- * Pending-change mutations for a table-view tab: cell edits, paste batches, and row delete toggles,
+ * Pending-change mutations for a table-view tab: cell edits, paste batches and row delete toggles,
  * each recorded as one undoable snapshot on shared undo/redo stacks.
  */
 export function useTableViewPendingMutations({

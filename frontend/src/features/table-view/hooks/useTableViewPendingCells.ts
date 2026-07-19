@@ -13,7 +13,7 @@ interface UseTableViewPendingCellsArgs {
 
 /**
  * Pending-edit bookkeeping for the table-view grid: primary-key lookups, the cell display value
- * (pending edit over raw), and the optimistic "edited" tint kept in lockstep with committed edits.
+ * (pending edit over raw) and the optimistic "edited" tint kept in lockstep with committed edits.
  */
 export function useTableViewPendingCells({
   rows,

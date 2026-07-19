@@ -162,8 +162,8 @@ tasks:
     summary: Run the Playwright UI suite (drives the app in Wails server mode; data dir ./e2e/XenSQL-data)
     dir: e2e
     cmds:
-      # e2e/playwright.config.ts builds the frontend, starts the server, and brings the
-      # database stack up (global-setup) on its own.
+      # e2e/playwright.config.ts builds the frontend, 
+      # starts the server and brings the database stack up (global-setup) on its own.
       - npx playwright test
 
   e2e:ui:all:

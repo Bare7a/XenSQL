@@ -34,7 +34,7 @@ describe('parseClipboardGrid', () => {
     ]);
   });
 
-  it('honors quoted fields containing the delimiter, quotes, and newlines', () => {
+  it('honors quoted fields containing the delimiter, quotes and newlines', () => {
     expect(parseClipboardGrid('"a,b","c""d","e\nf"')).toEqual([['a,b', 'c"d', 'e\nf']]);
   });
 

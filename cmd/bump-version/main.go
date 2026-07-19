@@ -36,7 +36,7 @@ var (
 func main() {
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, "Usage: go run ./cmd/bump-version [flags] [version]\n\n")
-		fmt.Fprintf(os.Stderr, "Updates version.go, build/config.yml, and frontend metadata, then runs\n")
+		fmt.Fprintf(os.Stderr, "Updates version.go, build/config.yml and frontend metadata, then runs\n")
 		fmt.Fprintf(os.Stderr, "wails3 task common:update:build-assets to refresh everything under build/.\n\n")
 		fmt.Fprintf(os.Stderr, "Examples:\n")
 		fmt.Fprintf(os.Stderr, "  go run ./cmd/bump-version -minor\n")

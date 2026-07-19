@@ -23,7 +23,7 @@ export interface CompletionItem {
   sortText?: string; // lower lex = higher in list
 }
 
-// One rule per keyword: shape gate, engines, and whether it survives inside WHERE.
+// One rule per keyword: shape gate, engines and whether it survives inside WHERE.
 interface KeywordRule {
   kw: string;
   drivers?: readonly DriverType[];

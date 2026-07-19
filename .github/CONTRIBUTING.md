@@ -1,7 +1,7 @@
 # 🤝 Contributing to XenSQL
 
 Thanks for considering contributing to **XenSQL**! 🎉  
-We welcome all kinds of contributions - bug reports, feature ideas, documentation, code, translations, and more.
+We welcome all kinds of contributions - bug reports, feature ideas, documentation, code, translations and more.
 
 ---
 
@@ -11,7 +11,7 @@ We welcome all kinds of contributions - bug reports, feature ideas, documentatio
 2. Follow the **[Development Setup](#-development-setup)** below
 3. Create a branch: `git checkout -b feature/amazing-thing`
 4. Make your changes
-5. Test thoroughly (especially across SQLite, PostgreSQL, and MySQL)
+5. Test thoroughly (especially across SQLite, PostgreSQL and MySQL)
 6. Open a **Pull Request** using our [PR template](.github/PULL_REQUEST_TEMPLATE.md)
 
 ---
@@ -62,7 +62,7 @@ task e2e:go:all
 task e2e:ui:all
 ```
 
-CI runs the frontend, API E2E (Go), and Go unit suites on every pull request.
+CI runs the frontend, API E2E (Go) and Go unit suites on every pull request.
 
 **Playwright UI tests are not in CI** - run them locally before merging UI-facing
 work. See **[TESTING.md](./TESTING.md#ui-end-to-end-tests-playwright)** for details.

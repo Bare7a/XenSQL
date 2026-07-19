@@ -114,14 +114,14 @@ Every test runs against all three engines (`postgres`, `mysql`, `mariadb`):
 - **Query execution** - DDL / DML / SELECT lifecycle, affected-row counts, empty
   result sets, error surfacing, value normalization (bigints past 2⁵³ → string,
   `NULL` → nil, binary → hex, timestamps → RFC3339), `RETURNING`
-- **Results grid** - browse with pagination, sort, filter, and rejection of
+- **Results grid** - browse with pagination, sort, filter and rejection of
   injection-style filters
 - **Editing data** - `InsertRow` (returns the generated key), `UpdateRow`,
-  `DeleteRows`, and the no-primary-key safety rule
+  `DeleteRows` and the no-primary-key safety rule
 - **Streaming** - batched row delivery, streaming table browse, multi-statement
-  scripts (one result set per statement), and stop-on-first-error
+  scripts (one result set per statement) and stop-on-first-error
 - **Transactions** - per-tab begin / commit / rollback, isolation from other
-  connections, guard rails, and independent concurrent transactions per tab
+  connections, guard rails and independent concurrent transactions per tab
 - **Query history** - success/error recording and clearing
 - **Export** - CSV / JSON / Markdown / SQL of live query results
 
@@ -143,8 +143,8 @@ Every test runs against all three engines (`postgres`, `mysql`, `mariadb`):
 The Playwright suite drives the **real XenSQL UI in a browser** against the
 **real Go backend** in Wails v3 server mode (HTTP + WebSocket, no native window).
 It lives entirely under [`e2e/`](../e2e/) and covers connections, schema, queries,
-transactions, table view, results grid, editor autocomplete, and app-shell toggles
-across **PostgreSQL**, **MySQL**, **MariaDB**, and **SQLite**.
+transactions, table view, results grid, editor autocomplete and app-shell toggles
+across **PostgreSQL**, **MySQL**, **MariaDB** and **SQLite**.
 
 ### Requirements
 
@@ -213,7 +213,7 @@ the matrix suites replay it on all four drivers.
 - **Editor tabs** - open (`+`), switch (`Ctrl+Tab` / `Ctrl+Shift+Tab`), close (`Ctrl+W` / ✕)
 - **Table view (browse)** - browse data; sort; scroll-paginate past the first 100 rows
 - **Table view (edit)** - inline edit, set NULL, mark row for delete, Reset / Apply
-  (verified against the DB), and undo / redo (`Ctrl+Z` / `Ctrl+Shift+Z`)
+  (verified against the DB) and undo / redo (`Ctrl+Z` / `Ctrl+Shift+Z`)
 - **Table view (data ops)** - filter by a condition; add a row via the Add-row dialog
 - **Cell viewer** - open a JSON cell with `Shift+Enter`, Beautify / Minify, Set to NULL
 - **JSON viewer** - `Ctrl+J` toggle, mirrors the focused row, key filter, JSON nesting

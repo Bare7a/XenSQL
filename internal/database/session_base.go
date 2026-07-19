@@ -7,9 +7,9 @@ import (
 )
 
 // SessionBase implements the Session methods whose behaviour is identical across drivers:
-// lifecycle, read-only gating, schema defaulting, statement execution, table browsing, and row
+// lifecycle, read-only gating, schema defaulting, statement execution, table browsing and row
 // mutations. Driver sessions embed it and keep only catalog discovery (ListSchemas / ListTables /
-// ListColumns), InsertRow, and ConnectionInfo driver-specific.
+// ListColumns), InsertRow and ConnectionInfo driver-specific.
 type SessionBase struct {
 	DB            *sql.DB
 	Driver        DriverType

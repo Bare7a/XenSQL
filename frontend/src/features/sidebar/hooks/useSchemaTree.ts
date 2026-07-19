@@ -198,7 +198,7 @@ export function useSchemaTree({ connId, connConnected, schemaList, schemaSearch 
     fetchTableColumns,
   ]);
 
-  // Pre-warm while the user types: tables for every schema (so name matches surface), and columns
+  // Pre-warm while the user types: tables for every schema (so name matches surface) and columns
   // for non-matching table names (so column matches surface). Loaded/loading guards make re-runs no-ops.
   useEffect(() => {
     if (!schemaSearch || !connId) return;
