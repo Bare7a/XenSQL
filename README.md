@@ -50,7 +50,7 @@ wails3 dev
 
 ## ⚡ SQL tools are usually overkill. XenSQL isn’t.
 
-Work with **SQLite**, **PostgreSQL**and **MySQL / MariaDB** in a single fast desktop app that runs entirely on your machine.
+Work with **SQLite**, **PostgreSQL** and **MySQL / MariaDB** in a single fast desktop app that runs entirely on your machine.
 
 🧳 Portable  
 ⚡ Fast startup  
@@ -96,7 +96,7 @@ Work with **SQLite**, **PostgreSQL**and **MySQL / MariaDB** in a single fast des
 
 ## ⚡ What XenSQL is
 
-XenSQL is a **desktop SQL client built for developers who want speed, clarityand control**.
+XenSQL is a **desktop SQL client built for developers who want speed, clarity and control**.
 
 It combines:
 
@@ -137,7 +137,7 @@ XenSQL focuses on one thing:
 
 ## 🔌 Connections
 
-- Create, edit, testand manage database connections
+- Create, edit, test and manage database connections
 - Organize into **folders** with drag-and-drop reorder
 - Per-connection **tab colors**
 - **Read-only mode** with defense-in-depth - blocked at both the Wails layer and inside each driver
@@ -155,7 +155,7 @@ XenSQL focuses on one thing:
 - Driver-correct identifier quoting (PostgreSQL, MySQL, SQLite)
 - **Run selection** (`Ctrl+Enter`) / **run all** (`Ctrl+Shift+Enter`) / **stop** long-running queries
 - **Streaming results** - rows render as the driver yields them
-- **Multi-statement scripts** - run several `;`-separated statements at once; they execute in order on one connection, so temp tables, `SET`and scripted `BEGIN` / `COMMIT` hold
+- **Multi-statement scripts** - run several `;`-separated statements at once; they execute in order on one connection, so temp tables, `SET` and scripted `BEGIN` / `COMMIT` hold
 - **Multiple result outputs** - a script or stored procedure that returns several result sets shows each in its own switchable result tab; a failing statement reports its error and stops the run
 - **Pinned transactions** per tab - run `BEGIN` / `COMMIT` / `ROLLBACK` as SQL or from the toolbar; queries run inside the open transaction until you commit or roll back
 - `UPDATE` / `DELETE` / `INSERT` with **`RETURNING`** flow back to the Results Grid
@@ -195,7 +195,7 @@ View and modify table data directly in the grid - no hand-written `UPDATE` / `DE
 - **Browse** any table's rows (`Ctrl+double-click` a table in the Schema Explorer)
 - **Inline edit** cells in place - changes are staged, then applied on demand
 - **Insert** new rows and **bulk-delete** selected ones
-- Safe by design: edits require a primary keyand **read-only** connections are blocked at both the Wails layer and inside the driver
+- Safe by design: edits require a primary key and **read-only** connections are blocked at both the Wails layer and inside the driver
 - `INSERT` / `UPDATE` / `DELETE … RETURNING` results flow straight back into the grid
 
 ---
@@ -203,7 +203,7 @@ View and modify table data directly in the grid - no hand-written `UPDATE` / `DE
 ## 📚 Query Library & History
 
 - **Saved queries** - name, filter, sort, link tabs with dirty-state tracking
-- Save, update, renameand delete from the sidebar or toolbar
+- Save, update, rename and delete from the sidebar or toolbar
 - **Per-connection query history** with success/error and duration
 - Clear history per connection or delete individual entries
 
@@ -223,18 +223,18 @@ View and modify table data directly in the grid - no hand-written `UPDATE` / `DE
 - Automatically checks for new versions on startup
 - Clean modal with changelog highlights
 - One-click download and update
-- Supports Windows (MSI), macOSand Linux builds
+- Supports Windows (MSI), macOS and Linux builds
 
 ---
 
 ## 🌍 UX
 
 - **Dark & light** themes
-- **English**, **Deutsch**and **Български**
+- **English**, **Deutsch** and **Български**
 - **Quick Search palette** (`Ctrl+P`) - jump to connections, saved queries, history, tabs
 - Custom shortcuts editor + keyboard tips
 - Frameless native title bar
-- **Window state persistence** - size, positionand maximized state restored between sessions
+- **Window state persistence** - size, position and maximized state restored between sessions
 
 ---
 
@@ -273,7 +273,7 @@ XenSQL-data/
   settings.json
 ```
 
-`settings.json` keeps your UI preferences - theme, language, layoutand keyboard shortcuts.
+`settings.json` keeps your UI preferences - theme, language, layout and keyboard shortcuts.
 
 When the app sits somewhere writable, that folder is created **right next to the executable** (beside the `.app` bundle on macOS) - move it to a USB stick, network drive, or another PC and it just works.
 
@@ -313,7 +313,7 @@ XenSQL uses **[Wails v3](https://v3.wails.io/)**, which embeds a web UI into a n
 ```bash
 go install github.com/wailsapp/wails/v3/cmd/wails3@latest
 
-# wails3 dev installs frontend deps, generates bindingsand launches the app
+# wails3 dev installs frontend deps, generates bindings and launches the app
 wails3 dev
 ```
 
