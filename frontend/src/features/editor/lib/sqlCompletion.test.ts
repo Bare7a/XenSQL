@@ -161,7 +161,7 @@ describe('existing contexts are unchanged', () => {
     expect(columnLabels('UPDATE users SET ')).toEqual(expect.arrayContaining(ALL_COLS));
   });
 
-  it('after a completed SET assignment offers WHERE, and columns again after a comma', () => {
+  it('after a completed SET assignment offers WHERE and columns again after a comma', () => {
     expect(columnLabels('UPDATE users SET name = 1 ')).toEqual([]);
     expect(labelsOf('UPDATE users SET name = 1 ')).toContain('WHERE');
     expect(columnLabels('UPDATE users SET name = 1, ')).toEqual(expect.arrayContaining(ALL_COLS));
@@ -177,7 +177,7 @@ describe('existing contexts are unchanged', () => {
 });
 
 // Regression: a quoted table in FROM (`FROM "Users"`) broke WHERE completion - the range matched
-// from its closing quote (hiding everything), and the table-ref needs a quoted filterText to match.
+// from its closing quote (hiding everything) and the table-ref needs a quoted filterText to match.
 describe('capital/quoted table works in WHERE (range + filterText)', () => {
   const capTables: TableInfo[] = [{ schema: 'public', name: 'Users', type: 'table' }];
   const capCtx = (): CompletionContext => ({

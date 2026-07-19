@@ -11,7 +11,7 @@ export default defineConfig({
   resolve: {
     alias: {
       // `@/` resolves to src/ - mirrors the tsconfig paths entry so editor,
-      // type checker, vite dev server, and the production build all agree
+      // type checker, vite dev server and the production build all agree
       // on what `@/features/...` means.
       '@': path.resolve(__dirname, 'src'),
       // `@bindings/` points at the Wails v3 generated bindings outside src/.

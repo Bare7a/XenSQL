@@ -8,7 +8,7 @@ import (
 )
 
 // TestE2EQueryHistory checks that ExecuteQuery records per-connection history with
-// success/error state, and that history can be cleared - the Query History panel.
+// success/error state and that history can be cleared - the Query History panel.
 func TestE2EQueryHistory(t *testing.T) {
 	forEachEngine(t, func(t *testing.T, a *App, e engine, connID string) {
 		// Clear any history left by other subtests on this fresh app+connection.

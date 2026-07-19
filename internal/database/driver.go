@@ -18,7 +18,7 @@ type Session interface {
 	Execute(ctx context.Context, sql string) (*QueryResult, error)
 	// Returned QueryResult carries metadata only; rows are delivered via OnBatch. Non-SELECT acts like Execute.
 	ExecuteStream(ctx context.Context, sql string, opts StreamOpts) (*QueryResult, error)
-	// BeginTxn checks out a dedicated connection, issues BEGIN, and returns a PinnedTxn that must be
+	// BeginTxn checks out a dedicated connection, issues BEGIN and returns a PinnedTxn that must be
 	// Committed or Rolled back by the caller, then Closed.
 	BeginTxn(ctx context.Context) (PinnedTxn, error)
 	// PinnedConn checks out a dedicated connection (with the session's setup applied) for running a

@@ -9,9 +9,9 @@ import (
 )
 
 // TestE2ESchemaExplorer covers the Schema Explorer surface: LoadSchemaData (the
-// single call the UI makes on connect), ListSchemas/ListTables/ListColumns, and
+// single call the UI makes on connect), ListSchemas/ListTables/ListColumns and
 // primary/foreign-key + nullable detection - the metadata that drives the tree,
-// editable-grid gating, and autocomplete.
+// editable-grid gating and autocomplete.
 func TestE2ESchemaExplorer(t *testing.T) {
 	forEachEngine(t, func(t *testing.T, a *App, e engine, connID string) {
 		parent := uniqueTable("authors")

@@ -175,7 +175,7 @@ describe('normalizeQueryResult disambiguates duplicate columns', () => {
 });
 
 describe('formatError', () => {
-  it('handles strings, Errors, and objects with .message', () => {
+  it('handles strings, Errors and objects with .message', () => {
     expect(formatError('boom')).toBe('boom');
     expect(formatError(new Error('nope'))).toBe('nope');
     expect(formatError({ message: 'huh' })).toBe('huh');

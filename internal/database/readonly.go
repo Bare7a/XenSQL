@@ -107,7 +107,7 @@ func IsReadOnlySQL(sql string) bool {
 	return IsReadOnlySQLFor("", sql)
 }
 
-// IsReadOnlySQLFor strips # comments only for MySQL - on Postgres # is an operator, and stripping
+// IsReadOnlySQLFor strips # comments only for MySQL - on Postgres # is an operator and stripping
 // to end-of-line could hide a following write from the classifier.
 func IsReadOnlySQLFor(driver DriverType, sql string) bool {
 	cleaned := maskStringLiterals(stripSQLComments(sql, driver == DriverMySQL))
@@ -290,7 +290,7 @@ func emitSpan(sql string, lo, hi int, mask bool, b *strings.Builder) {
 }
 
 // scanQuoted consumes the quoted span at sql[i] (doubled-quote escape), writing spaces when mask is
-// true else copying verbatim, and returns the index past the closing quote.
+// true else copying verbatim and returns the index past the closing quote.
 func scanQuoted(sql string, i int, quote byte, mask bool, b *strings.Builder) int {
 	end := quotedSpanEnd(sql, i, quote)
 	emitSpan(sql, i, end, mask, b)

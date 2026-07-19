@@ -9,7 +9,7 @@ import (
 )
 
 // TestE2ETestConnection covers the "Test connection" button: a good config pings
-// successfully, and bad host/credentials fail fast instead of hanging.
+// successfully and bad host/credentials fail fast instead of hanging.
 func TestE2ETestConnection(t *testing.T) {
 	for _, e := range allEngines() {
 		e := e

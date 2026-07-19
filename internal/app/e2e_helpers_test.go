@@ -169,7 +169,7 @@ var (
 // reachable reports whether the engine's server accepts a connection, so the
 // suite can skip engines that aren't up instead of failing. The result is probed
 // once per engine and cached: the first call absorbs a slow-starting server (a
-// few retries), and every later call across the suite is instant.
+// few retries) and every later call across the suite is instant.
 func reachable(e engine) error {
 	reachMu.Lock()
 	defer reachMu.Unlock()

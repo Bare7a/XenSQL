@@ -104,7 +104,7 @@ func TestE2EErrorSurfacing(t *testing.T) {
 }
 
 // TestE2EValueNormalization checks the type coercions that protect the frontend:
-// integers past JS's safe range become strings, NULL becomes nil, and binary is
+// integers past JS's safe range become strings, NULL becomes nil and binary is
 // hex-encoded. Timestamps and JSON are checked per-driver where syntax differs.
 func TestE2EValueNormalization(t *testing.T) {
 	forEachEngine(t, func(t *testing.T, a *App, e engine, connID string) {

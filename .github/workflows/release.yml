@@ -66,7 +66,7 @@ jobs:
       # single top-level entry, so each archive is named <platform>-<arch> and
       # holds exactly one entry: the binary (linux/windows) or XenSQL.app (macOS).
       # Plain XenSQL / XenSQL.exe (no platform tokens), distro packages
-      # (XenSQL.deb, XenSQL.rpm, XenSQL.pkg.tar.zst, xensql-x86_64.AppImage), and
+      # (XenSQL.deb, XenSQL.rpm, XenSQL.pkg.tar.zst, xensql-x86_64.AppImage) and
       # XenSQL-amd64-installer.exe are manual-download only.
 
       - name: Build & package (Linux)

@@ -95,7 +95,7 @@ describe('exportResultToText - csv', () => {
 });
 
 describe('exportResultToText - markdown', () => {
-  it('writes header, separator, and escaped pipes', () => {
+  it('writes header, separator and escaped pipes', () => {
     const r = sample();
     r.rows.push([4, 'a|b', 'c']);
     const lines = exportResultToText(r, 'markdown').split('\n');
@@ -377,7 +377,7 @@ describe('formatCellCopyValue', () => {
     expect(formatCellCopyValue(undefined)).toBe('');
   });
 
-  it('stringifies numbers, booleans, and strings', () => {
+  it('stringifies numbers, booleans and strings', () => {
     expect(formatCellCopyValue(0)).toBe('0');
     expect(formatCellCopyValue(false)).toBe('false');
     expect(formatCellCopyValue('hi')).toBe('hi');
