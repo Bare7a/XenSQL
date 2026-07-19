@@ -12,11 +12,11 @@ interface Props {
 export function AboutDialog({ info, onClose }: Props) {
   const { t } = useTranslation();
 
-  const openRepo = () => {
+  const openUrl = (url: string) => {
     try {
-      Browser.OpenURL(info.repository);
+      Browser.OpenURL(url);
     } catch {
-      window.open(info.repository, '_blank', 'noopener,noreferrer');
+      window.open(url, '_blank', 'noopener,noreferrer');
     }
   };
 
@@ -44,9 +44,17 @@ export function AboutDialog({ info, onClose }: Props) {
             </dd>
           </div>
           <div>
+            <dt>{t('about.website')}</dt>
+            <dd>
+              <button type="button" className="about-link-btn" onClick={() => openUrl(info.website)}>
+                {info.website}
+              </button>
+            </dd>
+          </div>
+          <div>
             <dt>{t('about.repository')}</dt>
             <dd>
-              <button type="button" className="about-link-btn" onClick={openRepo}>
+              <button type="button" className="about-link-btn" onClick={() => openUrl(info.repository)}>
                 {info.repository}
               </button>
             </dd>

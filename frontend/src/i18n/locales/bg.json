@@ -480,6 +480,7 @@
     "title": "За {{name}}",
     "version": "Версия",
     "createdBy": "Създадено от",
+    "website": "Уебсайт",
     "repository": "Хранилище с изходен код",
     "stack": "Създадено с Go, Wails, React и Monaco Editor.",
     "checkUpdates": "Проверка за актуализации"

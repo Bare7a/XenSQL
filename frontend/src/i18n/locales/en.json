@@ -480,6 +480,7 @@
     "title": "About {{name}}",
     "version": "Version",
     "createdBy": "Created by",
+    "website": "Website",
     "repository": "Source repository",
     "stack": "Built with Go, Wails, React and Monaco Editor.",
     "checkUpdates": "Check for Updates"

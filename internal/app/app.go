@@ -158,6 +158,7 @@ type AppInfo struct {
 	Version     string `json:"version"`
 	Author      string `json:"author"`
 	Email       string `json:"email"`
+	Website     string `json:"website"`
 	Repository  string `json:"repository"`
 	Description string `json:"description"`
 }
@@ -168,6 +169,7 @@ func (a *App) GetAppInfo() AppInfo {
 		Version:     Version,
 		Author:      "Bare7a",
 		Email:       "bare7a@gmail.com",
+		Website:     "https://xensql.bare7a.eu",
 		Repository:  "https://github.com/Bare7a/XenSQL",
 		Description: "A fast, native SQL client built with Go and Wails.",
 	}
