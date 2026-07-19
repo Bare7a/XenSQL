@@ -8,7 +8,7 @@
   IgnorableNamespaces="uap3">
   
   <Identity 
-    Name="com.bare7a.xensql"
+    Name="eu.bare7a.xensql"
     Publisher="CN=Bare7a"
     Version="1.1.2.0" 
     ProcessorArchitecture="x64" />
@@ -29,7 +29,7 @@
   </Resources>
   
   <Applications>
-    <Application Id="com.bare7a.xensql" Executable="xensql" EntryPoint="Windows.FullTrustApplication">
+    <Application Id="eu.bare7a.xensql" Executable="xensql" EntryPoint="Windows.FullTrustApplication">
       <uap:VisualElements
         DisplayName="XenSQL"
         Description="A fast, native SQL client built with Go, Wails and React."

@@ -25,7 +25,7 @@
         </Capabilities>
         <Applications>
             <Application
-                Id="com.bare7a.xensql"
+                Id="eu.bare7a.xensql"
                 Description="A fast, native SQL client built with Go, Wails and React."
                 DisplayName="XenSQL"
                 ExecutableName="xensql"
