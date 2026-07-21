@@ -883,6 +883,93 @@ describe('column suggestions carry PK / NOT NULL hints', () => {
   });
 });
 
+// Borrowed from potygen: a column name projected by several in-scope sources is ambiguous bare
+// (the server rejects it), so it is offered qualified per source instead.
+describe('ambiguous columns across joined sources are offered qualified', () => {
+  const cols: Record<string, ColumnInfo[]> = {
+    'public.users': [
+      { name: 'id', dataType: 'int', isNullable: false, isPrimary: true, isForeign: false },
+      { name: 'email', dataType: 'text', isNullable: false, isPrimary: false, isForeign: false },
+    ],
+    'public.orders': [
+      { name: 'id', dataType: 'int', isNullable: false, isPrimary: true, isForeign: false },
+      { name: 'total', dataType: 'numeric', isNullable: true, isPrimary: false, isForeign: false },
+    ],
+  };
+  const ambComplete = (text: string) => {
+    const ctx: CompletionContext = {
+      schemas,
+      tables,
+      columns: [],
+      tablesBySchema: { public: tables },
+      columnsByTable: cols,
+      driver: 'postgres',
+    };
+    const parsed = parseQueryContext(text, tables, schemas, 'postgres');
+    return buildCompletionItems({ ctx, text, position: text.length, parsed });
+  };
+
+  it('qualifies the shared column per source and keeps unique columns bare', () => {
+    const labels = ambComplete('SELECT * FROM users u JOIN orders o ON u.id = o.id WHERE ').map((i) => i.label);
+    expect(labels).toEqual(expect.arrayContaining(['u.id', 'o.id', 'email', 'total']));
+    expect(labels).not.toContain('id');
+  });
+
+  it('uses the table name as qualifier when there is no alias', () => {
+    const labels = ambComplete('SELECT * FROM users JOIN orders ON ').map((i) => i.label);
+    expect(labels).toEqual(expect.arrayContaining(['users.id', 'orders.id']));
+    expect(labels).not.toContain('id');
+  });
+
+  it('qualifies every column of a self-join per alias', () => {
+    const labels = ambComplete('SELECT * FROM users a JOIN users b ON ').map((i) => i.label);
+    expect(labels).toEqual(expect.arrayContaining(['a.id', 'b.id', 'a.email', 'b.email']));
+    expect(labels).not.toContain('id');
+    expect(labels).not.toContain('email');
+  });
+
+  it('keeps single-table statements fully bare', () => {
+    expect(columnLabels('SELECT * FROM users WHERE ')).toEqual(expect.arrayContaining(ALL_COLS));
+  });
+
+  it('driver-quotes the qualifier in the inserted text', () => {
+    const capTables: TableInfo[] = [
+      { schema: 'public', name: 'Users', type: 'table' },
+      { schema: 'public', name: 'orders', type: 'table' },
+    ];
+    const shared: ColumnInfo[] = [{ name: 'id', dataType: 'int', isNullable: false, isPrimary: true, isForeign: false }];
+    const ctx: CompletionContext = {
+      schemas,
+      tables: capTables,
+      columns: [],
+      tablesBySchema: { public: capTables },
+      columnsByTable: { 'public.Users': shared, 'public.orders': shared },
+      driver: 'postgres',
+    };
+    const text = 'SELECT * FROM "Users" JOIN orders ON ';
+    const items = buildCompletionItems({
+      ctx,
+      text,
+      position: text.length,
+      parsed: parseQueryContext(text, capTables, schemas, 'postgres'),
+    });
+    expect(items.find((i) => i.label === 'Users.id')?.insertText).toBe('"Users".id');
+    expect(items.find((i) => i.label === 'orders.id')?.insertText).toBe('orders.id');
+  });
+});
+
+// Borrowed from potygen: its column completions include the query's sources. The statement is
+// parsed whole, so a mid-statement edit of the select list knows the FROM/JOIN refs after the caret.
+describe('SELECT list offers the statement’s table refs (mid-statement edit)', () => {
+  it('offers alias, table and columns while editing the select list', () => {
+    const text = 'SELECT  FROM users u';
+    const position = 'SELECT '.length;
+    const parsed = parseQueryContext(text, tables, schemas, 'postgres');
+    const labels = buildCompletionItems({ ctx: makeCtx(), text, position, parsed }).map((i) => i.label);
+    expect(labels).toEqual(expect.arrayContaining(['u', 'users', 'id', 'email', 'name']));
+  });
+});
+
 describe('keywords are offered by position', () => {
   it('offers statement starters only at the very start', () => {
     expect(labelsOf('SEL')).toEqual(expect.arrayContaining(['SELECT']));

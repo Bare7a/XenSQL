@@ -10,11 +10,22 @@ export interface HoverQuery {
   end: number;
   lines?: string[];
   columnLookup?: { bindings: TableBinding[]; name: string };
+  // Table/alias hover: the caller appends this relation's column list (loaded lazily).
+  tableColumns?: TableBinding;
 }
 
 export function columnHoverLines(col: ColumnInfo, table: TableBinding): string[] {
   const where = table.schema ? `${table.schema}.${table.table}` : table.table;
   return [`**${col.name}** · ${columnDetail(col)}`, `column of ${where}`];
+}
+
+// Markdown column table for the table-hover card (potygen-style quick info).
+export function tableColumnsMarkdown(cols: ColumnInfo[], max = 30): string[] {
+  if (cols.length === 0) return [];
+  const shown = cols.slice(0, max);
+  const rows = shown.map((c) => `| ${c.name} | ${columnDetail(c)} |`);
+  const table = ['| column | type |', '| --- | --- |', ...rows].join('\n');
+  return cols.length > shown.length ? [table, `… ${cols.length - shown.length} more columns`] : [table];
 }
 
 function tableLines(t: TableInfo): string[] {
@@ -75,9 +86,13 @@ export function analyzeHover(
   if (bound) {
     const info = tables.find((t) => t.name === bound.table && t.schema === bound.schema);
     if (bound.table.toLowerCase() !== nameLc) {
-      return { ...span, lines: [`**${name}** · alias for ${bound.table}`, ...(info ? tableLines(info).slice(1) : [])] };
+      return {
+        ...span,
+        lines: [`**${name}** · alias for ${bound.table}`, ...(info ? tableLines(info).slice(1) : [])],
+        tableColumns: info ? bound : undefined,
+      };
     }
-    if (info) return { ...span, lines: tableLines(info) };
+    if (info) return { ...span, lines: tableLines(info), tableColumns: bound };
   }
 
   // CTE / derived-table alias.
@@ -90,7 +105,9 @@ export function analyzeHover(
 
   // Any table in the connected schema.
   const table = tables.find((t) => t.name.toLowerCase() === nameLc);
-  if (table) return { ...span, lines: tableLines(table) };
+  if (table) {
+    return { ...span, lines: tableLines(table), tableColumns: { schema: table.schema, table: table.name } };
+  }
 
   // A schema name.
   const schema = schemas.find((s) => s.name.toLowerCase() === nameLc);

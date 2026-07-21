@@ -1,3 +1,4 @@
+import { cacheKey, LruCache } from '@/features/editor/lib/sqlCache';
 import {
   findBlockCommentEnd,
   findLineCommentEnd,
@@ -34,8 +35,17 @@ const WS_RE = /\s/;
 const TWO_CHAR_OPS = new Set(['<=', '>=', '<>', '!=', '::', '||', ':=']);
 const PUNCT = new Set(['.', ',', '(', ')', ';']);
 
-// One pass; $tag$ delimiters are ops so dollar-quoted bodies stay tokenized (completion works inside them).
+// Completion, hover and query parsing all tokenize the same statement text within one keystroke.
+// The result is shared, so callers must treat the returned tokens as immutable.
+const tokenCache = new LruCache<SqlToken[]>(64);
+
 export function tokenizeSql(text: string, driver?: DriverType): SqlToken[] {
+  const key = cacheKey(driver, text);
+  return tokenCache.get(key) ?? tokenCache.set(key, tokenize(text, driver));
+}
+
+// One pass; $tag$ delimiters are ops so dollar-quoted bodies stay tokenized (completion works inside them).
+function tokenize(text: string, driver?: DriverType): SqlToken[] {
   const opts = lexOptionsFor(driver);
   const len = text.length;
   const tokens: SqlToken[] = [];

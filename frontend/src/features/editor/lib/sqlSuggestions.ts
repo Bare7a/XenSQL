@@ -319,33 +319,72 @@ export function suggestQueryTableRefs(
   return items;
 }
 
-export function suggestColumnsFromBindings(
+// Columns of every relation the statement binds, one source per FROM/JOIN/UPDATE/INSERT ref.
+// A name projected by several sources is ambiguous bare - the server would reject it - so those
+// are offered qualified per source (`alias.col`). Potygen drops ambiguous columns from its
+// completions; qualifying keeps them reachable.
+export function suggestColumnsInScope(
   ctx: CompletionContext,
-  bindings: Map<string, TableBinding>,
+  queryTables: QueryTableRef[],
   lcPrefix: string,
+  seen?: Set<string>,
 ): CompletionItem[] {
-  const items: CompletionItem[] = [];
-  const seen = new Set<string>();
-  const seenTables = new Set<string>();
-
-  for (const binding of bindings.values()) {
-    const tk = columnCacheKey(binding.schema, binding.table);
-    if (seenTables.has(tk)) continue;
-    seenTables.add(tk);
-    pushColumnItems(items, ctx.columnsByTable[tk] || [], 0, lcPrefix, ctx.driver, seen);
+  const sources: { ref: QueryTableRef; cols: ColumnInfo[] }[] = [];
+  const seenRefs = new Set<string>();
+  for (const ref of queryTables) {
+    const refKey = `${columnCacheKey(ref.schema, ref.table)}|${(ref.alias ?? '').toLowerCase()}`;
+    if (seenRefs.has(refKey)) continue;
+    seenRefs.add(refKey);
+    sources.push({ ref, cols: ctx.columnsByTable[columnCacheKey(ref.schema, ref.table)] || [] });
   }
 
+  // How many sources project each name; self-joins count once per alias, like the server does.
+  const nameCount = new Map<string, number>();
+  for (const s of sources) {
+    for (const name of new Set(s.cols.map((c) => c.name.toLowerCase()))) {
+      nameCount.set(name, (nameCount.get(name) ?? 0) + 1);
+    }
+  }
+
+  const items: CompletionItem[] = [];
+  for (const s of sources) {
+    const emitted = new Set<string>();
+    for (const c of s.cols) {
+      const key = c.name.toLowerCase();
+      if (emitted.has(key)) continue;
+      emitted.add(key);
+      const score = matchScore(c.name, lcPrefix);
+      if (score < 0) continue;
+      if ((nameCount.get(key) ?? 0) > 1) {
+        const qualifier = s.ref.alias ?? s.ref.table;
+        const label = `${qualifier}.${c.name}`;
+        seen?.add(key);
+        items.push({
+          label,
+          kind: 'field',
+          detail: columnDetail(c),
+          insertText: `${formatSqlIdentifier(qualifier, ctx.driver)}.${formatSqlIdentifier(c.name, ctx.driver)}`,
+          sortText: rank(0, score, label),
+        });
+      } else {
+        if (seen?.has(key)) continue;
+        seen?.add(key);
+        items.push({
+          label: c.name,
+          kind: 'field',
+          detail: columnDetail(c),
+          insertText: formatSqlIdentifier(c.name, ctx.driver),
+          sortText: rank(0, score, c.name),
+        });
+      }
+    }
+  }
   return items;
 }
 
 const VALUE_LITERALS = ['NULL', 'TRUE', 'FALSE', 'DEFAULT'];
 
-export function suggestValueItems(
-  ctx: CompletionContext,
-  queryTables: QueryTableRef[],
-  bindings: Map<string, TableBinding>,
-  lcPrefix: string,
-): CompletionItem[] {
+export function suggestValueItems(ctx: CompletionContext, queryTables: QueryTableRef[], lcPrefix: string): CompletionItem[] {
   const items: CompletionItem[] = [];
   const seenCols = new Set<string>();
 
@@ -360,16 +399,7 @@ export function suggestValueItems(
     if (item) items.push(item);
   }
 
-  for (const binding of bindings.values()) {
-    pushColumnItems(
-      items,
-      ctx.columnsByTable[columnCacheKey(binding.schema, binding.table)] || [],
-      0,
-      lcPrefix,
-      ctx.driver,
-      seenCols,
-    );
-  }
+  items.push(...suggestColumnsInScope(ctx, queryTables, lcPrefix, seenCols));
   pushColumnItems(items, ctx.columns, 1, lcPrefix, ctx.driver, seenCols);
 
   return items;

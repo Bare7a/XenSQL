@@ -1,3 +1,4 @@
+import { cacheKey, LruCache } from '@/features/editor/lib/sqlCache';
 import { ALIAS_STOP_WORDS, unquoteIdent } from '@/features/editor/lib/sqlQuoting';
 import {
   isIdentLike,
@@ -238,12 +239,32 @@ function collectCtes(tokens: SqlToken[], virtualColumns: Map<string, string[]>):
   return ctes;
 }
 
+// Completion, hover and diagnostics each parse the current statement per keystroke; diagnostics
+// re-parse every statement in the buffer, so unchanged statements should be cache hits. The
+// schema arrays participate in resolution, so a hit also requires their identity to match.
+interface ParseCacheEntry {
+  tables: TableInfo[];
+  schemas: SchemaInfo[];
+  result: ParsedQuery;
+}
+
+const parseCache = new LruCache<ParseCacheEntry>(64);
+
 export function parseQueryContext(
   sql: string,
   tables: TableInfo[],
   schemas: SchemaInfo[],
   driver: DriverType,
 ): ParsedQuery {
+  const key = cacheKey(driver, sql);
+  const hit = parseCache.get(key);
+  if (hit && hit.tables === tables && hit.schemas === schemas) return hit.result;
+  const result = parseQuery(sql, tables, schemas, driver);
+  parseCache.set(key, { tables, schemas, result });
+  return result;
+}
+
+function parseQuery(sql: string, tables: TableInfo[], schemas: SchemaInfo[], driver: DriverType): ParsedQuery {
   const tokens = tokenizeSql(sql, driver);
   const queryTables: QueryTableRef[] = [];
   const virtualColumns = new Map<string, string[]>();

@@ -1,3 +1,4 @@
+import { cacheKey, LruCache } from '@/features/editor/lib/sqlCache';
 import {
   findBlockCommentEnd,
   findLineCommentEnd,
@@ -47,7 +48,16 @@ function firstCodeOffset(text: string, from: number, to: number, opts: SqlLexOpt
 // mysql-client `DELIMITER xx` line: switches the terminator so procedure bodies can contain `;`.
 const DELIMITER_LINE_RE = /DELIMITER[ \t]+(\S+)[ \t]*(?:\r?\n|$)/iy;
 
+// Completion, hover, run glyphs and diagnostics all split the same (whole) buffer; entries are
+// buffer-sized, so the cache stays small.
+const statementCache = new LruCache<SqlStatement[]>(8);
+
 export function parseSqlStatements(sql: string, driver?: DriverType): SqlStatement[] {
+  const key = cacheKey(driver, sql);
+  return statementCache.get(key) ?? statementCache.set(key, splitStatements(sql, driver));
+}
+
+function splitStatements(sql: string, driver?: DriverType): SqlStatement[] {
   const opts = lexOptionsFor(driver);
   const clientDelimiters = driver === 'mysql';
   const statements: SqlStatement[] = [];
