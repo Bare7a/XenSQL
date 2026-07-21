@@ -248,7 +248,9 @@ interface ParseCacheEntry {
   result: ParsedQuery;
 }
 
-const parseCache = new LruCache<ParseCacheEntry>(64);
+// Capacity must exceed the statement count of a typical buffer (diagnostics parse every
+// statement per pass); beyond it the cache degrades gracefully to recomputing.
+const parseCache = new LruCache<ParseCacheEntry>(256);
 
 export function parseQueryContext(
   sql: string,

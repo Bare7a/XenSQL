@@ -36,8 +36,9 @@ const TWO_CHAR_OPS = new Set(['<=', '>=', '<>', '!=', '::', '||', ':=']);
 const PUNCT = new Set(['.', ',', '(', ')', ';']);
 
 // Completion, hover and query parsing all tokenize the same statement text within one keystroke.
-// The result is shared, so callers must treat the returned tokens as immutable.
-const tokenCache = new LruCache<SqlToken[]>(64);
+// The result is shared, so callers must treat the returned tokens as immutable. Capacity must
+// exceed the statement count of a typical buffer, or a diagnostics pass cycles the whole cache.
+const tokenCache = new LruCache<SqlToken[]>(256);
 
 export function tokenizeSql(text: string, driver?: DriverType): SqlToken[] {
   const key = cacheKey(driver, text);
