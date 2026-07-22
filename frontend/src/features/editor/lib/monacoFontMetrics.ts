@@ -1,4 +1,4 @@
-import * as monaco from 'monaco-editor/esm/vs/editor/editor.api';
+import * as monaco from 'monaco-editor/editor/editor.api';
 import { MONACO_FONT_FAMILY } from '@/shared/lib/appFonts';
 
 export const MONACO_FONT_METRICS_OPTIONS = {
