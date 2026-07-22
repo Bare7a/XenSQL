@@ -3,9 +3,9 @@ import type { editor, languages, Position } from 'monaco-editor';
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { MONACO_FONT_METRICS_OPTIONS } from '@/features/editor/lib/monacoFontMetrics';
 import { getMonacoThemeName, setupMonacoBeforeMount } from '@/features/editor/lib/monacoTheme';
+import { sqlLabels } from '@/features/editor/lib/sqlLabels';
 import { formatSqlIdentifier } from '@/features/editor/lib/sqlQuoting';
 import { matchScore, rank } from '@/features/editor/lib/sqlSuggestions';
-import { t } from '@/i18n';
 import { useAppTheme } from '@/shared/hooks/useAppTheme';
 import { useUiZoom } from '@/shared/hooks/useUiZoom';
 import { cx } from '@/shared/lib/cx';
@@ -185,7 +185,7 @@ export function SqlConditionInput({
           suggestions.push({
             label: col,
             kind: Kind.Field,
-            detail: types?.[i] || t('editor.sql.column'),
+            detail: types?.[i] || sqlLabels().column,
             insertText: formatSqlIdentifier(col, drv),
             sortText: rank(0, score, col),
             range,

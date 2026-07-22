@@ -1,4 +1,4 @@
-import { cacheKey, LruCache } from '@/features/editor/lib/sqlCache';
+import { DriverLruCache } from '@/features/editor/lib/sqlCache';
 import { ALIAS_STOP_WORDS, unquoteIdent } from '@/features/editor/lib/sqlQuoting';
 import {
   isIdentLike,
@@ -247,7 +247,7 @@ interface ParseCacheEntry {
 }
 
 // Sized so a typical multi-statement diagnostics pass stays warm.
-const parseCache = new LruCache<ParseCacheEntry>(256);
+const parseCache = new DriverLruCache<ParseCacheEntry>(256);
 
 export function parseQueryContext(
   sql: string,
@@ -255,11 +255,11 @@ export function parseQueryContext(
   schemas: SchemaInfo[],
   driver: DriverType,
 ): ParsedQuery {
-  const key = cacheKey(driver, sql);
-  const hit = parseCache.get(key);
+  const cache = parseCache.of(driver);
+  const hit = cache.get(sql);
   if (hit && hit.tables === tables && hit.schemas === schemas) return hit.result;
   const result = parseQuery(sql, tables, schemas, driver);
-  parseCache.set(key, { tables, schemas, result });
+  cache.set(sql, { tables, schemas, result });
   return result;
 }
 

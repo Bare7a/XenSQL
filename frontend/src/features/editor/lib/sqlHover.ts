@@ -1,3 +1,4 @@
+import { sqlLabels } from '@/features/editor/lib/sqlLabels';
 import { type ParsedQuery, resolveDotCompletion, type TableBinding } from '@/features/editor/lib/sqlQueryParse';
 import { QUOTE_FORCING_KEYWORDS, unquoteIdent } from '@/features/editor/lib/sqlQuoting';
 import { columnDetail, relationTypeLabel } from '@/features/editor/lib/sqlSuggestions';
@@ -23,7 +24,7 @@ export function tableColumnsMarkdown(cols: ColumnInfo[], max = 30): string[] {
   if (cols.length === 0) return [];
   const shown = cols.slice(0, max);
   const rows = shown.map((c) => `| ${c.name} | ${columnDetail(c)} |`);
-  const table = [`| ${t('editor.sql.column')} | ${t('editor.sql.type')} |`, '| --- | --- |', ...rows].join('\n');
+  const table = [`| ${sqlLabels().column} | ${sqlLabels().type} |`, '| --- | --- |', ...rows].join('\n');
   return cols.length > shown.length
     ? [table, t('editor.sql.moreColumns', { count: cols.length - shown.length })]
     : [table];
@@ -37,7 +38,7 @@ function tableLines(info: TableInfo): string[] {
 }
 
 function virtualKindLabel(isCte: boolean): string {
-  return isCte ? t('editor.sql.cte') : t('editor.sql.subquery');
+  return isCte ? sqlLabels().cte : sqlLabels().subquery;
 }
 
 function tokenAt(tokens: SqlToken[], offset: number): SqlToken | undefined {
@@ -134,7 +135,7 @@ export function analyzeHover(
   if (schema) {
     return {
       ...span,
-      lines: [t('editor.sql.nameKind', { name: `**${schema.name}**`, kind: t('editor.sql.schema') })],
+      lines: [t('editor.sql.nameKind', { name: `**${schema.name}**`, kind: sqlLabels().schema })],
     };
   }
 

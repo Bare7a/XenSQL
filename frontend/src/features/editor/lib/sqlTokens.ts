@@ -1,4 +1,4 @@
-import { cacheKey, LruCache } from '@/features/editor/lib/sqlCache';
+import { DriverLruCache } from '@/features/editor/lib/sqlCache';
 import {
   findBlockCommentEnd,
   findLineCommentEnd,
@@ -37,11 +37,11 @@ const PUNCT = new Set(['.', ',', '(', ')', ';']);
 
 // Shared across providers per keystroke; treat returned tokens as immutable.
 // Capacity covers a typical multi-statement diagnostics pass.
-const tokenCache = new LruCache<SqlToken[]>(256);
+const tokenCache = new DriverLruCache<SqlToken[]>(256);
 
 export function tokenizeSql(text: string, driver?: DriverType): SqlToken[] {
-  const key = cacheKey(driver, text);
-  return tokenCache.get(key) ?? tokenCache.set(key, tokenize(text, driver));
+  const cache = tokenCache.of(driver);
+  return cache.get(text) ?? cache.set(text, tokenize(text, driver));
 }
 
 // One pass; $tag$ delimiters are ops so dollar-quoted bodies stay tokenized (completion works inside them).

@@ -4,6 +4,7 @@ import {
   type SqlCursor,
   type StatementShape,
 } from '@/features/editor/lib/sqlContext';
+import { sqlLabels } from '@/features/editor/lib/sqlLabels';
 import {
   type ParsedQuery,
   type QueryTableRef,
@@ -27,7 +28,6 @@ import {
   suggestVirtualColumns,
   withLeadingSpace,
 } from '@/features/editor/lib/sqlSuggestions';
-import { t } from '@/i18n';
 import type { DriverType, SchemaInfo, TableInfo } from '@/types';
 
 export interface BindingsNeedingColumnsCtx {
@@ -132,7 +132,7 @@ function fkJoinItems(ctx: CompletionContext, queryTables: QueryTableRef[]): Comp
       items.push({
         label: expr,
         kind: 'field',
-        detail: t('editor.sql.foreignKey'),
+        detail: sqlLabels().foreignKey,
         insertText: expr,
         sortText: rank(0, 0, expr),
       });
@@ -142,9 +142,7 @@ function fkJoinItems(ctx: CompletionContext, queryTables: QueryTableRef[]): Comp
 }
 
 function virtualDetail(parsed: ParsedQuery, nameLc: string): string {
-  return parsed.ctes.some((c) => c.toLowerCase() === nameLc)
-    ? t('editor.sql.cteColumn')
-    : t('editor.sql.subqueryColumn');
+  return parsed.ctes.some((c) => c.toLowerCase() === nameLc) ? sqlLabels().cteColumn : sqlLabels().subqueryColumn;
 }
 
 // Derived-table aliases are always in scope; CTEs only once referenced in FROM/JOIN.

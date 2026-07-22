@@ -24,7 +24,20 @@ export class LruCache<V> {
   }
 }
 
-// Dialect + SQL text; '\0' cannot appear in either side.
-export function cacheKey(driver: string | undefined, text: string): string {
-  return `${driver ?? ''}\0${text}`;
+// One LRU per dialect, keyed by the SQL text itself. Keying on the existing string
+// avoids concatenating a fresh `driver + buffer` key (and re-hashing it) on every access.
+export class DriverLruCache<V> {
+  private byDriver = new Map<string, LruCache<V>>();
+
+  constructor(private readonly limit: number) {}
+
+  of(driver: string | undefined): LruCache<V> {
+    const key = driver ?? '';
+    let cache = this.byDriver.get(key);
+    if (!cache) {
+      cache = new LruCache<V>(this.limit);
+      this.byDriver.set(key, cache);
+    }
+    return cache;
+  }
 }

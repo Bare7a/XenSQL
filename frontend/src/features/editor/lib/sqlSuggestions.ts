@@ -1,4 +1,5 @@
 import type { StatementShape } from '@/features/editor/lib/sqlContext';
+import { sqlLabels } from '@/features/editor/lib/sqlLabels';
 import type { QueryTableRef, TableBinding } from '@/features/editor/lib/sqlQueryParse';
 import { columnCacheKey, formatSqlIdentifier } from '@/features/editor/lib/sqlQuoting';
 import { t } from '@/i18n';
@@ -144,20 +145,22 @@ export function rank(tier: 0 | 1 | 2 | 3 | 4 | 5, score: number, label: string):
 
 // Column hint shown in the suggestion's detail line: type plus PK / FK / NOT NULL markers.
 export function columnDetail(c: ColumnInfo): string {
-  const tags: string[] = [];
-  if (c.isPrimary) tags.push(t('editor.sql.pk'));
-  if (c.isForeign) tags.push(t('editor.sql.fk'));
-  if (tags.length > 0) return `${c.dataType} · ${tags.join(' · ')}`;
-  if (!c.isNullable) return `${c.dataType} · ${t('editor.sql.notNull')}`;
+  const labels = sqlLabels();
+  if (c.isPrimary || c.isForeign) {
+    const tags = c.isPrimary && c.isForeign ? `${labels.pk} · ${labels.fk}` : c.isPrimary ? labels.pk : labels.fk;
+    return `${c.dataType} · ${tags}`;
+  }
+  if (!c.isNullable) return `${c.dataType} · ${labels.notNull}`;
   return c.dataType;
 }
 
 // Known relation kinds; unknown catalog values pass through.
 export function relationTypeLabel(type?: string): string {
-  const raw = (type || 'table').trim();
+  if (!type || type === 'table') return sqlLabels().table;
+  const raw = type.trim();
   const key = raw.toLowerCase();
-  if (key === 'table' || key === 'base table') return t('editor.sql.table');
-  if (key === 'view') return t('editor.sql.view');
+  if (key === 'table' || key === 'base table') return sqlLabels().table;
+  if (key === 'view') return sqlLabels().view;
   return raw;
 }
 
@@ -230,7 +233,7 @@ export function suggestCteItems(ctes: string[], lcPrefix: string, driver: Driver
     items.push({
       label: name,
       kind: 'class',
-      detail: t('editor.sql.cte'),
+      detail: sqlLabels().cte,
       insertText: formatSqlIdentifier(name, driver),
       filterText: formatSqlIdentifier(name, driver),
       // Tier 0 (query-local): ranks above the table list so it survives the 100-item cap.
@@ -272,7 +275,7 @@ export function suggestSchemas(ctx: CompletionContext, lcPrefix: string): Comple
     items.push({
       label: s.name,
       kind: 'module',
-      detail: t('editor.sql.schema'),
+      detail: sqlLabels().schema,
       insertText: formatSqlIdentifier(s.name, ctx.driver),
       sortText: rank(3, score, s.name),
     });
@@ -300,8 +303,8 @@ export function suggestQueryTableRefs(
           label: ref.table,
           kind: 'class',
           detail: ref.schema
-            ? t('editor.sql.schemaTable', { schema: ref.schema, type: t('editor.sql.table') })
-            : t('editor.sql.table'),
+            ? t('editor.sql.schemaTable', { schema: ref.schema, type: sqlLabels().table })
+            : sqlLabels().table,
           insertText: insert,
           filterText: insert,
           sortText: rank(0, score, ref.table),
@@ -332,6 +335,21 @@ export function suggestQueryTableRefs(
   return items;
 }
 
+function countColumnNames(sources: { cols: ColumnInfo[] }[]): Map<string, number> {
+  const counts = new Map<string, number>();
+  const perSource = new Set<string>();
+  for (const s of sources) {
+    perSource.clear();
+    for (const c of s.cols) {
+      const key = c.name.toLowerCase();
+      if (perSource.has(key)) continue;
+      perSource.add(key);
+      counts.set(key, (counts.get(key) ?? 0) + 1);
+    }
+  }
+  return counts;
+}
+
 // In-scope columns; names shared by multiple sources are offered as `alias.col`.
 export function suggestColumnsInScope(
   ctx: CompletionContext,
@@ -348,13 +366,8 @@ export function suggestColumnsInScope(
     sources.push({ ref, cols: ctx.columnsByTable[columnCacheKey(ref.schema, ref.table)] || [] });
   }
 
-  // Count per source (self-joins: one per alias).
-  const nameCount = new Map<string, number>();
-  for (const s of sources) {
-    for (const name of new Set(s.cols.map((c) => c.name.toLowerCase()))) {
-      nameCount.set(name, (nameCount.get(name) ?? 0) + 1);
-    }
-  }
+  // Count per source (self-joins: one per alias). One source cannot be ambiguous with itself.
+  const nameCount = sources.length > 1 ? countColumnNames(sources) : null;
 
   const items: CompletionItem[] = [];
   for (const s of sources) {
@@ -365,7 +378,7 @@ export function suggestColumnsInScope(
       emitted.add(key);
       const score = matchScore(c.name, lcPrefix);
       if (score < 0) continue;
-      if ((nameCount.get(key) ?? 0) > 1) {
+      if (nameCount !== null && (nameCount.get(key) ?? 0) > 1) {
         const qualifier = s.ref.alias ?? s.ref.table;
         const label = `${qualifier}.${c.name}`;
         seen?.add(key);
