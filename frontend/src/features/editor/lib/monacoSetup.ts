@@ -4,12 +4,7 @@
 import { loader } from '@monaco-editor/react';
 import * as monaco from 'monaco-editor/editor/editor.api';
 import 'monaco-editor/editor/contrib/suggest/browser/suggestController'; // autocomplete widget
-import 'monaco-editor/features/hover/register'; // SQL hover provider UI
-import 'monaco-editor/features/find/register'; // Find / Find & Replace (context menu)
-import 'monaco-editor/features/folding/register'; // JSON / cell viewer folding
-import 'monaco-editor/features/clipboard/register'; // cut/copy action ids (context + native Edit menu)
-import 'monaco-editor/features/wordOperations/register'; // Ctrl/Alt+arrow word jump + word delete
-import 'monaco-editor/features/multicursor/register'; // Ctrl/Cmd+D select next match
+import 'monaco-editor/features/register.all'; // all features (hover, find, folding, clipboard, wordOperations, multicursor, etc.)
 import { remeasureMonacoFonts } from '@/features/editor/lib/monacoFontMetrics';
 import 'monaco-editor/languages/features/json/register'; // RowJsonViewer + cell JSON (worker)
 import 'monaco-editor/languages/definitions/sql/register'; // SQL highlighting
