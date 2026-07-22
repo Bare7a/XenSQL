@@ -239,17 +239,14 @@ function collectCtes(tokens: SqlToken[], virtualColumns: Map<string, string[]>):
   return ctes;
 }
 
-// Completion, hover and diagnostics each parse the current statement per keystroke; diagnostics
-// re-parse every statement in the buffer, so unchanged statements should be cache hits. The
-// schema arrays participate in resolution, so a hit also requires their identity to match.
+// Schema array identity is part of the hit check (resolution depends on it).
 interface ParseCacheEntry {
   tables: TableInfo[];
   schemas: SchemaInfo[];
   result: ParsedQuery;
 }
 
-// Capacity must exceed the statement count of a typical buffer (diagnostics parse every
-// statement per pass); beyond it the cache degrades gracefully to recomputing.
+// Sized so a typical multi-statement diagnostics pass stays warm.
 const parseCache = new LruCache<ParseCacheEntry>(256);
 
 export function parseQueryContext(

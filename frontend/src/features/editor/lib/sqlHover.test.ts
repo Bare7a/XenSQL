@@ -71,8 +71,6 @@ describe('analyzeHover', () => {
     expect(lines).toEqual(['**email** · text · not null', 'column of public.users']);
   });
 
-  // Borrowed from potygen's quick info: a table hover carries its relation so the provider can
-  // append the column list.
   it('marks table and alias hovers for a column-list append', () => {
     expect(hoverAt('SELECT * FROM users', 'users')?.tableColumns).toEqual({ schema: 'public', table: 'users' });
     const alias = hoverAt('SELECT * FROM users u WHERE u.id = 1', 'u ', 1);

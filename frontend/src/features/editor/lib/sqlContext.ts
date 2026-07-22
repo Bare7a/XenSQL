@@ -245,8 +245,7 @@ function lowerIdent(t: SqlToken): string {
   return tokenIdentText(t).toLowerCase();
 }
 
-// One completion request calls this three times with the same before-text (column prefetch,
-// item building, replace range); the cache turns that into a single analysis.
+// Same before-text is analyzed thrice per completion request.
 const cursorCache = new LruCache<SqlCursor>(16);
 
 export function analyzeSqlCursor(before: string, driver?: DriverType): SqlCursor {

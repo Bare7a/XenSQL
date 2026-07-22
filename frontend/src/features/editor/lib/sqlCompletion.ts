@@ -231,8 +231,7 @@ function generalItems(
   }
 
   if (slot.expectsExpr && shape.inSelectList) {
-    // The statement is parsed whole, so FROM/JOIN sources after the caret are known here.
-    // Offer them alongside their columns (potygen does the same) to make qualifying easy.
+    // Include table refs so SELECT-list edits can qualify columns.
     items.push(...suggestQueryTableRefs(ctx, queryTables, slot.prefix));
     items.push(...suggestColumnsInScope(ctx, queryTables, slot.prefix));
   }

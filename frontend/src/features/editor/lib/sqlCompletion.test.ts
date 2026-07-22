@@ -883,8 +883,6 @@ describe('column suggestions carry PK / NOT NULL hints', () => {
   });
 });
 
-// Borrowed from potygen: a column name projected by several in-scope sources is ambiguous bare
-// (the server rejects it), so it is offered qualified per source instead.
 describe('ambiguous columns across joined sources are offered qualified', () => {
   const cols: Record<string, ColumnInfo[]> = {
     'public.users': [
@@ -958,8 +956,6 @@ describe('ambiguous columns across joined sources are offered qualified', () => 
   });
 });
 
-// Borrowed from potygen: its column completions include the query's sources. The statement is
-// parsed whole, so a mid-statement edit of the select list knows the FROM/JOIN refs after the caret.
 describe('SELECT list offers the statement’s table refs (mid-statement edit)', () => {
   it('offers alias, table and columns while editing the select list', () => {
     const text = 'SELECT  FROM users u';

@@ -3,7 +3,7 @@ import bg from '@/i18n/locales/bg.json';
 import de from '@/i18n/locales/de.json';
 import en from '@/i18n/locales/en.json';
 
-// Node unit tests have no DOM; init a minimal i18n so SQL helpers that call t() resolve English copy.
+// Node has no DOM; init i18n so SQL helpers that call t() resolve English copy.
 if (!i18n.isInitialized) {
   await i18n.init({
     resources: {

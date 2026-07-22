@@ -11,7 +11,7 @@ describe('LruCache', () => {
     const cache = new LruCache<number>(2);
     cache.set('a', 1);
     cache.set('b', 2);
-    cache.get('a'); // refresh: 'b' is now the oldest
+    cache.get('a'); // make 'a' most recent
     cache.set('c', 3);
     expect(cache.get('a')).toBe(1);
     expect(cache.get('b')).toBeUndefined();
@@ -28,7 +28,6 @@ describe('LruCache', () => {
   });
 });
 
-// One keystroke fans out to several providers analyzing the same strings; these must be shared.
 describe('per-keystroke analysis is memoized', () => {
   const schemas: SchemaInfo[] = [{ name: 'public' }];
   const tables: TableInfo[] = [{ schema: 'public', name: 'users', type: 'table' }];
@@ -53,7 +52,7 @@ describe('per-keystroke analysis is memoized', () => {
   it('parseQueryContext hits only while the schema arrays keep their identity', () => {
     const first = parseQueryContext('SELECT * FROM users', tables, schemas, 'postgres');
     expect(parseQueryContext('SELECT * FROM users', tables, schemas, 'postgres')).toBe(first);
-    // A schema reload swaps the arrays; equal content is not enough for a hit.
+    // Equal content, new array identity → miss.
     const reloaded: TableInfo[] = [{ schema: 'public', name: 'users', type: 'table' }];
     expect(parseQueryContext('SELECT * FROM users', reloaded, schemas, 'postgres')).not.toBe(first);
   });

@@ -152,7 +152,7 @@ export function columnDetail(c: ColumnInfo): string {
   return c.dataType;
 }
 
-// Localize common relation kinds from the schema catalog; unknown values pass through.
+// Known relation kinds; unknown catalog values pass through.
 export function relationTypeLabel(type?: string): string {
   const raw = (type || 'table').trim();
   const key = raw.toLowerCase();
@@ -332,10 +332,7 @@ export function suggestQueryTableRefs(
   return items;
 }
 
-// Columns of every relation the statement binds, one source per FROM/JOIN/UPDATE/INSERT ref.
-// A name projected by several sources is ambiguous bare - the server would reject it - so those
-// are offered qualified per source (`alias.col`). Potygen drops ambiguous columns from its
-// completions; qualifying keeps them reachable.
+// In-scope columns; names shared by multiple sources are offered as `alias.col`.
 export function suggestColumnsInScope(
   ctx: CompletionContext,
   queryTables: QueryTableRef[],
@@ -351,7 +348,7 @@ export function suggestColumnsInScope(
     sources.push({ ref, cols: ctx.columnsByTable[columnCacheKey(ref.schema, ref.table)] || [] });
   }
 
-  // How many sources project each name; self-joins count once per alias, like the server does.
+  // Count per source (self-joins: one per alias).
   const nameCount = new Map<string, number>();
   for (const s of sources) {
     for (const name of new Set(s.cols.map((c) => c.name.toLowerCase()))) {

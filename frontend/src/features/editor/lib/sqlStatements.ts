@@ -48,8 +48,7 @@ function firstCodeOffset(text: string, from: number, to: number, opts: SqlLexOpt
 // mysql-client `DELIMITER xx` line: switches the terminator so procedure bodies can contain `;`.
 const DELIMITER_LINE_RE = /DELIMITER[ \t]+(\S+)[ \t]*(?:\r?\n|$)/iy;
 
-// Completion, hover, run glyphs and diagnostics all split the same (whole) buffer; entries are
-// buffer-sized, so the cache stays small.
+// Whole-buffer splits shared by glyphs / completion / diagnostics.
 const statementCache = new LruCache<SqlStatement[]>(8);
 
 export function parseSqlStatements(sql: string, driver?: DriverType): SqlStatement[] {

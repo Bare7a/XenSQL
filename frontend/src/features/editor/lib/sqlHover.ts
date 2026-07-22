@@ -11,8 +11,7 @@ export interface HoverQuery {
   end: number;
   lines?: string[];
   columnLookup?: { bindings: TableBinding[]; name: string };
-  // Table/alias hover: the caller appends this relation's column list (loaded lazily).
-  tableColumns?: TableBinding;
+  tableColumns?: TableBinding; // Lazy column list for table/alias hover.
 }
 
 export function columnHoverLines(col: ColumnInfo, table: TableBinding): string[] {
@@ -20,7 +19,6 @@ export function columnHoverLines(col: ColumnInfo, table: TableBinding): string[]
   return [`**${col.name}** · ${columnDetail(col)}`, t('editor.sql.columnOf', { target: where })];
 }
 
-// Markdown column table for the table-hover card (potygen-style quick info).
 export function tableColumnsMarkdown(cols: ColumnInfo[], max = 30): string[] {
   if (cols.length === 0) return [];
   const shown = cols.slice(0, max);

@@ -1,7 +1,4 @@
-// Tiny LRU used to memoize the pure per-keystroke analysis entry points (tokenize, cursor
-// analysis, query/statement parsing). One keystroke fans out to several Monaco providers that
-// re-analyze identical strings; the cache collapses those to a single computation.
-// Pattern borrowed from potygen's inspect cache (packages/potygen/src/inspect/cache.ts).
+// LRU for shared per-keystroke analysis (tokenize / cursor / parse).
 export class LruCache<V> {
   private map = new Map<string, V>();
 
@@ -27,7 +24,7 @@ export class LruCache<V> {
   }
 }
 
-// Cache keys join the dialect and source text; '\0' cannot appear in either side of the key.
+// Dialect + SQL text; '\0' cannot appear in either side.
 export function cacheKey(driver: string | undefined, text: string): string {
   return `${driver ?? ''}\0${text}`;
 }
