@@ -4,6 +4,7 @@ import {
   type SqlCursor,
   type StatementShape,
 } from '@/features/editor/lib/sqlContext';
+import { sqlLabels } from '@/features/editor/lib/sqlLabels';
 import {
   type ParsedQuery,
   type QueryTableRef,
@@ -18,7 +19,7 @@ import {
   keywordsForShape,
   rank,
   suggestColumnsForTable,
-  suggestColumnsFromBindings,
+  suggestColumnsInScope,
   suggestCteItems,
   suggestQueryTableRefs,
   suggestSchemas,
@@ -131,7 +132,7 @@ function fkJoinItems(ctx: CompletionContext, queryTables: QueryTableRef[]): Comp
       items.push({
         label: expr,
         kind: 'field',
-        detail: 'foreign key',
+        detail: sqlLabels().foreignKey,
         insertText: expr,
         sortText: rank(0, 0, expr),
       });
@@ -141,7 +142,7 @@ function fkJoinItems(ctx: CompletionContext, queryTables: QueryTableRef[]): Comp
 }
 
 function virtualDetail(parsed: ParsedQuery, nameLc: string): string {
-  return parsed.ctes.some((c) => c.toLowerCase() === nameLc) ? 'CTE column' : 'subquery column';
+  return parsed.ctes.some((c) => c.toLowerCase() === nameLc) ? sqlLabels().cteColumn : sqlLabels().subqueryColumn;
 }
 
 // Derived-table aliases are always in scope; CTEs only once referenced in FROM/JOIN.
@@ -190,14 +191,10 @@ function orderGroupItems(
   ctx: CompletionContext,
   slot: Extract<CursorSlot, { kind: 'order-group' }>,
   queryTables: QueryTableRef[],
-  bindings: Map<string, TableBinding>,
 ): CompletionItem[] {
   // Columns/tables only at the start of a sort term (after BY/comma), not after a finished one.
   const items: CompletionItem[] = slot.expectsExpr
-    ? [
-        ...suggestQueryTableRefs(ctx, queryTables, slot.prefix),
-        ...suggestColumnsFromBindings(ctx, bindings, slot.prefix),
-      ]
+    ? [...suggestQueryTableRefs(ctx, queryTables, slot.prefix), ...suggestColumnsInScope(ctx, queryTables, slot.prefix)]
     : [];
   const keywords = slot.directionAllowed ? ['ASC', 'DESC', ...slot.trailingKeywords] : slot.trailingKeywords;
   for (const kw of keywords) {
@@ -213,13 +210,13 @@ function generalItems(
   shape: StatementShape,
   parsed: ParsedQuery,
 ): CompletionItem[] {
-  const { queryTables, bindings } = parsed;
+  const { queryTables } = parsed;
   const items: CompletionItem[] = [];
   // Identifiers only when the preceding token expects one; keywords always flow through.
   if (slot.inFilter && slot.expectsExpr) {
     if (shape.afterOnKeyword && slot.prefix === '') items.push(...fkJoinItems(ctx, queryTables));
     items.push(...suggestQueryTableRefs(ctx, queryTables, slot.prefix));
-    items.push(...suggestColumnsFromBindings(ctx, bindings, slot.prefix));
+    items.push(...suggestColumnsInScope(ctx, queryTables, slot.prefix));
     items.push(...inScopeVirtualColumnItems(ctx, parsed, slot.prefix));
   }
 
@@ -229,7 +226,9 @@ function generalItems(
   }
 
   if (slot.expectsExpr && shape.inSelectList) {
-    items.push(...suggestColumnsFromBindings(ctx, bindings, slot.prefix));
+    // Include table refs so SELECT-list edits can qualify columns.
+    items.push(...suggestQueryTableRefs(ctx, queryTables, slot.prefix));
+    items.push(...suggestColumnsInScope(ctx, queryTables, slot.prefix));
   }
   if (slot.expectsExpr && !shape.hasFrom && !slot.inFilter) {
     items.push(...suggestSchemas(ctx, slot.prefix));
@@ -240,7 +239,7 @@ function generalItems(
 function completionItems(input: BuildCompletionInput, cursor: SqlCursor): CompletionItem[] {
   const { ctx, parsed } = input;
   const { slot, shape } = cursor;
-  const { queryTables, bindings } = parsed;
+  const { queryTables } = parsed;
 
   switch (slot.kind) {
     case 'none':
@@ -253,28 +252,26 @@ function completionItems(input: BuildCompletionInput, cursor: SqlCursor): Comple
     }
     case 'insert-columns': {
       const used = new Set(slot.used);
-      return suggestColumnsFromBindings(ctx, bindings, slot.prefix).filter(
-        (item) => !used.has(item.label.toLowerCase()),
-      );
+      return suggestColumnsInScope(ctx, queryTables, slot.prefix).filter((item) => !used.has(item.label.toLowerCase()));
     }
     case 'set-column': {
-      const items = suggestColumnsFromBindings(ctx, bindings, slot.prefix);
+      const items = suggestColumnsInScope(ctx, queryTables, slot.prefix);
       return slot.leadingSpace ? withLeadingSpace(items) : items;
     }
     case 'filter-start':
       return withLeadingSpace([
         ...(shape.afterOnKeyword ? fkJoinItems(ctx, queryTables) : []),
         ...suggestQueryTableRefs(ctx, queryTables, ''),
-        ...suggestColumnsFromBindings(ctx, bindings, ''),
+        ...suggestColumnsInScope(ctx, queryTables, ''),
         ...inScopeVirtualColumnItems(ctx, parsed, ''),
       ]);
     case 'value':
       return [
-        ...suggestValueItems(ctx, queryTables, bindings, slot.prefix),
+        ...suggestValueItems(ctx, queryTables, slot.prefix),
         ...inScopeVirtualColumnItems(ctx, parsed, slot.prefix),
       ];
     case 'order-group': {
-      const items = orderGroupItems(ctx, slot, queryTables, bindings);
+      const items = orderGroupItems(ctx, slot, queryTables);
       if (slot.expectsExpr) items.push(...inScopeVirtualColumnItems(ctx, parsed, slot.prefix));
       return slot.leadingSpace ? withLeadingSpace(items) : items;
     }

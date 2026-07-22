@@ -1,3 +1,4 @@
+import { DriverLruCache } from '@/features/editor/lib/sqlCache';
 import {
   findBlockCommentEnd,
   findLineCommentEnd,
@@ -34,8 +35,17 @@ const WS_RE = /\s/;
 const TWO_CHAR_OPS = new Set(['<=', '>=', '<>', '!=', '::', '||', ':=']);
 const PUNCT = new Set(['.', ',', '(', ')', ';']);
 
-// One pass; $tag$ delimiters are ops so dollar-quoted bodies stay tokenized (completion works inside them).
+// Shared across providers per keystroke; treat returned tokens as immutable.
+// Capacity covers a typical multi-statement diagnostics pass.
+const tokenCache = new DriverLruCache<SqlToken[]>(256);
+
 export function tokenizeSql(text: string, driver?: DriverType): SqlToken[] {
+  const cache = tokenCache.of(driver);
+  return cache.get(text) ?? cache.set(text, tokenize(text, driver));
+}
+
+// One pass; $tag$ delimiters are ops so dollar-quoted bodies stay tokenized (completion works inside them).
+function tokenize(text: string, driver?: DriverType): SqlToken[] {
   const opts = lexOptionsFor(driver);
   const len = text.length;
   const tokens: SqlToken[] = [];

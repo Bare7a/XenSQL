@@ -196,7 +196,31 @@
     "actionRunSelection": "Auswahl ausführen",
     "actionRunAll": "Alles ausführen",
     "actionSaveQuery": "Abfrage speichern",
-    "actionRenameSaved": "Gespeicherte Abfrage umbenennen"
+    "actionRenameSaved": "Gespeicherte Abfrage umbenennen",
+    "sql": {
+      "pk": "PK",
+      "fk": "FK",
+      "notNull": "nicht null",
+      "table": "Tabelle",
+      "view": "Sicht",
+      "schema": "Schema",
+      "column": "Spalte",
+      "type": "Typ",
+      "cte": "CTE",
+      "subquery": "Unterabfrage",
+      "cteColumn": "CTE-Spalte",
+      "subqueryColumn": "Unterabfrage-Spalte",
+      "foreignKey": "Fremdschlüssel",
+      "aliasArrow": "Alias → {{table}}",
+      "schemaTable": "{{schema}} · {{type}}",
+      "unknownTable": "Unbekannte Tabelle \"{{table}}\"",
+      "columnOf": "Spalte von {{target}}",
+      "schemaName": "Schema {{name}}",
+      "nameKind": "{{name}} · {{kind}}",
+      "aliasFor": "Alias für {{table}}",
+      "columnsList": "Spalten: {{cols}}",
+      "moreColumns": "… {{count}} weitere Spalten"
+    }
   },
   "results": {
     "noResults": "Keine Ergebnisse",

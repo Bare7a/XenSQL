@@ -1,25 +1,21 @@
-// Import the bare editor API, NOT the full 'monaco-editor' - the full entry statically
-// registers every language service (TypeScript/CSS/HTML/JSON), which makes the bundler emit
-// all their (large) workers regardless of the getWorker guard below. We register only the
-// languages the app actually uses.
+// Bare editor API + only the languages/features we use. Importing `monaco-editor` would
+// pull in every language service/worker (TypeScript, CSS, …) even with the getWorker guard.
 
 import { loader } from '@monaco-editor/react';
-import * as monaco from 'monaco-editor/esm/vs/editor/editor.api';
+import * as monaco from 'monaco-editor/editor/editor.api';
+import 'monaco-editor/editor/contrib/suggest/browser/suggestController'; // autocomplete widget
+import 'monaco-editor/features/hover/register'; // SQL hover provider UI
+import 'monaco-editor/features/find/register'; // Find / Find & Replace (context menu)
+import 'monaco-editor/features/folding/register'; // JSON / cell viewer folding
 import { remeasureMonacoFonts } from '@/features/editor/lib/monacoFontMetrics';
-// JSON language service (needs a worker) - used by the row/cell JSON viewers.
-import 'monaco-editor/esm/vs/language/json/monaco.contribution';
-// Syntax-highlighting-only languages (no worker): SQL editor/filter + cell viewer (xml/html).
-import 'monaco-editor/esm/vs/basic-languages/sql/sql.contribution';
-import 'monaco-editor/esm/vs/basic-languages/xml/xml.contribution';
-import 'monaco-editor/esm/vs/basic-languages/html/html.contribution';
-import editorWorker from 'monaco-editor/esm/vs/editor/editor.worker?worker';
-import jsonWorker from 'monaco-editor/esm/vs/language/json/json.worker?worker';
+import 'monaco-editor/languages/features/json/register'; // RowJsonViewer + cell JSON (worker)
+import 'monaco-editor/languages/definitions/sql/register'; // SQL highlighting
+import 'monaco-editor/languages/definitions/xml/register'; // cell viewer
+import 'monaco-editor/languages/definitions/html/register'; // cell viewer
+import editorWorker from 'monaco-editor/editor/editor.worker?worker';
+import jsonWorker from 'monaco-editor/languages/features/json/json.worker?worker';
 
-// Bundle Monaco and its workers locally and hand the instance to @monaco-editor/react,
-// so the editor never fetches from a CDN - the app works fully offline. Only the base
-// editor worker and JSON worker are bundled; the app uses SQL (custom) + JSON + plaintext,
-// plus xml/html highlighting in the cell viewer - never the TypeScript/CSS/HTML language
-// services, so their (large) workers stay out of the bundle.
+// Local bundle for @monaco-editor/react (no CDN) — editor worker + JSON worker only.
 export function initMonaco(): void {
   remeasureMonacoFonts();
 

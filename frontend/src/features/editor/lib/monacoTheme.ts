@@ -1,6 +1,6 @@
 import type { Monaco } from '@monaco-editor/react';
 import type { editor } from 'monaco-editor';
-import * as monaco from 'monaco-editor/esm/vs/editor/editor.api';
+import * as monaco from 'monaco-editor/editor/editor.api';
 import type { AppTheme } from '@/shared/lib/theme';
 
 const XENSQL_MONACO_THEME_DARK = 'xensql-dark';

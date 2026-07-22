@@ -1,3 +1,4 @@
+import { DriverLruCache } from '@/features/editor/lib/sqlCache';
 import { isIdentLike, isKeyword, type SqlToken, tokenIdentText, tokenizeSql } from '@/features/editor/lib/sqlTokens';
 import type { DriverType } from '@/types';
 
@@ -244,7 +245,15 @@ function lowerIdent(t: SqlToken): string {
   return tokenIdentText(t).toLowerCase();
 }
 
+// Same before-text is analyzed thrice per completion request.
+const cursorCache = new DriverLruCache<SqlCursor>(16);
+
 export function analyzeSqlCursor(before: string, driver?: DriverType): SqlCursor {
+  const cache = cursorCache.of(driver);
+  return cache.get(before) ?? cache.set(before, analyzeCursor(before, driver));
+}
+
+function analyzeCursor(before: string, driver?: DriverType): SqlCursor {
   const all = tokenizeSql(before, driver);
   const len = before.length;
 

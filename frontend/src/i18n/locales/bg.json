@@ -196,7 +196,31 @@
     "actionRunSelection": "Изпълни избраното",
     "actionRunAll": "Изпълни всичко",
     "actionSaveQuery": "Запази заявка",
-    "actionRenameSaved": "Преименувай запазена заявка"
+    "actionRenameSaved": "Преименувай запазена заявка",
+    "sql": {
+      "pk": "PK",
+      "fk": "FK",
+      "notNull": "не е null",
+      "table": "таблица",
+      "view": "изглед",
+      "schema": "схема",
+      "column": "колона",
+      "type": "тип",
+      "cte": "CTE",
+      "subquery": "подзаявка",
+      "cteColumn": "колона от CTE",
+      "subqueryColumn": "колона от подзаявка",
+      "foreignKey": "външен ключ",
+      "aliasArrow": "псевдоним → {{table}}",
+      "schemaTable": "{{schema}} · {{type}}",
+      "unknownTable": "Неизвестна таблица \"{{table}}\"",
+      "columnOf": "колона от {{target}}",
+      "schemaName": "схема {{name}}",
+      "nameKind": "{{name}} · {{kind}}",
+      "aliasFor": "псевдоним за {{table}}",
+      "columnsList": "колони: {{cols}}",
+      "moreColumns": "… още {{count}} колони"
+    }
   },
   "results": {
     "noResults": "Няма резултати",

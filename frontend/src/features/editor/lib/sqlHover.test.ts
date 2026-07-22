@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { analyzeHover, columnHoverLines } from '@/features/editor/lib/sqlHover';
+import { analyzeHover, columnHoverLines, tableColumnsMarkdown } from '@/features/editor/lib/sqlHover';
 import { parseQueryContext } from '@/features/editor/lib/sqlQueryParse';
-import type { SchemaInfo, TableInfo } from '@/types';
+import type { ColumnInfo, SchemaInfo, TableInfo } from '@/types';
 
 const schemas: SchemaInfo[] = [{ name: 'public' }];
 const tables: TableInfo[] = [
@@ -69,5 +69,31 @@ describe('analyzeHover', () => {
       { schema: 'public', table: 'users' },
     );
     expect(lines).toEqual(['**email** · text · not null', 'column of public.users']);
+  });
+
+  it('marks table and alias hovers for a column-list append', () => {
+    expect(hoverAt('SELECT * FROM users', 'users')?.tableColumns).toEqual({ schema: 'public', table: 'users' });
+    const alias = hoverAt('SELECT * FROM users u WHERE u.id = 1', 'u ', 1);
+    expect(alias?.tableColumns).toEqual({ schema: 'public', table: 'users' });
+  });
+
+  it('renders the column list as a markdown table, capped', () => {
+    const cols: ColumnInfo[] = [
+      { name: 'id', dataType: 'int', isNullable: false, isPrimary: true, isForeign: false },
+      { name: 'email', dataType: 'text', isNullable: false, isPrimary: false, isForeign: false },
+    ];
+    expect(tableColumnsMarkdown(cols)).toEqual([
+      '| column | type |\n| --- | --- |\n| id | int · PK |\n| email | text · not null |',
+    ]);
+    expect(tableColumnsMarkdown([])).toEqual([]);
+
+    const many: ColumnInfo[] = Array.from({ length: 35 }, (_, i) => ({
+      name: `c${i}`,
+      dataType: 'int',
+      isNullable: true,
+      isPrimary: false,
+      isForeign: false,
+    }));
+    expect(tableColumnsMarkdown(many)[1]).toBe('… 5 more columns');
   });
 });

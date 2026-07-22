@@ -1,5 +1,5 @@
 import type { editor, languages } from 'monaco-editor';
-import { analyzeHover, columnHoverLines } from '@/features/editor/lib/sqlHover';
+import { analyzeHover, columnHoverLines, tableColumnsMarkdown } from '@/features/editor/lib/sqlHover';
 import { parseQueryContext } from '@/features/editor/lib/sqlQueryParse';
 import { currentStatementRange, parseSqlStatements } from '@/features/editor/lib/sqlStatements';
 import type { ColumnInfo, DriverType, SchemaInfo, TableInfo } from '@/types';
@@ -38,7 +38,12 @@ export function createSqlHoverProvider(
       };
 
       if (query.lines) {
-        return { range, contents: query.lines.map((value) => ({ value })) };
+        const contents = query.lines.map((value) => ({ value }));
+        if (query.tableColumns) {
+          const cols = await onLoadColumns(query.tableColumns.schema, query.tableColumns.table).catch(() => []);
+          contents.push(...tableColumnsMarkdown(cols).map((value) => ({ value })));
+        }
+        return { range, contents };
       }
       if (query.columnLookup) {
         for (const binding of query.columnLookup.bindings) {

@@ -1,3 +1,4 @@
+import { DriverLruCache } from '@/features/editor/lib/sqlCache';
 import { ALIAS_STOP_WORDS, unquoteIdent } from '@/features/editor/lib/sqlQuoting';
 import {
   isIdentLike,
@@ -238,12 +239,31 @@ function collectCtes(tokens: SqlToken[], virtualColumns: Map<string, string[]>):
   return ctes;
 }
 
+// Schema array identity is part of the hit check (resolution depends on it).
+interface ParseCacheEntry {
+  tables: TableInfo[];
+  schemas: SchemaInfo[];
+  result: ParsedQuery;
+}
+
+// Sized so a typical multi-statement diagnostics pass stays warm.
+const parseCache = new DriverLruCache<ParseCacheEntry>(256);
+
 export function parseQueryContext(
   sql: string,
   tables: TableInfo[],
   schemas: SchemaInfo[],
   driver: DriverType,
 ): ParsedQuery {
+  const cache = parseCache.of(driver);
+  const hit = cache.get(sql);
+  if (hit && hit.tables === tables && hit.schemas === schemas) return hit.result;
+  const result = parseQuery(sql, tables, schemas, driver);
+  cache.set(sql, { tables, schemas, result });
+  return result;
+}
+
+function parseQuery(sql: string, tables: TableInfo[], schemas: SchemaInfo[], driver: DriverType): ParsedQuery {
   const tokens = tokenizeSql(sql, driver);
   const queryTables: QueryTableRef[] = [];
   const virtualColumns = new Map<string, string[]>();

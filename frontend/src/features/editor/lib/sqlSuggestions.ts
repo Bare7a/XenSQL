@@ -1,6 +1,8 @@
 import type { StatementShape } from '@/features/editor/lib/sqlContext';
+import { sqlLabels } from '@/features/editor/lib/sqlLabels';
 import type { QueryTableRef, TableBinding } from '@/features/editor/lib/sqlQueryParse';
 import { columnCacheKey, formatSqlIdentifier } from '@/features/editor/lib/sqlQuoting';
+import { t } from '@/i18n';
 import type { ColumnInfo, DriverType, SchemaInfo, TableInfo } from '@/types';
 
 export interface CompletionContext {
@@ -143,12 +145,23 @@ export function rank(tier: 0 | 1 | 2 | 3 | 4 | 5, score: number, label: string):
 
 // Column hint shown in the suggestion's detail line: type plus PK / FK / NOT NULL markers.
 export function columnDetail(c: ColumnInfo): string {
-  const tags: string[] = [];
-  if (c.isPrimary) tags.push('PK');
-  if (c.isForeign) tags.push('FK');
-  if (tags.length > 0) return `${c.dataType} · ${tags.join(' · ')}`;
-  if (!c.isNullable) return `${c.dataType} · not null`;
+  const labels = sqlLabels();
+  if (c.isPrimary || c.isForeign) {
+    const tags = c.isPrimary && c.isForeign ? `${labels.pk} · ${labels.fk}` : c.isPrimary ? labels.pk : labels.fk;
+    return `${c.dataType} · ${tags}`;
+  }
+  if (!c.isNullable) return `${c.dataType} · ${labels.notNull}`;
   return c.dataType;
+}
+
+// Known relation kinds; unknown catalog values pass through.
+export function relationTypeLabel(type?: string): string {
+  if (!type || type === 'table') return sqlLabels().table;
+  const raw = type.trim();
+  const key = raw.toLowerCase();
+  if (key === 'table' || key === 'base table') return sqlLabels().table;
+  if (key === 'view') return sqlLabels().view;
+  return raw;
 }
 
 export function keywordItem(kw: string, lcPrefix: string): CompletionItem | null {
@@ -220,7 +233,7 @@ export function suggestCteItems(ctes: string[], lcPrefix: string, driver: Driver
     items.push({
       label: name,
       kind: 'class',
-      detail: 'CTE',
+      detail: sqlLabels().cte,
       insertText: formatSqlIdentifier(name, driver),
       filterText: formatSqlIdentifier(name, driver),
       // Tier 0 (query-local): ranks above the table list so it survives the 100-item cap.
@@ -241,10 +254,11 @@ export function suggestTables(ctx: CompletionContext, lcPrefix: string, schemaFi
     const score = matchScore(t.name, lcPrefix);
     if (score < 0) continue;
     const insert = formatSqlIdentifier(t.name, ctx.driver);
+    const kind = relationTypeLabel(schemaFilter ? 'table' : t.type || 'table');
     items.push({
       label: t.name,
       kind: 'class',
-      detail: schemaFilter ? 'table' : t.type || 'table',
+      detail: kind,
       insertText: insert,
       filterText: insert,
       sortText: rank(1, score, t.name),
@@ -261,7 +275,7 @@ export function suggestSchemas(ctx: CompletionContext, lcPrefix: string): Comple
     items.push({
       label: s.name,
       kind: 'module',
-      detail: 'schema',
+      detail: sqlLabels().schema,
       insertText: formatSqlIdentifier(s.name, ctx.driver),
       sortText: rank(3, score, s.name),
     });
@@ -288,7 +302,9 @@ export function suggestQueryTableRefs(
         items.push({
           label: ref.table,
           kind: 'class',
-          detail: ref.schema ? `${ref.schema} · table` : 'table',
+          detail: ref.schema
+            ? t('editor.sql.schemaTable', { schema: ref.schema, type: sqlLabels().table })
+            : sqlLabels().table,
           insertText: insert,
           filterText: insert,
           sortText: rank(0, score, ref.table),
@@ -306,7 +322,7 @@ export function suggestQueryTableRefs(
           items.push({
             label: ref.alias,
             kind: 'class',
-            detail: `alias → ${ref.table}`,
+            detail: t('editor.sql.aliasArrow', { table: ref.table }),
             insertText: insert,
             filterText: insert,
             sortText: rank(0, score, ref.alias),
@@ -319,22 +335,73 @@ export function suggestQueryTableRefs(
   return items;
 }
 
-export function suggestColumnsFromBindings(
-  ctx: CompletionContext,
-  bindings: Map<string, TableBinding>,
-  lcPrefix: string,
-): CompletionItem[] {
-  const items: CompletionItem[] = [];
-  const seen = new Set<string>();
-  const seenTables = new Set<string>();
+function countColumnNames(sources: { cols: ColumnInfo[] }[]): Map<string, number> {
+  const counts = new Map<string, number>();
+  const perSource = new Set<string>();
+  for (const s of sources) {
+    perSource.clear();
+    for (const c of s.cols) {
+      const key = c.name.toLowerCase();
+      if (perSource.has(key)) continue;
+      perSource.add(key);
+      counts.set(key, (counts.get(key) ?? 0) + 1);
+    }
+  }
+  return counts;
+}
 
-  for (const binding of bindings.values()) {
-    const tk = columnCacheKey(binding.schema, binding.table);
-    if (seenTables.has(tk)) continue;
-    seenTables.add(tk);
-    pushColumnItems(items, ctx.columnsByTable[tk] || [], 0, lcPrefix, ctx.driver, seen);
+// In-scope columns; names shared by multiple sources are offered as `alias.col`.
+export function suggestColumnsInScope(
+  ctx: CompletionContext,
+  queryTables: QueryTableRef[],
+  lcPrefix: string,
+  seen?: Set<string>,
+): CompletionItem[] {
+  const sources: { ref: QueryTableRef; cols: ColumnInfo[] }[] = [];
+  const seenRefs = new Set<string>();
+  for (const ref of queryTables) {
+    const refKey = `${columnCacheKey(ref.schema, ref.table)}|${(ref.alias ?? '').toLowerCase()}`;
+    if (seenRefs.has(refKey)) continue;
+    seenRefs.add(refKey);
+    sources.push({ ref, cols: ctx.columnsByTable[columnCacheKey(ref.schema, ref.table)] || [] });
   }
 
+  // Count per source (self-joins: one per alias). One source cannot be ambiguous with itself.
+  const nameCount = sources.length > 1 ? countColumnNames(sources) : null;
+
+  const items: CompletionItem[] = [];
+  for (const s of sources) {
+    const emitted = new Set<string>();
+    for (const c of s.cols) {
+      const key = c.name.toLowerCase();
+      if (emitted.has(key)) continue;
+      emitted.add(key);
+      const score = matchScore(c.name, lcPrefix);
+      if (score < 0) continue;
+      if (nameCount !== null && (nameCount.get(key) ?? 0) > 1) {
+        const qualifier = s.ref.alias ?? s.ref.table;
+        const label = `${qualifier}.${c.name}`;
+        seen?.add(key);
+        items.push({
+          label,
+          kind: 'field',
+          detail: columnDetail(c),
+          insertText: `${formatSqlIdentifier(qualifier, ctx.driver)}.${formatSqlIdentifier(c.name, ctx.driver)}`,
+          sortText: rank(0, score, label),
+        });
+      } else {
+        if (seen?.has(key)) continue;
+        seen?.add(key);
+        items.push({
+          label: c.name,
+          kind: 'field',
+          detail: columnDetail(c),
+          insertText: formatSqlIdentifier(c.name, ctx.driver),
+          sortText: rank(0, score, c.name),
+        });
+      }
+    }
+  }
   return items;
 }
 
@@ -343,7 +410,6 @@ const VALUE_LITERALS = ['NULL', 'TRUE', 'FALSE', 'DEFAULT'];
 export function suggestValueItems(
   ctx: CompletionContext,
   queryTables: QueryTableRef[],
-  bindings: Map<string, TableBinding>,
   lcPrefix: string,
 ): CompletionItem[] {
   const items: CompletionItem[] = [];
@@ -360,16 +426,7 @@ export function suggestValueItems(
     if (item) items.push(item);
   }
 
-  for (const binding of bindings.values()) {
-    pushColumnItems(
-      items,
-      ctx.columnsByTable[columnCacheKey(binding.schema, binding.table)] || [],
-      0,
-      lcPrefix,
-      ctx.driver,
-      seenCols,
-    );
-  }
+  items.push(...suggestColumnsInScope(ctx, queryTables, lcPrefix, seenCols));
   pushColumnItems(items, ctx.columns, 1, lcPrefix, ctx.driver, seenCols);
 
   return items;

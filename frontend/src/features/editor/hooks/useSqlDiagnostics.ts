@@ -14,6 +14,7 @@ export function useSqlDiagnostics(
   tables: TableInfo[],
   schemas: SchemaInfo[],
   driver: DriverType,
+  languageRevision = 0,
 ) {
   useEffect(() => {
     const ed = editorRef.current;
@@ -46,5 +47,5 @@ export function useSqlDiagnostics(
       clearTimeout(handle);
       if (!model.isDisposed()) monaco.editor.setModelMarkers(model, SCHEMA_MARKER_OWNER, []);
     };
-  }, [editorRef, monacoRef, sql, tables, schemas, driver]);
+  }, [editorRef, monacoRef, sql, tables, schemas, driver, languageRevision]);
 }

@@ -196,7 +196,31 @@
     "actionRunSelection": "Run Selection",
     "actionRunAll": "Run All",
     "actionSaveQuery": "Save Query",
-    "actionRenameSaved": "Rename Saved Query"
+    "actionRenameSaved": "Rename Saved Query",
+    "sql": {
+      "pk": "PK",
+      "fk": "FK",
+      "notNull": "not null",
+      "table": "table",
+      "view": "view",
+      "schema": "schema",
+      "column": "column",
+      "type": "type",
+      "cte": "CTE",
+      "subquery": "subquery",
+      "cteColumn": "CTE column",
+      "subqueryColumn": "subquery column",
+      "foreignKey": "foreign key",
+      "aliasArrow": "alias → {{table}}",
+      "schemaTable": "{{schema}} · {{type}}",
+      "unknownTable": "Unknown table \"{{table}}\"",
+      "columnOf": "column of {{target}}",
+      "schemaName": "schema {{name}}",
+      "nameKind": "{{name}} · {{kind}}",
+      "aliasFor": "alias for {{table}}",
+      "columnsList": "columns: {{cols}}",
+      "moreColumns": "… {{count}} more columns"
+    }
   },
   "results": {
     "noResults": "No results",
