@@ -5,6 +5,7 @@ import { MONACO_FONT_METRICS_OPTIONS } from '@/features/editor/lib/monacoFontMet
 import { getMonacoThemeName, setupMonacoBeforeMount } from '@/features/editor/lib/monacoTheme';
 import { formatSqlIdentifier } from '@/features/editor/lib/sqlQuoting';
 import { matchScore, rank } from '@/features/editor/lib/sqlSuggestions';
+import { t } from '@/i18n';
 import { useAppTheme } from '@/shared/hooks/useAppTheme';
 import { useUiZoom } from '@/shared/hooks/useUiZoom';
 import { cx } from '@/shared/lib/cx';
@@ -184,7 +185,7 @@ export function SqlConditionInput({
           suggestions.push({
             label: col,
             kind: Kind.Field,
-            detail: types?.[i] || 'column',
+            detail: types?.[i] || t('editor.sql.column'),
             insertText: formatSqlIdentifier(col, drv),
             sortText: rank(0, score, col),
             range,

@@ -173,7 +173,7 @@ export const SqlEditor = memo(function SqlEditor({
   }, []);
 
   const { updateRunGlyphs, statementsRef } = useRunGlyphs(editorRef, monacoRef, sql, languageRevision, driver);
-  useSqlDiagnostics(editorRef, monacoRef, sql, allTables, schemas, driver);
+  useSqlDiagnostics(editorRef, monacoRef, sql, allTables, schemas, driver, languageRevision);
 
   const { bindEditorActions } = useEditorActions({
     editorRef,

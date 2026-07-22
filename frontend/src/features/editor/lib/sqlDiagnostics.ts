@@ -1,5 +1,6 @@
 import { parseQueryContext } from '@/features/editor/lib/sqlQueryParse';
 import { parseSqlStatements } from '@/features/editor/lib/sqlStatements';
+import { t } from '@/i18n';
 import type { DriverType, SchemaInfo, TableInfo } from '@/types';
 
 export interface SqlDiagnostic {
@@ -24,7 +25,7 @@ export function collectSchemaDiagnostics(
       out.push({
         start: stmt.start + ref.nameStart,
         end: stmt.start + ref.nameEnd,
-        message: `Unknown table "${ref.table}"`,
+        message: t('editor.sql.unknownTable', { table: ref.table }),
       });
     }
   }

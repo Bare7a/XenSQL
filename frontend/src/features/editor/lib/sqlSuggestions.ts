@@ -1,6 +1,7 @@
 import type { StatementShape } from '@/features/editor/lib/sqlContext';
 import type { QueryTableRef, TableBinding } from '@/features/editor/lib/sqlQueryParse';
 import { columnCacheKey, formatSqlIdentifier } from '@/features/editor/lib/sqlQuoting';
+import { t } from '@/i18n';
 import type { ColumnInfo, DriverType, SchemaInfo, TableInfo } from '@/types';
 
 export interface CompletionContext {
@@ -144,11 +145,20 @@ export function rank(tier: 0 | 1 | 2 | 3 | 4 | 5, score: number, label: string):
 // Column hint shown in the suggestion's detail line: type plus PK / FK / NOT NULL markers.
 export function columnDetail(c: ColumnInfo): string {
   const tags: string[] = [];
-  if (c.isPrimary) tags.push('PK');
-  if (c.isForeign) tags.push('FK');
+  if (c.isPrimary) tags.push(t('editor.sql.pk'));
+  if (c.isForeign) tags.push(t('editor.sql.fk'));
   if (tags.length > 0) return `${c.dataType} · ${tags.join(' · ')}`;
-  if (!c.isNullable) return `${c.dataType} · not null`;
+  if (!c.isNullable) return `${c.dataType} · ${t('editor.sql.notNull')}`;
   return c.dataType;
+}
+
+// Localize common relation kinds from the schema catalog; unknown values pass through.
+export function relationTypeLabel(type?: string): string {
+  const raw = (type || 'table').trim();
+  const key = raw.toLowerCase();
+  if (key === 'table' || key === 'base table') return t('editor.sql.table');
+  if (key === 'view') return t('editor.sql.view');
+  return raw;
 }
 
 export function keywordItem(kw: string, lcPrefix: string): CompletionItem | null {
@@ -220,7 +230,7 @@ export function suggestCteItems(ctes: string[], lcPrefix: string, driver: Driver
     items.push({
       label: name,
       kind: 'class',
-      detail: 'CTE',
+      detail: t('editor.sql.cte'),
       insertText: formatSqlIdentifier(name, driver),
       filterText: formatSqlIdentifier(name, driver),
       // Tier 0 (query-local): ranks above the table list so it survives the 100-item cap.
@@ -241,10 +251,11 @@ export function suggestTables(ctx: CompletionContext, lcPrefix: string, schemaFi
     const score = matchScore(t.name, lcPrefix);
     if (score < 0) continue;
     const insert = formatSqlIdentifier(t.name, ctx.driver);
+    const kind = relationTypeLabel(schemaFilter ? 'table' : t.type || 'table');
     items.push({
       label: t.name,
       kind: 'class',
-      detail: schemaFilter ? 'table' : t.type || 'table',
+      detail: kind,
       insertText: insert,
       filterText: insert,
       sortText: rank(1, score, t.name),
@@ -261,7 +272,7 @@ export function suggestSchemas(ctx: CompletionContext, lcPrefix: string): Comple
     items.push({
       label: s.name,
       kind: 'module',
-      detail: 'schema',
+      detail: t('editor.sql.schema'),
       insertText: formatSqlIdentifier(s.name, ctx.driver),
       sortText: rank(3, score, s.name),
     });
@@ -288,7 +299,9 @@ export function suggestQueryTableRefs(
         items.push({
           label: ref.table,
           kind: 'class',
-          detail: ref.schema ? `${ref.schema} · table` : 'table',
+          detail: ref.schema
+            ? t('editor.sql.schemaTable', { schema: ref.schema, type: t('editor.sql.table') })
+            : t('editor.sql.table'),
           insertText: insert,
           filterText: insert,
           sortText: rank(0, score, ref.table),
@@ -306,7 +319,7 @@ export function suggestQueryTableRefs(
           items.push({
             label: ref.alias,
             kind: 'class',
-            detail: `alias → ${ref.table}`,
+            detail: t('editor.sql.aliasArrow', { table: ref.table }),
             insertText: insert,
             filterText: insert,
             sortText: rank(0, score, ref.alias),

@@ -22,6 +22,7 @@ export default defineConfig({
     // Tests can live anywhere under src - co-located with the modules they
     // cover. Feature folders are about to hold their own *.test.ts files.
     include: ['src/**/*.test.ts'],
+    setupFiles: ['src/test/setupI18n.ts'],
     globals: false,
   },
 });

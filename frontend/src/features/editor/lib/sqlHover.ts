@@ -1,7 +1,8 @@
 import { type ParsedQuery, resolveDotCompletion, type TableBinding } from '@/features/editor/lib/sqlQueryParse';
 import { QUOTE_FORCING_KEYWORDS, unquoteIdent } from '@/features/editor/lib/sqlQuoting';
-import { columnDetail } from '@/features/editor/lib/sqlSuggestions';
+import { columnDetail, relationTypeLabel } from '@/features/editor/lib/sqlSuggestions';
 import { isIdentLike, type SqlToken, tokenIdentText, tokenizeSql } from '@/features/editor/lib/sqlTokens';
+import { t } from '@/i18n';
 import type { ColumnInfo, DriverType, SchemaInfo, TableInfo } from '@/types';
 
 // Immediate answer (`lines`) or a column lookup the caller resolves via cached loads.
@@ -16,7 +17,7 @@ export interface HoverQuery {
 
 export function columnHoverLines(col: ColumnInfo, table: TableBinding): string[] {
   const where = table.schema ? `${table.schema}.${table.table}` : table.table;
-  return [`**${col.name}** · ${columnDetail(col)}`, `column of ${where}`];
+  return [`**${col.name}** · ${columnDetail(col)}`, t('editor.sql.columnOf', { target: where })];
 }
 
 // Markdown column table for the table-hover card (potygen-style quick info).
@@ -24,16 +25,25 @@ export function tableColumnsMarkdown(cols: ColumnInfo[], max = 30): string[] {
   if (cols.length === 0) return [];
   const shown = cols.slice(0, max);
   const rows = shown.map((c) => `| ${c.name} | ${columnDetail(c)} |`);
-  const table = ['| column | type |', '| --- | --- |', ...rows].join('\n');
-  return cols.length > shown.length ? [table, `… ${cols.length - shown.length} more columns`] : [table];
+  const table = [`| ${t('editor.sql.column')} | ${t('editor.sql.type')} |`, '| --- | --- |', ...rows].join('\n');
+  return cols.length > shown.length
+    ? [table, t('editor.sql.moreColumns', { count: cols.length - shown.length })]
+    : [table];
 }
 
-function tableLines(t: TableInfo): string[] {
-  return [`**${t.name}** · ${t.type || 'table'}`, t.schema ? `schema ${t.schema}` : ''].filter(Boolean);
+function tableLines(info: TableInfo): string[] {
+  return [
+    t('editor.sql.nameKind', { name: `**${info.name}**`, kind: relationTypeLabel(info.type) }),
+    info.schema ? t('editor.sql.schemaName', { name: info.schema }) : '',
+  ].filter(Boolean);
+}
+
+function virtualKindLabel(isCte: boolean): string {
+  return isCte ? t('editor.sql.cte') : t('editor.sql.subquery');
 }
 
 function tokenAt(tokens: SqlToken[], offset: number): SqlToken | undefined {
-  return tokens.find((t) => offset >= t.start && offset < t.end && isIdentLike(t));
+  return tokens.find((tok) => offset >= tok.start && offset < tok.end && isIdentLike(tok));
 }
 
 export function analyzeHover(
@@ -44,7 +54,7 @@ export function analyzeHover(
   schemas: SchemaInfo[],
   driver: DriverType,
 ): HoverQuery | null {
-  const tokens = tokenizeSql(stmtText, driver).filter((t) => t.kind !== 'comment');
+  const tokens = tokenizeSql(stmtText, driver).filter((tok) => tok.kind !== 'comment');
   const tok = tokenAt(tokens, offset);
   if (!tok) return null;
   // Bare keywords aren't identifiers; quoted tokens always are.
@@ -73,8 +83,8 @@ export function analyzeHover(
     const virtual = parsed.virtualColumns.get(qualLc);
     if (virtual) {
       if (!virtual.some((c) => c.toLowerCase() === nameLc)) return null;
-      const kind = parsed.ctes.some((c) => c.toLowerCase() === qualLc) ? 'CTE' : 'subquery';
-      return { ...span, lines: [`**${name}**`, `column of ${kind} ${qualLc}`] };
+      const kind = virtualKindLabel(parsed.ctes.some((c) => c.toLowerCase() === qualLc));
+      return { ...span, lines: [`**${name}**`, t('editor.sql.columnOf', { target: `${kind} ${qualLc}` })] };
     }
     const binding = resolveDotCompletion({ segments }, parsed.bindings, tables, schemas, driver);
     if (binding) return { ...span, columnLookup: { bindings: [binding], name: nameLc } };
@@ -84,11 +94,17 @@ export function analyzeHover(
   // Alias or table referenced by this query.
   const bound = parsed.bindings.get(nameLc);
   if (bound) {
-    const info = tables.find((t) => t.name === bound.table && t.schema === bound.schema);
+    const info = tables.find((tbl) => tbl.name === bound.table && tbl.schema === bound.schema);
     if (bound.table.toLowerCase() !== nameLc) {
       return {
         ...span,
-        lines: [`**${name}** · alias for ${bound.table}`, ...(info ? tableLines(info).slice(1) : [])],
+        lines: [
+          t('editor.sql.nameKind', {
+            name: `**${name}**`,
+            kind: t('editor.sql.aliasFor', { table: bound.table }),
+          }),
+          ...(info ? tableLines(info).slice(1) : []),
+        ],
         tableColumns: info ? bound : undefined,
       };
     }
@@ -98,20 +114,31 @@ export function analyzeHover(
   // CTE / derived-table alias.
   const virtual = parsed.virtualColumns.get(nameLc);
   if (virtual) {
-    const kind = parsed.ctes.some((c) => c.toLowerCase() === nameLc) ? 'CTE' : 'subquery';
+    const kind = virtualKindLabel(parsed.ctes.some((c) => c.toLowerCase() === nameLc));
     const cols = virtual.length > 0 ? virtual.slice(0, 8).join(', ') + (virtual.length > 8 ? ', …' : '') : '';
-    return { ...span, lines: [`**${name}** · ${kind}`, cols && `columns: ${cols}`].filter(Boolean) as string[] };
+    return {
+      ...span,
+      lines: [
+        t('editor.sql.nameKind', { name: `**${name}**`, kind }),
+        cols ? t('editor.sql.columnsList', { cols }) : '',
+      ].filter(Boolean) as string[],
+    };
   }
 
   // Any table in the connected schema.
-  const table = tables.find((t) => t.name.toLowerCase() === nameLc);
+  const table = tables.find((tbl) => tbl.name.toLowerCase() === nameLc);
   if (table) {
     return { ...span, lines: tableLines(table), tableColumns: { schema: table.schema, table: table.name } };
   }
 
   // A schema name.
   const schema = schemas.find((s) => s.name.toLowerCase() === nameLc);
-  if (schema) return { ...span, lines: [`**${schema.name}** · schema`] };
+  if (schema) {
+    return {
+      ...span,
+      lines: [t('editor.sql.nameKind', { name: `**${schema.name}**`, kind: t('editor.sql.schema') })],
+    };
+  }
 
   // Bare column: search the query's in-scope tables (loaded lazily by the caller).
   const candidates = [...parsed.bindings.values()].filter(
