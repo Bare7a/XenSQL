@@ -394,7 +394,11 @@ export function suggestColumnsInScope(
 
 const VALUE_LITERALS = ['NULL', 'TRUE', 'FALSE', 'DEFAULT'];
 
-export function suggestValueItems(ctx: CompletionContext, queryTables: QueryTableRef[], lcPrefix: string): CompletionItem[] {
+export function suggestValueItems(
+  ctx: CompletionContext,
+  queryTables: QueryTableRef[],
+  lcPrefix: string,
+): CompletionItem[] {
   const items: CompletionItem[] = [];
   const seenCols = new Set<string>();
 

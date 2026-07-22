@@ -935,7 +935,9 @@ describe('ambiguous columns across joined sources are offered qualified', () => 
       { schema: 'public', name: 'Users', type: 'table' },
       { schema: 'public', name: 'orders', type: 'table' },
     ];
-    const shared: ColumnInfo[] = [{ name: 'id', dataType: 'int', isNullable: false, isPrimary: true, isForeign: false }];
+    const shared: ColumnInfo[] = [
+      { name: 'id', dataType: 'int', isNullable: false, isPrimary: true, isForeign: false },
+    ];
     const ctx: CompletionContext = {
       schemas,
       tables: capTables,

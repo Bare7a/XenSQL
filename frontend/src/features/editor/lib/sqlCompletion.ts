@@ -196,10 +196,7 @@ function orderGroupItems(
 ): CompletionItem[] {
   // Columns/tables only at the start of a sort term (after BY/comma), not after a finished one.
   const items: CompletionItem[] = slot.expectsExpr
-    ? [
-        ...suggestQueryTableRefs(ctx, queryTables, slot.prefix),
-        ...suggestColumnsInScope(ctx, queryTables, slot.prefix),
-      ]
+    ? [...suggestQueryTableRefs(ctx, queryTables, slot.prefix), ...suggestColumnsInScope(ctx, queryTables, slot.prefix)]
     : [];
   const keywords = slot.directionAllowed ? ['ASC', 'DESC', ...slot.trailingKeywords] : slot.trailingKeywords;
   for (const kw of keywords) {
@@ -257,9 +254,7 @@ function completionItems(input: BuildCompletionInput, cursor: SqlCursor): Comple
     }
     case 'insert-columns': {
       const used = new Set(slot.used);
-      return suggestColumnsInScope(ctx, queryTables, slot.prefix).filter(
-        (item) => !used.has(item.label.toLowerCase()),
-      );
+      return suggestColumnsInScope(ctx, queryTables, slot.prefix).filter((item) => !used.has(item.label.toLowerCase()));
     }
     case 'set-column': {
       const items = suggestColumnsInScope(ctx, queryTables, slot.prefix);
