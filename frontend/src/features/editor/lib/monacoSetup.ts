@@ -7,6 +7,9 @@ import 'monaco-editor/editor/contrib/suggest/browser/suggestController'; // auto
 import 'monaco-editor/features/hover/register'; // SQL hover provider UI
 import 'monaco-editor/features/find/register'; // Find / Find & Replace (context menu)
 import 'monaco-editor/features/folding/register'; // JSON / cell viewer folding
+import 'monaco-editor/features/clipboard/register'; // cut/copy action ids (context + native Edit menu)
+import 'monaco-editor/features/wordOperations/register'; // Ctrl/Alt+arrow word jump + word delete
+import 'monaco-editor/features/multicursor/register'; // Ctrl/Cmd+D select next match
 import { remeasureMonacoFonts } from '@/features/editor/lib/monacoFontMetrics';
 import 'monaco-editor/languages/features/json/register'; // RowJsonViewer + cell JSON (worker)
 import 'monaco-editor/languages/definitions/sql/register'; // SQL highlighting
@@ -15,7 +18,7 @@ import 'monaco-editor/languages/definitions/html/register'; // cell viewer
 import editorWorker from 'monaco-editor/editor/editor.worker?worker';
 import jsonWorker from 'monaco-editor/languages/features/json/json.worker?worker';
 
-// Local bundle for @monaco-editor/react (no CDN) — editor worker + JSON worker only.
+// Local bundle for @monaco-editor/react (no CDN) - editor worker + JSON worker only.
 export function initMonaco(): void {
   remeasureMonacoFonts();
 
