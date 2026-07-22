@@ -11,7 +11,7 @@ export interface AppInfo {
 /** Fallback when Go binding is unavailable (dev in browser). */
 export const DEFAULT_APP_INFO: AppInfo = {
   name: 'XenSQL',
-  version: '1.4.3',
+  version: '1.4.4',
   author: 'Bare7a',
   email: 'bare7a@gmail.com',
   website: 'https://xensql.bare7a.eu',
