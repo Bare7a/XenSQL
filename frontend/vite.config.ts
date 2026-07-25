@@ -27,5 +27,8 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     emptyOutDir: true,
+    // Monaco + workers push the main chunk well past Vite's 500 kB default;
+    // for a Wails desktop app this is expected and not a web-download concern.
+    chunkSizeWarningLimit: 5000,
   },
 });
