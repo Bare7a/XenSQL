@@ -37,6 +37,8 @@ interface FocusGridCellDomOptions {
   scrollRow: boolean;
   rowHeight: number;
   scrollToRow?: () => void;
+  /** Mounts the target column when column virtualization has it out of the window. */
+  scrollToCol?: () => void;
   /** Runs on attempt 0 (e.g. restore scroll after refresh). */
   onFirstAttempt?: () => void;
 }
@@ -50,6 +52,7 @@ export function focusGridCellDom({
   scrollRow,
   rowHeight,
   scrollToRow,
+  scrollToCol,
   onFirstAttempt,
 }: FocusGridCellDomOptions): void {
   const tryFocus = () => {
@@ -66,6 +69,7 @@ export function focusGridCellDom({
   const run = () => {
     onFirstAttempt?.();
     scrollToRow?.();
+    scrollToCol?.();
     if (tryFocus()) return;
     requestAnimationFrame(tryFocus);
   };
@@ -75,4 +79,9 @@ export function focusGridCellDom({
 
 export function scrollVirtualizerToRow(rowVirtualizer: Virtualizer<HTMLDivElement, Element>, row: number): void {
   rowVirtualizer.scrollToIndex(Math.max(0, row - 1), { align: 'start' });
+}
+
+export function scrollVirtualizerToCol(colVirtualizer: Virtualizer<HTMLDivElement, Element>, colPos: number): void {
+  if (colPos < 0) return;
+  colVirtualizer.scrollToIndex(colPos, { align: 'auto' });
 }

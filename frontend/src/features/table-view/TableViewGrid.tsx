@@ -18,6 +18,7 @@ import { GridTable } from '@/shared/components/GridTable';
 import { GridToolbar } from '@/shared/components/GridToolbar';
 import { useGridClipboardCopy } from '@/shared/hooks/useGridClipboardCopy';
 import { useGridColumns } from '@/shared/hooks/useGridColumns';
+import { useGridColumnVirtualizer } from '@/shared/hooks/useGridColumnVirtualizer';
 import { type CopiedCells, useGridCopyExport } from '@/shared/hooks/useGridCopyExport';
 import { useGridCore } from '@/shared/hooks/useGridCore';
 import { useGridSelectionView } from '@/shared/hooks/useGridSelectionView';
@@ -134,6 +135,7 @@ export const TableViewGrid = memo(function TableViewGrid({
     rowHeight,
     tableWrapRef,
   });
+  const colVirtualizer = useGridColumnVirtualizer({ colWidths, columnsSized, tableWrapRef });
 
   const publishFocusedRow = useCallback(
     (globalIdx: number | null) => {
@@ -165,6 +167,7 @@ export const TableViewGrid = memo(function TableViewGrid({
     tableWrapRef,
     applyColumnWidth,
     scrollToRow: (rowIdx) => rowVirtualizer.scrollToIndex(rowIdx, { align: 'auto' }),
+    scrollToCol: (colPos) => colVirtualizer.scrollToIndex(colPos, { align: 'auto' }),
     getElementId,
     onFocusedRowChange: (globalIdx) => publishFocusedRowRef.current(globalIdx),
   });
@@ -212,6 +215,7 @@ export const TableViewGrid = memo(function TableViewGrid({
     setFocusedColPos,
     tableWrapRef,
     rowVirtualizer,
+    colVirtualizer,
     colIndices,
     getElementId,
     rowHeight,
@@ -453,6 +457,7 @@ export const TableViewGrid = memo(function TableViewGrid({
         wrapClassName="results-table-wrap table-view-table-wrap"
         tableWrapRef={tableWrapRef}
         rowVirtualizer={rowVirtualizer}
+        colVirtualizer={colVirtualizer}
         rowHeight={rowHeight}
         colIndices={colIndices}
         onClearSelection={clearSelection}
@@ -461,6 +466,7 @@ export const TableViewGrid = memo(function TableViewGrid({
           <GridHeaderRow
             displayColumns={displayColumns}
             colWidths={colWidths}
+            colVirtualizer={colVirtualizer}
             selectedColumns={selectedColumns}
             sortedColumn={orderBy}
             sortDirection={orderDir}

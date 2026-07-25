@@ -6,6 +6,7 @@ import {
   focusGridCellDom,
   type GridCellFocus,
   resolveGridCellFocus,
+  scrollVirtualizerToCol,
   scrollVirtualizerToRow,
 } from '@/shared/lib/gridFocus';
 import {
@@ -30,6 +31,7 @@ interface UseTableViewGridFocusOptions {
   setFocusedColPos: (colPos: FocusCol) => void;
   tableWrapRef: React.RefObject<HTMLDivElement | null>;
   rowVirtualizer: Virtualizer<HTMLDivElement, Element>;
+  colVirtualizer: Virtualizer<HTMLDivElement, Element>;
   colIndices: number[];
   getElementId: (type: 'cell' | 'rownum', rowIdx: number, colIdx: number) => string;
   rowHeight: number;
@@ -53,6 +55,7 @@ export function useTableViewGridFocus({
   setFocusedColPos,
   tableWrapRef,
   rowVirtualizer,
+  colVirtualizer,
   colIndices,
   getElementId,
   rowHeight,
@@ -81,10 +84,11 @@ export function useTableViewGridFocus({
         scrollRow,
         rowHeight,
         scrollToRow: scrollRow ? () => scrollVirtualizerToRow(rowVirtualizer, row) : undefined,
+        scrollToCol: scrollRow ? () => scrollVirtualizerToCol(colVirtualizer, colPos) : undefined,
         onFirstAttempt: scrollRow ? undefined : () => restoreScrollSnapshot(scrollSnapshotRef, wrap),
       });
     },
-    [tableWrapRef, colIndices, getElementId, rowHeight, rowVirtualizer],
+    [tableWrapRef, colIndices, getElementId, rowHeight, rowVirtualizer, colVirtualizer],
   );
 
   const syncFocusRow = useCallback(

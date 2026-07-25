@@ -27,6 +27,7 @@ interface UseGridCoreOptions {
   tableWrapRef: React.RefObject<HTMLDivElement | null>;
   applyColumnWidth(colPos: number, width: number): void;
   scrollToRow(displayIdx: number): void;
+  scrollToCol?(colPos: number): void;
   getElementId(type: 'cell' | 'rownum', rowIdx: number, colIdx: number): string;
   rowIndex?: RowIndexMap | null;
   onFocusedRowChange?(globalIdx: number | null): void;
@@ -39,6 +40,7 @@ export function useGridCore({
   tableWrapRef,
   applyColumnWidth,
   scrollToRow,
+  scrollToCol,
   getElementId,
   rowIndex = null,
   onFocusedRowChange,
@@ -92,6 +94,7 @@ export function useGridCore({
     (globalIdx: number, colPos: FocusCol) => {
       const displayIdx = sortedOf(globalIdx);
       if (displayIdx >= 0) scrollToRow(displayIdx);
+      if (colPos >= 0) scrollToCol?.(colPos);
       const colIdx = colPos >= 0 ? colIndices[colPos] : -1;
       const id = getElementId(colPos < 0 ? 'rownum' : 'cell', globalIdx, colIdx);
 
@@ -109,7 +112,7 @@ export function useGridCore({
       });
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [colIndices, getElementId, scrollToRow, tableWrapRef],
+    [colIndices, getElementId, scrollToRow, scrollToCol, tableWrapRef],
   );
 
   const applyRowModeCellRange = useCallback((range: CellRange, rowsToSelect: Set<number>) => {

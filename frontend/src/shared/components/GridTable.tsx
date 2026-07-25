@@ -7,6 +7,7 @@ interface GridTableProps<TCtx> {
   wrapClassName: string;
   tableWrapRef: React.RefObject<HTMLDivElement | null>;
   rowVirtualizer: Virtualizer<HTMLDivElement, Element>;
+  colVirtualizer: Virtualizer<HTMLDivElement, Element>;
   rowHeight: number;
   colIndices: number[];
   header: React.ReactNode;
@@ -27,6 +28,7 @@ export function GridTable<TCtx>({
   wrapClassName,
   tableWrapRef,
   rowVirtualizer,
+  colVirtualizer,
   rowHeight,
   colIndices,
   header,
@@ -42,6 +44,12 @@ export function GridTable<TCtx>({
     // Ref attached during sizing so mount-time effects (useGridWheel) bind to the element.
     return <div ref={tableWrapRef} className={sizingClassName} aria-busy="true" />;
   }
+
+  // Spacers stand in for the unmounted columns so mounted cells keep their flex offsets
+  // and the row's total width (thus the wrap's scrollWidth) stays stable while scrolling.
+  const virtualCols = colVirtualizer.getVirtualItems();
+  const padLeft = virtualCols.length > 0 ? virtualCols[0].start : 0;
+  const padRight = virtualCols.length > 0 ? colVirtualizer.getTotalSize() - virtualCols[virtualCols.length - 1].end : 0;
 
   return (
     // biome-ignore lint/a11y/noStaticElementInteractions: grid scroll wrapper; mousedown on empty space (outside any cell) clears the cell selection. Cells themselves are keyboard-focusable.
@@ -81,7 +89,9 @@ export function GridTable<TCtx>({
                 }}
               >
                 {renderRowNum(displayIdx, ctx)}
-                {colIndices.map((ci, colPos) => renderCell(displayIdx, colPos, ci, ctx))}
+                {padLeft > 0 && <td className="col-virtual-spacer" style={{ width: padLeft }} aria-hidden />}
+                {virtualCols.map((vc) => renderCell(displayIdx, vc.index, colIndices[vc.index], ctx))}
+                {padRight > 0 && <td className="col-virtual-spacer" style={{ width: padRight }} aria-hidden />}
               </tr>
             );
           })}

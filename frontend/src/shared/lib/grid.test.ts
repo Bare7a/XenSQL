@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { columnRangeSet, computeColWidths, exportFormatLabel, identityIndices, rowRangeSet } from '@/shared/lib/grid';
+import {
+  COL_FALLBACK_PX,
+  columnRangeSet,
+  colWidthToPx,
+  computeColWidths,
+  exportFormatLabel,
+  identityIndices,
+  rowRangeSet,
+} from '@/shared/lib/grid';
 
 describe('identityIndices', () => {
   it('returns [0..n-1]', () => {
@@ -36,6 +44,24 @@ describe('computeColWidths', () => {
   it('still uses header+chevron when a short column has only short data', () => {
     const [w] = computeColWidths(['id'], [0], [[1], [2], [3]]);
     expect(w).toBe('9ch');
+  });
+});
+
+describe('colWidthToPx', () => {
+  it('converts ch widths using the measured ch size', () => {
+    expect(colWidthToPx('12ch', 7.5)).toBe(90);
+    expect(colWidthToPx('50ch', 8)).toBe(400);
+  });
+
+  it('passes px widths through unchanged', () => {
+    expect(colWidthToPx('150px', 7.5)).toBe(150);
+    expect(colWidthToPx('40.5px', 7.5)).toBe(40.5);
+  });
+
+  it('falls back for missing or malformed widths', () => {
+    expect(colWidthToPx(undefined, 7.5)).toBe(COL_FALLBACK_PX);
+    expect(colWidthToPx('', 7.5)).toBe(COL_FALLBACK_PX);
+    expect(colWidthToPx('abc', 7.5)).toBe(COL_FALLBACK_PX);
   });
 });
 

@@ -14,6 +14,7 @@ import { GridTable } from '@/shared/components/GridTable';
 import { GridToolbar } from '@/shared/components/GridToolbar';
 import { useGridClipboardCopy } from '@/shared/hooks/useGridClipboardCopy';
 import { useGridColumns } from '@/shared/hooks/useGridColumns';
+import { useGridColumnVirtualizer } from '@/shared/hooks/useGridColumnVirtualizer';
 import { useGridCopyExport } from '@/shared/hooks/useGridCopyExport';
 import { useGridCore } from '@/shared/hooks/useGridCore';
 import { useGridSelectionView } from '@/shared/hooks/useGridSelectionView';
@@ -108,6 +109,7 @@ function ResultsGridImpl({
     rowHeight,
     tableWrapRef,
   });
+  const colVirtualizer = useGridColumnVirtualizer({ colWidths, columnsSized, tableWrapRef });
 
   const publishFocusedRowRef = useRef<(globalIdx: number | null) => void>(() => {});
 
@@ -118,6 +120,7 @@ function ResultsGridImpl({
     tableWrapRef,
     applyColumnWidth,
     scrollToRow: (sortedIdx) => rowVirtualizer.scrollToIndex(sortedIdx, { align: 'auto' }),
+    scrollToCol: (colPos) => colVirtualizer.scrollToIndex(colPos, { align: 'auto' }),
     getElementId: (type, rowIdx, colIdx) =>
       type === 'rownum' ? `result-rownum-${rowIdx}` : `result-cell-${rowIdx}-${colIdx}`,
     rowIndex: {
@@ -437,6 +440,7 @@ function ResultsGridImpl({
         wrapClassName="results-table-wrap"
         tableWrapRef={tableWrapRef}
         rowVirtualizer={rowVirtualizer}
+        colVirtualizer={colVirtualizer}
         rowHeight={rowHeight}
         colIndices={colIndices}
         onClearSelection={clearSelection}
@@ -448,6 +452,7 @@ function ResultsGridImpl({
           <GridHeaderRow
             displayColumns={displayColumns}
             colWidths={colWidths}
+            colVirtualizer={colVirtualizer}
             selectedColumns={selectedColumns}
             sortedColumn={sortCol}
             sortDirection={sortDir}

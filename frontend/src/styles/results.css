@@ -197,6 +197,14 @@
   z-index: 1;
 }
 
+.data-table th.col-virtual-spacer,
+.data-table td.col-virtual-spacer {
+  flex: 0 0 auto;
+  min-width: 0;
+  padding: 0;
+  border-right: none;
+}
+
 .data-table thead th.col-rownum {
   z-index: 5;
 }

@@ -11,6 +11,8 @@ export function rowHeightForZoom(uiZoomPx: number): number {
 }
 
 export const OVERSCAN = 12;
+export const COL_OVERSCAN = 6;
+export const COL_FALLBACK_PX = 120;
 const COL_MIN_CH = 8;
 export const COL_MAX_CH = 50;
 const COL_PAD_CH = 3;
@@ -45,6 +47,17 @@ export function identityIndices(n: number): number[] {
   const out = new Array<number>(n);
   for (let i = 0; i < n; i++) out[i] = i;
   return out;
+}
+
+/**
+ * Resolve a column width style ('12ch' from auto-fit, '150px' from a user resize) to px
+ * for the column virtualizer. `chPx` is the measured advance of '0' in the grid font.
+ */
+export function colWidthToPx(width: string | undefined, chPx: number): number {
+  if (!width) return COL_FALLBACK_PX;
+  const n = Number.parseFloat(width);
+  if (!Number.isFinite(n) || n < 0) return COL_FALLBACK_PX;
+  return width.endsWith('ch') ? n * chPx : n;
 }
 
 export function computeColWidths(displayColumns: string[], colIndices: number[], sampleRows: unknown[][]): string[] {
