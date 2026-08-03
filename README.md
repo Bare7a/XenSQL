@@ -1,7 +1,7 @@
 # ⚡ XenSQL
 
 ![Go](https://img.shields.io/badge/Go-1.26+-00ADD8?style=for-the-badge&logo=go)
-![Wails](https://img.shields.io/badge/Wails-v3--alpha-4B275F?style=for-the-badge)
+![Wails](https://img.shields.io/badge/Wails-v3--beta-4B275F?style=for-the-badge)
 ![License](https://img.shields.io/badge/license-GPL--3.0-blue?style=for-the-badge)
 ![Status](https://img.shields.io/badge/status-active-success?style=for-the-badge)
 
