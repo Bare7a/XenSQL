@@ -442,6 +442,8 @@
     "deleteRow": "Mark row for delete",
     "undeleteRow": "Unmark row for delete",
     "contextEdit": "Edit…",
+    "viewForeignKey": "View referenced row in {{table}}",
+    "foreignKeyUnresolved": "Can't tell which column this foreign key references.",
     "contextSetNull": "Set to NULL",
     "contextRestore": "Restore value",
     "ambiguousRow": "Can't edit this row: its primary key is not unique among the loaded rows.",

@@ -149,6 +149,43 @@
   font: inherit;
 }
 
+/* Overlays the cell's trailing edge (zero layout space), so long values keep the full column width. */
+.data-table td.cell-fk {
+  position: relative;
+}
+
+.cell-fk-btn {
+  position: absolute;
+  top: 50%;
+  right: var(--space-3);
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-elevated);
+  color: var(--text-muted);
+  cursor: pointer;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.1s ease;
+}
+
+.data-table td.cell-fk:hover .cell-fk-btn,
+.data-table td.cell-fk:focus .cell-fk-btn,
+.data-table td.cell-fk:focus-within .cell-fk-btn {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.cell-fk-btn:hover {
+  border-color: var(--accent);
+  background: var(--bg-hover);
+  color: var(--accent);
+}
+
 .table-view-grid-empty {
   padding: var(--space-16);
   color: var(--text-muted);

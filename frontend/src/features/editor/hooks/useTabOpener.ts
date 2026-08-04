@@ -2,6 +2,7 @@ import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api, newTabId } from '@/shared/lib/api';
 import { appAlert, appError } from '@/shared/lib/appDialog';
+import { requestTableViewFilter } from '@/shared/lib/tableViewFilter';
 import {
   useActiveTab,
   useConnectedIds,
@@ -68,7 +69,7 @@ export function useTabOpener(setConnPickerOpen: (open: boolean) => void) {
   );
 
   const openTableViewTab = useCallback(
-    (connId: string, schema: string, table: string) => {
+    (connId: string, schema: string, table: string, options?: { filter?: string }) => {
       const conn = connections.find((c) => c.id === connId);
       if (!conn) return;
 
@@ -78,21 +79,24 @@ export function useTabOpener(setConnPickerOpen: (open: boolean) => void) {
       if (existing) {
         setSelectedConnection(connId);
         setActiveTab(existing.id);
+        // The pane owns the fetch; a state write alone wouldn't reload it.
+        if (options?.filter != null) requestTableViewFilter(existing.id, options.filter);
         return;
       }
 
       setSelectedConnection(connId);
+      const tableView = { schema, table, filter: options?.filter };
       const tab: EditorTab = {
         id: newTabId(),
         connectionId: connId,
         title: table,
         sql: '',
         color: conn.color,
-        tableView: { schema, table },
+        tableView,
       };
       addTab(tab);
       updateTabSession(tab.id, {
-        tableViewState: tableViewStateFrom({ schema, table }),
+        tableViewState: tableViewStateFrom(tableView),
         dataBrowser: { schema, table },
         result: null,
         resultError: null,

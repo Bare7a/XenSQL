@@ -7,6 +7,7 @@ import { useTableViewCellViewer } from '@/features/table-view/hooks/useTableView
 import { useTableViewGridFocus } from '@/features/table-view/hooks/useTableViewGridFocus';
 import { useTableViewKeyboardActions } from '@/features/table-view/hooks/useTableViewKeyboardActions';
 import { useTableViewPendingCells } from '@/features/table-view/hooks/useTableViewPendingCells';
+import type { ForeignKeyTarget } from '@/features/table-view/lib/foreignKeyFilter';
 import type { PasteCellEdit } from '@/features/table-view/lib/tableViewClipboard';
 import { buildTableViewExportResult } from '@/features/table-view/lib/tableViewExport';
 import { TableViewCell } from '@/features/table-view/TableViewCell';
@@ -51,6 +52,8 @@ interface Props {
   hasMore: boolean;
   isActive: boolean;
   initialHiddenColumns?: string[];
+  foreignKeys?: Record<string, ForeignKeyTarget>;
+  onOpenForeignKey?: (col: string, value: unknown) => void;
   onHiddenColumnsChange?: (cols: string[]) => void;
   onSortChange: (col: string) => void;
   onCellEdit: (rowIdx: number, col: string, value: string | null) => void;
@@ -81,6 +84,8 @@ export const TableViewGrid = memo(function TableViewGrid({
   hasMore,
   isActive,
   initialHiddenColumns,
+  foreignKeys,
+  onOpenForeignKey,
   onHiddenColumnsChange,
   onSortChange,
   onCellEdit,
@@ -237,6 +242,21 @@ export const TableViewGrid = memo(function TableViewGrid({
     pendingCells,
   });
 
+  // Per FK column, not per rendered cell.
+  const fkLabels = useMemo(() => {
+    const entries = Object.entries(foreignKeys ?? {});
+    if (!entries.length) return null;
+    return Object.fromEntries(
+      entries.map(([col, target]) => [col, t('tableView.viewForeignKey', { table: target.table })]),
+    );
+  }, [foreignKeys, t]);
+
+  const openForeignKey = (rowIdx: number, ci: number, col: string) => {
+    const value = pendingCells.getCellValue(rowIdx, ci, col);
+    if (value == null) return;
+    onOpenForeignKey?.(col, value);
+  };
+
   const { contextMenu, menuItems, openCellContextMenu, closeContextMenu } = useTableViewCellMenu({
     columns,
     colIndices,
@@ -244,9 +264,11 @@ export const TableViewGrid = memo(function TableViewGrid({
     readOnly,
     pendingCells,
     focusRef,
+    fkLabels: onOpenForeignKey ? fkLabels : null,
     focusRow,
     focusElement,
     openCellViewer,
+    openForeignKey,
     onToggleDeleteRow,
   });
 
@@ -522,6 +544,7 @@ export const TableViewGrid = memo(function TableViewGrid({
           const edited = optimisticEdited.has(`${ctx.pkKey}${col}`) || isCellEditedByKey(ctx.pkKey, col);
           const isEditing = editing?.row === rowIdx && editing?.col === colPos && !readOnly;
           const isFocusedCell = ctx.isFocusedRow && focusedColPos === colPos;
+          const fkLabel = isNull ? undefined : fkLabels?.[col];
 
           return (
             <TableViewCell
@@ -545,6 +568,8 @@ export const TableViewGrid = memo(function TableViewGrid({
               rowCount={rows.length}
               colCount={colIndices.length}
               lastCommittedEditRef={lastCommittedEditRef}
+              fkLabel={fkLabel}
+              onOpenFk={fkLabel && onOpenForeignKey ? () => openForeignKey(rowIdx, ci, col) : undefined}
               setEditing={setEditing}
               onCommitCell={commitCell}
               onMouseDown={(e) => {

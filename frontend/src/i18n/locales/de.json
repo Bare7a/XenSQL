@@ -442,6 +442,8 @@
     "deleteRow": "Zeile zum Löschen markieren",
     "undeleteRow": "Löschmarkierung aufheben",
     "contextEdit": "Bearbeiten…",
+    "viewForeignKey": "Referenzierte Zeile in {{table}} anzeigen",
+    "foreignKeyUnresolved": "Die von diesem Fremdschlüssel referenzierte Spalte ist nicht ermittelbar.",
     "contextSetNull": "Auf NULL setzen",
     "contextRestore": "Wert wiederherstellen",
     "ambiguousRow": "Diese Zeile kann nicht bearbeitet werden: Ihr Primärschlüssel ist unter den geladenen Zeilen nicht eindeutig.",

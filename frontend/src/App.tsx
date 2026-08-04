@@ -403,6 +403,9 @@ function App() {
                         isActive={tab.id === activeTabId}
                         running={runningTabId === tab.id}
                         onFocusedRowChange={(row) => handleFocusedRowChangeForTab(tab.id, row)}
+                        onOpenTableView={(schema, table, filter) =>
+                          openTableViewTab(tab.connectionId, schema, table, { filter })
+                        }
                       />
                     </ErrorBoundary>
                   </div>

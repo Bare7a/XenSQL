@@ -1,4 +1,5 @@
 // biome-ignore-all lint/a11y/noNoninteractiveTabindex: data-grid cells use roving tabindex for keyboard navigation; <td> can be neither a native interactive element nor carry an interactive role without tripping the inverse rule.
+import { ExternalLink } from 'lucide-react';
 import type { Dispatch, SetStateAction } from 'react';
 import { TableViewCellEditor } from '@/features/table-view/TableViewCellEditor';
 import type { FocusCol } from '@/shared/lib/grid';
@@ -25,6 +26,8 @@ interface Props {
   rowCount: number;
   colCount: number;
   lastCommittedEditRef: React.RefObject<{ row: number; colPos: number } | null>;
+  fkLabel?: string;
+  onOpenFk?: () => void;
   setEditing: Dispatch<SetStateAction<{ row: number; col: number } | null>>;
   onCommitCell: (rowIdx: number, colIdx: number, colName: string, value: string | null) => void;
   onMouseDown: (e: React.MouseEvent) => void;
@@ -54,6 +57,8 @@ export function TableViewCell({
   rowCount,
   colCount,
   lastCommittedEditRef,
+  fkLabel,
+  onOpenFk,
   setEditing,
   onCommitCell,
   onMouseDown,
@@ -62,6 +67,8 @@ export function TableViewCell({
   onKeyDown,
   onDoubleClick,
 }: Props) {
+  const showFk = !!onOpenFk && !isEditing;
+
   return (
     <td
       id={`tableview-cell-${rowIdx}-${ci}`}
@@ -73,6 +80,7 @@ export function TableViewCell({
         isNull ? 'null-val' : '',
         'cell-preview',
         'cell-focusable',
+        showFk ? 'cell-fk' : '',
         edited ? 'cell-pending-edit' : '',
         isFocusedCell && !edited && !hasCellSelection && !hasRowColSelection ? 'cell-focused' : '',
         gridSelectionHighlightClasses(
@@ -108,6 +116,24 @@ export function TableViewCell({
         />
       ) : (
         text
+      )}
+      {showFk && (
+        // tabIndex -1: the grid owns Tab via roving tabindex; the cell menu is the keyboard path.
+        <button
+          type="button"
+          className="cell-fk-btn"
+          tabIndex={-1}
+          aria-label={fkLabel}
+          data-tooltip={fkLabel}
+          onMouseDown={(e) => e.stopPropagation()}
+          onDoubleClick={(e) => e.stopPropagation()}
+          onClick={(e) => {
+            e.stopPropagation();
+            onOpenFk?.();
+          }}
+        >
+          <ExternalLink className="icon-xs" aria-hidden />
+        </button>
       )}
     </td>
   );

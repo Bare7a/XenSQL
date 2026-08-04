@@ -13,9 +13,11 @@ interface UseTableViewCellMenuArgs {
   readOnly: boolean;
   pendingCells: TableViewPendingCells;
   focusRef: React.RefObject<{ row: number | null; colPos: FocusCol }>;
+  fkLabels: Record<string, string> | null;
   focusRow: (row: number, colPos: FocusCol) => void;
   focusElement: (row: number, colPos: FocusCol) => void;
   openCellViewer: (rowIdx: number, colPos: number) => void;
+  openForeignKey: (rowIdx: number, ci: number, col: string) => void;
   onToggleDeleteRow: (rowIdx: number) => void;
 }
 
@@ -36,9 +38,11 @@ export function useTableViewCellMenu({
   readOnly,
   pendingCells,
   focusRef,
+  fkLabels,
   focusRow,
   focusElement,
   openCellViewer,
+  openForeignKey,
   onToggleDeleteRow,
 }: UseTableViewCellMenuArgs) {
   const { t } = useTranslation();
@@ -81,6 +85,7 @@ export function useTableViewCellMenu({
     const cellIsNull = pendingCells.getCellValue(row, ci, col) == null;
     const hasEdit = pendingCells.isCellEditedByKey(pkKey, col) || pendingCells.optimisticEdited.has(`${pkKey}${col}`);
     const canEdit = !readOnly && primaryKeys.length > 0;
+    const fkLabel = fkLabels?.[col];
 
     return [
       { label: t('common.copy'), action: () => copyCellValue(row, ci, col) },
@@ -89,6 +94,10 @@ export function useTableViewCellMenu({
         action: () => openCellViewer(row, colPos),
         disabled: !canEdit,
       },
+      // Keyboard path to the in-cell jump button.
+      ...(fkLabel
+        ? [{ label: fkLabel, action: () => openForeignKey(row, ci, col), disabled: cellIsNull }]
+        : ([] as ContextMenuItem[])),
       { label: '', action: () => {}, separator: true },
       {
         label: t('tableView.contextSetNull'),

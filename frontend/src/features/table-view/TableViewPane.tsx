@@ -2,6 +2,7 @@ import { Filter, Minus, Plus, RefreshCw, Search } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { SqlConditionInput } from '@/features/editor/SqlConditionInput';
+import { useTableViewForeignKeys } from '@/features/table-view/hooks/useTableViewForeignKeys';
 import { useTableViewPendingMutations } from '@/features/table-view/hooks/useTableViewPendingMutations';
 import { mergeTablePage, TABLE_PAGE_SIZE } from '@/features/table-view/lib/tableViewRows';
 import { TableViewAddRowDialog } from '@/features/table-view/TableViewAddRowDialog';
@@ -9,7 +10,9 @@ import { type TableSortDir, TableViewGrid } from '@/features/table-view/TableVie
 import { ErrorState } from '@/shared/components/ErrorState';
 import { api } from '@/shared/lib/api';
 import { appError } from '@/shared/lib/appDialog';
+import { appToast, toastError } from '@/shared/lib/appToast';
 import { formatError } from '@/shared/lib/normalize';
+import { TABLE_VIEW_FILTER_EVENT, type TableViewFilterDetail } from '@/shared/lib/tableViewFilter';
 import { useAppStore } from '@/store/appStore';
 import type { DriverType, EditorTab, TableViewSessionState } from '@/types';
 import { tableViewStateFrom } from '@/types';
@@ -23,13 +26,23 @@ interface Props {
   isActive: boolean;
   running: boolean;
   onFocusedRowChange: (row: Record<string, unknown> | null) => void;
+  /** Foreign-key jump: opens another table of this connection, pre-filtered. */
+  onOpenTableView: (schema: string, table: string, filter: string) => void;
 }
 
 function emptyTableViewState(schema: string, table: string): TableViewSessionState {
   return tableViewStateFrom({ schema, table });
 }
 
-export function TableViewPane({ tab, driver, readOnly, isActive, running, onFocusedRowChange }: Props) {
+export function TableViewPane({
+  tab,
+  driver,
+  readOnly,
+  isActive,
+  running,
+  onFocusedRowChange,
+  onOpenTableView,
+}: Props) {
   const { t } = useTranslation();
   // biome-ignore lint/style/noNonNullAssertion: TableViewPane is only rendered for table-view tabs, so tab.tableView is guaranteed present.
   const tv = tab.tableView!;
@@ -52,6 +65,8 @@ export function TableViewPane({ tab, driver, readOnly, isActive, running, onFocu
   const onFocusedRowChangeRef = useRef(onFocusedRowChange);
   onFocusedRowChangeRef.current = onFocusedRowChange;
   const notifyFocusedRow = useCallback((row: Record<string, unknown> | null) => onFocusedRowChangeRef.current(row), []);
+  const onOpenTableViewRef = useRef(onOpenTableView);
+  onOpenTableViewRef.current = onOpenTableView;
 
   const state = session ?? emptyTableViewState(tv.schema, tv.table);
   const effectiveOrderBy = state.orderBy ?? state.primaryKeys[0] ?? state.columns[0] ?? null;
@@ -79,6 +94,20 @@ export function TableViewPane({ tab, driver, readOnly, isActive, running, onFocu
     deleteCount,
     hasPending,
   } = useTableViewPendingMutations({ tabId: tab.id, readOnly, state, persistState });
+
+  const { foreignKeys, resolveJump } = useTableViewForeignKeys(tab.connectionId, tv.schema, tv.table, driver);
+
+  const handleOpenForeignKey = useCallback(
+    (col: string, value: unknown) => {
+      void resolveJump(col, value)
+        .then((jump) => {
+          if (!jump) return void appToast.error(t('tableView.foreignKeyUnresolved'));
+          onOpenTableViewRef.current(tv.schema, jump.table, jump.filter);
+        })
+        .catch((e) => toastError(e, t('errors.generic')));
+    },
+    [resolveJump, tv.schema, t],
+  );
 
   const fetchPage = useCallback(
     async (opts: {
@@ -133,6 +162,24 @@ export function TableViewPane({ tab, driver, readOnly, isActive, running, onFocu
       updateTabSession,
     ],
   );
+
+  const fetchPageRef = useRef(fetchPage);
+  fetchPageRef.current = fetchPage;
+
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent<TableViewFilterDetail>).detail;
+      if (detail?.tabId !== tab.id) return;
+      setFilterDraft(detail.filter);
+      // Claims the mount fetch: a never-activated tab would otherwise race a second, unfiltered stream.
+      initialFetchInFlightRef.current = true;
+      void fetchPageRef.current({ offset: 0, replace: true, filter: detail.filter }).finally(() => {
+        initialFetchInFlightRef.current = false;
+      });
+    };
+    window.addEventListener(TABLE_VIEW_FILTER_EVENT, handler);
+    return () => window.removeEventListener(TABLE_VIEW_FILTER_EVENT, handler);
+  }, [tab.id]);
 
   // The in-flight guard keeps StrictMode's double-invoked mount effect from starting two streams;
   // the registry cancels the older one, which can leave the pane empty until a manual refresh.
@@ -355,6 +402,8 @@ export function TableViewPane({ tab, driver, readOnly, isActive, running, onFocu
             hasMore={state.hasMore && !hasPending}
             isActive={isActive}
             initialHiddenColumns={state.hiddenColumns}
+            foreignKeys={foreignKeys}
+            onOpenForeignKey={handleOpenForeignKey}
             onHiddenColumnsChange={handleHiddenColumnsChange}
             onSortChange={handleSortChange}
             onCellEdit={handleCellEdit}

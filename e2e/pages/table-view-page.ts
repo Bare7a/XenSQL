@@ -45,6 +45,28 @@ export class TableViewPage {
     await expect(this.grid.locator('td[id^="tableview-cell-"]').first()).toBeVisible({ timeout: 30_000 });
   }
 
+  /** Active tab's pane - `pane` itself matches every mounted table tab. */
+  get activePane(): Locator {
+    return this.page.locator('.table-view-layer.tab-layer-active .table-view-pane');
+  }
+
+  // ── Foreign keys ─────────────────────────────────────────────────────────
+  /** In-cell jump button; present only on non-null foreign-key cells. */
+  fkButton(row: number, colPos: number): Locator {
+    return this.activePane.locator(`td[data-row="${row}"][data-col-pos="${colPos}"] .cell-fk-btn`);
+  }
+
+  async jumpToForeignKey(row: number, colPos: number): Promise<void> {
+    await this.activePane.locator(`td[data-row="${row}"][data-col-pos="${colPos}"]`).hover();
+    await this.fkButton(row, colPos).click();
+    await expect(this.activePane.locator('td[id^="tableview-cell-"]').first()).toBeVisible({ timeout: 30_000 });
+  }
+
+  /** Rendered condition text. Assert with `toHaveText` - Monaco renders spaces as non-breaking. */
+  get activeFilterText(): Locator {
+    return this.activePane.locator('.table-view-filter-bar .view-lines');
+  }
+
   // ── Cells / rows / headers ───────────────────────────────────────────────
   /** Cell by on-screen position (survives sorting). */
   cellAt(row: number, colPos: number): Locator {
