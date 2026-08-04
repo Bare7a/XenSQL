@@ -129,7 +129,13 @@ export const APP_SHORTCUTS: ShortcutDef[] = [
 ];
 
 const STORAGE_KEY = STORAGE_KEYS.shortcuts;
-const SHORTCUTS_CHANGED_EVENT = 'xensql-shortcuts-changed';
+
+type ShortcutsListener = () => void;
+
+const listeners = new Set<ShortcutsListener>();
+
+// Bumped on every override write so useSyncExternalStore sees a new snapshot.
+let revision = 0;
 
 // Prevents global dispatcher from firing actions while the Shortcuts dialog records a new binding
 let capturingBinding = false;
@@ -157,7 +163,8 @@ function readOverrides(): OverrideMap {
 
 function writeOverrides(overrides: OverrideMap) {
   settings.setItem(STORAGE_KEY, JSON.stringify(overrides));
-  window.dispatchEvent(new CustomEvent(SHORTCUTS_CHANGED_EVENT));
+  revision++;
+  for (const listener of listeners) listener();
 }
 
 function getShortcutDef(id: string): ShortcutDef | undefined {
@@ -303,8 +310,11 @@ export function toMonacoKeybinding(monaco: typeof import('monaco-editor'), bindi
   return mod;
 }
 
-export function subscribeShortcutsChanged(onChange: () => void): () => void {
-  const handler = () => onChange();
-  window.addEventListener(SHORTCUTS_CHANGED_EVENT, handler);
-  return () => window.removeEventListener(SHORTCUTS_CHANGED_EVENT, handler);
+export function getShortcutsRevision(): number {
+  return revision;
+}
+
+export function subscribeShortcutsChanged(listener: ShortcutsListener): () => void {
+  listeners.add(listener);
+  return () => listeners.delete(listener);
 }

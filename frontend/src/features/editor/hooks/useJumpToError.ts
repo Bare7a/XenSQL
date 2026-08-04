@@ -1,12 +1,7 @@
 import type { Monaco } from '@monaco-editor/react';
 import type { editor } from 'monaco-editor';
 import { type RefObject, useEffect } from 'react';
-import {
-  clearQueryErrorMarkers,
-  JUMP_TO_ERROR_EVENT,
-  type JumpToErrorDetail,
-  QUERY_ERROR_MARKER_OWNER,
-} from '@/shared/lib/jumpToError';
+import { clearQueryErrorMarkers, QUERY_ERROR_MARKER_OWNER, subscribeJumpToError } from '@/shared/lib/jumpToError';
 
 // Active editor only (mirrors useSidebarInsert). SplitStatements trims each statement, so it's a
 // verbatim substring of the buffer and indexOf maps the error position to an absolute offset.
@@ -18,18 +13,16 @@ export function useJumpToError(
 ) {
   useEffect(() => {
     if (!isActive) return;
-    const handler = (e: Event) => {
+    return subscribeJumpToError((request) => {
       const ed = editorRef.current;
       const monaco = monacoRef.current;
       const model = ed?.getModel();
       if (!ed || !monaco || !model) return;
-      const detail = (e as CustomEvent<JumpToErrorDetail>).detail;
-      if (!detail?.statement || detail.position <= 0) return;
 
-      const stmtStart = model.getValue().indexOf(detail.statement);
+      const stmtStart = model.getValue().indexOf(request.statement);
       ed.focus();
       if (stmtStart < 0) return; // statement was edited away
-      const pos = model.getPositionAt(stmtStart + detail.position - 1);
+      const pos = model.getPositionAt(stmtStart + request.position - 1);
       ed.setPosition(pos);
       ed.revealPositionInCenter(pos);
 
@@ -38,16 +31,14 @@ export function useJumpToError(
       monaco.editor.setModelMarkers(model, QUERY_ERROR_MARKER_OWNER, [
         {
           severity: monaco.MarkerSeverity.Error,
-          message: detail.message ?? '',
+          message: request.message ?? '',
           startLineNumber: pos.lineNumber,
           startColumn: word ? word.startColumn : pos.column,
           endLineNumber: pos.lineNumber,
           endColumn: word ? word.endColumn : pos.column + 1,
         },
       ]);
-    };
-    window.addEventListener(JUMP_TO_ERROR_EVENT, handler);
-    return () => window.removeEventListener(JUMP_TO_ERROR_EVENT, handler);
+    });
   }, [isActive, editorRef, monacoRef]);
 
   // Clear the squiggle when the user edits (sql is the controlled value).

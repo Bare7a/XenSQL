@@ -1,10 +1,11 @@
 import { Application, Window } from '@wailsio/runtime';
 import { Minus, Square, X } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import xensqlIcon from '@/assets/images/xensql-icon.png';
 import { type EditAction, runEditAction } from '@/features/layout/lib/editActions';
 import { ViewMenuContent } from '@/features/layout/ViewMenuContent';
+import { useDismissOnOutside } from '@/shared/hooks/useDismissOnOutside';
 import { isDesktop, isMac } from '@/shared/lib/platform';
 import { formatBinding, getEffectiveBinding, type KeyBinding } from '@/shared/lib/shortcuts';
 
@@ -72,15 +73,7 @@ export function AppTitleBar({ onAction, sidebarOpen, onToggleSidebar, jsonPanelO
     Window.ToggleMaximise();
   };
 
-  useEffect(() => {
-    if (!open) return;
-    const close = (e: MouseEvent) => {
-      if (barRef.current?.contains(e.target as Node)) return;
-      closeAll();
-    };
-    window.addEventListener('mousedown', close);
-    return () => window.removeEventListener('mousedown', close);
-  }, [open]);
+  useDismissOnOutside(barRef, closeAll, { enabled: open !== null });
 
   const renderRows = (rows: MenuRow[]) =>
     rows.map((row) =>

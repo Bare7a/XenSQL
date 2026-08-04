@@ -1,6 +1,7 @@
 import type { Virtualizer } from '@tanstack/react-virtual';
 import { ChevronDown, ChevronsUpDown, ChevronUp } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import type { PointerDragProps } from '@/shared/hooks/usePointerDrag';
 
 interface Props {
   displayColumns: string[];
@@ -11,7 +12,9 @@ interface Props {
   sortDirection: 'ASC' | 'DESC';
   onHeaderClick: (col: string, colPos: number, e: React.MouseEvent<HTMLTableCellElement>) => void;
   onSortToggle: (col: string) => void;
-  onStartResize: (e: React.MouseEvent, colPos: number) => void;
+  onStartResize: (e: React.PointerEvent, colPos: number) => void;
+  /** Pointer-capture drag props for the resize handle; pairs with onStartResize. */
+  colResizeProps: PointerDragProps;
 }
 
 export function GridHeaderRow({
@@ -24,6 +27,7 @@ export function GridHeaderRow({
   onHeaderClick,
   onSortToggle,
   onStartResize,
+  colResizeProps,
 }: Props) {
   const { t } = useTranslation();
 
@@ -82,8 +86,7 @@ export function GridHeaderRow({
                   <ChevronsUpDown className="icon-xs"></ChevronsUpDown>
                 )}
               </button>
-              {/* biome-ignore lint/a11y/noStaticElementInteractions: pointer-drag column resize handle; resizing is a mouse affordance and columns remain readable without it. */}
-              <div className="col-resize-handle" onMouseDown={(e) => onStartResize(e, colPos)} />
+              <div className="col-resize-handle" onPointerDown={(e) => onStartResize(e, colPos)} {...colResizeProps} />
             </th>
           );
         })}

@@ -12,7 +12,6 @@ import { api } from '@/shared/lib/api';
 import { appError } from '@/shared/lib/appDialog';
 import { appToast, toastError } from '@/shared/lib/appToast';
 import { formatError } from '@/shared/lib/normalize';
-import { TABLE_VIEW_FILTER_EVENT, type TableViewFilterDetail } from '@/shared/lib/tableViewFilter';
 import { useAppStore } from '@/store/appStore';
 import type { DriverType, EditorTab, TableViewSessionState } from '@/types';
 import { tableViewStateFrom } from '@/types';
@@ -47,6 +46,7 @@ export function TableViewPane({
   // biome-ignore lint/style/noNonNullAssertion: TableViewPane is only rendered for table-view tabs, so tab.tableView is guaranteed present.
   const tv = tab.tableView!;
   const session = useAppStore((s) => s.tabSession[tab.id]?.tableViewState);
+  const pendingFilter = useAppStore((s) => s.tabSession[tab.id]?.tableViewState?.pendingFilter);
   const result = useAppStore((s) => s.tabSession[tab.id]?.result);
   const resultError = useAppStore((s) => s.tabSession[tab.id]?.resultError);
   const resultErrorInfo = useAppStore((s) => s.tabSession[tab.id]?.resultErrorInfo);
@@ -167,19 +167,15 @@ export function TableViewPane({
   fetchPageRef.current = fetchPage;
 
   useEffect(() => {
-    const handler = (e: Event) => {
-      const detail = (e as CustomEvent<TableViewFilterDetail>).detail;
-      if (detail?.tabId !== tab.id) return;
-      setFilterDraft(detail.filter);
-      // Claims the mount fetch: a never-activated tab would otherwise race a second, unfiltered stream.
-      initialFetchInFlightRef.current = true;
-      void fetchPageRef.current({ offset: 0, replace: true, filter: detail.filter }).finally(() => {
-        initialFetchInFlightRef.current = false;
-      });
-    };
-    window.addEventListener(TABLE_VIEW_FILTER_EVENT, handler);
-    return () => window.removeEventListener(TABLE_VIEW_FILTER_EVENT, handler);
-  }, [tab.id]);
+    if (pendingFilter == null) return;
+    setFilterDraft(pendingFilter);
+    // Claims the mount fetch: a never-activated tab would otherwise race a second, unfiltered stream.
+    initialFetchInFlightRef.current = true;
+    persistState({ pendingFilter: null });
+    void fetchPageRef.current({ offset: 0, replace: true, filter: pendingFilter }).finally(() => {
+      initialFetchInFlightRef.current = false;
+    });
+  }, [pendingFilter, persistState]);
 
   // The in-flight guard keeps StrictMode's double-invoked mount effect from starting two streams;
   // the registry cancels the older one, which can leave the pane empty until a manual refresh.

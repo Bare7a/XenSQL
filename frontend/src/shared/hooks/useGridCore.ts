@@ -1,6 +1,7 @@
 import { useCallback, useRef, useState } from 'react';
 import { useColumnResize } from '@/shared/hooks/useColumnResize';
 import { useGridGlobalKeys } from '@/shared/hooks/useGridGlobalKeys';
+import { usePointerDrag } from '@/shared/hooks/usePointerDrag';
 import { queryElementInContainer } from '@/shared/lib/dom';
 import { columnRangeSet, type FocusCol, rowRangeSet } from '@/shared/lib/grid';
 import {
@@ -57,6 +58,8 @@ export function useGridCore({
   const selectingRef = useRef(false);
   const selectionAnchorRef = useRef<CellCoord | null>(null);
   const shiftMouseDownAppliedRef = useRef(false);
+  // True once a cell drag has left its origin cell, so the trailing click can be ignored.
+  const rangeDraggedRef = useRef(false);
   const selectionRef = useRef<{ rows: Set<number>; cols: Set<string> }>({
     rows: selectedRows,
     cols: selectedColumns,
@@ -129,7 +132,8 @@ export function useGridCore({
     setSelectedRows(new Set());
   }, []);
 
-  const { resizingRef, startColResize } = useColumnResize(applyColumnWidth);
+  const { resizingRef, startColResize, colResizeProps } = useColumnResize(applyColumnWidth);
+  const { startDrag, dragProps: cellDragProps } = usePointerDrag();
 
   // Also mirrors into selectionRef so Ctrl+C sees the latest selection before React flushes state.
   const applyCellRangeSelection = useCallback(
@@ -173,7 +177,7 @@ export function useGridCore({
     return existingAnchor ?? (fDisplay >= 0 && fc >= 0 ? { row: fDisplay, col: fc } : fallback);
   };
 
-  const handleCellMouseDown = (displayIdx: number, colPos: number, e: React.MouseEvent) => {
+  const handleCellPointerDown = (displayIdx: number, colPos: number, e: React.PointerEvent) => {
     if (e.button !== 0) return;
     e.preventDefault();
     const shift = e.shiftKey || shiftHeldRef.current || e.nativeEvent.getModifierState?.('Shift');
@@ -205,18 +209,26 @@ export function useGridCore({
     selectionAnchorRef.current = anchor;
     applyCellRangeSelection(anchor, anchor);
 
-    const onMove = (ev: MouseEvent) => {
-      const hit = findDataCellAtPoint(tableWrapRef.current, ev.clientX, ev.clientY);
-      if (hit) applyCellRangeSelection(anchor, hit);
-    };
-    const onUp = () => {
-      selectingRef.current = false;
-      setIsSelecting(false);
-      window.removeEventListener('mousemove', onMove);
-      window.removeEventListener('mouseup', onUp);
-    };
-    window.addEventListener('mousemove', onMove);
-    window.addEventListener('mouseup', onUp);
+    startDrag(e, {
+      onMove: (ev) => {
+        const hit = findDataCellAtPoint(tableWrapRef.current, ev.clientX, ev.clientY);
+        if (!hit) return;
+        // Jitter inside the origin cell stays a plain click, not a range drag.
+        if (hit.row !== anchor.row || hit.col !== anchor.col) rangeDraggedRef.current = true;
+        applyCellRangeSelection(anchor, hit);
+      },
+      onEnd: () => {
+        selectingRef.current = false;
+        setIsSelecting(false);
+        // Deferred so the click that follows pointerup still sees the flag; cleared here too in
+        // case the release produced no click at all, which would swallow the next real one.
+        if (rangeDraggedRef.current) {
+          requestAnimationFrame(() => {
+            rangeDraggedRef.current = false;
+          });
+        }
+      },
+    });
   };
 
   const handleColumnHeaderClick = (col: string, colPos: number, e: React.MouseEvent) => {
@@ -320,6 +332,12 @@ export function useGridCore({
 
   const handleCellClick = (displayIdx: number, globalIdx: number, colPos: number, e: React.MouseEvent) => {
     e.stopPropagation();
+    // Pointer capture retargets the trailing click to the cell the drag started on, so without this
+    // the click would immediately collapse the range the drag just selected.
+    if (rangeDraggedRef.current) {
+      rangeDraggedRef.current = false;
+      return;
+    }
     if (shiftMouseDownAppliedRef.current) {
       shiftMouseDownAppliedRef.current = false;
       return;
@@ -390,7 +408,9 @@ export function useGridCore({
     focusRow,
     focusElement,
     startColResize,
-    handleCellMouseDown,
+    colResizeProps,
+    handleCellPointerDown,
+    cellDragProps,
     handleColumnHeaderClick,
     handleRowGutterClick,
     handleCellClick,

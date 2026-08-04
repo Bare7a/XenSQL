@@ -19,8 +19,8 @@ import { subscribeLanguageChanged } from '@/i18n';
 import { ContextMenu } from '@/shared/components/ContextMenu';
 import { useAppTheme } from '@/shared/hooks/useAppTheme';
 import { useMeasuredHeight } from '@/shared/hooks/useMeasuredHeight';
+import { useShortcutsRevision } from '@/shared/hooks/useShortcutsRevision';
 import { clearQueryErrorMarkers } from '@/shared/lib/jumpToError';
-import { subscribeShortcutsChanged } from '@/shared/lib/shortcuts';
 import type { ColumnInfo, DriverType, EditorCursorState, SchemaInfo, TableInfo, TxnState } from '@/types';
 
 const STATIC_EDITOR_OPTIONS = {
@@ -107,7 +107,7 @@ export const SqlEditor = memo(function SqlEditor({
   const contextMenuCleanupRef = useRef<(() => void) | null>(null);
   const isQueryRunningRef = useRef(isQueryRunning);
   const onRunRef = useRef(onRun);
-  const [shortcutRevision, setShortcutRevision] = useState(0);
+  const shortcutRevision = useShortcutsRevision();
   const [languageRevision, setLanguageRevision] = useState(0);
   // Mirrors backend DefaultBrowseSchema: postgres/sqlite → 'public', mysql → '' (uses database, not schema).
   const tablesBySchema = useMemo<Record<string, TableInfo[]>>(() => {
@@ -185,8 +185,6 @@ export const SqlEditor = memo(function SqlEditor({
     shortcutRevision,
     languageRevision,
   });
-
-  useEffect(() => subscribeShortcutsChanged(() => setShortcutRevision((n) => n + 1)), []);
 
   useEffect(() => {
     editorRef.current?.updateOptions(monacoFontOptions(fontSize));

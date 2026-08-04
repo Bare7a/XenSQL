@@ -6,6 +6,7 @@ import type {
   ConnectionFolder,
   EditorTab,
   HistoryEntry,
+  PendingSqliteFile,
   QueryError,
   QueryResult,
   ResultSet,
@@ -78,6 +79,11 @@ interface AppState {
   savedQueries: SavedQuery[];
   sidebarView: 'schema' | 'saved' | 'history';
   selectedConnectionId: string | null;
+  /**
+   * A SQLite file handed to us by the OS (CLI arg, file drop, "Open with"). Held as state rather
+   * than emitted as an event so a file that arrives before the consumer mounts is not lost.
+   */
+  pendingSqliteFile: PendingSqliteFile | null;
 
   setConnections: (c: ConnectionConfig[]) => void;
   reorderConnections: (fromId: string, toId: string) => void;
@@ -134,6 +140,10 @@ interface AppState {
   reorderTabs: (fromId: string, toId: string) => void;
   setSidebarView: (v: AppState['sidebarView']) => void;
   setSelectedConnection: (id: string | null) => void;
+  requestOpenSqliteFile: (file: PendingSqliteFile) => void;
+  clearPendingSqliteFile: () => void;
+  /** Asks the tab's table-view pane to refetch with this filter; the pane clears it once applied. */
+  requestTableViewFilter: (tabId: string, filter: string) => void;
 }
 
 export const useAppStore = create<AppState>((set, get) => ({
@@ -151,6 +161,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   savedQueries: [],
   sidebarView: 'schema',
   selectedConnectionId: null,
+  pendingSqliteFile: null,
 
   setConnections: (connections) => set({ connections }),
   reorderConnections: (fromId, toId) => {
@@ -420,4 +431,19 @@ export const useAppStore = create<AppState>((set, get) => ({
   },
   setSidebarView: (sidebarView) => set({ sidebarView }),
   setSelectedConnection: (selectedConnectionId) => set({ selectedConnectionId }),
+  requestOpenSqliteFile: (pendingSqliteFile) => set({ pendingSqliteFile }),
+  clearPendingSqliteFile: () => set({ pendingSqliteFile: null }),
+  requestTableViewFilter: (tabId, filter) =>
+    set((s) => {
+      const tab = s.tabs.find((t) => t.id === tabId);
+      if (!tab?.tableView) return s;
+      const session = s.tabSession[tabId] ?? emptyTabSession();
+      const base = session.tableViewState ?? tableViewStateFrom(tab.tableView);
+      return {
+        tabSession: {
+          ...s.tabSession,
+          [tabId]: { ...session, tableViewState: { ...base, pendingFilter: filter } },
+        },
+      };
+    }),
 }));

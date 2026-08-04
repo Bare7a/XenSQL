@@ -1,5 +1,6 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useLayoutEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useDismissOnOutside } from '@/shared/hooks/useDismissOnOutside';
 import type { ConnectionConfig } from '@/types';
 
 interface Props {
@@ -13,20 +14,7 @@ export function ConnectionPickerMenu({ connections, anchorRef, onPick, onClose }
   const { t } = useTranslation();
   const menuRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    const onMouseDown = (e: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) onClose();
-    };
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
-    window.addEventListener('mousedown', onMouseDown, true);
-    window.addEventListener('keydown', onKey, true);
-    return () => {
-      window.removeEventListener('mousedown', onMouseDown, true);
-      window.removeEventListener('keydown', onKey, true);
-    };
-  }, [onClose]);
+  useDismissOnOutside(menuRef, onClose, { onEscape: true });
 
   // null until measured, so the menu stays hidden instead of flashing at (0,0) on the first frame.
   const [pos, setPos] = useState<{ top: number; left: number } | null>(null);

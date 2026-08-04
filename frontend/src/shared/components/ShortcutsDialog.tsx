@@ -1,6 +1,7 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Modal } from '@/shared/components/Modal';
+import { useShortcutsRevision } from '@/shared/hooks/useShortcutsRevision';
 import {
   APP_SHORTCUTS,
   bindingFromKeyboardEvent,
@@ -15,8 +16,18 @@ import {
   type ShortcutDef,
   setCapturingBinding,
   setShortcutBinding,
-  subscribeShortcutsChanged,
 } from '@/shared/lib/shortcuts';
+
+// Categories come from the static shortcut table, so the grouping never changes at runtime.
+const GROUPED_SHORTCUTS = (() => {
+  const map = new Map<string, typeof APP_SHORTCUTS>();
+  for (const def of APP_SHORTCUTS) {
+    const list = map.get(def.category) ?? [];
+    list.push(def);
+    map.set(def.category, list);
+  }
+  return map;
+})();
 
 interface Props {
   onClose: () => void;
@@ -24,21 +35,11 @@ interface Props {
 
 export function ShortcutsDialog({ onClose }: Props) {
   const { t } = useTranslation();
-  const [revision, setRevision] = useState(0);
   const [recordingId, setRecordingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => subscribeShortcutsChanged(() => setRevision((n) => n + 1)), []);
-
-  const grouped = useMemo(() => {
-    const map = new Map<string, typeof APP_SHORTCUTS>();
-    for (const def of APP_SHORTCUTS) {
-      const list = map.get(def.category) ?? [];
-      list.push(def);
-      map.set(def.category, list);
-    }
-    return map;
-  }, [revision]);
+  // Bindings are read straight from storage during render, so a remap only needs a re-render.
+  useShortcutsRevision();
 
   const applyBinding = useCallback(
     (id: string, binding: KeyBinding) => {
@@ -92,7 +93,7 @@ export function ShortcutsDialog({ onClose }: Props) {
             {error}
           </p>
         )}
-        {[...grouped.entries()].map(([category, items]) => (
+        {[...GROUPED_SHORTCUTS.entries()].map(([category, items]) => (
           <section key={category} className="shortcuts-section">
             <h3 className="shortcuts-section-title">{getShortcutCategory(category as ShortcutDef['category'])}</h3>
             <table className="shortcuts-table">

@@ -3,9 +3,11 @@ import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ConnectionDialog } from '@/features/connections/ConnectionDialog';
 import { ConnectionsPanel } from '@/features/sidebar/ConnectionsPanel';
+import { useDismissOnOutside } from '@/shared/hooks/useDismissOnOutside';
 import { api } from '@/shared/lib/api';
 import { basename } from '@/shared/lib/connectionLabel';
 import { cx } from '@/shared/lib/cx';
+import { useAppStore } from '@/store/appStore';
 import { useConnectedIds, useConnections, useResolvedConnectionId, useStoreActions } from '@/store/selectors';
 import type { ConnectionConfig } from '@/types';
 import { DEFAULT_CONNECTION_COLOR } from '@/types';
@@ -46,48 +48,36 @@ export function ConnectionSwitcher({ onConnected, onOpenConnectionTab }: Props) 
         : [current.driver, [current.host, current.database].filter(Boolean).join('/')].filter(Boolean).join(' · ')
       : '';
 
-  // Always-mounted OS SQLite-drop listener; pre-fills the new-connection dialog regardless of active sidebar tab.
+  // Pre-fills the new-connection dialog for an OS-supplied SQLite file, whatever the active sidebar
+  // tab. Reading it as state means a file that lands before this mounts is still picked up.
+  const pendingSqliteFile = useAppStore((s) => s.pendingSqliteFile);
+  const clearPendingSqliteFile = useAppStore((s) => s.clearPendingSqliteFile);
   useEffect(() => {
-    const handler = (e: Event) => {
-      const { filePath, name } = (e as CustomEvent<{ filePath: string; name: string }>).detail;
-      setDialogConn({
-        id: '',
-        name,
-        driver: 'sqlite',
-        color: DEFAULT_CONNECTION_COLOR,
-        filePath,
-        host: 'localhost',
-        port: 5432,
-        database: '',
-        username: '',
-        password: '',
-        sslMode: 'disable',
-        schema: '',
-      });
-    };
-    window.addEventListener('xensql:open-sqlite', handler);
-    return () => window.removeEventListener('xensql:open-sqlite', handler);
-  }, []);
+    if (!pendingSqliteFile) return;
+    setDialogConn({
+      id: '',
+      name: pendingSqliteFile.name,
+      driver: 'sqlite',
+      color: DEFAULT_CONNECTION_COLOR,
+      filePath: pendingSqliteFile.filePath,
+      host: 'localhost',
+      port: 5432,
+      database: '',
+      username: '',
+      password: '',
+      sslMode: 'disable',
+      schema: '',
+    });
+    clearPendingSqliteFile();
+  }, [pendingSqliteFile, clearPendingSqliteFile]);
 
-  // Ignore clicks inside .modal-overlay so owned dialogs don't dismiss the popover.
-  useEffect(() => {
-    if (!open) return;
-    const onMouseDown = (e: MouseEvent) => {
-      const target = e.target as HTMLElement;
-      if (target.closest('.modal-overlay')) return;
-      if (menuRef.current?.contains(target) || anchorRef.current?.contains(target)) return;
-      setOpen(false);
-    };
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setOpen(false);
-    };
-    window.addEventListener('mousedown', onMouseDown, true);
-    window.addEventListener('keydown', onKey, true);
-    return () => {
-      window.removeEventListener('mousedown', onMouseDown, true);
-      window.removeEventListener('keydown', onKey, true);
-    };
-  }, [open]);
+  // ignoreSelector keeps clicks in owned dialogs (.modal-overlay) from dismissing the popover.
+  useDismissOnOutside(menuRef, () => setOpen(false), {
+    enabled: open,
+    alsoInside: [anchorRef],
+    ignoreSelector: '.modal-overlay',
+    onEscape: true,
+  });
 
   const toggleMenu = () => {
     if (!hasConnections) {

@@ -1,36 +1,5 @@
 import { settings } from '@/shared/lib/settingsStore';
 
-// Returns a teardown so the caller can end the drag on unmount.
-export function startPanelResize(
-  e: React.MouseEvent,
-  axis: 'x' | 'y',
-  apply: (totalDelta: number) => void,
-): () => void {
-  e.preventDefault();
-  const start = axis === 'x' ? e.clientX : e.clientY;
-
-  const onMove = (ev: MouseEvent) => {
-    const pos = axis === 'x' ? ev.clientX : ev.clientY;
-    apply(pos - start);
-  };
-
-  const cleanup = () => {
-    window.removeEventListener('mousemove', onMove);
-    window.removeEventListener('mouseup', onUp);
-    document.body.style.cursor = '';
-    document.body.style.userSelect = '';
-  };
-  function onUp() {
-    cleanup();
-  }
-
-  document.body.style.cursor = axis === 'x' ? 'col-resize' : 'row-resize';
-  document.body.style.userSelect = 'none';
-  window.addEventListener('mousemove', onMove);
-  window.addEventListener('mouseup', onUp);
-  return cleanup;
-}
-
 export function readStoredWidth(key: string, fallback: number, min?: number, max?: number): number {
   try {
     const v = settings.getItem(key);

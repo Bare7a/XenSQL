@@ -22,6 +22,12 @@ export interface ConnectionFolder {
   name: string;
 }
 
+/** A SQLite file the OS handed to the app (CLI arg, file drop, "Open with"). */
+export interface PendingSqliteFile {
+  filePath: string;
+  name: string;
+}
+
 export interface ColumnInfo {
   name: string;
   dataType: string;
@@ -182,6 +188,12 @@ export interface TableViewSessionState {
   primaryKeys: string[];
   hasMore: boolean;
   pending: TableViewPendingState;
+  /**
+   * A filter another part of the app (e.g. a foreign-key jump) wants applied. The pane owns the
+   * fetch, so it picks this up, refetches and clears it back to null. Held as state rather than
+   * emitted as an event so the request cannot be missed.
+   */
+  pendingFilter?: string | null;
 }
 
 export type TxnState = 'idle' | 'active' | 'error';

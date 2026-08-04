@@ -1,4 +1,5 @@
-import { type ReactNode, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { type ReactNode, useLayoutEffect, useRef, useState } from 'react';
+import { useDismissOnOutside } from '@/shared/hooks/useDismissOnOutside';
 import { useModalEscape } from '@/shared/hooks/useModalEscape';
 import { cx } from '@/shared/lib/cx';
 
@@ -37,21 +38,8 @@ export function ContextMenu({ x, y, items, onClose }: Props) {
     });
   }, [x, y]);
 
-  // Ref keeps listeners attached once per mount instead of re-subscribing on every parent re-render.
-  const onCloseRef = useRef(onClose);
-  onCloseRef.current = onClose;
-  useEffect(() => {
-    const onPointerDown = (e: MouseEvent) => {
-      if (menuRef.current?.contains(e.target as Node)) return;
-      onCloseRef.current();
-    };
-    window.addEventListener('mousedown', onPointerDown, true);
-    window.addEventListener('contextmenu', onPointerDown, true);
-    return () => {
-      window.removeEventListener('mousedown', onPointerDown, true);
-      window.removeEventListener('contextmenu', onPointerDown, true);
-    };
-  }, []);
+  // Escape is handled by useModalEscape above, which stacks so only the topmost menu closes.
+  useDismissOnOutside(menuRef, onClose, { onContextMenu: true });
 
   let separatorCount = 0;
   return (

@@ -148,7 +148,9 @@ function ResultsGridImpl({
     clearSelection,
     focusRow,
     startColResize,
-    handleCellMouseDown,
+    colResizeProps,
+    handleCellPointerDown,
+    cellDragProps,
     handleColumnHeaderClick,
     handleRowGutterClick,
     handleCellClick,
@@ -462,6 +464,7 @@ function ResultsGridImpl({
             }}
             onSortToggle={applySortToggle}
             onStartResize={startColResize}
+            colResizeProps={colResizeProps}
           />
         }
         buildRowContext={(sortedIdx) => {
@@ -515,7 +518,8 @@ function ResultsGridImpl({
                 .join(' ')}
               data-tooltip={t('tooltip.resultsCell')}
               onFocus={() => focusRow(ctx.globalIdx, colPos)}
-              onMouseDown={(e) => handleCellMouseDown(sortedIdx, colPos, e)}
+              onPointerDown={(e) => handleCellPointerDown(sortedIdx, colPos, e)}
+              {...cellDragProps}
               onClick={(e) => handleCellClick(sortedIdx, ctx.globalIdx, colPos, e)}
               onKeyDown={(e) => onGridKeyDown(e, sortedIdx, colPos)}
               onDoubleClick={openFocusedCellViewer}

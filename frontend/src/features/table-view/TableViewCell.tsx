@@ -2,6 +2,7 @@
 import { ExternalLink } from 'lucide-react';
 import type { Dispatch, SetStateAction } from 'react';
 import { TableViewCellEditor } from '@/features/table-view/TableViewCellEditor';
+import type { PointerDragProps } from '@/shared/hooks/usePointerDrag';
 import type { FocusCol } from '@/shared/lib/grid';
 import type { CellRange } from '@/shared/lib/gridCellRange';
 import { gridSelectionHighlightClasses } from '@/shared/lib/gridCellRange';
@@ -30,7 +31,9 @@ interface Props {
   onOpenFk?: () => void;
   setEditing: Dispatch<SetStateAction<{ row: number; col: number } | null>>;
   onCommitCell: (rowIdx: number, colIdx: number, colName: string, value: string | null) => void;
-  onMouseDown: (e: React.MouseEvent) => void;
+  onPointerDown: (e: React.PointerEvent) => void;
+  /** Pointer-capture drag props for the cell-range selection drag. */
+  cellDragProps: PointerDragProps;
   onFocus: () => void;
   onClick: (e: React.MouseEvent) => void;
   onKeyDown: (e: React.KeyboardEvent) => void;
@@ -61,7 +64,8 @@ export function TableViewCell({
   onOpenFk,
   setEditing,
   onCommitCell,
-  onMouseDown,
+  onPointerDown,
+  cellDragProps,
   onFocus,
   onClick,
   onKeyDown,
@@ -97,7 +101,8 @@ export function TableViewCell({
       ]
         .filter(Boolean)
         .join(' ')}
-      onMouseDown={onMouseDown}
+      onPointerDown={onPointerDown}
+      {...cellDragProps}
       onFocus={onFocus}
       onClick={onClick}
       onKeyDown={onKeyDown}
@@ -125,7 +130,7 @@ export function TableViewCell({
           tabIndex={-1}
           aria-label={fkLabel}
           data-tooltip={fkLabel}
-          onMouseDown={(e) => e.stopPropagation()}
+          onPointerDown={(e) => e.stopPropagation()}
           onDoubleClick={(e) => e.stopPropagation()}
           onClick={(e) => {
             e.stopPropagation();

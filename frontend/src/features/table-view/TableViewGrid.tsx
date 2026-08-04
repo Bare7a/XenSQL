@@ -198,7 +198,9 @@ export const TableViewGrid = memo(function TableViewGrid({
     focusRow,
     focusElement,
     startColResize,
-    handleCellMouseDown,
+    colResizeProps,
+    handleCellPointerDown,
+    cellDragProps,
     handleColumnHeaderClick,
     handleRowGutterClick,
     handleCellClick,
@@ -498,6 +500,7 @@ export const TableViewGrid = memo(function TableViewGrid({
               onSortChange(col);
             }}
             onStartResize={startColResize}
+            colResizeProps={colResizeProps}
           />
         }
         buildRowContext={(rowIdx) => {
@@ -572,10 +575,11 @@ export const TableViewGrid = memo(function TableViewGrid({
               onOpenFk={fkLabel && onOpenForeignKey ? () => openForeignKey(rowIdx, ci, col) : undefined}
               setEditing={setEditing}
               onCommitCell={commitCell}
-              onMouseDown={(e) => {
+              onPointerDown={(e) => {
                 if (editing != null) return;
-                handleCellMouseDown(rowIdx, colPos, e);
+                handleCellPointerDown(rowIdx, colPos, e);
               }}
+              cellDragProps={cellDragProps}
               onFocus={() => {
                 if (focusedRowIdx !== rowIdx || focusedColPos !== colPos) {
                   focusRow(rowIdx, colPos);

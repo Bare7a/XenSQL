@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { readStoredWidth, startPanelResize, storeWidth } from '@/features/layout/lib/panelResize';
+import { type PointerEvent as ReactPointerEvent, useCallback, useState } from 'react';
+import { readStoredWidth, storeWidth } from '@/features/layout/lib/panelResize';
+import { type PointerDragProps, usePointerDrag } from '@/shared/hooks/usePointerDrag';
 import type { StorageKey } from '@/shared/lib/storageKeys';
 
 export interface PersistedPanelWidthOptions {
@@ -13,26 +14,30 @@ export interface PersistedPanelWidthOptions {
 
 export function usePersistedPanelWidth(opts: PersistedPanelWidthOptions): {
   width: number;
-  handleResize: (e: React.MouseEvent) => void;
+  /** Spread onto the resize handle; carries both the drag start and the captured pointer events. */
+  resizeProps: PointerDragProps & { onPointerDown: (e: ReactPointerEvent) => void };
 } {
   const [width, setWidth] = useState(() => readStoredWidth(opts.storageKey, opts.defaultWidth, opts.min, opts.max));
+  const { startDrag, dragProps } = usePointerDrag();
 
-  // End an in-progress drag if the component unmounts mid-resize.
-  const cleanupRef = useRef<(() => void) | null>(null);
-  useEffect(() => () => cleanupRef.current?.(), []);
-
-  const handleResize = useCallback(
-    (e: React.MouseEvent) => {
+  const onPointerDown = useCallback(
+    (e: ReactPointerEvent) => {
+      const startX = e.clientX;
       const start = width;
-      cleanupRef.current = startPanelResize(e, 'x', (delta) => {
-        const signed = opts.edge === 'right' ? delta : -delta;
-        const next = Math.min(opts.max, Math.max(opts.min, start + signed));
-        setWidth(next);
-        storeWidth(opts.storageKey, next);
+      startDrag(e, {
+        cursor: 'col-resize',
+        disableSelect: true,
+        onMove: (ev) => {
+          const delta = ev.clientX - startX;
+          const signed = opts.edge === 'right' ? delta : -delta;
+          const next = Math.min(opts.max, Math.max(opts.min, start + signed));
+          setWidth(next);
+          storeWidth(opts.storageKey, next);
+        },
       });
     },
-    [width, opts.storageKey, opts.min, opts.max, opts.edge],
+    [width, opts.storageKey, opts.min, opts.max, opts.edge, startDrag],
   );
 
-  return { width, handleResize };
+  return { width, resizeProps: { onPointerDown, ...dragProps } };
 }

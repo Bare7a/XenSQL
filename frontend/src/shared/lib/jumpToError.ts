@@ -1,22 +1,23 @@
 import type { Monaco } from '@monaco-editor/react';
 import type { editor } from 'monaco-editor';
-
-// Results pane dispatches, the active SqlEditor listens (mirrors INSERT_SQL_EVENT).
-export const JUMP_TO_ERROR_EVENT = 'xensql:jump-to-error';
+import { createEmitter } from '@/shared/lib/emitter';
 
 export const QUERY_ERROR_MARKER_OWNER = 'xensql:query-error';
 
-export interface JumpToErrorDetail {
+export interface JumpToErrorRequest {
   statement: string;
   position: number; // 1-based char offset within the statement
   message?: string;
 }
 
+// Results pane emits, the active SqlEditor subscribes (mirrors insertSql).
+const jumpToErrorEmitter = createEmitter<JumpToErrorRequest>();
+
+export const subscribeJumpToError = jumpToErrorEmitter.subscribe;
+
 export function jumpToQueryError(statement: string, position: number, message?: string): void {
   if (!statement || position <= 0) return;
-  window.dispatchEvent(
-    new CustomEvent<JumpToErrorDetail>(JUMP_TO_ERROR_EVENT, { detail: { statement, position, message } }),
-  );
+  jumpToErrorEmitter.emit({ statement, position, message });
 }
 
 export function clearQueryErrorMarkers(monaco: Monaco | null, model: editor.ITextModel | null): void {

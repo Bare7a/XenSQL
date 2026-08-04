@@ -352,10 +352,9 @@ function App() {
                 onOpenConnectionTab={focusOrOpenConnectionTab}
               />
             </div>
-            {/* biome-ignore lint/a11y/noStaticElementInteractions: pointer-drag panel resize handle; resizing is a mouse affordance and the panels remain fully usable without it. */}
             <div
               className="panel-resize-handle panel-resize-handle-vertical"
-              onMouseDown={sidebar.handleResize}
+              {...sidebar.resizeProps}
               data-tooltip={t('tooltip.resizeSidebar')}
             />
           </>
@@ -438,8 +437,7 @@ function App() {
                       onRollbackTxn={rollbackTransaction}
                     />
                   </ErrorBoundary>
-                  {/* biome-ignore lint/a11y/noStaticElementInteractions: pointer-drag results splitter; resizing is a mouse affordance and both panes remain fully usable without it. */}
-                  <div className="resizer" onMouseDown={resultsSplit.onMouseDown} />
+                  <div className="resizer" {...resultsSplit.resizeProps} />
                   <div className="results-pane" style={{ flex: `0 0 ${resultsSplit.percent}%`, minHeight: 0 }}>
                     <ErrorBoundary label={t('errorBoundary.results')} resetKey={activeTabId}>
                       <ResultsPane
@@ -459,10 +457,9 @@ function App() {
 
         {jsonPanelVisible.value && (
           <>
-            {/* biome-ignore lint/a11y/noStaticElementInteractions: pointer-drag panel resize handle; resizing is a mouse affordance and the panels remain fully usable without it. */}
             <div
               className="panel-resize-handle panel-resize-handle-vertical"
-              onMouseDown={jsonPanel.handleResize}
+              {...jsonPanel.resizeProps}
               data-tooltip={t('tooltip.resizeJsonPanel')}
             />
             <div className="json-viewer-shell" style={{ width: jsonPanel.width }}>

@@ -2,7 +2,7 @@ import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api, newTabId } from '@/shared/lib/api';
 import { appAlert, appError } from '@/shared/lib/appDialog';
-import { requestTableViewFilter } from '@/shared/lib/tableViewFilter';
+import { useAppStore } from '@/store/appStore';
 import {
   useActiveTab,
   useConnectedIds,
@@ -79,8 +79,8 @@ export function useTabOpener(setConnPickerOpen: (open: boolean) => void) {
       if (existing) {
         setSelectedConnection(connId);
         setActiveTab(existing.id);
-        // The pane owns the fetch; a state write alone wouldn't reload it.
-        if (options?.filter != null) requestTableViewFilter(existing.id, options.filter);
+        // The pane owns the fetch, so this records a request it picks up and clears.
+        if (options?.filter != null) useAppStore.getState().requestTableViewFilter(existing.id, options.filter);
         return;
       }
 
