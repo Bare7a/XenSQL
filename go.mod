@@ -6,8 +6,8 @@ require (
 	github.com/go-sql-driver/mysql v1.10.0
 	github.com/google/uuid v1.6.0
 	github.com/jackc/pgx/v5 v5.10.0
-	github.com/wailsapp/wails/v3 v3.0.0-beta.2
-	modernc.org/sqlite v1.55.0
+	github.com/wailsapp/wails/v3 v3.0.0-beta.3
+	modernc.org/sqlite v1.56.0
 )
 
 require (
