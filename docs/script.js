@@ -2,6 +2,7 @@
 (function () {
   const root = document.documentElement;
   const toggle = document.getElementById("theme-toggle");
+  if (!toggle) return;
 
   toggle.addEventListener("click", function () {
     const next = root.dataset.theme === "dark" ? "light" : "dark";
@@ -32,6 +33,8 @@
   const lightbox = document.getElementById("lightbox");
   const img = lightbox.querySelector("img");
   const caption = lightbox.querySelector(".lightbox-caption");
+  const closeBtn = lightbox.querySelector(".lightbox-close");
+  let lastFocused = null;
 
   document.querySelectorAll(".gallery figure").forEach(function (fig) {
     fig.querySelector("img").addEventListener("click", function (e) {
@@ -41,6 +44,8 @@
       caption.textContent = cap ? cap.textContent : "";
       lightbox.hidden = false;
       document.body.style.overflow = "hidden";
+      lastFocused = e.target;
+      if (closeBtn) closeBtn.focus();
     });
   });
 
@@ -48,6 +53,8 @@
     lightbox.hidden = true;
     img.src = "";
     document.body.style.overflow = "";
+    if (lastFocused) lastFocused.focus();
+    lastFocused = null;
   }
 
   lightbox.addEventListener("click", close);

@@ -1,4 +1,10 @@
-export type DriverType = 'sqlite' | 'postgres' | 'mysql';
+export type DriverType = 'sqlite' | 'postgres' | 'mysql' | 'turso';
+
+// Mirrors database.IsSQLiteFamily: Turso is a SQLite-compatible engine, so it shares SQLite's
+// dialect - one "main" schema, unqualified tables, `?` placeholders, PRAGMA, `"` quoting.
+export function isSqliteFamily(driver: DriverType): boolean {
+  return driver === 'sqlite' || driver === 'turso';
+}
 
 export interface ConnectionConfig {
   id: string;
@@ -15,6 +21,11 @@ export interface ConnectionConfig {
   sslMode?: string;
   schema?: string;
   readOnly?: boolean;
+  // Turso: set remoteUrl to make filePath a replica of a Turso Cloud database.
+  remoteUrl?: string;
+  authToken?: string;
+  // Turso: comma-separated experimental engine features, e.g. 'views' for materialized views.
+  experimentalFeatures?: string;
 }
 
 export interface ConnectionFolder {

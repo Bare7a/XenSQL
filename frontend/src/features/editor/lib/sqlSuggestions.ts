@@ -4,6 +4,7 @@ import type { QueryTableRef, TableBinding } from '@/features/editor/lib/sqlQuery
 import { columnCacheKey, formatSqlIdentifier } from '@/features/editor/lib/sqlQuoting';
 import { t } from '@/i18n';
 import type { ColumnInfo, DriverType, SchemaInfo, TableInfo } from '@/types';
+import { isSqliteFamily } from '@/types';
 
 export interface CompletionContext {
   schemas: SchemaInfo[];
@@ -48,11 +49,13 @@ const KEYWORD_RULES: readonly KeywordRule[] = [
   { kw: 'DROP TABLE', gate: atStart },
   { kw: 'EXPLAIN', gate: atStart },
   { kw: 'TRUNCATE TABLE', drivers: ['postgres', 'mysql'], gate: atStart },
-  { kw: 'REPLACE INTO', drivers: ['mysql', 'sqlite'], gate: atStart },
-  { kw: 'VACUUM', drivers: ['postgres', 'sqlite'], gate: atStart },
-  { kw: 'PRAGMA', drivers: ['sqlite'], gate: atStart },
+  { kw: 'REPLACE INTO', drivers: ['mysql', 'sqlite', 'turso'], gate: atStart },
+  { kw: 'VACUUM', drivers: ['postgres', 'sqlite', 'turso'], gate: atStart },
+  { kw: 'PRAGMA', drivers: ['sqlite', 'turso'], gate: atStart },
   { kw: 'SHOW TABLES', drivers: ['mysql'], gate: atStart },
   { kw: 'SHOW DATABASES', drivers: ['mysql'], gate: atStart },
+  // Turso only. There is no DROP MATERIALIZED VIEW - the engine parses only the CREATE form.
+  { kw: 'CREATE MATERIALIZED VIEW', drivers: ['turso'], gate: atStart },
 
   // Clause structure.
   { kw: 'FROM', gate: (s) => !s.hasFrom },
@@ -62,7 +65,7 @@ const KEYWORD_RULES: readonly KeywordRule[] = [
   { kw: 'RIGHT JOIN', gate: joinable },
   { kw: 'INNER JOIN', gate: joinable },
   { kw: 'CROSS JOIN', gate: joinable },
-  { kw: 'FULL JOIN', drivers: ['postgres', 'sqlite'], gate: joinable },
+  { kw: 'FULL JOIN', drivers: ['postgres', 'sqlite', 'turso'], gate: joinable },
   { kw: 'ON', gate: (s) => s.hasJoin },
   { kw: 'GROUP BY', whereOk: true, gate: (s) => s.hasFrom && !s.groupBySeen },
   { kw: 'ORDER BY', whereOk: true, gate: (s) => s.hasFrom && !s.orderBySeen },
@@ -105,12 +108,12 @@ const KEYWORD_RULES: readonly KeywordRule[] = [
   { kw: 'IS NOT DISTINCT FROM', drivers: ['postgres'], whereOk: true, gate: inFilterClause },
   { kw: 'REGEXP', drivers: ['mysql'], whereOk: true, gate: inFilterClause },
   { kw: 'RLIKE', drivers: ['mysql'], whereOk: true, gate: inFilterClause },
-  { kw: 'GLOB', drivers: ['sqlite'], whereOk: true, gate: inFilterClause },
-  { kw: 'MATCH', drivers: ['sqlite'], whereOk: true, gate: inFilterClause },
+  { kw: 'GLOB', drivers: ['sqlite', 'turso'], whereOk: true, gate: inFilterClause },
+  { kw: 'MATCH', drivers: ['sqlite', 'turso'], whereOk: true, gate: inFilterClause },
 
   // Write-statement tails.
-  { kw: 'RETURNING', drivers: ['postgres', 'sqlite'], whereOk: true, gate: (s) => s.returningSlot },
-  { kw: 'ON CONFLICT', drivers: ['postgres', 'sqlite'], whereOk: true, gate: (s) => s.insertBody },
+  { kw: 'RETURNING', drivers: ['postgres', 'sqlite', 'turso'], whereOk: true, gate: (s) => s.returningSlot },
+  { kw: 'ON CONFLICT', drivers: ['postgres', 'sqlite', 'turso'], whereOk: true, gate: (s) => s.insertBody },
   { kw: 'ON DUPLICATE KEY UPDATE', drivers: ['mysql'], whereOk: true, gate: (s) => s.insertBody },
 ];
 
@@ -421,7 +424,7 @@ export function suggestValueItems(
 
   for (const lit of VALUE_LITERALS) {
     // SQLite has no DEFAULT expression (`SET x = DEFAULT` doesn't parse there).
-    if (lit === 'DEFAULT' && ctx.driver === 'sqlite') continue;
+    if (lit === 'DEFAULT' && isSqliteFamily(ctx.driver)) continue;
     const item = keywordItem(lit, lcPrefix);
     if (item) items.push(item);
   }

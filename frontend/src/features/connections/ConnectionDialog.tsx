@@ -5,7 +5,7 @@ import { api } from '@/shared/lib/api';
 import { appToast } from '@/shared/lib/appToast';
 import { formatError } from '@/shared/lib/normalize';
 import type { ConnectionConfig, DriverType } from '@/types';
-import { DEFAULT_COLORS, DEFAULT_CONNECTION_COLOR } from '@/types';
+import { DEFAULT_COLORS, DEFAULT_CONNECTION_COLOR, isSqliteFamily } from '@/types';
 
 interface Props {
   connection?: ConnectionConfig | null;
@@ -24,7 +24,11 @@ function defaultsForDriver(driver: DriverType): Partial<ConnectionConfig> {
   if (driver === 'mysql') {
     return { port: 3306, username: 'root', schema: '', sslMode: 'disable' };
   }
-  return {};
+  // Switching away from Turso clears its fields so no stale token is carried over.
+  if (driver === 'turso') {
+    return { schema: '' };
+  }
+  return { remoteUrl: '', authToken: '', experimentalFeatures: '' };
 }
 
 export function ConnectionDialog({ connection, onClose, onSaved }: Props) {
@@ -61,7 +65,10 @@ export function ConnectionDialog({ connection, onClose, onSaved }: Props) {
   const handlePickFile = async () => {
     try {
       const path = await api.pickSQLiteFile();
-      if (path) update({ filePath: path, name: form.name || path.split(/[/\\]/).pop() || 'SQLite' });
+      if (path) {
+        const fallbackName = form.driver === 'turso' ? 'Turso' : 'SQLite';
+        update({ filePath: path, name: form.name || path.split(/[/\\]/).pop() || fallbackName });
+      }
     } catch {
       /* cancelled */
     }
@@ -86,7 +93,7 @@ export function ConnectionDialog({ connection, onClose, onSaved }: Props) {
       setError(t('connection.nameRequired'));
       return;
     }
-    if (form.driver === 'sqlite' && !form.filePath?.trim()) {
+    if (isSqliteFamily(form.driver) && !form.filePath?.trim()) {
       setError(t('connection.fileRequired'));
       return;
     }
@@ -107,6 +114,10 @@ export function ConnectionDialog({ connection, onClose, onSaved }: Props) {
         database: form.database?.trim(),
         host: form.host?.trim(),
         schema,
+        // Only Turso persists these, so a token can't linger on a connection that no longer uses it.
+        remoteUrl: form.driver === 'turso' ? form.remoteUrl?.trim() : undefined,
+        authToken: form.driver === 'turso' ? form.authToken?.trim() : undefined,
+        experimentalFeatures: form.driver === 'turso' ? form.experimentalFeatures?.trim() : undefined,
       });
       onSaved(saved);
       onClose();
@@ -142,6 +153,7 @@ export function ConnectionDialog({ connection, onClose, onSaved }: Props) {
             <option value="sqlite">{t('connection.sqlite')}</option>
             <option value="postgres">{t('connection.postgres')}</option>
             <option value="mysql">{t('connection.mysql')}</option>
+            <option value="turso">{t('connection.turso')}</option>
           </select>
         </div>
         <div className="form-group form-group-checkbox">
@@ -165,21 +177,61 @@ export function ConnectionDialog({ connection, onClose, onSaved }: Props) {
             ))}
           </div>
         </div>
-        {form.driver === 'sqlite' ? (
-          <div className="form-group">
-            <label htmlFor="conn-file">{t('connection.file')}</label>
-            <div className="form-file-row">
-              <input
-                id="conn-file"
-                value={form.filePath || ''}
-                onChange={(e) => update({ filePath: e.target.value })}
-                placeholder={t('connection.filePlaceholder')}
-              />
-              <button type="button" className="btn" onClick={handlePickFile}>
-                {t('common.browse')}
-              </button>
+        {isSqliteFamily(form.driver) ? (
+          <>
+            <div className="form-group">
+              <label htmlFor="conn-file">
+                {form.driver === 'turso' ? t('connection.tursoFile') : t('connection.file')}
+              </label>
+              <div className="form-file-row">
+                <input
+                  id="conn-file"
+                  value={form.filePath || ''}
+                  onChange={(e) => update({ filePath: e.target.value })}
+                  placeholder={t('connection.filePlaceholder')}
+                />
+                <button type="button" className="btn" onClick={handlePickFile}>
+                  {t('common.browse')}
+                </button>
+              </div>
+              {form.driver === 'turso' && <p className="form-hint">{t('connection.tursoFileHint')}</p>}
             </div>
-          </div>
+            {form.driver === 'turso' && (
+              <>
+                <div className="form-group">
+                  <label htmlFor="conn-remote-url">{t('connection.tursoRemoteUrl')}</label>
+                  <input
+                    id="conn-remote-url"
+                    value={form.remoteUrl || ''}
+                    onChange={(e) => update({ remoteUrl: e.target.value })}
+                    placeholder="https://my-db-my-org.turso.io"
+                  />
+                  <p className="form-hint">{t('connection.tursoRemoteUrlHint')}</p>
+                </div>
+                <div className="form-group">
+                  <label htmlFor="conn-auth-token">{t('connection.tursoAuthToken')}</label>
+                  <input
+                    id="conn-auth-token"
+                    type="password"
+                    autoComplete="off"
+                    value={form.authToken || ''}
+                    onChange={(e) => update({ authToken: e.target.value })}
+                  />
+                  <p className="form-hint">{t('connection.tursoAuthTokenHint')}</p>
+                </div>
+                <div className="form-group">
+                  <label htmlFor="conn-experimental-features">{t('connection.tursoExperimentalFeatures')}</label>
+                  <input
+                    id="conn-experimental-features"
+                    value={form.experimentalFeatures || ''}
+                    onChange={(e) => update({ experimentalFeatures: e.target.value })}
+                    placeholder="views"
+                  />
+                  <p className="form-hint">{t('connection.tursoExperimentalFeaturesHint')}</p>
+                </div>
+              </>
+            )}
+          </>
         ) : (
           <>
             <div className="form-row">

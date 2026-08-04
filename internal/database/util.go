@@ -262,9 +262,9 @@ func PrimaryKeys(cols []ColumnInfo) []string {
 	return pks
 }
 
-// tableRef is the driver-aware table reference: SQLite tables are never schema-qualified.
+// tableRef is the driver-aware table reference: SQLite-family tables are never schema-qualified.
 func tableRef(driver DriverType, schema, table string) string {
-	if driver == DriverSQLite {
+	if IsSQLiteFamily(driver) {
 		return QuoteIdent(driver, table)
 	}
 	return BuildQualifiedTable(driver, schema, table)

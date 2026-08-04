@@ -53,9 +53,22 @@ export class ConnectionConfig {
     "folderId"?: string;
 
     /**
-     * SQLite
+     * SQLite / Turso (for Turso this is the local database, or the local replica when synced)
      */
     "filePath"?: string;
+
+    /**
+     * Turso: set RemoteURL to make FilePath a replica of a Turso Cloud database, pulled on connect
+     * and pushed after every write. Empty means local-only.
+     */
+    "remoteUrl"?: string;
+    "authToken"?: string;
+
+    /**
+     * Turso: comma-separated experimental engine features, e.g. "views" for CREATE MATERIALIZED
+     * VIEW. Passed through as-is, so future features need no code change here.
+     */
+    "experimentalFeatures"?: string;
 
     /**
      * PostgreSQL / MySQL / MariaDB
@@ -148,6 +161,11 @@ export enum DriverType {
      * MariaDB uses the same driver
      */
     DriverMySQL = "mysql",
+
+    /**
+     * Turso/libSQL: SQLite dialect on its own engine
+     */
+    DriverTurso = "turso",
 };
 
 export class HistoryEntry {

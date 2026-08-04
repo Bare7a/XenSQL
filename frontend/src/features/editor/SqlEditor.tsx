@@ -22,6 +22,7 @@ import { useMeasuredHeight } from '@/shared/hooks/useMeasuredHeight';
 import { clearQueryErrorMarkers } from '@/shared/lib/jumpToError';
 import { subscribeShortcutsChanged } from '@/shared/lib/shortcuts';
 import type { ColumnInfo, DriverType, EditorCursorState, SchemaInfo, TableInfo, TxnState } from '@/types';
+import { isSqliteFamily } from '@/types';
 
 const STATIC_EDITOR_OPTIONS = {
   minimap: { enabled: false },
@@ -109,9 +110,9 @@ export const SqlEditor = memo(function SqlEditor({
   const onRunRef = useRef(onRun);
   const [shortcutRevision, setShortcutRevision] = useState(0);
   const [languageRevision, setLanguageRevision] = useState(0);
-  // Mirrors backend DefaultBrowseSchema: postgres/sqlite → 'public', mysql → '' (uses database, not schema).
+  // Mirrors backend DefaultBrowseSchema: sqlite/turso → 'main', mysql → '', else 'public'.
   const tablesBySchema = useMemo<Record<string, TableInfo[]>>(() => {
-    const defaultKey = driver === 'postgres' ? 'public' : driver === 'mysql' ? '' : 'public';
+    const defaultKey = isSqliteFamily(driver) ? 'main' : driver === 'mysql' ? '' : 'public';
     const grouped: Record<string, TableInfo[]> = {};
     for (const table of allTables) {
       const key = table.schema || defaultKey;

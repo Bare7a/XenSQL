@@ -7,20 +7,25 @@ import (
 
 func TestNormalizeConnectionConfigTrims(t *testing.T) {
 	cfg := ConnectionConfig{
-		Name:     "  prod ",
-		FilePath: " ./data.db ",
-		Host:     " localhost\n",
-		Database: "\tshop ",
-		Username: " admin ",
-		SSLMode:  " require ",
-		Schema:   " public ",
-		Password: " secret ", // password is intentionally left untouched
+		Name:      "  prod ",
+		FilePath:  " ./data.db ",
+		Host:      " localhost\n",
+		Database:  "\tshop ",
+		Username:  " admin ",
+		SSLMode:   " require ",
+		Schema:    " public ",
+		RemoteURL: " https://db.turso.io ",
+		AuthToken: "  tok\n",
+		Password:  " secret ", // password is intentionally left untouched
 	}
 	NormalizeConnectionConfig(&cfg)
 	if cfg.Name != "prod" || cfg.FilePath != "./data.db" || cfg.Host != "localhost" ||
 		cfg.Database != "shop" || cfg.Username != "admin" || cfg.SSLMode != "require" ||
 		cfg.Schema != "public" {
 		t.Fatalf("trim failed: %+v", cfg)
+	}
+	if cfg.RemoteURL != "https://db.turso.io" || cfg.AuthToken != "tok" {
+		t.Fatalf("turso remote/token should be trimmed: %+v", cfg)
 	}
 	if cfg.Password != " secret " {
 		t.Fatalf("password must not be trimmed (leading/trailing space can be intentional), got %q", cfg.Password)
@@ -41,6 +46,12 @@ func TestValidateConnectionConfig(t *testing.T) {
 		{"postgres missing user", ConnectionConfig{Driver: DriverPostgres, Host: "h", Database: "d"}, "username"},
 		{"mysql ok", ConnectionConfig{Driver: DriverMySQL, Host: "h", Database: "d", Username: "u"}, ""},
 		{"mysql missing host", ConnectionConfig{Driver: DriverMySQL, Database: "d", Username: "u"}, "host"},
+		{"turso local ok", ConnectionConfig{Driver: DriverTurso, FilePath: "x.db"}, ""},
+		{"turso missing file", ConnectionConfig{Driver: DriverTurso}, "file path"},
+		{"turso synced ok", ConnectionConfig{Driver: DriverTurso, FilePath: "x.db", RemoteURL: "https://db.turso.io"}, ""},
+		{"turso remote without scheme", ConnectionConfig{Driver: DriverTurso, FilePath: "x.db", RemoteURL: "db.turso.io"}, "https://"},
+		{"turso remote wrong scheme", ConnectionConfig{Driver: DriverTurso, FilePath: "x.db", RemoteURL: "libsql://db.turso.io"}, "https://"},
+		{"turso remote without host", ConnectionConfig{Driver: DriverTurso, FilePath: "x.db", RemoteURL: "https://"}, "host"},
 		{"unknown driver", ConnectionConfig{Driver: "oracle"}, "unsupported"},
 	}
 	for _, tc := range tests {
@@ -90,6 +101,9 @@ func TestConfigFingerprintChangesWithEveryRelevantField(t *testing.T) {
 		{"filePath", func(c *ConnectionConfig) { c.FilePath = "x.db" }},
 		{"schema", func(c *ConnectionConfig) { c.Schema = "s2" }},
 		{"readOnly", func(c *ConnectionConfig) { c.ReadOnly = true }},
+		{"remoteURL", func(c *ConnectionConfig) { c.RemoteURL = "https://db.turso.io" }},
+		{"authToken", func(c *ConnectionConfig) { c.AuthToken = "tok" }},
+		{"experimentalFeatures", func(c *ConnectionConfig) { c.ExperimentalFeatures = "views" }},
 	}
 	for _, m := range mutations {
 		t.Run(m.name, func(t *testing.T) {

@@ -6,7 +6,14 @@ const (
 	DriverSQLite   DriverType = "sqlite"
 	DriverPostgres DriverType = "postgres"
 	DriverMySQL    DriverType = "mysql" // MariaDB uses the same driver
+	DriverTurso    DriverType = "turso" // Turso/libSQL: SQLite dialect on its own engine
 )
+
+// IsSQLiteFamily reports whether driver speaks the SQLite dialect: one "main" schema, unqualified
+// tables, `?` placeholders, `"` quoting, PRAGMA introspection.
+func IsSQLiteFamily(driver DriverType) bool {
+	return driver == DriverSQLite || driver == DriverTurso
+}
 
 type ConnectionConfig struct {
 	ID       string     `json:"id"`
@@ -15,8 +22,16 @@ type ConnectionConfig struct {
 	Color    string     `json:"color"`
 	FolderID string     `json:"folderId,omitempty"`
 
-	// SQLite
+	// SQLite / Turso (for Turso this is the local database, or the local replica when synced)
 	FilePath string `json:"filePath,omitempty"`
+
+	// Turso: set RemoteURL to make FilePath a replica of a Turso Cloud database, pulled on connect
+	// and pushed after every write. Empty means local-only.
+	RemoteURL string `json:"remoteUrl,omitempty"`
+	AuthToken string `json:"authToken,omitempty"`
+	// Turso: comma-separated experimental engine features, e.g. "views" for CREATE MATERIALIZED
+	// VIEW. Passed through as-is, so future features need no code change here.
+	ExperimentalFeatures string `json:"experimentalFeatures,omitempty"`
 
 	// PostgreSQL / MySQL / MariaDB
 	Host     string `json:"host,omitempty"`

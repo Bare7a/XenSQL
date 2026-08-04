@@ -14,7 +14,7 @@ func IsSelectLike(driver DriverType, upper string) bool {
 		return true
 	}
 	switch driver {
-	case DriverSQLite:
+	case DriverSQLite, DriverTurso:
 		return strings.HasPrefix(upper, "PRAGMA")
 	case DriverMySQL:
 		return strings.HasPrefix(upper, "SHOW") ||

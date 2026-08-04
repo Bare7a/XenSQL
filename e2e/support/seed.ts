@@ -23,7 +23,7 @@ export interface SeedTableOptions {
 
 /**
  * Seeds tables through the app itself (editor + schema browser) - the same path a user
- * takes. Keep the SQL portable: matrix tests run these statements against all four drivers.
+ * takes. Keep the SQL portable: matrix tests run these statements against every driver.
  */
 export class Seeder {
   constructor(

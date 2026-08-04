@@ -51,7 +51,7 @@ wails3 dev
 
 ## ⚡ SQL tools are usually overkill. XenSQL isn’t.
 
-Work with **SQLite**, **PostgreSQL** and **MySQL / MariaDB** in a single fast desktop app that runs entirely on your machine.
+Work with **SQLite**, **PostgreSQL**, **MySQL / MariaDB** and **Turso** in a single fast desktop app that runs entirely on your machine.
 
 🧳 Portable  
 ⚡ Fast startup  
@@ -133,6 +133,7 @@ XenSQL focuses on one thing:
 | **MySQL** | ✅ | ✅ | TLS |
 | **MariaDB** | ✅ | ✅ | TLS |
 | **SQLite** | ✅ | ✅ | local file |
+| **Turso** | ✅ | ✅ | local file, or HTTPS sync to Turso Cloud |
 
 ---
 
@@ -144,6 +145,8 @@ XenSQL focuses on one thing:
 - **Read-only mode** with defense-in-depth - blocked at both the Wails layer and inside each driver
 - PostgreSQL SSL (`disable` / `require` / `verify-full`) and MySQL TLS
 - SQLite file picker workflow
+- Turso: open a local database, or sync a local replica with a Turso Cloud database (pulled on connect, your writes pushed back)
+- Turso: per-connection **experimental features** field (comma-separated, e.g. `views` for `CREATE MATERIALIZED VIEW`); Turso's internal bookkeeping tables stay hidden from the schema tree
 
 ---
 
@@ -153,7 +156,7 @@ XenSQL focuses on one thing:
 - Monaco-powered editing with custom dark/light themes
 - **Smart autocomplete** - substring + prefix matching, context-aware (`SELECT` / `FROM` / `JOIN` / `WHERE` / `UPDATE` / `DELETE` / `INSERT`), `schema.table.column` dot completion, quoted identifiers and aliases
 - Built-in **snippets** - `JOIN`, `SELECT * FROM`, aggregate functions
-- Driver-correct identifier quoting (PostgreSQL, MySQL, SQLite)
+- Driver-correct identifier quoting (PostgreSQL, MySQL, SQLite / Turso)
 - **Run selection** (`Ctrl+Enter`) / **run all** (`Ctrl+Shift+Enter`) / **stop** long-running queries
 - **Streaming results** - rows render as the driver yields them
 - **Multi-statement scripts** - run several `;`-separated statements at once; they execute in order on one connection, so temp tables, `SET` and scripted `BEGIN` / `COMMIT` hold
@@ -337,7 +340,7 @@ wails3 task build       # or: wails3 task package  (platform bundle/installer)
 │   └── bump-version/      # version bump tool (keeps build assets in sync)
 ├── internal/
 │   ├── app/               # Wails App API bindings + tests (connections, query, history, …)
-│   ├── database/          # Driver interface + SQLite / PostgreSQL / MySQL
+│   ├── database/          # Driver interface + SQLite / PostgreSQL / MySQL / Turso
 │   ├── storage/           # JSON persistence (incl. settings.json)
 │   ├── paths/             # Portable data directory
 │   ├── windowstate/       # Window size / position / mode persistence
@@ -359,6 +362,7 @@ wails3 task build       # or: wails3 task package  (platform bundle/installer)
 | PostgreSQL | [pgx](https://github.com/jackc/pgx)                                         |
 | MySQL      | [go-sql-driver/mysql](https://github.com/go-sql-driver/mysql)               |
 | SQLite     | [modernc.org/sqlite](https://pkg.go.dev/modernc.org/sqlite)                 |
+| Turso      | [tursogo](https://pkg.go.dev/turso.tech/database/tursogo)                    |
 | Tables     | [TanStack Virtual](https://tanstack.com/virtual)                            |
 | State      | [Zustand](https://zustand-demo.pmnd.rs/)                                    |
 | Icons      | [Lucide](https://lucide.dev/)                                               |

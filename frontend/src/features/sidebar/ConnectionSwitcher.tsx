@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { ConnectionDialog } from '@/features/connections/ConnectionDialog';
 import { ConnectionsPanel } from '@/features/sidebar/ConnectionsPanel';
 import { api } from '@/shared/lib/api';
-import { basename } from '@/shared/lib/connectionLabel';
+import { connectionSubtitle } from '@/shared/lib/connectionLabel';
 import { cx } from '@/shared/lib/cx';
 import { useConnectedIds, useConnections, useResolvedConnectionId, useStoreActions } from '@/store/selectors';
 import type { ConnectionConfig } from '@/types';
@@ -39,12 +39,7 @@ export function ConnectionSwitcher({ onConnected, onOpenConnectionTab }: Props) 
   const hasConnections = connections.length > 0;
 
   // Surfaces host/db detail as the tooltip - replaces the old schema-panel banner row.
-  const detail =
-    current && isConnected
-      ? current.driver === 'sqlite'
-        ? `sqlite · ${basename(current.filePath || '')}`
-        : [current.driver, [current.host, current.database].filter(Boolean).join('/')].filter(Boolean).join(' · ')
-      : '';
+  const detail = current && isConnected ? connectionSubtitle(current) : '';
 
   // Always-mounted OS SQLite-drop listener; pre-fills the new-connection dialog regardless of active sidebar tab.
   useEffect(() => {

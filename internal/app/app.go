@@ -12,6 +12,7 @@ import (
 	_ "xensql/internal/database/mysql"
 	_ "xensql/internal/database/postgres"
 	_ "xensql/internal/database/sqlite"
+	_ "xensql/internal/database/turso"
 	"xensql/internal/service"
 	"xensql/internal/storage"
 )

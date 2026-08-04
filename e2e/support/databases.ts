@@ -1,11 +1,11 @@
 // Database matrix the E2E suite runs against. Network drivers come from docker-compose.yml
-// SQLite uses a file under e2e/XenSQL-data
+// SQLite and Turso use files under e2e/XenSQL-data
 
-export type DriverKey = 'postgres' | 'mysql' | 'mariadb' | 'sqlite';
+export type DriverKey = 'postgres' | 'mysql' | 'mariadb' | 'sqlite' | 'turso';
 
 // Value selected in the connection dialog's driver <select>. MariaDB speaks the
 // MySQL wire protocol, so it reuses the 'mysql' driver.
-export type DialogDriver = 'postgres' | 'mysql' | 'sqlite';
+export type DialogDriver = 'postgres' | 'mysql' | 'sqlite' | 'turso';
 
 export interface DbConfig {
   key: DriverKey;
@@ -18,7 +18,7 @@ export interface DbConfig {
   database?: string;
   username?: string;
   password?: string;
-  /** SQLite only: path typed into the dialog (relative to the server cwd). */
+  /** SQLite / Turso only: path typed into the dialog (relative to the server cwd). */
   filePath?: string;
 }
 
@@ -69,8 +69,17 @@ export const SQLITE: DbConfig = {
   filePath: env('XENSQL_E2E_SQLITE_PATH', 'e2e/XenSQL-data/e2e.sqlite'),
 };
 
+// Embedded like SQLite: no compose service, and its own file so the engines never share a database.
+export const TURSO: DbConfig = {
+  key: 'turso',
+  label: 'E2E Turso',
+  driver: 'turso',
+  network: false,
+  filePath: env('XENSQL_E2E_TURSO_PATH', 'e2e/XenSQL-data/e2e.turso.db'),
+};
+
 /** Every supported driver. */
-export const ALL_DATABASES: DbConfig[] = [POSTGRES, MYSQL, MARIADB, SQLITE];
+export const ALL_DATABASES: DbConfig[] = [POSTGRES, MYSQL, MARIADB, SQLITE, TURSO];
 
 /** Network drivers only (host/port based). */
 export const NETWORK_DATABASES: DbConfig[] = [POSTGRES, MYSQL, MARIADB];

@@ -700,6 +700,23 @@ describe('driver-specific statement keywords', () => {
     expect(lite).not.toEqual(expect.arrayContaining(['TRUNCATE TABLE', 'SHOW TABLES']));
   });
 
+  // Guards against a future rule listing 'sqlite' without 'turso'.
+  it('gives Turso the SQLite dialect keywords', () => {
+    const turso = labelsOf('', 'turso');
+    for (const kw of labelsOf('', 'sqlite')) {
+      expect(turso).toContain(kw);
+    }
+    expect(turso).not.toEqual(expect.arrayContaining(['TRUNCATE TABLE', 'SHOW TABLES']));
+  });
+
+  it('offers CREATE MATERIALIZED VIEW on Turso only', () => {
+    expect(labelsOf('', 'turso')).toContain('CREATE MATERIALIZED VIEW');
+    for (const drv of ['sqlite', 'postgres', 'mysql'] as const) {
+      expect(labelsOf('', drv)).not.toContain('CREATE MATERIALIZED VIEW');
+    }
+    expect(labelsOf('SELECT * FROM users ', 'turso')).not.toContain('CREATE MATERIALIZED VIEW');
+  });
+
   it('keeps dialect starters out of the middle of a statement', () => {
     expect(labelsOf('SELECT * FROM users ', 'sqlite')).not.toEqual(expect.arrayContaining(['PRAGMA', 'VACUUM']));
     expect(labelsOf('SELECT * FROM users ', 'mysql')).not.toContain('SHOW TABLES');
