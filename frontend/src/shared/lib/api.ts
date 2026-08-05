@@ -1,4 +1,5 @@
 import {
+  AppendTextFile,
   BeginTransaction,
   CancelQuery,
   CheckForUpdates,
@@ -124,6 +125,8 @@ export const api = {
   copyToClipboard: (text: string): Promise<void> => writeClipboardText(text),
   pickExportSavePath: (ext: string): Promise<string> => PickExportSavePath(ext),
   saveTextFile: (path: string, content: string): Promise<void> => SaveTextFile(path, content),
+  appendTextFile: (path: string, chunk: string, truncate: boolean): Promise<void> =>
+    AppendTextFile(path, chunk, truncate),
   getAppInfo: (): Promise<import('@/shared/lib/appInfo').AppInfo> => cast(GetAppInfo()),
   getPathDefaults: (): Promise<import('@/shared/lib/pathDefaults').PathDefaults> => cast(GetPathDefaults()),
   // Fire-and-forget: the native update window drives the rest of the flow.

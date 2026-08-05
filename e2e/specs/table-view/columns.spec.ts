@@ -18,7 +18,7 @@ test.describe('Table view - column visibility', () => {
     await expect(tableView.columnsButton).toContainText('(1/2)');
 
     // The export dialog defaults to the visible-column scope.
-    await tableView.pane.getByRole('button', { name: 'Export as' }).click();
+    await tableView.pane.getByRole('button', { name: 'Export', exact: true }).click();
     const colsGroup = page.locator('#export-cols-group');
     await expect(colsGroup.getByRole('button', { name: 'All (2)' })).toBeVisible();
     await expect(colsGroup.getByRole('button', { name: 'Visible (1)' })).toHaveClass(/active/);

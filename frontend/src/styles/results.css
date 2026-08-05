@@ -301,6 +301,34 @@
   margin: var(--space-4) 0 0;
 }
 
+.export-progress-bar {
+  /* Reset the native widget so the track/fill colours below apply. */
+  appearance: none;
+  display: block;
+  width: 100%;
+  height: 0.25rem;
+  margin-top: var(--space-6);
+  border: none;
+  border-radius: var(--radius-pill);
+  background: var(--bg-hover);
+  color: var(--accent);
+}
+
+.export-progress-bar::-webkit-progress-bar {
+  background: var(--bg-hover);
+  border-radius: var(--radius-pill);
+}
+
+.export-progress-bar::-webkit-progress-value {
+  background: var(--accent);
+  border-radius: var(--radius-pill);
+}
+
+.export-progress-bar::-moz-progress-bar {
+  background: var(--accent);
+  border-radius: var(--radius-pill);
+}
+
 .results-table-wrap {
   flex: 1;
   min-height: 0;

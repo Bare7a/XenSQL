@@ -108,7 +108,8 @@
     "savedFile": "Gespeichert als {{fileName}}",
     "exportCopied": "Export in Zwischenablage kopiert",
     "connectionSuccess": "Verbindung erfolgreich!",
-    "savedQuery": "Abfrage gespeichert"
+    "savedQuery": "Abfrage gespeichert",
+    "exportStopped": "Export abgebrochen — {{fileName}} enthält nur die ersten {{count}} Zeile(n)"
   },
   "tooltip": {
     "runStatement": "Diese Anweisung ausführen",
@@ -123,7 +124,6 @@
     "copyFormat": "Format für Kopieren und Export",
     "cellViewerKind": "Inhalt anzeigen als",
     "copyResults": "Ergebnisse in Zwischenablage kopieren",
-    "exportFile": "Ergebnisse in Datei speichern",
     "exportOptions": "Export mit Zeilen-, Spalten- und Formatoptionen",
     "showHideColumns": "Spalten ein- oder ausblenden",
     "resultsColumnHeader": "Klicken zum Sortieren · Strg+Klick Spalte wählen · Umschalt+Klick Bereich",
@@ -230,7 +230,6 @@
     "txnCommit": "Transaktion bestätigt",
     "txnRollback": "Transaktion zurückgerollt",
     "fitColumns": "Spalten anpassen",
-    "exportAs": "Exportieren als",
     "export": "Exportieren",
     "deleteRows": "Löschen ({{count}})",
     "contextExportAs": "Exportieren als",
@@ -266,7 +265,9 @@
     "formatCsv": "CSV",
     "formatJson": "JSON",
     "formatMarkdown": "Markdown",
-    "formatSql": "SQL INSERT"
+    "formatSql": "SQL INSERT",
+    "progress": "Exportiert… {{done}} von {{total}} Zeilen geschrieben",
+    "stop": "Stoppen"
   },
   "sidebar": {
     "connect": "Verbinden",

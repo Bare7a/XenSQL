@@ -1,7 +1,7 @@
 import { POSTGRES } from '@support/databases';
 import { expect, test } from '@support/fixtures';
 
-// Covers the "Export as" dialog UI only. "Save to file" (native OS dialog) and
+// Covers the export dialog UI only. "Save to file" (native OS dialog) and
 // "Copy to clipboard" (Wails clipboard) aren't driven here.
 test.describe('Export', () => {
   test('switches format and scope and reflects them in the summary', async ({ connections, editor, results }) => {
@@ -15,6 +15,11 @@ test.describe('Export', () => {
     // "Selected" stays disabled until rows are selected in the grid.
     const selectedRows = results.exportRowsGroup.getByRole('button', { name: /Selected/ });
     await expect(selectedRows).toBeDisabled();
+
+    // With no column hidden, "Visible" would duplicate "All", so only "All" is offered.
+    const colsGroup = results.exportColumnsGroup;
+    await expect(colsGroup.getByRole('button', { name: 'All (2)' })).toHaveClass(/active/);
+    await expect(colsGroup.getByRole('button', { name: /Visible/ })).toHaveCount(0);
 
     await results.setExportFormat('json');
     await expect(results.exportSummary).toContainText('JSON');

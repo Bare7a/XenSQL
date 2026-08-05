@@ -14,10 +14,8 @@ interface GridToolbarProps {
   extraRight?: React.ReactNode;
   copyFormat: ExportFormat;
   onFormatChange: (format: ExportFormat) => void;
-  exportBusy: boolean;
   onCopy: () => Promise<void>;
-  onExportToFile: () => Promise<void>;
-  onExportAs: () => void;
+  onExport: () => void;
 }
 
 export function GridToolbar({
@@ -30,10 +28,8 @@ export function GridToolbar({
   extraRight,
   copyFormat,
   onFormatChange,
-  exportBusy,
   onCopy,
-  onExportToFile,
-  onExportAs,
+  onExport,
 }: GridToolbarProps) {
   const { t } = useTranslation();
 
@@ -84,31 +80,14 @@ export function GridToolbar({
         <button
           type="button"
           className="btn btn-sm"
-          disabled={exportBusy}
           onClick={() => void onCopy().catch((e) => toastError(e, t('errors.copyFailed')))}
           data-tooltip={t('tooltip.copyResults')}
         >
           <ClipboardCopy className="icon-xs" /> {t('common.copy')}
         </button>
 
-        <button
-          type="button"
-          className="btn btn-sm"
-          disabled={exportBusy}
-          onClick={() => void onExportToFile()}
-          data-tooltip={t('tooltip.exportFile')}
-        >
+        <button type="button" className="btn btn-sm" onClick={onExport} data-tooltip={t('tooltip.exportOptions')}>
           <Download className="icon-xs" /> {t('results.export')}
-        </button>
-
-        <button
-          type="button"
-          className="btn btn-sm"
-          disabled={exportBusy}
-          onClick={onExportAs}
-          data-tooltip={t('tooltip.exportOptions')}
-        >
-          <Download className="icon-xs" /> {t('results.exportAs')}
         </button>
 
         {extraRight}

@@ -9,20 +9,41 @@ export interface ExportOptions {
   rowIndices: number[];
 }
 
-function pickSubset(result: QueryResult, opts: ExportOptions): QueryResult {
-  const colIndices = opts.columns.map((c) => result.columns.indexOf(c)).filter((i) => i >= 0);
-  const columns = colIndices.map((i) => result.columns[i]);
-  const rows = opts.rowIndices.map((ri) => {
-    const row = result.rows[ri];
-    if (!row) return colIndices.map(() => null); // guard against a stale out-of-range selection index
-    return colIndices.map((i) => row[i]);
-  });
+const EXPORT_CHUNK_ROWS = 5000;
+
+// Reads rows in place, so an export never duplicates the result in memory.
+interface ExportView {
+  columns: string[];
+  columnTypes: string[];
+  rowIndices: Iterable<number>;
+  cells: (rowIndex: number) => unknown[];
+}
+
+function* range(count: number): Generator<number> {
+  for (let i = 0; i < count; i++) yield i;
+}
+
+// Positional, so duplicate column names (SELECT 1 AS a, 2 AS a) keep their own values.
+function allColumnsView(result: QueryResult): ExportView {
   return {
-    ...result,
-    columns,
+    columns: result.columns,
+    columnTypes: result.columns.map((_, i) => result.columnTypes?.[i] ?? ''),
+    rowIndices: range(result.rows.length),
+    cells: (ri) => result.rows[ri],
+  };
+}
+
+function subsetView(result: QueryResult, opts: ExportOptions): ExportView {
+  const colIndices = opts.columns.map((c) => result.columns.indexOf(c)).filter((i) => i >= 0);
+  return {
+    columns: colIndices.map((i) => result.columns[i]),
     columnTypes: colIndices.map((i) => result.columnTypes?.[i] ?? ''),
-    rows,
-    rowCount: rows.length,
+    rowIndices: opts.rowIndices,
+    cells: (ri) => {
+      const row = result.rows[ri];
+      if (!row) return colIndices.map(() => null); // guard against a stale out-of-range selection index
+      return colIndices.map((i) => row[i]);
+    },
   };
 }
 
@@ -48,68 +69,167 @@ function sqlLiteral(v: unknown): string {
   return `'${String(v).replace(/'/g, "''")}'`;
 }
 
-export function exportResultToText(result: QueryResult, format: ExportFormat): string {
-  switch (format) {
-    case 'json': {
-      // Nest JSON/JSONB columns instead of string-wrapping them (matches the row JSON viewer).
-      const isJsonCol = result.columns.map((_, i) => /json/i.test(result.columnTypes?.[i] ?? ''));
-      const rows = result.rows.map((row) => {
-        const m: Record<string, unknown> = {};
-        result.columns.forEach((col, i) => {
-          const v = row[i];
-          m[col] = isJsonCol[i] && typeof v === 'string' ? safeJsonParse(v) : v;
-        });
-        return m;
+interface RowFormatter {
+  header: string;
+  open: string;
+  sep: string;
+  close: string;
+  empty: string;
+  row: (cells: unknown[]) => string;
+}
+
+// bigint isn't JSON-serializable; emit it as a number (backend already sends out-of-range ints as strings).
+function jsonBigint(_key: string, val: unknown): unknown {
+  return typeof val === 'bigint' ? Number(val) : val;
+}
+
+function jsonFormatter(view: ExportView): RowFormatter {
+  // Nest JSON/JSONB columns instead of string-wrapping them (matches the row JSON viewer).
+  const isJsonCol = view.columnTypes.map((t) => /json/i.test(t));
+  return {
+    header: '',
+    open: '[\n',
+    sep: ',\n',
+    close: '\n]',
+    empty: '[]',
+    row: (cells) => {
+      const m: Record<string, unknown> = {};
+      view.columns.forEach((col, i) => {
+        const v = cells[i];
+        m[col] = isJsonCol[i] && typeof v === 'string' ? safeJsonParse(v) : v;
       });
-      // bigint isn't JSON-serializable; emit it as a number (backend already sends out-of-range ints as strings).
-      return JSON.stringify(rows, (_k, val) => (typeof val === 'bigint' ? Number(val) : val), 2);
-    }
-    case 'csv': {
-      const escapeCsv = (cell: string) => {
-        // Mirror Go's encoding/csv: quote on delimiter/quote/newline, leading whitespace, or \. sentinel.
-        const needsQuote = cell === '\\.' || /[",\n\r]/.test(cell) || /^\s/u.test(cell);
-        if (needsQuote) return `"${cell.replace(/"/g, '""')}"`;
-        return cell;
-      };
-      const lines = [result.columns.map(escapeCsv).join(',')];
-      for (const row of result.rows) {
-        lines.push(row.map((v) => (v == null ? '' : escapeCsv(defuseCsvFormula(String(v))))).join(','));
-      }
-      return lines.join('\n');
-    }
-    case 'markdown': {
-      // Escape headers too, not just cells - a column named `a|b` would break the alignment.
-      const mdCell = (s: string) => s.replace(/\|/g, '\\|').replace(/\r\n?|\n/g, ' ');
-      const sep = result.columns.map(() => '---');
-      const lines = [`| ${result.columns.map(mdCell).join(' | ')} |`, `| ${sep.join(' | ')} |`];
-      for (const row of result.rows) {
-        const cells = row.map((v) => (v == null ? '' : mdCell(String(v))));
-        lines.push(`| ${cells.join(' | ')} |`);
-      }
-      return lines.join('\n');
-    }
-    case 'sql': {
-      const quoteIdent = (id: string) => `"${id.replace(/"/g, '""')}"`;
-      const table = quoteIdent(result.tableName || 'results');
-      const quotedCols = result.columns.map(quoteIdent);
-      const lines: string[] = [];
-      for (const row of result.rows) {
-        const vals = row.map(sqlLiteral);
-        lines.push(`INSERT INTO ${table} (${quotedCols.join(', ')}) VALUES (${vals.join(', ')});`);
-      }
-      return lines.join('\n');
-    }
-    case 'text': {
-      return result.rows.map((row) => row.map((v) => (v == null ? '' : String(v))).join('\t')).join('\n');
-    }
+      // One level deeper, so it reads as an element of the array JSON.stringify(allRows, …, 2) builds.
+      return `  ${JSON.stringify(m, jsonBigint, 2).replace(/\n/g, '\n  ')}`;
+    },
+  };
+}
+
+function csvFormatter(view: ExportView): RowFormatter {
+  const escapeCsv = (cell: string) => {
+    // Mirror Go's encoding/csv: quote on delimiter/quote/newline, leading whitespace, or \. sentinel.
+    const needsQuote = cell === '\\.' || /[",\n\r]/.test(cell) || /^\s/u.test(cell);
+    if (needsQuote) return `"${cell.replace(/"/g, '""')}"`;
+    return cell;
+  };
+  return {
+    header: view.columns.map(escapeCsv).join(','),
+    open: '\n',
+    sep: '\n',
+    close: '',
+    empty: '',
+    row: (cells) => cells.map((v) => (v == null ? '' : escapeCsv(defuseCsvFormula(String(v))))).join(','),
+  };
+}
+
+function markdownFormatter(view: ExportView): RowFormatter {
+  // Escape headers too, not just cells - a column named `a|b` would break the alignment.
+  const mdCell = (s: string) => s.replace(/\|/g, '\\|').replace(/\r\n?|\n/g, ' ');
+  const sep = view.columns.map(() => '---');
+  return {
+    header: `| ${view.columns.map(mdCell).join(' | ')} |\n| ${sep.join(' | ')} |`,
+    open: '\n',
+    sep: '\n',
+    close: '',
+    empty: '',
+    row: (cells) => `| ${cells.map((v) => (v == null ? '' : mdCell(String(v)))).join(' | ')} |`,
+  };
+}
+
+function sqlFormatter(view: ExportView, tableName: string | undefined): RowFormatter {
+  const quoteIdent = (id: string) => `"${id.replace(/"/g, '""')}"`;
+  const table = quoteIdent(tableName || 'results');
+  const quotedCols = view.columns.map(quoteIdent).join(', ');
+  return {
+    header: '',
+    open: '',
+    sep: '\n',
+    close: '',
+    empty: '',
+    row: (cells) => `INSERT INTO ${table} (${quotedCols}) VALUES (${cells.map(sqlLiteral).join(', ')});`,
+  };
+}
+
+const TEXT_FORMATTER: RowFormatter = {
+  header: '',
+  open: '',
+  sep: '\n',
+  close: '',
+  empty: '',
+  row: (cells) => cells.map((v) => (v == null ? '' : String(v))).join('\t'),
+};
+
+function rowFormatter(view: ExportView, format: ExportFormat, tableName: string | undefined): RowFormatter | null {
+  switch (format) {
+    case 'json':
+      return jsonFormatter(view);
+    case 'csv':
+      return csvFormatter(view);
+    case 'markdown':
+      return markdownFormatter(view);
+    case 'sql':
+      return sqlFormatter(view, tableName);
+    case 'text':
+      return TEXT_FORMATTER;
     default:
-      return '';
+      return null;
   }
 }
 
+export interface ExportChunk {
+  text: string;
+  /** Rows in this chunk, not cumulative. */
+  rows: number;
+}
+
+function* formatView(
+  view: ExportView,
+  format: ExportFormat,
+  tableName: string | undefined,
+  rowsPerChunk: number,
+): Generator<ExportChunk> {
+  const fmt = rowFormatter(view, format, tableName);
+  if (!fmt) return;
+
+  let pending = fmt.header;
+  let pendingRows = 0;
+  let written = 0;
+  for (const rowIndex of view.rowIndices) {
+    pending += written === 0 ? fmt.open : fmt.sep;
+    pending += fmt.row(view.cells(rowIndex));
+    written++;
+    pendingRows++;
+    if (written % rowsPerChunk === 0) {
+      yield { text: pending, rows: pendingRows };
+      pending = '';
+      pendingRows = 0;
+    }
+  }
+  pending += written === 0 ? fmt.empty : fmt.close;
+  if (pending !== '') yield { text: pending, rows: pendingRows };
+}
+
+/** Joining every chunk's text gives exactly what buildExport returns. */
+export function buildExportChunks(
+  result: QueryResult,
+  format: ExportFormat,
+  opts: ExportOptions,
+  rowsPerChunk: number = EXPORT_CHUNK_ROWS,
+): Generator<ExportChunk> {
+  return formatView(subsetView(result, opts), format, result.tableName, rowsPerChunk);
+}
+
+export function exportResultToText(result: QueryResult, format: ExportFormat): string {
+  let out = '';
+  for (const chunk of formatView(allColumnsView(result), format, result.tableName, EXPORT_CHUNK_ROWS)) {
+    out += chunk.text;
+  }
+  return out;
+}
+
 export function buildExport(result: QueryResult, format: ExportFormat, opts: ExportOptions): string {
-  const subset = pickSubset(result, opts);
-  return exportResultToText(subset, format);
+  let out = '';
+  for (const chunk of buildExportChunks(result, format, opts)) out += chunk.text;
+  return out;
 }
 
 export const EXPORT_FORMATS: { id: ExportFormat; label: string; ext: string }[] = [

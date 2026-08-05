@@ -108,7 +108,8 @@
     "savedFile": "Saved as {{fileName}}",
     "exportCopied": "Export copied to clipboard",
     "connectionSuccess": "Connection successful!",
-    "savedQuery": "Query saved"
+    "savedQuery": "Query saved",
+    "exportStopped": "Export stopped — {{fileName}} holds only the first {{count}} row(s)"
   },
   "tooltip": {
     "runStatement": "Run this statement",
@@ -123,7 +124,6 @@
     "copyFormat": "Format used for copy and export",
     "cellViewerKind": "View content as",
     "copyResults": "Copy results to clipboard",
-    "exportFile": "Save results to file",
     "exportOptions": "Export with row, column and format options",
     "showHideColumns": "Show or hide columns",
     "resultsColumnHeader": "Click to sort · Ctrl+click to select column · Shift+click for range",
@@ -230,7 +230,6 @@
     "txnCommit": "Transaction committed",
     "txnRollback": "Transaction rolled back",
     "fitColumns": "Fit columns",
-    "exportAs": "Export as",
     "export": "Export",
     "deleteRows": "Delete ({{count}})",
     "contextExportAs": "Export as",
@@ -266,7 +265,9 @@
     "formatCsv": "CSV",
     "formatJson": "JSON",
     "formatMarkdown": "Markdown",
-    "formatSql": "SQL INSERT"
+    "formatSql": "SQL INSERT",
+    "progress": "Exporting… {{done}} of {{total}} rows written",
+    "stop": "Stop"
   },
   "sidebar": {
     "connect": "Connect",

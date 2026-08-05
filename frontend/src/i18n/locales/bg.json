@@ -108,7 +108,8 @@
     "savedFile": "Запазено като {{fileName}}",
     "exportCopied": "Експортът е копиран в клипборда",
     "connectionSuccess": "Връзката е успешна!",
-    "savedQuery": "Заявката е запазена"
+    "savedQuery": "Заявката е запазена",
+    "exportStopped": "Експортирането е спряно — {{fileName}} съдържа само първите {{count}} ред(а)"
   },
   "tooltip": {
     "runStatement": "Изпълни тази заявка",
@@ -123,7 +124,6 @@
     "copyFormat": "Формат за копиране и експорт",
     "cellViewerKind": "Преглед на съдържанието като",
     "copyResults": "Копирай резултатите в клипборда",
-    "exportFile": "Запази резултатите във файл",
     "exportOptions": "Експорт с опции за редове, колони и формат",
     "showHideColumns": "Покажи или скрий колони",
     "resultsColumnHeader": "Клик за сортиране · Ctrl+клик за колона · Shift+клик за диапазон",
@@ -230,7 +230,6 @@
     "txnCommit": "Транзакцията е потвърдена",
     "txnRollback": "Транзакцията е отменена",
     "fitColumns": "Оразмери колоните",
-    "exportAs": "Експорт като",
     "export": "Експорт",
     "deleteRows": "Изтрий ({{count}})",
     "contextExportAs": "Експорт като",
@@ -266,7 +265,9 @@
     "formatCsv": "CSV",
     "formatJson": "JSON",
     "formatMarkdown": "Markdown",
-    "formatSql": "SQL INSERT"
+    "formatSql": "SQL INSERT",
+    "progress": "Експортиране… {{done}} от {{total}} реда записани",
+    "stop": "Спиране"
   },
   "sidebar": {
     "connect": "Свържи",

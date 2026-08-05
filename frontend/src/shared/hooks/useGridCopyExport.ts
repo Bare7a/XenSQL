@@ -1,10 +1,9 @@
 import { useCallback, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '@/shared/lib/api';
-import { appToast, toastError } from '@/shared/lib/appToast';
+import { appToast } from '@/shared/lib/appToast';
 import {
   buildExport,
-  EXPORT_FORMATS,
   type ExportFormat,
   type ExportOptions,
   formatCellCopyValue,
@@ -45,8 +44,8 @@ export interface CopyExportInputs {
   onCopied?: (copied: CopiedCells) => void;
 }
 
-// Materialize the copied selection as a 2D value grid, mirroring pickSubset's column/row resolution
-// so it lines up with the exported text.
+// Materialize the copied selection as a 2D value grid, resolving columns and rows the way the
+// exporter's subsetView does so it lines up with the exported text.
 function selectionCells(result: QueryResult, opts: ExportOptions): (string | null)[][] {
   const colIndices = opts.columns.map((c) => result.columns.indexOf(c));
   return opts.rowIndices.map((ri) => {
@@ -61,17 +60,13 @@ function selectionCells(result: QueryResult, opts: ExportOptions): (string | nul
 export interface GridCopyExport {
   copyFormat: ExportFormat;
   setCopyFormat: (format: ExportFormat) => void;
-  /** Disables action buttons while a Wails save dialog is open. */
-  exportBusy: boolean;
   /** `allowSingleCell` enables the focused-cell shortcut when nothing else is selected. */
   copyToClipboard: (allowSingleCell: boolean) => Promise<void>;
-  exportToFile: () => Promise<void>;
 }
 
 export function useGridCopyExport(inputs: CopyExportInputs): GridCopyExport {
   const { t } = useTranslation();
   const [copyFormat, setCopyFormatState] = useState<ExportFormat>(() => readStoredExportFormat());
-  const [exportBusy, setExportBusy] = useState(false);
 
   // Ref keeps callbacks stable across re-renders; without it the Ctrl+C listener re-attaches on every render.
   const inputsRef = useRef(inputs);
@@ -125,38 +120,9 @@ export function useGridCopyExport(inputs: CopyExportInputs): GridCopyExport {
     [copyFormat, t],
   );
 
-  const exportToFile = useCallback(async () => {
-    const { result, displayColumns, sortedRowIndices, sortedRowCount, selectionRef } = inputsRef.current;
-    if (!result) return;
-    const { rows, cols } = selectionRef.current;
-    const opts = resolveCopySelection({
-      selectedRows: rows,
-      selectedColumns: cols,
-      displayColumns,
-      sortedRowIndices: sortedRowIndices ?? identityIndices(sortedRowCount),
-    });
-    const text = buildExport(result, copyFormat, opts);
-    const meta = EXPORT_FORMATS.find((f) => f.id === copyFormat);
-    if (!meta) return;
-
-    setExportBusy(true);
-    try {
-      const path = await api.pickExportSavePath(meta.ext).catch(() => '');
-      if (!path) return;
-      await api.saveTextFile(path, text);
-      appToast.success(t('toast.savedFile', { fileName: path.split(/[/\\]/).pop() ?? path }));
-    } catch (e) {
-      toastError(e, t('errors.exportFailed'));
-    } finally {
-      setExportBusy(false);
-    }
-  }, [copyFormat, t]);
-
   return {
     copyFormat,
     setCopyFormat,
-    exportBusy,
     copyToClipboard,
-    exportToFile,
   };
 }

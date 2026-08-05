@@ -292,19 +292,9 @@ export const TableViewGrid = memo(function TableViewGrid({
       lastCopyRef.current = copied;
     },
   });
-  const { copyFormat, setCopyFormat, exportBusy, copyToClipboard, exportToFile } = copyExport;
+  const { copyFormat, setCopyFormat, copyToClipboard } = copyExport;
   const copyButtonToClipboard = useCallback(() => copyToClipboard(false), [copyToClipboard]);
   const copySelectionToClipboard = useCallback(() => copyToClipboard(true), [copyToClipboard]);
-
-  const exportAllLoaded = useCallback(async () => {
-    const saved = selectionRef.current;
-    selectionRef.current = { rows: new Set(), cols: new Set() };
-    try {
-      await exportToFile();
-    } finally {
-      selectionRef.current = saved;
-    }
-  }, [exportToFile, selectionRef]);
 
   const { selectionRowsCount, selectionColsCount, selectedSortedRows, selectedColPositions } = useGridSelectionView({
     cellRange,
@@ -467,10 +457,8 @@ export const TableViewGrid = memo(function TableViewGrid({
         }
         copyFormat={copyFormat}
         onFormatChange={setCopyFormat}
-        exportBusy={exportBusy}
         onCopy={copyButtonToClipboard}
-        onExportToFile={exportAllLoaded}
-        onExportAs={() => setExportOpen(true)}
+        onExport={() => setExportOpen(true)}
       />
 
       <GridTable

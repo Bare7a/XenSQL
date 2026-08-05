@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import {
   buildExport,
+  buildExportChunks,
+  type ExportChunk,
+  type ExportFormat,
   exportResultToText,
   formatCellCopyValue,
   resolveCopySelection,
@@ -381,5 +384,71 @@ describe('formatCellCopyValue', () => {
     expect(formatCellCopyValue(0)).toBe('0');
     expect(formatCellCopyValue(false)).toBe('false');
     expect(formatCellCopyValue('hi')).toBe('hi');
+  });
+});
+
+describe('buildExportChunks', () => {
+  const formats: ExportFormat[] = ['text', 'csv', 'json', 'markdown', 'sql'];
+  const joinText = (chunks: ExportChunk[]) => chunks.map((c) => c.text).join('');
+  const totalRows = (chunks: ExportChunk[]) => chunks.reduce((n, c) => n + c.rows, 0);
+
+  // Chunking saves memory; it must not change output. A boundary must not drop or duplicate a separator.
+  it.each(formats)('joined chunks equal buildExport for %s at every boundary', (format) => {
+    const result = sample();
+    const opts = { columns: result.columns, rowIndices: [0, 1, 2] };
+    const want = buildExport(result, format, opts);
+    for (const rowsPerChunk of [1, 2, 3, 4, 100]) {
+      const chunks = [...buildExportChunks(result, format, opts, rowsPerChunk)];
+      expect(joinText(chunks), `${format} @ ${rowsPerChunk}`).toBe(want);
+    }
+  });
+
+  // Progress is driven off these counts, so they must add up at any boundary - including one
+  // landing exactly on the last row.
+  it.each(formats)('chunk row counts sum to the exported rows for %s', (format) => {
+    const result = sample();
+    const opts = { columns: result.columns, rowIndices: [0, 1, 2] };
+    for (const rowsPerChunk of [1, 2, 3, 4, 100]) {
+      const chunks = [...buildExportChunks(result, format, opts, rowsPerChunk)];
+      expect(totalRows(chunks), `${format} @ ${rowsPerChunk}`).toBe(3);
+    }
+  });
+
+  it.each(formats)('chunks an empty selection the same as buildExport for %s', (format) => {
+    const result = sample();
+    const opts = { columns: result.columns, rowIndices: [] };
+    const chunks = [...buildExportChunks(result, format, opts, 1)];
+    expect(joinText(chunks)).toBe(buildExport(result, format, opts));
+    expect(totalRows(chunks)).toBe(0);
+  });
+
+  it('really does split into several chunks', () => {
+    const rows = Array.from({ length: 10 }, (_, i) => [i, `n${i}`, null]);
+    const result = { ...sample(), rows, rowCount: rows.length };
+    const opts = { columns: result.columns, rowIndices: rows.map((_, i) => i) };
+    const chunks = [...buildExportChunks(result, 'csv', opts, 3)];
+    expect(chunks.length).toBeGreaterThan(1);
+    expect(joinText(chunks)).toBe(buildExport(result, 'csv', opts));
+    expect(totalRows(chunks)).toBe(10);
+  });
+
+  it('honors the column and row subset', () => {
+    const chunks = [...buildExportChunks(sample(), 'csv', { columns: ['name'], rowIndices: [2] }, 1)];
+    expect(joinText(chunks)).toBe('name\neve');
+  });
+});
+
+// A duplicated column name is legal SQL; the all-columns path resolves positionally.
+describe('exportResultToText - duplicate column names', () => {
+  it('keeps each duplicate column value', () => {
+    const r: QueryResult = {
+      columns: ['a', 'a'],
+      columnTypes: ['int', 'int'],
+      rows: [[1, 2]],
+      rowCount: 1,
+      affectedRows: 0,
+      durationMs: 0,
+    };
+    expect(exportResultToText(r, 'csv')).toBe('a,a\n1,2');
   });
 });

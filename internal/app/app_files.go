@@ -102,3 +102,24 @@ func (a *App) SaveTextFile(path, content string) error {
 	}
 	return os.WriteFile(path, []byte(content), 0o600)
 }
+
+// AppendTextFile writes one chunk, emptying the file first when truncate is set. Each chunk opens and
+// closes the file, so nothing leaks if the caller stops part-way.
+func (a *App) AppendTextFile(path, chunk string, truncate bool) error {
+	if path == "" {
+		return fmt.Errorf("path is empty")
+	}
+	flags := os.O_WRONLY | os.O_CREATE | os.O_APPEND
+	if truncate {
+		flags = os.O_WRONLY | os.O_CREATE | os.O_TRUNC
+	}
+	file, err := os.OpenFile(path, flags, 0o600)
+	if err != nil {
+		return err
+	}
+	if _, err := file.WriteString(chunk); err != nil {
+		_ = file.Close()
+		return err
+	}
+	return file.Close()
+}

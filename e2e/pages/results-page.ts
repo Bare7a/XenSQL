@@ -117,7 +117,7 @@ export class ResultsPage {
   }
 
   // ── Export ───────────────────────────────────────────────────────────────
-  /** The "Export as" options dialog (note: "Save to file" itself uses a native dialog). */
+  /** The export options dialog (note: "Save to file" itself uses a native dialog). */
   get exportDialog(): Locator {
     return this.page.locator('.modal').filter({ has: this.page.locator('#export-format') });
   }
@@ -130,12 +130,16 @@ export class ResultsPage {
     return this.page.locator('#export-rows-group');
   }
 
+  get exportColumnsGroup(): Locator {
+    return this.page.locator('#export-cols-group');
+  }
+
   get exportSummary(): Locator {
     return this.page.locator('.export-results-summary');
   }
 
   async openExportDialog(): Promise<void> {
-    await this.activeSet.getByRole('button', { name: 'Export as' }).click();
+    await this.activeSet.getByRole('button', { name: 'Export', exact: true }).click();
     await expect(this.exportDialog).toBeVisible();
   }
 

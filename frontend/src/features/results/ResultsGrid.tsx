@@ -212,7 +212,7 @@ function ResultsGridImpl({
     selectionRef,
     focusRef,
   });
-  const { copyFormat, setCopyFormat, exportBusy, copyToClipboard, exportToFile } = copyExport;
+  const { copyFormat, setCopyFormat, copyToClipboard } = copyExport;
   const copySelectionToClipboard = useCallback(() => copyToClipboard(true), [copyToClipboard]);
   const copyButtonToClipboard = useCallback(() => copyToClipboard(false), [copyToClipboard]);
 
@@ -428,10 +428,8 @@ function ResultsGridImpl({
         }
         copyFormat={copyFormat}
         onFormatChange={setCopyFormat}
-        exportBusy={exportBusy}
         onCopy={copyButtonToClipboard}
-        onExportToFile={exportToFile}
-        onExportAs={() => setExportOpen(true)}
+        onExport={() => setExportOpen(true)}
       />
 
       <GridTable
