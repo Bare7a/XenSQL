@@ -20,12 +20,8 @@ import * as storage$0 from "../storage/models.js";
 import * as $models from "./models.js";
 
 /**
- * AppendTextFile writes one chunk of a file, creating or emptying it first when truncate is set. A
- * caller holding a large document can stream it out a piece at a time instead of materializing the
- * whole thing as one string on either side of the bridge.
- * 
- * Each chunk opens and closes the file rather than holding a handle across calls: there is no
- * server-side state to leak if the caller stops part-way.
+ * AppendTextFile writes one chunk, emptying the file first when truncate is set. Each chunk opens and
+ * closes the file, so nothing leaks if the caller stops part-way.
  */
 export function AppendTextFile(path: string, chunk: string, truncate: boolean): $CancellablePromise<void> {
     return $Call.ByID(403815492, path, chunk, truncate);
