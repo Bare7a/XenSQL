@@ -15,7 +15,25 @@ export interface ConnectionConfig {
   sslMode?: string;
   schema?: string;
   readOnly?: boolean;
+  ssh?: SSHConfig;
 }
+
+export type SSHAuthMethod = 'password' | 'key' | 'agent';
+
+export interface SSHConfig {
+  enabled?: boolean;
+  host?: string;
+  port?: number;
+  username?: string;
+  auth?: SSHAuthMethod;
+  password?: string;
+  keyPath?: string;
+  passphrase?: string;
+  knownHosts?: string;
+  ignoreHostKey?: boolean;
+}
+
+export const DEFAULT_SSH_PORT = 22;
 
 export interface ConnectionFolder {
   id: string;

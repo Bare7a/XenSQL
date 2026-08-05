@@ -30,6 +30,32 @@ type ConnectionConfig struct {
 	// Statement-level gate only - does not block side-effecting functions inside SELECT (e.g. pg_terminate_backend).
 	// Pair with a restricted DB role for hard isolation.
 	ReadOnly bool `json:"readOnly,omitempty"`
+
+	// SSH tunnel (PostgreSQL / MySQL / MariaDB). Host/Port above are resolved from the bastion.
+	SSH SSHConfig `json:"ssh,omitempty"`
+}
+
+type SSHAuthMethod string
+
+const (
+	SSHAuthPassword SSHAuthMethod = "password"
+	SSHAuthKey      SSHAuthMethod = "key"
+	SSHAuthAgent    SSHAuthMethod = "agent"
+)
+
+type SSHConfig struct {
+	Enabled    bool          `json:"enabled,omitempty"`
+	Host       string        `json:"host,omitempty"`
+	Port       int           `json:"port,omitempty"`
+	Username   string        `json:"username,omitempty"`
+	Auth       SSHAuthMethod `json:"auth,omitempty"`
+	Password   string        `json:"password,omitempty"`
+	KeyPath    string        `json:"keyPath,omitempty"`
+	Passphrase string        `json:"passphrase,omitempty"`
+	// KnownHosts overrides the default ~/.ssh/known_hosts.
+	KnownHosts string `json:"knownHosts,omitempty"`
+	// IgnoreHostKey accepts any bastion key, leaving the hop open to interception.
+	IgnoreHostKey bool `json:"ignoreHostKey,omitempty"`
 }
 
 type ColumnInfo struct {

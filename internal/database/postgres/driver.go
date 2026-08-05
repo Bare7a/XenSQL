@@ -6,7 +6,8 @@ import (
 	"strings"
 	"time"
 
-	_ "github.com/jackc/pgx/v5/stdlib"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/stdlib"
 
 	"xensql/internal/database"
 )
@@ -28,12 +29,29 @@ func (d *Driver) Connect(ctx context.Context, cfg database.ConnectionConfig) (da
 	if err := database.ValidateConnectionConfig(cfg); err != nil {
 		return nil, err
 	}
-	db, err := sql.Open("pgx", buildDSN(cfg))
+	// ParseConfig + OpenDB (not sql.Open) so a tunnel can supply DialFunc. The DSN keeps the real
+	// hostname, so sslmode=verify-full still checks the right certificate.
+	connCfg, err := pgx.ParseConfig(buildDSN(cfg))
 	if err != nil {
 		return nil, err
 	}
+	tunnel, err := database.OpenTunnel(ctx, cfg)
+	if err != nil {
+		return nil, err
+	}
+	closeTunnel := func() error {
+		if tunnel == nil {
+			return nil
+		}
+		return tunnel.Close()
+	}
+	if tunnel != nil {
+		connCfg.DialFunc = tunnel.DialContext
+	}
+	db := stdlib.OpenDB(*connCfg)
 	db.SetMaxOpenConns(10)
 	if err := database.PingOrClose(ctx, db, 10*time.Second); err != nil {
+		_ = closeTunnel()
 		return nil, err
 	}
 	schema := cfg.Schema
@@ -52,6 +70,7 @@ func (d *Driver) Connect(ctx context.Context, cfg database.ConnectionConfig) (da
 		SetupConn:     s.setSearchPath,
 		RegisterKill:  s.registerQueryKill,
 		ListCols:      s.ListColumns,
+		OnClose:       closeTunnel,
 	}
 	return s, nil
 }

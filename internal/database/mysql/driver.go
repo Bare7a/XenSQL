@@ -4,13 +4,19 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"net"
 	"strings"
+	"sync/atomic"
 	"time"
 
 	mysqldriver "github.com/go-sql-driver/mysql"
 
 	"xensql/internal/database"
 )
+
+// go-sql-driver keys dialers by network name in a process-wide registry, so each tunnelled session
+// needs its own name to deregister independently.
+var tunnelSeq atomic.Uint64
 
 var systemSchemas = map[string]bool{
 	"information_schema": true,
@@ -36,14 +42,37 @@ func (d *Driver) Connect(ctx context.Context, cfg database.ConnectionConfig) (da
 	if err := database.ValidateConnectionConfig(cfg); err != nil {
 		return nil, err
 	}
-	// Open via the connector so the in-memory TLS config survives - FormatDSN()+sql.Open drops it (plaintext downgrade).
-	connector, err := mysqldriver.NewConnector(buildConfig(cfg))
+	mysqlCfg := buildConfig(cfg)
+	tunnel, err := database.OpenTunnel(ctx, cfg)
 	if err != nil {
+		return nil, err
+	}
+	var netName string
+	if tunnel != nil {
+		netName = fmt.Sprintf("xensql-ssh-%d", tunnelSeq.Add(1))
+		mysqldriver.RegisterDialContext(netName, func(ctx context.Context, addr string) (net.Conn, error) {
+			return tunnel.DialContext(ctx, "tcp", addr)
+		})
+		// Addr keeps the real hostname, so a verify-full handshake checks the right certificate.
+		mysqlCfg.Net = netName
+	}
+	closeTunnel := func() error {
+		if tunnel == nil {
+			return nil
+		}
+		mysqldriver.DeregisterDialContext(netName)
+		return tunnel.Close()
+	}
+	// Open via the connector so the in-memory TLS config survives - FormatDSN()+sql.Open drops it (plaintext downgrade).
+	connector, err := mysqldriver.NewConnector(mysqlCfg)
+	if err != nil {
+		_ = closeTunnel()
 		return nil, err
 	}
 	db := sql.OpenDB(connector)
 	db.SetMaxOpenConns(10)
 	if err := database.PingOrClose(ctx, db, 10*time.Second); err != nil {
+		_ = closeTunnel()
 		return nil, err
 	}
 	schema := cfg.Schema
@@ -59,6 +88,7 @@ func (d *Driver) Connect(ctx context.Context, cfg database.ConnectionConfig) (da
 		ReadOnly:      cfg.ReadOnly,
 		RegisterKill:  s.registerQueryKill,
 		ListCols:      s.ListColumns,
+		OnClose:       closeTunnel,
 	}
 	return s, nil
 }

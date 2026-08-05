@@ -49,3 +49,37 @@ export class AppInfo {
         return new AppInfo($$parsedSource as Partial<AppInfo>);
     }
 }
+
+/**
+ * PathDefaults lets the UI show example paths that match the host, not one platform's convention.
+ */
+export class PathDefaults {
+    "platform": string;
+    "separator": string;
+
+    /**
+     * SSHKey and SSHKnownHosts are empty when the home directory cannot be resolved.
+     */
+    "sshKey"?: string;
+    "sshKnownHosts"?: string;
+
+    /** Creates a new PathDefaults instance. */
+    constructor($$source: Partial<PathDefaults> = {}) {
+        if (!("platform" in $$source)) {
+            this["platform"] = "";
+        }
+        if (!("separator" in $$source)) {
+            this["separator"] = "";
+        }
+
+        Object.assign(this, $$source);
+    }
+
+    /**
+     * Creates a new PathDefaults instance from a string or object.
+     */
+    static createFrom($$source: any = {}): PathDefaults {
+        let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
+        return new PathDefaults($$parsedSource as Partial<PathDefaults>);
+    }
+}

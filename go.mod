@@ -7,6 +7,7 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/jackc/pgx/v5 v5.10.0
 	github.com/wailsapp/wails/v3 v3.0.0-beta.3
+	golang.org/x/crypto v0.53.0
 	modernc.org/sqlite v1.56.0
 )
 

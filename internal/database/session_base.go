@@ -27,11 +27,22 @@ type SessionBase struct {
 	RegisterKill func(ctx context.Context, conn *sql.Conn) error
 	// ListCols is the embedding session's ListColumns, needed here for primary-key discovery.
 	ListCols func(ctx context.Context, schema, table string) ([]ColumnInfo, error)
+	// OnClose releases resources the pool cannot see (e.g. an SSH tunnel); nil when there are none.
+	OnClose func() error
 }
 
 func (b *SessionBase) DriverType() DriverType { return b.Driver }
 
-func (b *SessionBase) Close() error { return b.DB.Close() }
+// Close drains the pool before OnClose tears the transport down.
+func (b *SessionBase) Close() error {
+	err := b.DB.Close()
+	if b.OnClose != nil {
+		if closeErr := b.OnClose(); err == nil {
+			err = closeErr
+		}
+	}
+	return err
+}
 
 func (b *SessionBase) Ping(ctx context.Context) error { return b.DB.PingContext(ctx) }
 

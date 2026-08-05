@@ -7,5 +7,6 @@ export {
 };
 
 export {
-    AppInfo
+    AppInfo,
+    PathDefaults
 } from "./models.js";

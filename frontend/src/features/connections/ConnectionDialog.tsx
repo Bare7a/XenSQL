@@ -1,11 +1,13 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Modal } from '@/shared/components/Modal';
+import { usePathDefaults } from '@/shared/hooks/usePathDefaults';
 import { api } from '@/shared/lib/api';
 import { appToast } from '@/shared/lib/appToast';
 import { formatError } from '@/shared/lib/normalize';
-import type { ConnectionConfig, DriverType } from '@/types';
-import { DEFAULT_COLORS, DEFAULT_CONNECTION_COLOR } from '@/types';
+import { isWindows } from '@/shared/lib/pathDefaults';
+import type { ConnectionConfig, DriverType, SSHAuthMethod, SSHConfig } from '@/types';
+import { DEFAULT_COLORS, DEFAULT_CONNECTION_COLOR, DEFAULT_SSH_PORT } from '@/types';
 
 interface Props {
   connection?: ConnectionConfig | null;
@@ -51,8 +53,35 @@ export function ConnectionDialog({ connection, onClose, onSaved }: Props) {
   const [saving, setSaving] = useState(false);
 
   const network = isNetworkDriver(form.driver);
+  const ssh: SSHConfig = form.ssh ?? {};
+  const sshAuth: SSHAuthMethod = ssh.auth ?? 'key';
+
+  const paths = usePathDefaults();
+  const filePlaceholder = isWindows(paths)
+    ? t('connection.filePlaceholderWindows')
+    : t('connection.filePlaceholderUnix');
 
   const update = (patch: Partial<ConnectionConfig>) => setForm((f) => ({ ...f, ...patch }));
+
+  const updateSSH = (patch: Partial<SSHConfig>) => setForm((f) => ({ ...f, ssh: { ...f.ssh, ...patch } }));
+
+  const handlePickSSHKey = async () => {
+    try {
+      const path = await api.pickSSHKeyFile();
+      if (path) updateSSH({ keyPath: path });
+    } catch {
+      /* cancelled */
+    }
+  };
+
+  const handlePickKnownHosts = async () => {
+    try {
+      const path = await api.pickKnownHostsFile();
+      if (path) updateSSH({ knownHosts: path });
+    } catch {
+      /* cancelled */
+    }
+  };
 
   const handleDriverChange = (driver: DriverType) => {
     update({ driver, ...defaultsForDriver(driver) });
@@ -173,7 +202,7 @@ export function ConnectionDialog({ connection, onClose, onSaved }: Props) {
                 id="conn-file"
                 value={form.filePath || ''}
                 onChange={(e) => update({ filePath: e.target.value })}
-                placeholder={t('connection.filePlaceholder')}
+                placeholder={filePlaceholder}
               />
               <button type="button" className="btn" onClick={handlePickFile}>
                 {t('common.browse')}
@@ -258,6 +287,133 @@ export function ConnectionDialog({ connection, onClose, onSaved }: Props) {
                 />
                 {form.driver === 'mysql' && <p className="form-hint">{t('connection.defaultSchemaMysqlHint')}</p>}
               </div>
+            </div>
+            <div className="form-section">
+              <div className="form-group form-group-checkbox">
+                <label className="checkbox-label">
+                  <input
+                    type="checkbox"
+                    checked={!!ssh.enabled}
+                    onChange={(e) => updateSSH({ enabled: e.target.checked })}
+                  />
+                  <span className="checkbox-text">{t('connection.sshTunnel')}</span>
+                </label>
+                <p className="form-hint">{t('connection.sshTunnelHint')}</p>
+              </div>
+              {ssh.enabled && (
+                <>
+                  <div className="form-row">
+                    <div className="form-group">
+                      <label htmlFor="conn-ssh-host">{t('connection.sshHost')}</label>
+                      <input
+                        id="conn-ssh-host"
+                        value={ssh.host || ''}
+                        onChange={(e) => updateSSH({ host: e.target.value })}
+                        placeholder={t('connection.sshHostPlaceholder')}
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label htmlFor="conn-ssh-port">{t('connection.sshPort')}</label>
+                      <input
+                        id="conn-ssh-port"
+                        type="number"
+                        value={ssh.port || DEFAULT_SSH_PORT}
+                        onChange={(e) => updateSSH({ port: parseInt(e.target.value, 10) || DEFAULT_SSH_PORT })}
+                      />
+                    </div>
+                  </div>
+                  <div className="form-row">
+                    <div className="form-group">
+                      <label htmlFor="conn-ssh-username">{t('connection.sshUsername')}</label>
+                      <input
+                        id="conn-ssh-username"
+                        value={ssh.username || ''}
+                        onChange={(e) => updateSSH({ username: e.target.value })}
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label htmlFor="conn-ssh-auth">{t('connection.sshAuth')}</label>
+                      <select
+                        id="conn-ssh-auth"
+                        value={sshAuth}
+                        onChange={(e) => updateSSH({ auth: e.target.value as SSHAuthMethod })}
+                      >
+                        <option value="key">{t('connection.sshAuthKey')}</option>
+                        <option value="password">{t('connection.sshAuthPassword')}</option>
+                        <option value="agent">{t('connection.sshAuthAgent')}</option>
+                      </select>
+                    </div>
+                  </div>
+                  {sshAuth === 'key' && (
+                    <>
+                      <div className="form-group">
+                        <label htmlFor="conn-ssh-key">{t('connection.sshKeyPath')}</label>
+                        <div className="form-file-row">
+                          <input
+                            id="conn-ssh-key"
+                            value={ssh.keyPath || ''}
+                            onChange={(e) => updateSSH({ keyPath: e.target.value })}
+                            placeholder={paths.sshKey}
+                          />
+                          <button type="button" className="btn" onClick={handlePickSSHKey}>
+                            {t('common.browse')}
+                          </button>
+                        </div>
+                      </div>
+                      <div className="form-group">
+                        <label htmlFor="conn-ssh-passphrase">{t('connection.sshPassphrase')}</label>
+                        <input
+                          id="conn-ssh-passphrase"
+                          type="password"
+                          value={ssh.passphrase || ''}
+                          onChange={(e) => updateSSH({ passphrase: e.target.value })}
+                          placeholder={t('connection.sshPassphrasePlaceholder')}
+                        />
+                      </div>
+                    </>
+                  )}
+                  {sshAuth === 'password' && (
+                    <div className="form-group">
+                      <label htmlFor="conn-ssh-password">{t('connection.sshPassword')}</label>
+                      <input
+                        id="conn-ssh-password"
+                        type="password"
+                        value={ssh.password || ''}
+                        onChange={(e) => updateSSH({ password: e.target.value })}
+                      />
+                    </div>
+                  )}
+                  {sshAuth === 'agent' && <p className="form-hint">{t('connection.sshAuthAgentHint')}</p>}
+                  <div className="form-group form-group-checkbox">
+                    <label className="checkbox-label">
+                      <input
+                        type="checkbox"
+                        checked={!!ssh.ignoreHostKey}
+                        onChange={(e) => updateSSH({ ignoreHostKey: e.target.checked })}
+                      />
+                      <span className="checkbox-text">{t('connection.sshIgnoreHostKey')}</span>
+                    </label>
+                    <p className="form-hint">{t('connection.sshIgnoreHostKeyHint')}</p>
+                  </div>
+                  {!ssh.ignoreHostKey && (
+                    <div className="form-group">
+                      <label htmlFor="conn-ssh-known-hosts">{t('connection.sshKnownHosts')}</label>
+                      <div className="form-file-row">
+                        <input
+                          id="conn-ssh-known-hosts"
+                          value={ssh.knownHosts || ''}
+                          onChange={(e) => updateSSH({ knownHosts: e.target.value })}
+                          placeholder={paths.sshKnownHosts}
+                        />
+                        <button type="button" className="btn" onClick={handlePickKnownHosts}>
+                          {t('common.browse')}
+                        </button>
+                      </div>
+                      <p className="form-hint">{t('connection.sshKnownHostsHint', { path: paths.sshKnownHosts })}</p>
+                    </div>
+                  )}
+                </>
+              )}
             </div>
           </>
         )}

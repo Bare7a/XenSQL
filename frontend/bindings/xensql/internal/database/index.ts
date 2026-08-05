@@ -10,6 +10,8 @@ export {
     QueryResult,
     RowDelete,
     RowUpdate,
+    SSHAuthMethod,
+    SSHConfig,
     SavedQuery,
     SchemaBundle,
     SchemaInfo,

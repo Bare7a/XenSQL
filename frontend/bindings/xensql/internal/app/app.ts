@@ -134,21 +134,27 @@ export function GetEditorSession(): $CancellablePromise<storage$0.EditorSession>
     });
 }
 
+export function GetPathDefaults(): $CancellablePromise<$models.PathDefaults> {
+    return $Call.ByID(230484794).then(($result: any) => {
+        return $$createType5($result);
+    });
+}
+
 export function GetPendingFile(): $CancellablePromise<{ [_ in string]?: string }> {
     return $Call.ByID(109090272).then(($result: any) => {
-        return $$createType5($result);
+        return $$createType6($result);
     });
 }
 
 export function GetQueryHistory(connectionID: string, limit: number): $CancellablePromise<database$0.HistoryEntry[]> {
     return $Call.ByID(4033942967, connectionID, limit).then(($result: any) => {
-        return $$createType7($result);
+        return $$createType8($result);
     });
 }
 
 export function GetSettings(): $CancellablePromise<{ [_ in string]?: string }> {
     return $Call.ByID(222085978).then(($result: any) => {
-        return $$createType5($result);
+        return $$createType6($result);
     });
 }
 
@@ -158,7 +164,7 @@ export function InitStores(configDir: string): $CancellablePromise<void> {
 
 export function InsertRow(connectionID: string, schema: string, table: string, values: { [_ in string]?: any }): $CancellablePromise<{ [_ in string]?: any }> {
     return $Call.ByID(1655633052, connectionID, schema, table, values).then(($result: any) => {
-        return $$createType8($result);
+        return $$createType9($result);
     });
 }
 
@@ -172,37 +178,37 @@ export function IsDesktopMode(): $CancellablePromise<boolean> {
 
 export function ListColumns(connectionID: string, schema: string, table: string): $CancellablePromise<database$0.ColumnInfo[]> {
     return $Call.ByID(3118816600, connectionID, schema, table).then(($result: any) => {
-        return $$createType10($result);
+        return $$createType11($result);
     });
 }
 
 export function ListConnections(): $CancellablePromise<database$0.ConnectionConfig[]> {
     return $Call.ByID(1654481338).then(($result: any) => {
-        return $$createType12($result);
+        return $$createType13($result);
     });
 }
 
 export function ListFolders(): $CancellablePromise<storage$0.ConnectionFolder[]> {
     return $Call.ByID(1373072582).then(($result: any) => {
-        return $$createType14($result);
+        return $$createType15($result);
     });
 }
 
 export function ListSavedQueries(connectionID: string): $CancellablePromise<database$0.SavedQuery[]> {
     return $Call.ByID(2254370512, connectionID).then(($result: any) => {
-        return $$createType16($result);
+        return $$createType17($result);
     });
 }
 
 export function ListSchemas(connectionID: string): $CancellablePromise<database$0.SchemaInfo[]> {
     return $Call.ByID(2969331507, connectionID).then(($result: any) => {
-        return $$createType18($result);
+        return $$createType19($result);
     });
 }
 
 export function ListTables(connectionID: string, schema: string): $CancellablePromise<database$0.TableInfo[]> {
     return $Call.ByID(773846824, connectionID, schema).then(($result: any) => {
-        return $$createType20($result);
+        return $$createType21($result);
     });
 }
 
@@ -212,7 +218,7 @@ export function ListTables(connectionID: string, schema: string): $CancellablePr
  */
 export function LoadSchemaData(connectionID: string): $CancellablePromise<database$0.SchemaBundle> {
     return $Call.ByID(4233994986, connectionID).then(($result: any) => {
-        return $$createType21($result);
+        return $$createType22($result);
     });
 }
 
@@ -220,8 +226,16 @@ export function PickExportSavePath(ext: string): $CancellablePromise<string> {
     return $Call.ByID(1154457340, ext);
 }
 
+export function PickKnownHostsFile(): $CancellablePromise<string> {
+    return $Call.ByID(155068216);
+}
+
 export function PickSQLiteFile(): $CancellablePromise<string> {
     return $Call.ByID(2769801138);
+}
+
+export function PickSSHKeyFile(): $CancellablePromise<string> {
+    return $Call.ByID(4136702487);
 }
 
 export function QueryTableStream(connectionID: string, tabID: string, req: database$0.TableDataRequest): $CancellablePromise<void> {
@@ -241,7 +255,7 @@ export function RollbackTransaction(tabID: string): $CancellablePromise<void> {
 
 export function SaveConnection(cfg: database$0.ConnectionConfig): $CancellablePromise<database$0.ConnectionConfig> {
     return $Call.ByID(571429232, cfg).then(($result: any) => {
-        return $$createType11($result);
+        return $$createType12($result);
     });
 }
 
@@ -251,13 +265,13 @@ export function SaveEditorSession(session: storage$0.EditorSession): $Cancellabl
 
 export function SaveFolder(f: storage$0.ConnectionFolder): $CancellablePromise<storage$0.ConnectionFolder> {
     return $Call.ByID(1026390748, f).then(($result: any) => {
-        return $$createType13($result);
+        return $$createType14($result);
     });
 }
 
 export function SaveSavedQuery(q: database$0.SavedQuery): $CancellablePromise<database$0.SavedQuery> {
     return $Call.ByID(1936361457, q).then(($result: any) => {
-        return $$createType15($result);
+        return $$createType16($result);
     });
 }
 
@@ -293,7 +307,7 @@ export function SetWindowStateFlush(flush: any): $CancellablePromise<void> {
 
 export function SettingsStore(): $CancellablePromise<storage$0.SettingsStore | null> {
     return $Call.ByID(2329735545).then(($result: any) => {
-        return $$createType23($result);
+        return $$createType24($result);
     });
 }
 
@@ -318,22 +332,23 @@ const $$createType1 = $Create.Nullable($$createType0);
 const $$createType2 = $models.AppInfo.createFrom;
 const $$createType3 = database$0.ConnectionStatus.createFrom;
 const $$createType4 = storage$0.EditorSession.createFrom;
-const $$createType5 = $Create.Map($Create.Any, $Create.Any);
-const $$createType6 = database$0.HistoryEntry.createFrom;
-const $$createType7 = $Create.Array($$createType6);
-const $$createType8 = $Create.Map($Create.Any, $Create.Any);
-const $$createType9 = database$0.ColumnInfo.createFrom;
-const $$createType10 = $Create.Array($$createType9);
-const $$createType11 = database$0.ConnectionConfig.createFrom;
-const $$createType12 = $Create.Array($$createType11);
-const $$createType13 = storage$0.ConnectionFolder.createFrom;
-const $$createType14 = $Create.Array($$createType13);
-const $$createType15 = database$0.SavedQuery.createFrom;
-const $$createType16 = $Create.Array($$createType15);
-const $$createType17 = database$0.SchemaInfo.createFrom;
-const $$createType18 = $Create.Array($$createType17);
-const $$createType19 = database$0.TableInfo.createFrom;
-const $$createType20 = $Create.Array($$createType19);
-const $$createType21 = database$0.SchemaBundle.createFrom;
-const $$createType22 = storage$0.SettingsStore.createFrom;
-const $$createType23 = $Create.Nullable($$createType22);
+const $$createType5 = $models.PathDefaults.createFrom;
+const $$createType6 = $Create.Map($Create.Any, $Create.Any);
+const $$createType7 = database$0.HistoryEntry.createFrom;
+const $$createType8 = $Create.Array($$createType7);
+const $$createType9 = $Create.Map($Create.Any, $Create.Any);
+const $$createType10 = database$0.ColumnInfo.createFrom;
+const $$createType11 = $Create.Array($$createType10);
+const $$createType12 = database$0.ConnectionConfig.createFrom;
+const $$createType13 = $Create.Array($$createType12);
+const $$createType14 = storage$0.ConnectionFolder.createFrom;
+const $$createType15 = $Create.Array($$createType14);
+const $$createType16 = database$0.SavedQuery.createFrom;
+const $$createType17 = $Create.Array($$createType16);
+const $$createType18 = database$0.SchemaInfo.createFrom;
+const $$createType19 = $Create.Array($$createType18);
+const $$createType20 = database$0.TableInfo.createFrom;
+const $$createType21 = $Create.Array($$createType20);
+const $$createType22 = database$0.SchemaBundle.createFrom;
+const $$createType23 = storage$0.SettingsStore.createFrom;
+const $$createType24 = $Create.Nullable($$createType23);

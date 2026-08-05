@@ -67,6 +67,24 @@ func (a *App) PickSQLiteFile() (string, error) {
 		PromptForSingleSelection()
 }
 
+func (a *App) PickSSHKeyFile() (string, error) {
+	return a.pickSSHFile("Select SSH private key")
+}
+
+func (a *App) PickKnownHostsFile() (string, error) {
+	return a.pickSSHFile("Select known_hosts file")
+}
+
+// pickSSHFile shows hidden files because both targets live in ~/.ssh.
+func (a *App) pickSSHFile(title string) (string, error) {
+	return a.app.Dialog.OpenFile().
+		SetTitle(title).
+		CanChooseFiles(true).
+		ShowHiddenFiles(true).
+		AddFilter("All Files", "*.*").
+		PromptForSingleSelection()
+}
+
 func (a *App) PickExportSavePath(ext string) (string, error) {
 	if ext == "" {
 		ext = "txt"

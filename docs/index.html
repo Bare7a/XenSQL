@@ -130,6 +130,7 @@
           <ul>
             <li>Read &amp; write + read-only mode</li>
             <li>SSL: <code>require</code> / <code>verify-full</code></li>
+            <li>SSH tunnel to a bastion</li>
             <li>Powered by pgx</li>
           </ul>
         </div>
@@ -138,6 +139,7 @@
           <ul>
             <li>Read &amp; write + read-only mode</li>
             <li>TLS transport</li>
+            <li>SSH tunnel to a bastion</li>
             <li>Powered by go-sql-driver</li>
           </ul>
         </div>
@@ -193,6 +195,10 @@
         <div class="feature-card">
           <h3>📚 Query library &amp; history</h3>
           <p>Save, rename, filter and reuse queries with dirty-state tracking, plus per-connection history with success/error status and duration.</p>
+        </div>
+        <div class="feature-card">
+          <h3>🔐 SSH tunnel</h3>
+          <p>Reach a database only its bastion can see - no <code>ssh -L</code> in a side terminal. Private key, password or ssh-agent auth, with host keys checked against <code>known_hosts</code>.</p>
         </div>
         <div class="feature-card">
           <h3>🔌 Connection manager</h3>

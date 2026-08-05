@@ -74,6 +74,11 @@ export class ConnectionConfig {
      */
     "readOnly"?: boolean;
 
+    /**
+     * SSH tunnel (PostgreSQL / MySQL / MariaDB). Host/Port above are resolved from the bastion.
+     */
+    "ssh"?: SSHConfig;
+
     /** Creates a new ConnectionConfig instance. */
     constructor($$source: Partial<ConnectionConfig> = {}) {
         if (!("id" in $$source)) {
@@ -96,7 +101,11 @@ export class ConnectionConfig {
      * Creates a new ConnectionConfig instance from a string or object.
      */
     static createFrom($$source: any = {}): ConnectionConfig {
+        const $$createField14_0 = $$createType0;
         let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
+        if ("ssh" in $$parsedSource) {
+            $$parsedSource["ssh"] = $$createField14_0($$parsedSource["ssh"]);
+        }
         return new ConnectionConfig($$parsedSource as Partial<ConnectionConfig>);
     }
 }
@@ -232,10 +241,10 @@ export class QueryResult {
      * Creates a new QueryResult instance from a string or object.
      */
     static createFrom($$source: any = {}): QueryResult {
-        const $$createField0_0 = $$createType0;
-        const $$createField1_0 = $$createType0;
-        const $$createField2_0 = $$createType2;
-        const $$createField7_0 = $$createType0;
+        const $$createField0_0 = $$createType1;
+        const $$createField1_0 = $$createType1;
+        const $$createField2_0 = $$createType3;
+        const $$createField7_0 = $$createType1;
         let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
         if ("columns" in $$parsedSource) {
             $$parsedSource["columns"] = $$createField0_0($$parsedSource["columns"]);
@@ -277,7 +286,7 @@ export class RowDelete {
      * Creates a new RowDelete instance from a string or object.
      */
     static createFrom($$source: any = {}): RowDelete {
-        const $$createField2_0 = $$createType4;
+        const $$createField2_0 = $$createType5;
         let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
         if ("primaryKeys" in $$parsedSource) {
             $$parsedSource["primaryKeys"] = $$createField2_0($$parsedSource["primaryKeys"]);
@@ -314,8 +323,8 @@ export class RowUpdate {
      * Creates a new RowUpdate instance from a string or object.
      */
     static createFrom($$source: any = {}): RowUpdate {
-        const $$createField2_0 = $$createType3;
-        const $$createField3_0 = $$createType3;
+        const $$createField2_0 = $$createType4;
+        const $$createField3_0 = $$createType4;
         let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
         if ("primaryKey" in $$parsedSource) {
             $$parsedSource["primaryKey"] = $$createField2_0($$parsedSource["primaryKey"]);
@@ -324,6 +333,52 @@ export class RowUpdate {
             $$parsedSource["changes"] = $$createField3_0($$parsedSource["changes"]);
         }
         return new RowUpdate($$parsedSource as Partial<RowUpdate>);
+    }
+}
+
+export enum SSHAuthMethod {
+    /**
+     * The Go zero value for the underlying type of the enum.
+     */
+    $zero = "",
+
+    SSHAuthPassword = "password",
+    SSHAuthKey = "key",
+    SSHAuthAgent = "agent",
+};
+
+export class SSHConfig {
+    "enabled"?: boolean;
+    "host"?: string;
+    "port"?: number;
+    "username"?: string;
+    "auth"?: SSHAuthMethod;
+    "password"?: string;
+    "keyPath"?: string;
+    "passphrase"?: string;
+
+    /**
+     * KnownHosts overrides the default ~/.ssh/known_hosts.
+     */
+    "knownHosts"?: string;
+
+    /**
+     * IgnoreHostKey accepts any bastion key, leaving the hop open to interception.
+     */
+    "ignoreHostKey"?: boolean;
+
+    /** Creates a new SSHConfig instance. */
+    constructor($$source: Partial<SSHConfig> = {}) {
+
+        Object.assign(this, $$source);
+    }
+
+    /**
+     * Creates a new SSHConfig instance from a string or object.
+     */
+    static createFrom($$source: any = {}): SSHConfig {
+        let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
+        return new SSHConfig($$parsedSource as Partial<SSHConfig>);
     }
 }
 
@@ -389,9 +444,9 @@ export class SchemaBundle {
      * Creates a new SchemaBundle instance from a string or object.
      */
     static createFrom($$source: any = {}): SchemaBundle {
-        const $$createField0_0 = $$createType5;
-        const $$createField1_0 = $$createType7;
-        const $$createField2_0 = $$createType9;
+        const $$createField0_0 = $$createType6;
+        const $$createField1_0 = $$createType8;
+        const $$createField2_0 = $$createType10;
         let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
         if ("status" in $$parsedSource) {
             $$parsedSource["status"] = $$createField0_0($$parsedSource["status"]);
@@ -447,7 +502,7 @@ export class SchemaTables {
      * Creates a new SchemaTables instance from a string or object.
      */
     static createFrom($$source: any = {}): SchemaTables {
-        const $$createField1_0 = $$createType11;
+        const $$createField1_0 = $$createType12;
         let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
         if ("tables" in $$parsedSource) {
             $$parsedSource["tables"] = $$createField1_0($$parsedSource["tables"]);
@@ -522,15 +577,16 @@ export class TableInfo {
 }
 
 // Private type creation functions
-const $$createType0 = $Create.Array($Create.Any);
+const $$createType0 = SSHConfig.createFrom;
 const $$createType1 = $Create.Array($Create.Any);
-const $$createType2 = $Create.Array($$createType1);
-const $$createType3 = $Create.Map($Create.Any, $Create.Any);
-const $$createType4 = $Create.Array($$createType3);
-const $$createType5 = ConnectionStatus.createFrom;
-const $$createType6 = SchemaInfo.createFrom;
-const $$createType7 = $Create.Array($$createType6);
-const $$createType8 = SchemaTables.createFrom;
-const $$createType9 = $Create.Array($$createType8);
-const $$createType10 = TableInfo.createFrom;
-const $$createType11 = $Create.Array($$createType10);
+const $$createType2 = $Create.Array($Create.Any);
+const $$createType3 = $Create.Array($$createType2);
+const $$createType4 = $Create.Map($Create.Any, $Create.Any);
+const $$createType5 = $Create.Array($$createType4);
+const $$createType6 = ConnectionStatus.createFrom;
+const $$createType7 = SchemaInfo.createFrom;
+const $$createType8 = $Create.Array($$createType7);
+const $$createType9 = SchemaTables.createFrom;
+const $$createType10 = $Create.Array($$createType9);
+const $$createType11 = TableInfo.createFrom;
+const $$createType12 = $Create.Array($$createType11);

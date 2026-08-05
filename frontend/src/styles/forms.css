@@ -87,6 +87,15 @@
   gap: var(--space-10);
 }
 
+/* Groups related fields under a divider. */
+.form-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
+  padding-top: var(--space-12);
+  border-top: 1px solid var(--border);
+}
+
 .color-picker {
   display: grid;
   grid-template-columns: repeat(15, var(--space-24));

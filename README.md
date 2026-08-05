@@ -64,6 +64,7 @@ Work with **SQLite**, **PostgreSQL** and **MySQL / MariaDB** in a single fast de
 ### 👉 Everything you need. Nothing you don’t.
 
 - Query faster with smart, schema-aware autocomplete
+- Reach databases behind a bastion over an SSH tunnel
 - Stream results - rows arrive as the driver yields them
 - Run multi-statement scripts and get a result tab per output
 - Explore schemas instantly
@@ -127,12 +128,12 @@ XenSQL focuses on one thing:
 
 ## 🗄️ Supported Databases
 
-| Database | Read & write | Read-only mode | Secure transport |
-|----------|:------------:|:--------------:|:-----------------|
-| **PostgreSQL** | ✅ | ✅ | SSL - `disable` / `require` / `verify-full` |
-| **MySQL** | ✅ | ✅ | TLS |
-| **MariaDB** | ✅ | ✅ | TLS |
-| **SQLite** | ✅ | ✅ | local file |
+| Database | Read & write | Read-only mode | Secure transport | SSH tunnel |
+|----------|:------------:|:--------------:|:-----------------|:----------:|
+| **PostgreSQL** | ✅ | ✅ | SSL - `disable` / `require` / `verify-full` | ✅ |
+| **MySQL** | ✅ | ✅ | TLS | ✅ |
+| **MariaDB** | ✅ | ✅ | TLS | ✅ |
+| **SQLite** | ✅ | ✅ | local file | n/a |
 
 ---
 
@@ -143,7 +144,19 @@ XenSQL focuses on one thing:
 - Per-connection **tab colors**
 - **Read-only mode** with defense-in-depth - blocked at both the Wails layer and inside each driver
 - PostgreSQL SSL (`disable` / `require` / `verify-full`) and MySQL TLS
+- **SSH tunnel** to reach databases behind a bastion (see below)
 - SQLite file picker workflow
+
+### 🔐 SSH Tunnel
+
+Connect to a database that only its bastion can reach - no `ssh -L` in a side terminal.
+
+- Auth by **private key** (with passphrase), **password**, or a running **ssh-agent**
+- Host keys verified against `~/.ssh/known_hosts` by default, with an override for a custom file
+- Unknown bastion? The error tells you the exact `ssh-keyscan` line to run - or tick **Skip host key check**
+- Keepalives hold the tunnel open under a long, idle session
+- The tunnel carries the driver's own traffic, so the database host stays what the bastion resolves
+  (usually `localhost`) and `sslmode=verify-full` still checks the real certificate
 
 ---
 
