@@ -4,11 +4,15 @@ package app
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
 	"testing"
 
 	"xensql/internal/database"
 )
+
+// Word-bounded, so the fixture's own explain_* table name isn't mistaken for the keyword.
+var explainKeywordRe = regexp.MustCompile(`(?i)\bexplain\b`)
 
 // An indexed table with rows, so the planner has a choice to make.
 func explainFixture(t *testing.T, a *App, e engine, connID string) string {
@@ -182,8 +186,8 @@ func TestE2EExplainOfAnExplain(t *testing.T) {
 		if len(plan.Nodes) == 0 {
 			t.Fatal("expected a plan for the underlying statement")
 		}
-		if strings.Count(strings.ToUpper(plan.ExplainSQL), "EXPLAIN") != 1 {
-			t.Errorf("explain sql nested: %q", plan.ExplainSQL)
+		if got := len(explainKeywordRe.FindAllString(plan.ExplainSQL, -1)); got != 1 {
+			t.Errorf("explain sql nests %d EXPLAINs: %q", got, plan.ExplainSQL)
 		}
 	})
 }
