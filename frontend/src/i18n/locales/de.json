@@ -109,7 +109,7 @@
     "exportCopied": "Export in Zwischenablage kopiert",
     "connectionSuccess": "Verbindung erfolgreich!",
     "savedQuery": "Abfrage gespeichert",
-    "exportStopped": "Export abgebrochen — {{fileName}} enthält nur die ersten {{count}} Zeile(n)"
+    "exportStopped": "Export abgebrochen - {{fileName}} enthält nur die ersten {{count}} Zeile(n)"
   },
   "tooltip": {
     "runStatement": "Diese Anweisung ausführen",

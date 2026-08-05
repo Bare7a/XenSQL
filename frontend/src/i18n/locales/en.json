@@ -109,7 +109,7 @@
     "exportCopied": "Export copied to clipboard",
     "connectionSuccess": "Connection successful!",
     "savedQuery": "Query saved",
-    "exportStopped": "Export stopped — {{fileName}} holds only the first {{count}} row(s)"
+    "exportStopped": "Export stopped - {{fileName}} holds only the first {{count}} row(s)"
   },
   "tooltip": {
     "runStatement": "Run this statement",

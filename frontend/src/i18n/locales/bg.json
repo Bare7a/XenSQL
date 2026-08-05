@@ -109,7 +109,7 @@
     "exportCopied": "Експортът е копиран в клипборда",
     "connectionSuccess": "Връзката е успешна!",
     "savedQuery": "Заявката е запазена",
-    "exportStopped": "Експортирането е спряно — {{fileName}} съдържа само първите {{count}} ред(а)"
+    "exportStopped": "Експортирането е спряно - {{fileName}} съдържа само първите {{count}} ред(а)"
   },
   "tooltip": {
     "runStatement": "Изпълни тази заявка",
