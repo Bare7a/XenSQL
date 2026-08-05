@@ -145,7 +145,7 @@ func (c *scriptCapture) sink(batchSize int) database.ScriptSink {
 			c.rows[idx] = append(c.rows[idx], rows...)
 			return nil
 		},
-		OnResult: func(idx int, _ *database.QueryResult, _ string, err error) {
+		OnResult: func(idx int, _ *database.QueryResult, _ *database.QueryPlan, _ string, err error) {
 			c.mu.Lock()
 			defer c.mu.Unlock()
 			c.results = append(c.results, scriptResult{idx, err})

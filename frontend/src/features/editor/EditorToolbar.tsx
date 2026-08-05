@@ -1,5 +1,21 @@
-import { Bookmark, Check, CircleAlert, Clock, GitBranch, Pencil, Play, PlayCircle, Square, X } from 'lucide-react';
+import {
+  Bookmark,
+  Check,
+  ChevronDown,
+  CircleAlert,
+  Clock,
+  Gauge,
+  GitBranch,
+  Pencil,
+  Play,
+  PlayCircle,
+  Route,
+  Square,
+  X,
+} from 'lucide-react';
+import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { ContextMenu } from '@/shared/components/ContextMenu';
 import { formatBinding, getEffectiveBinding } from '@/shared/lib/shortcuts';
 import type { TxnState } from '@/types';
 
@@ -7,6 +23,8 @@ interface Props {
   isQueryRunning: boolean;
   onCancelQuery?: () => void;
   runQuery: (selectedOnly: boolean) => void;
+  explainQuery?: (analyze: boolean) => void;
+  canAnalyze?: boolean;
   onSaveQuery?: () => void;
   onRenameSavedQuery?: () => void;
   savedQueryId?: string;
@@ -20,6 +38,8 @@ export function EditorToolbar({
   isQueryRunning,
   onCancelQuery,
   runQuery,
+  explainQuery,
+  canAnalyze = false,
   onSaveQuery,
   onRenameSavedQuery,
   savedQueryId,
@@ -30,6 +50,14 @@ export function EditorToolbar({
 }: Props) {
   const { t } = useTranslation();
   const inTxn = txnState === 'active' || txnState === 'error';
+  const explainMenuRef = useRef<HTMLButtonElement>(null);
+  const [explainMenu, setExplainMenu] = useState<{ x: number; y: number } | null>(null);
+
+  const openExplainMenu = () => {
+    const rect = explainMenuRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    setExplainMenu({ x: rect.left, y: rect.bottom + 2 });
+  };
 
   return (
     <div className="toolbar">
@@ -64,6 +92,36 @@ export function EditorToolbar({
           >
             <PlayCircle className="icon-sm" /> {t('editor.runAll')}
           </button>
+          {explainQuery && (
+            <span className="btn-split">
+              <button
+                type="button"
+                className="btn btn-sm btn-split-main"
+                onClick={() => explainQuery(false)}
+                data-tooltip={t('tooltip.explain', {
+                  shortcut: formatBinding(getEffectiveBinding('explainQuery')),
+                })}
+              >
+                <Route className="icon-sm" /> {t('editor.explain')}
+              </button>
+              {canAnalyze && (
+                <button
+                  ref={explainMenuRef}
+                  type="button"
+                  className="btn btn-sm btn-split-more"
+                  onClick={openExplainMenu}
+                  aria-haspopup="menu"
+                  aria-expanded={explainMenu != null}
+                  aria-label={t('editor.explainOptions')}
+                  data-tooltip={t('tooltip.explainOptions', {
+                    shortcut: formatBinding(getEffectiveBinding('explainAnalyze')),
+                  })}
+                >
+                  <ChevronDown className="icon-xs" />
+                </button>
+              )}
+            </span>
+          )}
         </>
       )}
       {onSaveQuery && (
@@ -143,6 +201,25 @@ export function EditorToolbar({
             </button>
           )}
         </>
+      )}
+      {explainMenu && explainQuery && (
+        <ContextMenu
+          x={explainMenu.x}
+          y={explainMenu.y}
+          onClose={() => setExplainMenu(null)}
+          items={[
+            {
+              label: t('editor.explain'),
+              icon: <Route className="icon-xs" />,
+              action: () => explainQuery(false),
+            },
+            {
+              label: t('editor.explainAnalyze'),
+              icon: <Gauge className="icon-xs" />,
+              action: () => explainQuery(true),
+            },
+          ]}
+        />
       )}
     </div>
   );

@@ -101,7 +101,7 @@ export function useQueryStreamEvents(onConnectionStatusChange: (status: Connecti
       reorder.ingest(payload.streamId, payload.seq, false, () => {
         // Flush buffered rows before finalise so the row count can't snap ahead of visible rows.
         flushNow();
-        const { tabId, streamId, resultIndex, result, statement, error, errorInfo } = payload;
+        const { tabId, streamId, resultIndex, result, plan, statement, error, errorInfo } = payload;
         const cancelled = isCancelled(error, errorInfo);
         const displayError = error ? (cancelled ? tRef.current('dialog.queryCancelled') : error) : null;
         const displayInfo = error && !cancelled ? (errorInfo ?? null) : null;
@@ -111,6 +111,7 @@ export function useQueryStreamEvents(onConnectionStatusChange: (status: Connecti
           streamId,
           resultIndex,
           result ?? null,
+          plan ?? null,
           statement ?? null,
           displayError,
           displayInfo,

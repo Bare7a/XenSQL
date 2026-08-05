@@ -29,6 +29,7 @@ type capturedSet struct {
 	cols    []string
 	rows    [][]any
 	summary *QueryResult
+	plan    *QueryPlan
 	stmt    string
 	err     error
 }
@@ -51,9 +52,10 @@ func captureSink(sets *[]*capturedSet) ScriptSink {
 			s.rows = append(s.rows, rows...)
 			return nil
 		},
-		OnResult: func(idx int, summary *QueryResult, stmt string, err error) {
+		OnResult: func(idx int, summary *QueryResult, plan *QueryPlan, stmt string, err error) {
 			s := get(idx)
 			s.summary = summary
+			s.plan = plan
 			s.stmt = stmt
 			s.err = err
 			*sets = append(*sets, s)
@@ -120,5 +122,77 @@ func TestRunScriptStopsAtFirstError(t *testing.T) {
 	}
 	if sets[1].err == nil {
 		t.Error("second set should carry the syntax error")
+	}
+}
+
+// A typed EXPLAIN yields a plan; its neighbours stay grids.
+func TestRunScriptMixesPlansAndGrids(t *testing.T) {
+	conn, cleanup := memConn(t)
+	defer cleanup()
+
+	var sets []*capturedSet
+	script := []string{
+		"CREATE TABLE t (id INTEGER PRIMARY KEY, name TEXT)",
+		"INSERT INTO t VALUES (1, 'a'), (2, 'b')",
+		"SELECT * FROM t",
+		"EXPLAIN QUERY PLAN SELECT * FROM t WHERE id = 1",
+		"SELECT COUNT(*) FROM t",
+	}
+	if err := RunScript(context.Background(), conn, DriverSQLite, script, captureSink(&sets)); err != nil {
+		t.Fatalf("RunScript: %v", err)
+	}
+	if len(sets) != 5 {
+		t.Fatalf("expected one result set per statement, got %d", len(sets))
+	}
+
+	plan := sets[3]
+	if plan.plan == nil {
+		t.Fatalf("the EXPLAIN statement produced no plan: %+v", plan)
+	}
+	if len(plan.rows) != 0 {
+		t.Errorf("a plan set must deliver no rows, got %d", len(plan.rows))
+	}
+	if plan.summary != nil {
+		t.Errorf("a plan set carries no row summary, got %+v", plan.summary)
+	}
+	if len(plan.plan.Nodes) == 0 {
+		t.Fatal("expected plan nodes")
+	}
+	if got := plan.plan.Nodes[0]; got.Label != "SEARCH" || got.Relation != "t" {
+		t.Errorf("plan root = %+v, expected a SEARCH of t", got)
+	}
+	if plan.plan.Analyzed {
+		t.Error("EXPLAIN QUERY PLAN measures nothing")
+	}
+
+	for _, i := range []int{2, 4} {
+		if sets[i].plan != nil {
+			t.Errorf("set %d should be a grid, got a plan", i)
+		}
+		if len(sets[i].rows) == 0 {
+			t.Errorf("set %d should have rows", i)
+		}
+	}
+}
+
+// Bytecode, not a plan: it stays an ordinary query.
+func TestRunScriptKeepsSQLiteBytecodeExplainAsRows(t *testing.T) {
+	conn, cleanup := memConn(t)
+	defer cleanup()
+
+	var sets []*capturedSet
+	script := []string{
+		"CREATE TABLE t (id INTEGER PRIMARY KEY)",
+		"EXPLAIN SELECT * FROM t",
+	}
+	if err := RunScript(context.Background(), conn, DriverSQLite, script, captureSink(&sets)); err != nil {
+		t.Fatalf("RunScript: %v", err)
+	}
+	last := sets[len(sets)-1]
+	if last.plan != nil {
+		t.Error("bytecode EXPLAIN must not become a plan")
+	}
+	if len(last.rows) == 0 {
+		t.Error("expected the bytecode listing as rows")
 	}
 }

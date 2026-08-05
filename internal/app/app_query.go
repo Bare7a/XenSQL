@@ -52,7 +52,8 @@ type QueryStreamRowsEvent struct {
 }
 
 // QueryStreamResultEvent finalizes one result set within a run. Result carries metadata only; rows
-// were delivered via stream batches. Statement is the SQL that produced it (for labeling).
+// were delivered via stream batches. Statement is the SQL that produced it (for labeling). A plan
+// statement carries Plan instead, and delivered no rows.
 type QueryStreamResultEvent struct {
 	Seq          int                   `json:"seq"`
 	TabID        string                `json:"tabId"`
@@ -60,6 +61,7 @@ type QueryStreamResultEvent struct {
 	ConnectionID string                `json:"connectionId"`
 	ResultIndex  int                   `json:"resultIndex"`
 	Result       *database.QueryResult `json:"result,omitempty"`
+	Plan         *database.QueryPlan   `json:"plan,omitempty"`
 	Statement    string                `json:"statement,omitempty"`
 	Error        string                `json:"error,omitempty"`
 	ErrorInfo    *database.QueryError  `json:"errorInfo,omitempty"`
@@ -120,7 +122,7 @@ func (e *streamEmitter) rows(resultIndex int, rows [][]any) {
 	})
 }
 
-func (e *streamEmitter) result(resultIndex int, result *database.QueryResult, statement string, err error) {
+func (e *streamEmitter) result(resultIndex int, result *database.QueryResult, plan *database.QueryPlan, statement string, err error) {
 	payload := QueryStreamResultEvent{
 		Seq:          e.nextSeq(),
 		TabID:        e.tabID,
@@ -128,6 +130,7 @@ func (e *streamEmitter) result(resultIndex int, result *database.QueryResult, st
 		ConnectionID: e.connectionID,
 		ResultIndex:  resultIndex,
 		Result:       result,
+		Plan:         plan,
 		Statement:    statement,
 	}
 	if err != nil {
@@ -215,11 +218,11 @@ func (a *App) runBatchStream(tabID, connectionID string, statements []string) {
 				em.rows(idx, rows)
 				return nil
 			},
-			OnResult: func(idx int, summary *database.QueryResult, statement string, err error) {
+			OnResult: func(idx int, summary *database.QueryResult, plan *database.QueryPlan, statement string, err error) {
 				resultCount = idx + 1
 				err = queryErr(err)
 				hist = append(hist, histEntry{statement, summary, err})
-				em.result(idx, summary, statement, err)
+				em.result(idx, summary, plan, statement, err)
 			},
 		}
 		// Per-statement errors are reported via the result event above, so the terminal done carries
@@ -290,7 +293,7 @@ func (a *App) QueryTableStream(connectionID, tabID string, req database.TableDat
 		}
 		// A table browse is always a single result set (index 0).
 		result, err := s.QueryTableStream(queryCtx, req, opts)
-		em.result(0, result, "", queryErr(err))
+		em.result(0, result, nil, "", queryErr(err))
 		em.done(1, nil)
 	})
 	return nil

@@ -90,3 +90,20 @@
   padding: var(--space-3) var(--space-8);
   font-size: var(--text-xs);
 }
+
+/* Split button: the pair reads as one control, so the seam collapses to a single border. */
+.btn-split {
+  display: inline-flex;
+}
+
+.btn-split-main {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.btn-split-more {
+  margin-left: calc(-1 * var(--space-1));
+  padding-inline: var(--space-4);
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+}

@@ -1,4 +1,5 @@
 import { memo, useCallback } from 'react';
+import { PlanView } from '@/features/results/PlanView';
 import { ResultsGrid } from '@/features/results/ResultsGrid';
 import { ResultTabs } from '@/features/results/ResultTabs';
 import { useAppStore } from '@/store/appStore';
@@ -55,7 +56,7 @@ const ResultsPaneTab = memo(function ResultsPaneTab({
     }
   }, [dataBrowser, onRefreshTable, connectionId, tabId]);
 
-  // One grid per result set, hidden via CSS, so per-set grid state survives result-tab switches.
+  // One layer per set, hidden via CSS, so per-set state survives tab switches.
   const runKey = session.runStreamId ?? 'direct';
 
   return (
@@ -82,18 +83,22 @@ const ResultsPaneTab = memo(function ResultsPaneTab({
           return (
             // biome-ignore lint/suspicious/noArrayIndexKey: sets never reorder within a run; runKey remounts them on a new run
             <div key={`${runKey}-${i}`} className={`result-set-layer${setActive ? ' tab-layer-active' : ''}`}>
-              <ResultsGrid
-                connectionId={connectionId}
-                result={set.result}
-                error={set.error}
-                errorInfo={set.errorInfo}
-                errorStatement={set.statement ?? null}
-                readOnly={readOnly}
-                tableMode={dataBrowser || undefined}
-                isActive={isActive && setActive}
-                onRefresh={dataBrowser && onRefreshTable ? handleRefresh : undefined}
-                onFocusedRowChange={handleFocusedRowChange}
-              />
+              {set.plan ? (
+                <PlanView plan={set.plan} />
+              ) : (
+                <ResultsGrid
+                  connectionId={connectionId}
+                  result={set.result}
+                  error={set.error}
+                  errorInfo={set.errorInfo}
+                  errorStatement={set.statement ?? null}
+                  readOnly={readOnly}
+                  tableMode={dataBrowser || undefined}
+                  isActive={isActive && setActive}
+                  onRefresh={dataBrowser && onRefreshTable ? handleRefresh : undefined}
+                  onFocusedRowChange={handleFocusedRowChange}
+                />
+              )}
             </div>
           );
         })

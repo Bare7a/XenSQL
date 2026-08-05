@@ -94,7 +94,7 @@ function App() {
   const [quickSearchOpen, setQuickSearchOpen] = useState(false);
   const [connPickerOpen, setConnPickerOpen] = useState(false);
 
-  const { runQueryForTab, cancelQueryForTab } = useQueryRunner();
+  const { runQueryForTab, explainQueryForTab, cancelQueryForTab } = useQueryRunner();
   const { beginTransaction, commitTransaction, rollbackTransaction, cleanupTabTransaction } = useTransactionActions();
   const { persistTabSavedQuery, handleSaveQuery, openRenameDialog, confirmRenameSavedQuery, openSavedQuery } =
     useSavedQueryActions(renameTabId, setRenameTabId);
@@ -310,6 +310,10 @@ function App() {
     (tabId: string, sql: string) => void runQueryForTab(tabId, sql),
     [runQueryForTab],
   );
+  const handleExplainForTab = useCallback(
+    (tabId: string, sql: string, analyze: boolean) => void explainQueryForTab(tabId, sql, analyze),
+    [explainQueryForTab],
+  );
   const handleSaveQueryWrapped = useCallback(() => void handleSaveQuery(), [handleSaveQuery]);
   const handleDragEnd = useCallback(() => {
     setDragTabId(null);
@@ -428,6 +432,7 @@ function App() {
                       loadColumnsForConnection={loadColumnsForConnection}
                       onChangeSql={handleChangeSql}
                       onRun={handleRunForTab}
+                      onExplain={handleExplainForTab}
                       onCancel={cancelQueryForTab}
                       onSaveQuery={handleSaveQueryWrapped}
                       onRenameSavedQuery={openRenameDialog}

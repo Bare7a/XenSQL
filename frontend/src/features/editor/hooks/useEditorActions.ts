@@ -10,6 +10,8 @@ interface UseEditorActionsArgs {
   monacoRef: RefObject<Monaco | null>;
   isActive: boolean;
   runQuery: (selectedOnly: boolean) => void;
+  explainQuery: (analyze: boolean) => void;
+  canAnalyze: boolean;
   onSaveQueryRef: RefObject<(() => void) | undefined>;
   onRenameSavedQueryRef: RefObject<(() => void) | undefined>;
   shortcutRevision: number;
@@ -21,6 +23,8 @@ export function useEditorActions({
   monacoRef,
   isActive,
   runQuery,
+  explainQuery,
+  canAnalyze,
   onSaveQueryRef,
   onRenameSavedQueryRef,
   shortcutRevision,
@@ -32,7 +36,7 @@ export function useEditorActions({
   const bindEditorActions = useCallback(
     (ed: editor.IStandaloneCodeEditor, monaco: Monaco) => {
       for (const d of editorActionsRef.current) d.dispose();
-      editorActionsRef.current = [
+      const actions = [
         ed.addAction({
           id: 'run-selected',
           label: t('editor.actionRunSelection'),
@@ -44,6 +48,12 @@ export function useEditorActions({
           label: t('editor.actionRunAll'),
           keybindings: [toMonacoKeybinding(monaco, getEffectiveBinding('runAll'))],
           run: () => runQuery(false),
+        }),
+        ed.addAction({
+          id: 'explain-query',
+          label: t('editor.actionExplain'),
+          keybindings: [toMonacoKeybinding(monaco, getEffectiveBinding('explainQuery'))],
+          run: () => explainQuery(false),
         }),
         ed.addAction({
           id: 'save-query',
@@ -78,8 +88,20 @@ export function useEditorActions({
           },
         }),
       ];
+      // Left unbound where the engine cannot measure, so the key does nothing rather than error.
+      if (canAnalyze) {
+        actions.push(
+          ed.addAction({
+            id: 'explain-analyze',
+            label: t('editor.actionExplainAnalyze'),
+            keybindings: [toMonacoKeybinding(monaco, getEffectiveBinding('explainAnalyze'))],
+            run: () => explainQuery(true),
+          }),
+        );
+      }
+      editorActionsRef.current = actions;
     },
-    [runQuery, t, onSaveQueryRef, onRenameSavedQueryRef],
+    [runQuery, explainQuery, canAnalyze, t, onSaveQueryRef, onRenameSavedQueryRef],
   );
 
   useEffect(() => {

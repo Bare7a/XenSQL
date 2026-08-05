@@ -4,6 +4,7 @@ import { CellViewerPage } from '../pages/cell-viewer-page';
 import { ConnectionsPage } from '../pages/connections-page';
 import { EditorPage } from '../pages/editor-page';
 import { JsonViewerPage } from '../pages/json-viewer-page';
+import { PlanPage } from '../pages/plan-page';
 import { QueriesPage } from '../pages/queries-page';
 import { ResultsPage } from '../pages/results-page';
 import { SchemaPage } from '../pages/schema-page';
@@ -16,6 +17,7 @@ interface Fixtures {
   connections: ConnectionsPage;
   editor: EditorPage;
   results: ResultsPage;
+  plan: PlanPage;
   schema: SchemaPage;
   tableView: TableViewPage;
   queries: QueriesPage;
@@ -50,6 +52,7 @@ export const test = base.extend<Fixtures>({
   connections: pageObject(ConnectionsPage),
   editor: pageObject(EditorPage),
   results: pageObject(ResultsPage),
+  plan: pageObject(PlanPage),
   schema: pageObject(SchemaPage),
   tableView: pageObject(TableViewPage),
   queries: pageObject(QueriesPage),

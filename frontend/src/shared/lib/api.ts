@@ -14,6 +14,7 @@ import {
   DeleteSavedQuery,
   Disconnect,
   ExecuteQueryStream,
+  ExplainQuery,
   ExportResult,
   FormatSQL,
   GetAppInfo,
@@ -61,6 +62,7 @@ import type {
   ConnectionFolder,
   EditorTab,
   HistoryEntry,
+  QueryPlan,
   QueryResult,
   SavedQuery,
   TableDataRequest,
@@ -93,6 +95,8 @@ export const api = {
     normalizeColumns(await ListColumns(connId, schema, table)),
   executeQueryStream: (connId: string, tabId: string, sql: string): Promise<void> =>
     cast(ExecuteQueryStream(connId, tabId, sql)),
+  explainQuery: (connId: string, tabId: string, sql: string, analyze: boolean): Promise<QueryPlan> =>
+    cast(ExplainQuery(connId, tabId, sql, analyze)),
   queryTableStream: (connId: string, tabId: string, req: TableDataRequest): Promise<void> =>
     cast(QueryTableStream(connId, tabId, req as never)),
   updateRow: (

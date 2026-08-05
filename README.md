@@ -170,12 +170,45 @@ Connect to a database that only its bastion can reach - no `ssh -L` in a side te
 - **Run selection** (`Ctrl+Enter`) / **run all** (`Ctrl+Shift+Enter`) / **stop** long-running queries
 - **Streaming results** - rows render as the driver yields them
 - **Multi-statement scripts** - run several `;`-separated statements at once; they execute in order on one connection, so temp tables, `SET` and scripted `BEGIN` / `COMMIT` hold
-- **Multiple result outputs** - a script or stored procedure that returns several result sets shows each in its own switchable result tab; a failing statement reports its error and stops the run
+- **Multiple result outputs** - a script or stored procedure that returns several result sets shows each in its own switchable result tab, query plans included; a failing statement reports its error and stops the run
 - **Pinned transactions** per tab - run `BEGIN` / `COMMIT` / `ROLLBACK` as SQL or from the toolbar; queries run inside the open transaction until you commit or roll back
+- **Query plan viewer** (`Ctrl+Shift+E`) - see below
 - `UPDATE` / `DELETE` / `INSERT` with **`RETURNING`** flow back to the Results Grid
 - Gutter icons to run individual statements
 - Right-click menu with **format SQL**
 - **Remappable keyboard shortcuts**
+
+### 🧭 Query Plan Viewer
+
+**Explain** (`Ctrl+Shift+E`) plans the statement under the cursor and shows the engine's plan as one
+tree, whichever database you're on. Nothing runs - the numbers are the planner's estimates.
+**Explain analyze** (`Ctrl+Shift+A`, or the button's menu) *executes* the statement instead and
+reports what really happened: measured rows, real timings, loop counts.
+
+Typing `EXPLAIN` yourself works the same way - **Run** recognises it and opens the plan viewer instead
+of dumping the engine's raw rows into the grid. Statements whose output already carries structure (any
+`FORMAT JSON`, MySQL's `EXPLAIN ANALYZE`, `EXPLAIN QUERY PLAN`) run exactly as typed; the rest are
+asked again in JSON. Name a format on purpose (`EXPLAIN (FORMAT TEXT)`, `FORMAT=TRADITIONAL`) or use
+SQLite's bytecode `EXPLAIN` and you get the raw rows, as asked.
+
+Plans are outputs like any other, so a script can mix them freely - `SELECT …; EXPLAIN SELECT …;`
+gives you `Result 1 · Plan 1` as switchable tabs, each keeping its own state.
+
+- **Heat map** over the tree - each node's bar is its own share of the run's time, cost or rows, so
+  the expensive step is the one you see first; switch the metric to re-rank
+- **Own vs. total** for time and cost, side by side - a node isn't flagged just because its children
+  are slow. Loop counts are folded in, so a node inside a nested loop compares fairly to its siblings
+- **Bad row estimates flagged** - when the measured count is 10x off the planner's guess, the node is
+  marked with the factor: usually where a missing index or stale statistics hides
+- **Relations and indexes** called out per node, plus the filter or join condition behind it
+- **Node details** - every field the engine reported (sort method, buffer hits, rows removed by
+  filter, …), and the untouched engine output on a raw tab
+- Per engine: PostgreSQL `EXPLAIN (ANALYZE, BUFFERS, FORMAT JSON)`, MySQL `EXPLAIN FORMAT=JSON` and
+  `EXPLAIN ANALYZE`, MariaDB `ANALYZE FORMAT=JSON`, SQLite `EXPLAIN QUERY PLAN` (plan shape only -
+  SQLite reports no cost or timings)
+- **Analyzing a write never leaves data behind** - `EXPLAIN ANALYZE` executes the statement, so a
+  write runs inside a transaction that is always rolled back (and says so). On a tab with an open
+  transaction it runs there, exactly where a plain **Run** would have
 
 ---
 
@@ -261,6 +294,8 @@ Every shortcut is remappable in the in-app shortcuts editor.
 | Quick Search palette | `Ctrl/⌘ + P` |
 | Run selection | `Ctrl/⌘ + Enter` |
 | Run all statements | `Ctrl/⌘ + Shift + Enter` |
+| Explain query plan | `Ctrl/⌘ + Shift + E` |
+| Explain query plan (analyze) | `Ctrl/⌘ + Shift + A` |
 | Save query | `Ctrl/⌘ + S` |
 | Rename saved query | `F2` |
 | New / close tab | `Ctrl/⌘ + T` / `Ctrl/⌘ + W` |

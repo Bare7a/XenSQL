@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { bindingFromKeyboardEvent, bindingKey, matchesBinding } from '@/shared/lib/shortcuts';
+import { APP_SHORTCUTS, bindingFromKeyboardEvent, bindingKey, matchesBinding } from '@/shared/lib/shortcuts';
 
 const ev = (init: Partial<KeyboardEvent>) =>
   ({ ctrlKey: false, metaKey: false, shiftKey: false, altKey: false, ...init }) as KeyboardEvent;
@@ -65,5 +65,23 @@ describe('bindingFromKeyboardEvent on non-Latin layouts', () => {
       shift: false,
       alt: false,
     });
+  });
+});
+
+describe('default bindings', () => {
+  it('are all distinct', () => {
+    const seen = new Map<string, string>();
+    for (const def of APP_SHORTCUTS) {
+      const key = bindingKey(def.defaultBinding);
+      const clash = seen.get(key);
+      expect(clash, `${def.id} shares its default binding with ${clash}`).toBeUndefined();
+      seen.set(key, def.id);
+    }
+  });
+
+  // Windows reports AltGr as Ctrl+Alt, so such a default fires while typing (German AltGr+E is €).
+  it('never default to a Ctrl+Alt chord', () => {
+    const altGr = APP_SHORTCUTS.filter((def) => def.defaultBinding.ctrl && def.defaultBinding.alt);
+    expect(altGr.map((def) => def.id)).toEqual([]);
   });
 });

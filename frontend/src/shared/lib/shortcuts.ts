@@ -37,6 +37,19 @@ export const APP_SHORTCUTS: ShortcutDef[] = [
     defaultBinding: { key: 'Enter', ctrl: true, shift: true },
   },
   {
+    id: 'explainQuery',
+    category: 'query',
+    scope: 'editor',
+    defaultBinding: { key: 'e', ctrl: true, shift: true },
+  },
+  {
+    // Not a Ctrl+Alt chord: Windows reports AltGr as Ctrl+Alt (German AltGr+E types €).
+    id: 'explainAnalyze',
+    category: 'query',
+    scope: 'editor',
+    defaultBinding: { key: 'a', ctrl: true, shift: true },
+  },
+  {
     id: 'saveQuery',
     category: 'query',
     scope: 'editor',

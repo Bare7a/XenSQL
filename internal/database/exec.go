@@ -69,11 +69,13 @@ func streamQueryRows(ctx context.Context, conn *sql.Conn, query string, startMs 
 // set fires OnMeta once, then OnBatch zero or more times; every set ends with OnResult carrying its
 // summary (columns/counts/message) and any error. resultIndex is global across all statements in
 // the script, so one statement that yields several result sets advances it several times.
+//
+// A statement asking for a query plan delivers no rows: its set is a single OnResult carrying plan.
 type ScriptSink struct {
 	BatchSize int
 	OnMeta    func(resultIndex int, columns, columnTypes []string)
 	OnBatch   func(resultIndex int, rows [][]any) error
-	OnResult  func(resultIndex int, summary *QueryResult, statement string, err error)
+	OnResult  func(resultIndex int, summary *QueryResult, plan *QueryPlan, statement string, err error)
 }
 
 // RunScript executes statements in order on a single connection, streaming every result set
@@ -90,6 +92,9 @@ func RunScript(ctx context.Context, conn *sql.Conn, driver DriverType, statement
 }
 
 func runScriptStatement(ctx context.Context, conn *sql.Conn, driver DriverType, stmt string, resultIndex *int, sink ScriptSink) error {
+	if req, ok := DetectPlanRequest(driver, stmt); ok {
+		return runScriptPlan(ctx, conn, driver, stmt, req, resultIndex, sink)
+	}
 	start := NowMs()
 	upper := strings.ToUpper(StripLeadingComments(stmt))
 	if statementReturnsRows(driver, upper) {
@@ -99,11 +104,56 @@ func runScriptStatement(ctx context.Context, conn *sql.Conn, driver DriverType, 
 	idx := *resultIndex
 	*resultIndex++
 	if err != nil {
-		sink.OnResult(idx, nil, stmt, err)
+		sink.OnResult(idx, nil, nil, stmt, err)
 		return err
 	}
-	sink.OnResult(idx, execSummary(res, start), stmt, nil)
+	sink.OnResult(idx, execSummary(res, start), nil, stmt, nil)
 	return nil
+}
+
+// runScriptPlan delivers a normalized plan in place of rows. Output the parsers don't recognize
+// falls back to the engine's rows rather than erroring.
+func runScriptPlan(ctx context.Context, conn *sql.Conn, driver DriverType, stmt string, req PlanRequest, resultIndex *int, sink ScriptSink) error {
+	start := NowMs()
+	idx := *resultIndex
+	*resultIndex++
+
+	res, err := bufferedQuery(ctx, conn, req.SQL)
+	if err != nil {
+		sink.OnResult(idx, nil, nil, stmt, err)
+		return err
+	}
+	plan, parseErr := ParsePlan(driver, stmt, req.SQL, req.Analyze, res)
+	if parseErr != nil {
+		if sink.OnMeta != nil {
+			sink.OnMeta(idx, res.Columns, res.ColumnTypes)
+		}
+		if sink.OnBatch != nil && len(res.Rows) > 0 {
+			if err := sink.OnBatch(idx, res.Rows); err != nil {
+				sink.OnResult(idx, res, nil, stmt, err)
+				return err
+			}
+		}
+		sink.OnResult(idx, res, nil, stmt, nil)
+		return nil
+	}
+	plan.DurationMs = NowMs() - start
+	sink.OnResult(idx, nil, plan, stmt, nil)
+	return nil
+}
+
+// Plan output is always small enough to buffer.
+func bufferedQuery(ctx context.Context, conn *sql.Conn, query string) (*QueryResult, error) {
+	var rows [][]any
+	opts := StreamOpts{OnBatch: func(batch [][]any) error {
+		rows = append(rows, batch...)
+		return nil
+	}}
+	result, err := streamQueryRows(ctx, conn, query, NowMs(), opts, &QueryResult{})
+	if result != nil {
+		result.Rows = rows
+	}
+	return result, err
 }
 
 // streamResultSets runs a row-returning statement and streams each of its result sets (the first
@@ -113,7 +163,7 @@ func streamResultSets(ctx context.Context, conn *sql.Conn, query string, start i
 	if err != nil {
 		idx := *resultIndex
 		*resultIndex++
-		sink.OnResult(idx, nil, query, err)
+		sink.OnResult(idx, nil, nil, query, err)
 		return err
 	}
 	defer rows.Close()
@@ -124,10 +174,10 @@ func streamResultSets(ctx context.Context, conn *sql.Conn, query string, start i
 		summary, scanErr := streamOneResultSet(ctx, rows, sink.BatchSize, idx, sink)
 		summary.DurationMs = NowMs() - start
 		if scanErr != nil {
-			sink.OnResult(idx, summary, query, scanErr)
+			sink.OnResult(idx, summary, nil, query, scanErr)
 			return scanErr
 		}
-		sink.OnResult(idx, summary, query, nil)
+		sink.OnResult(idx, summary, nil, query, nil)
 		if !rows.NextResultSet() {
 			break
 		}
@@ -162,6 +212,10 @@ func streamOneResultSet(ctx context.Context, rows *sql.Rows, batchSize, resultIn
 // also covers stored-procedure calls, which can return one or more result sets.
 func statementReturnsRows(driver DriverType, upper string) bool {
 	if IsSelectLike(driver, upper) || hasReturningClause(upper) {
+		return true
+	}
+	// MySQL ANALYZE always answers with rows: a status table, or MariaDB's measured plan.
+	if driver == DriverMySQL && strings.HasPrefix(upper, "ANALYZE ") {
 		return true
 	}
 	return strings.HasPrefix(upper, "CALL") ||

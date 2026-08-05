@@ -57,6 +57,7 @@ interface Props {
   onCursorStateChange?: (state: EditorCursorState) => void;
   onChange: (sql: string) => void;
   onRun: (sql: string) => void;
+  onExplain?: (sql: string, analyze: boolean) => void;
   isQueryRunning?: boolean;
   onCancelQuery?: () => void;
   onSaveQuery?: () => void;
@@ -82,6 +83,7 @@ export const SqlEditor = memo(function SqlEditor({
   onCursorStateChange,
   onChange,
   onRun,
+  onExplain,
   isQueryRunning = false,
   onCancelQuery,
   onSaveQuery,
@@ -173,6 +175,36 @@ export const SqlEditor = memo(function SqlEditor({
   }, []);
 
   const { updateRunGlyphs, statementsRef } = useRunGlyphs(editorRef, monacoRef, sql, languageRevision, driver);
+
+  // SQLite has no EXPLAIN ANALYZE.
+  const canAnalyze = driver !== 'sqlite';
+
+  // A plan is for one statement: the selection, else the statement at the cursor, else the buffer.
+  const explainQuery = useCallback(
+    (analyze: boolean) => {
+      if (isQueryRunning || !onExplain) return;
+      const ed = editorRef.current;
+      if (!ed) return;
+      const selection = ed.getSelection();
+      const selected = (selection ? ed.getModel()?.getValueInRange(selection) : '') || '';
+      let text = selected.trim();
+      if (!text) {
+        const model = ed.getModel();
+        const pos = ed.getPosition();
+        if (model && pos) {
+          const offset = model.getOffsetAt(pos);
+          const atCursor = statementsRef.current.find((s) => offset >= s.start && offset <= s.end);
+          text = atCursor?.text.trim() ?? '';
+        }
+      }
+      if (!text) text = ed.getValue().trim();
+      if (text) {
+        clearQueryErrorMarkers(monacoRef.current, ed.getModel());
+        onExplain(text, analyze);
+      }
+    },
+    [isQueryRunning, onExplain, statementsRef],
+  );
   useSqlDiagnostics(editorRef, monacoRef, sql, allTables, schemas, driver, languageRevision);
 
   const { bindEditorActions } = useEditorActions({
@@ -180,6 +212,8 @@ export const SqlEditor = memo(function SqlEditor({
     monacoRef,
     isActive,
     runQuery,
+    explainQuery,
+    canAnalyze,
     onSaveQueryRef,
     onRenameSavedQueryRef,
     shortcutRevision,
@@ -342,6 +376,8 @@ export const SqlEditor = memo(function SqlEditor({
         isQueryRunning={isQueryRunning}
         onCancelQuery={onCancelQuery}
         runQuery={runQuery}
+        explainQuery={onExplain ? explainQuery : undefined}
+        canAnalyze={canAnalyze}
         onSaveQuery={onSaveQuery}
         onRenameSavedQuery={onRenameSavedQuery}
         savedQueryId={savedQueryId}

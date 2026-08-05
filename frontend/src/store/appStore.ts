@@ -7,6 +7,7 @@ import type {
   EditorTab,
   HistoryEntry,
   QueryError,
+  QueryPlan,
   QueryResult,
   ResultSet,
   SavedQuery,
@@ -107,16 +108,19 @@ interface AppState {
   ) => void;
   /** Appends streamed rows to one result set; drops events from a superseded run. */
   appendResultRows: (tabId: string, streamId: string, resultIndex: number, rows: unknown[][]) => void;
-  /** Finalizes one result set (result event) with summary metadata or a per-statement error. */
+  /** Finalizes one result set: summary metadata, a query plan, or a per-statement error. */
   finalizeResultSet: (
     tabId: string,
     streamId: string,
     resultIndex: number,
     result: QueryResult | null,
+    plan: QueryPlan | null,
     statement: string | null,
     error: string | null,
     errorInfo?: QueryError | null,
   ) => void;
+  /** Shows a plan as the tab's lone output; the Explain action runs outside a stream. */
+  showPlan: (tabId: string, plan: QueryPlan) => void;
   /** Terminates a run (done event): clears the running indicator and surfaces a batch-level error. */
   finishRun: (
     tabId: string,
@@ -323,7 +327,7 @@ export const useAppStore = create<AppState>((set, get) => ({
         tabSession: { ...s.tabSession, [tabId]: withActiveMirror({ ...session, results }) },
       };
     }),
-  finalizeResultSet: (tabId, streamId, resultIndex, result, statement, error, errorInfo) =>
+  finalizeResultSet: (tabId, streamId, resultIndex, result, plan, statement, error, errorInfo) =>
     set((s) => {
       const tabStillOpen = s.tabs.some((t) => t.id === tabId);
       const sessionExists = s.tabSession[tabId] != null;
@@ -335,6 +339,9 @@ export const useAppStore = create<AppState>((set, get) => ({
       let set_: ResultSet;
       if (error) {
         set_ = { result: null, error, errorInfo: errorInfo ?? null, statement: label };
+      } else if (plan) {
+        // A plan statement streamed no rows.
+        set_ = { result: null, error: null, plan, statement: label };
       } else if (existing && existing.streamId === streamId) {
         // Streamed result set: merge backend metadata; rows stay as-is.
         set_ = {
@@ -394,6 +401,24 @@ export const useAppStore = create<AppState>((set, get) => ({
         tabSession: { ...s.tabSession, [tabId]: session },
         connectedIds: nextConnected,
         runningTabId: nextRunning,
+      };
+    }),
+  showPlan: (tabId, plan) =>
+    set((s) => {
+      const tabStillOpen = s.tabs.some((t) => t.id === tabId);
+      const sessionExists = s.tabSession[tabId] != null;
+      if (!tabStillOpen && !sessionExists) return s;
+      const session = s.tabSession[tabId] ?? emptyTabSession();
+      return {
+        tabSession: {
+          ...s.tabSession,
+          [tabId]: withActiveMirror({
+            ...session,
+            results: [{ result: null, error: null, plan }],
+            activeResultIndex: 0,
+            dataBrowser: null,
+          }),
+        },
       };
     }),
   setActiveResultIndex: (tabId, index) =>

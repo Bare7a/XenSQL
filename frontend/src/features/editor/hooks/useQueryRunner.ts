@@ -36,7 +36,7 @@ function txnResult(message: string): QueryResult {
 export function useQueryRunner() {
   const tabs = useTabs();
   const { t } = useTranslation();
-  const { setRunningTab, updateTabSession } = useStoreActions();
+  const { setRunningTab, updateTabSession, showPlan } = useStoreActions();
   const { beginTransaction, commitTransaction, rollbackTransaction } = useTransactionActions();
 
   const runQueryForTab = useCallback(
@@ -74,6 +74,24 @@ export function useQueryRunner() {
     [tabs, setRunningTab, updateTabSession, beginTransaction, commitTransaction, rollbackTransaction, t],
   );
 
+  // Reuses the running-tab indicator: an EXPLAIN ANALYZE is as slow as the query and cancels alike.
+  const explainQueryForTab = useCallback(
+    async (tabId: string, sql: string, analyze: boolean) => {
+      const tab = tabs.find((tab) => tab.id === tabId);
+      if (!tab) return;
+
+      setRunningTab(tabId);
+      try {
+        showPlan(tabId, await api.explainQuery(tab.connectionId, tabId, sql, analyze));
+      } catch (e) {
+        updateTabSession(tabId, { result: null, resultError: formatError(e) });
+      } finally {
+        setRunningTab(null);
+      }
+    },
+    [tabs, setRunningTab, updateTabSession, showPlan],
+  );
+
   const cancelQueryForTab = useCallback(
     (tabId: string) => {
       const tab = tabs.find((tab) => tab.id === tabId);
@@ -83,5 +101,5 @@ export function useQueryRunner() {
     [tabs],
   );
 
-  return { runQueryForTab, cancelQueryForTab };
+  return { runQueryForTab, explainQueryForTab, cancelQueryForTab };
 }

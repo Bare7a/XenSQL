@@ -1,7 +1,8 @@
-// biome-ignore-all lint/suspicious/noArrayIndexKey: result-set tabs are positional ("Result 1..N"), rebuilt wholesale on each run and never reordered, so the array index is the stable identity.
-import { CircleAlert } from 'lucide-react';
-import { useRef } from 'react';
+// biome-ignore-all lint/suspicious/noArrayIndexKey: result-set tabs are positional, rebuilt wholesale on each run and never reordered, so the array index is the stable identity.
+import { CircleAlert, Route } from 'lucide-react';
+import { useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
+import { resultTabLabels } from '@/features/results/lib/resultTabLabels';
 import { useHorizontalWheelScroll } from '@/shared/hooks/useHorizontalWheelScroll';
 import type { ResultSet } from '@/types';
 
@@ -11,24 +12,20 @@ interface Props {
   onSelect: (index: number) => void;
 }
 
-// Result-set switcher shown when a run produced more than one result set (a multi-statement script,
-// or a stored procedure returning several sets). Hidden for the common single-result case.
+// Shown when a run produced more than one output. Hidden for the common single-output case.
 export function ResultTabs({ results, activeIndex, onSelect }: Props) {
   const { t } = useTranslation();
   const tabsRef = useRef<HTMLDivElement>(null);
   const showTabs = results.length > 1;
   useHorizontalWheelScroll(tabsRef, showTabs);
+  const labels = useMemo(() => resultTabLabels(results), [results]);
 
   if (!showTabs) return null;
   return (
     <div ref={tabsRef} className="result-tabs" role="tablist">
       {results.map((rs, i) => {
         const isActive = i === activeIndex;
-        const count = rs.error
-          ? null
-          : rs.result?.columns?.length
-            ? rs.result.rowCount
-            : (rs.result?.affectedRows ?? 0);
+        const label = labels[i];
         const tooltip = rs.statement ? rs.statement.replace(/\s+/g, ' ').slice(0, 120) : undefined;
         return (
           <button
@@ -41,8 +38,9 @@ export function ResultTabs({ results, activeIndex, onSelect }: Props) {
             data-tooltip={tooltip}
           >
             <span className="result-tab-text">
-              {t('results.resultLabel', { n: i + 1 })}
-              {!rs.error && count != null ? <span className="result-tab-count">{count.toLocaleString()}</span> : null}
+              {rs.plan ? <Route className="icon-xs result-tab-icon" /> : null}
+              {t(label.key, { n: label.n })}
+              {label.count != null ? <span className="result-tab-count">{label.count.toLocaleString()}</span> : null}
             </span>
             {rs.error ? <CircleAlert className="icon-xs" /> : null}
           </button>

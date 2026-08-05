@@ -98,6 +98,49 @@ export interface QueryResult {
   streaming?: boolean;
 }
 
+// See database.PlanField.
+export interface PlanField {
+  key: string;
+  value: string;
+}
+
+// See database.PlanNode. Metrics are optional: a metric the engine never reported renders blank,
+// not as 0.
+export interface PlanNode {
+  label: string;
+  detail?: string;
+  relation?: string;
+  index?: string;
+  costTotal?: number | null;
+  costSelf?: number | null;
+  rowsPlanned?: number | null;
+  /** Totals across every loop, not the per-loop averages Postgres and MariaDB report. */
+  rowsActual?: number | null;
+  loops?: number | null;
+  timeMs?: number | null;
+  selfTimeMs?: number | null;
+  neverRun?: boolean;
+  fields?: PlanField[];
+  children?: PlanNode[];
+}
+
+// Translated via results.planNote.<code>.
+export type PlanNote = 'noMetrics' | 'rolledBack' | 'tabTransaction';
+
+export interface QueryPlan {
+  driver: DriverType;
+  statement: string;
+  explainSql: string;
+  analyzed: boolean;
+  nodes: PlanNode[];
+  totalCost?: number | null;
+  planningMs?: number | null;
+  executionMs?: number | null;
+  durationMs: number;
+  notes?: string[];
+  raw: string;
+}
+
 // Structured form of a failed query (see database.QueryError).
 export interface QueryError {
   message: string;
@@ -133,6 +176,7 @@ export interface QueryStreamRowsPayload {
 }
 
 // Finalizes one result set within a run (result carries metadata only; rows arrived via rows events).
+// A plan statement carries plan instead and streamed no rows.
 export interface QueryStreamResultPayload {
   seq: number;
   tabId: string;
@@ -140,6 +184,7 @@ export interface QueryStreamResultPayload {
   connectionId: string;
   resultIndex: number;
   result?: QueryResult | null;
+  plan?: QueryPlan | null;
   statement?: string;
   error?: string;
   errorInfo?: QueryError | null;
@@ -204,13 +249,14 @@ export interface TableViewSessionState {
 
 export type TxnState = 'idle' | 'active' | 'error';
 
-// One result set produced by a run: either a grid (result) or a failure (error). A run can produce
-// several - multiple statements in a script, or a stored procedure returning more than one set.
+// One output of a run: a grid, a query plan or a failure. A run can produce several, each its own tab.
 export interface ResultSet {
   result: QueryResult | null;
   error: string | null;
   errorInfo?: QueryError | null;
   statement?: string;
+  /** Set for a plan statement; the set renders as the plan viewer, not a grid. */
+  plan?: QueryPlan | null;
 }
 
 export interface TabSessionState {

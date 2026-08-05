@@ -201,6 +201,137 @@ export class HistoryEntry {
     }
 }
 
+export class PlanField {
+    "key": string;
+    "value": string;
+
+    /** Creates a new PlanField instance. */
+    constructor($$source: Partial<PlanField> = {}) {
+        if (!("key" in $$source)) {
+            this["key"] = "";
+        }
+        if (!("value" in $$source)) {
+            this["value"] = "";
+        }
+
+        Object.assign(this, $$source);
+    }
+
+    /**
+     * Creates a new PlanField instance from a string or object.
+     */
+    static createFrom($$source: any = {}): PlanField {
+        let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
+        return new PlanField($$parsedSource as Partial<PlanField>);
+    }
+}
+
+/**
+ * PlanNode is one operation in a normalized plan tree.
+ */
+export class PlanNode {
+    "label": string;
+    "detail"?: string;
+    "relation"?: string;
+    "index"?: string;
+    "costTotal"?: number | null;
+    "costSelf"?: number | null;
+    "rowsPlanned"?: number | null;
+
+    /**
+     * Totals across every loop, not the per-loop averages Postgres and MariaDB report.
+     */
+    "rowsActual"?: number | null;
+    "loops"?: number | null;
+    "timeMs"?: number | null;
+    "selfTimeMs"?: number | null;
+    "neverRun"?: boolean;
+    "fields"?: PlanField[];
+    "children"?: PlanNode[];
+
+    /** Creates a new PlanNode instance. */
+    constructor($$source: Partial<PlanNode> = {}) {
+        if (!("label" in $$source)) {
+            this["label"] = "";
+        }
+
+        Object.assign(this, $$source);
+    }
+
+    /**
+     * Creates a new PlanNode instance from a string or object.
+     */
+    static createFrom($$source: any = {}): PlanNode {
+        const $$createField12_0 = $$createType2;
+        const $$createField13_0 = $$createType4;
+        let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
+        if ("fields" in $$parsedSource) {
+            $$parsedSource["fields"] = $$createField12_0($$parsedSource["fields"]);
+        }
+        if ("children" in $$parsedSource) {
+            $$parsedSource["children"] = $$createField13_0($$parsedSource["children"]);
+        }
+        return new PlanNode($$parsedSource as Partial<PlanNode>);
+    }
+}
+
+export class QueryPlan {
+    "driver": DriverType;
+    "statement": string;
+    "explainSql": string;
+    "analyzed": boolean;
+    "nodes": PlanNode[];
+    "totalCost"?: number | null;
+    "planningMs"?: number | null;
+    "executionMs"?: number | null;
+    "durationMs": number;
+    "notes"?: string[];
+    "raw": string;
+
+    /** Creates a new QueryPlan instance. */
+    constructor($$source: Partial<QueryPlan> = {}) {
+        if (!("driver" in $$source)) {
+            this["driver"] = DriverType.$zero;
+        }
+        if (!("statement" in $$source)) {
+            this["statement"] = "";
+        }
+        if (!("explainSql" in $$source)) {
+            this["explainSql"] = "";
+        }
+        if (!("analyzed" in $$source)) {
+            this["analyzed"] = false;
+        }
+        if (!("nodes" in $$source)) {
+            this["nodes"] = [];
+        }
+        if (!("durationMs" in $$source)) {
+            this["durationMs"] = 0;
+        }
+        if (!("raw" in $$source)) {
+            this["raw"] = "";
+        }
+
+        Object.assign(this, $$source);
+    }
+
+    /**
+     * Creates a new QueryPlan instance from a string or object.
+     */
+    static createFrom($$source: any = {}): QueryPlan {
+        const $$createField4_0 = $$createType4;
+        const $$createField9_0 = $$createType5;
+        let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
+        if ("nodes" in $$parsedSource) {
+            $$parsedSource["nodes"] = $$createField4_0($$parsedSource["nodes"]);
+        }
+        if ("notes" in $$parsedSource) {
+            $$parsedSource["notes"] = $$createField9_0($$parsedSource["notes"]);
+        }
+        return new QueryPlan($$parsedSource as Partial<QueryPlan>);
+    }
+}
+
 export class QueryResult {
     "columns": string[];
     "columnTypes": string[];
@@ -241,10 +372,10 @@ export class QueryResult {
      * Creates a new QueryResult instance from a string or object.
      */
     static createFrom($$source: any = {}): QueryResult {
-        const $$createField0_0 = $$createType1;
-        const $$createField1_0 = $$createType1;
-        const $$createField2_0 = $$createType3;
-        const $$createField7_0 = $$createType1;
+        const $$createField0_0 = $$createType5;
+        const $$createField1_0 = $$createType5;
+        const $$createField2_0 = $$createType7;
+        const $$createField7_0 = $$createType5;
         let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
         if ("columns" in $$parsedSource) {
             $$parsedSource["columns"] = $$createField0_0($$parsedSource["columns"]);
@@ -286,7 +417,7 @@ export class RowDelete {
      * Creates a new RowDelete instance from a string or object.
      */
     static createFrom($$source: any = {}): RowDelete {
-        const $$createField2_0 = $$createType5;
+        const $$createField2_0 = $$createType9;
         let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
         if ("primaryKeys" in $$parsedSource) {
             $$parsedSource["primaryKeys"] = $$createField2_0($$parsedSource["primaryKeys"]);
@@ -323,8 +454,8 @@ export class RowUpdate {
      * Creates a new RowUpdate instance from a string or object.
      */
     static createFrom($$source: any = {}): RowUpdate {
-        const $$createField2_0 = $$createType4;
-        const $$createField3_0 = $$createType4;
+        const $$createField2_0 = $$createType8;
+        const $$createField3_0 = $$createType8;
         let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
         if ("primaryKey" in $$parsedSource) {
             $$parsedSource["primaryKey"] = $$createField2_0($$parsedSource["primaryKey"]);
@@ -444,9 +575,9 @@ export class SchemaBundle {
      * Creates a new SchemaBundle instance from a string or object.
      */
     static createFrom($$source: any = {}): SchemaBundle {
-        const $$createField0_0 = $$createType6;
-        const $$createField1_0 = $$createType8;
-        const $$createField2_0 = $$createType10;
+        const $$createField0_0 = $$createType10;
+        const $$createField1_0 = $$createType12;
+        const $$createField2_0 = $$createType14;
         let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
         if ("status" in $$parsedSource) {
             $$parsedSource["status"] = $$createField0_0($$parsedSource["status"]);
@@ -502,7 +633,7 @@ export class SchemaTables {
      * Creates a new SchemaTables instance from a string or object.
      */
     static createFrom($$source: any = {}): SchemaTables {
-        const $$createField1_0 = $$createType12;
+        const $$createField1_0 = $$createType16;
         let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
         if ("tables" in $$parsedSource) {
             $$parsedSource["tables"] = $$createField1_0($$parsedSource["tables"]);
@@ -578,15 +709,19 @@ export class TableInfo {
 
 // Private type creation functions
 const $$createType0 = SSHConfig.createFrom;
-const $$createType1 = $Create.Array($Create.Any);
-const $$createType2 = $Create.Array($Create.Any);
-const $$createType3 = $Create.Array($$createType2);
-const $$createType4 = $Create.Map($Create.Any, $Create.Any);
-const $$createType5 = $Create.Array($$createType4);
-const $$createType6 = ConnectionStatus.createFrom;
-const $$createType7 = SchemaInfo.createFrom;
-const $$createType8 = $Create.Array($$createType7);
-const $$createType9 = SchemaTables.createFrom;
-const $$createType10 = $Create.Array($$createType9);
-const $$createType11 = TableInfo.createFrom;
+const $$createType1 = PlanField.createFrom;
+const $$createType2 = $Create.Array($$createType1);
+const $$createType3 = PlanNode.createFrom;
+const $$createType4 = $Create.Array($$createType3);
+const $$createType5 = $Create.Array($Create.Any);
+const $$createType6 = $Create.Array($Create.Any);
+const $$createType7 = $Create.Array($$createType6);
+const $$createType8 = $Create.Map($Create.Any, $Create.Any);
+const $$createType9 = $Create.Array($$createType8);
+const $$createType10 = ConnectionStatus.createFrom;
+const $$createType11 = SchemaInfo.createFrom;
 const $$createType12 = $Create.Array($$createType11);
+const $$createType13 = SchemaTables.createFrom;
+const $$createType14 = $Create.Array($$createType13);
+const $$createType15 = TableInfo.createFrom;
+const $$createType16 = $Create.Array($$createType15);

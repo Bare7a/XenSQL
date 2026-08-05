@@ -21,6 +21,7 @@ interface EditorPaneProps {
   loadColumnsForConnection: (connectionId: string) => (schema: string, table: string) => Promise<ColumnInfo[]>;
   onChangeSql: (tabId: string, sql: string) => void;
   onRun: (tabId: string, sql: string) => void;
+  onExplain: (tabId: string, sql: string, analyze: boolean) => void;
   onCancel: (tabId: string) => void;
   onSaveQuery: () => void;
   onRenameSavedQuery: () => void;
@@ -46,6 +47,7 @@ interface EditorPaneTabProps {
   loadColumnsForConnection: EditorPaneProps['loadColumnsForConnection'];
   onChangeSql: EditorPaneProps['onChangeSql'];
   onRun: EditorPaneProps['onRun'];
+  onExplain: EditorPaneProps['onExplain'];
   onCancel: EditorPaneProps['onCancel'];
   onSaveQuery: EditorPaneProps['onSaveQuery'];
   onRenameSavedQuery: EditorPaneProps['onRenameSavedQuery'];
@@ -69,6 +71,7 @@ const EditorPaneTab = memo(function EditorPaneTab({
   loadColumnsForConnection,
   onChangeSql,
   onRun,
+  onExplain,
   onCancel,
   onSaveQuery,
   onRenameSavedQuery,
@@ -84,6 +87,10 @@ const EditorPaneTab = memo(function EditorPaneTab({
 
   const handleChange = useCallback((sql: string) => onChangeSql(tabId, sql), [onChangeSql, tabId]);
   const handleRun = useCallback((sql: string) => onRun(tabId, sql), [onRun, tabId]);
+  const handleExplain = useCallback(
+    (sql: string, analyze: boolean) => onExplain(tabId, sql, analyze),
+    [onExplain, tabId],
+  );
   const handleCancel = useCallback(() => onCancel(tabId), [onCancel, tabId]);
   const handleCursorStateChange = useCallback(
     (cursor: EditorCursorState) => onCursorStateChange(tabId, cursor),
@@ -106,6 +113,7 @@ const EditorPaneTab = memo(function EditorPaneTab({
         color={tab.color}
         onChange={handleChange}
         onRun={handleRun}
+        onExplain={handleExplain}
         isQueryRunning={isQueryRunning}
         onCancelQuery={handleCancel}
         savedQueryId={tab.savedQueryId}
@@ -134,6 +142,7 @@ export const EditorPane = memo(function EditorPane({
   loadColumnsForConnection,
   onChangeSql,
   onRun,
+  onExplain,
   onCancel,
   onSaveQuery,
   onRenameSavedQuery,
@@ -161,6 +170,7 @@ export const EditorPane = memo(function EditorPane({
             loadColumnsForConnection={loadColumnsForConnection}
             onChangeSql={onChangeSql}
             onRun={onRun}
+            onExplain={onExplain}
             onCancel={onCancel}
             onSaveQuery={onSaveQuery}
             onRenameSavedQuery={onRenameSavedQuery}

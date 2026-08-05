@@ -1,0 +1,429 @@
+/* Query plan viewer: heat-mapped plan tree, node details, raw engine output. */
+
+.result-tab-icon {
+  flex-shrink: 0;
+  opacity: 0.75;
+}
+
+.plan-view {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--bg-panel);
+}
+
+.plan-toolbar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  flex-shrink: 0;
+  padding: var(--space-4) var(--space-8);
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-panel);
+  overflow: hidden;
+}
+
+.plan-toolbar-spacer {
+  flex: 1;
+  min-width: var(--space-4);
+}
+
+.plan-badge {
+  flex-shrink: 0;
+  padding: var(--space-2) var(--space-7);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  font-size: var(--text-2xs);
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.plan-badge-analyzed {
+  color: var(--success);
+  border-color: color-mix(in srgb, var(--success) 45%, transparent);
+  background: color-mix(in srgb, var(--success) 12%, transparent);
+}
+
+.plan-summary {
+  display: flex;
+  align-items: center;
+  gap: var(--space-12);
+  min-width: 0;
+  overflow: hidden;
+}
+
+.plan-stat {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-4);
+  font-size: var(--text-sm);
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+  white-space: nowrap;
+}
+
+.plan-stat-label {
+  color: var(--text-muted);
+  font-size: var(--text-xs);
+}
+
+.plan-metric-switch {
+  display: flex;
+  flex-shrink: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.plan-metric-btn {
+  padding: var(--space-3) var(--space-8);
+  border: none;
+  border-right: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-muted);
+  font-size: var(--text-xs);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.plan-metric-btn:last-child {
+  border-right: none;
+}
+
+.plan-metric-btn:hover {
+  color: var(--text);
+  background: var(--bg-hover);
+}
+
+.plan-metric-btn.active {
+  color: var(--on-accent);
+  background: var(--accent);
+}
+
+.plan-icon-btn {
+  flex-shrink: 0;
+  padding: var(--space-4) var(--space-6);
+}
+
+.plan-icon-btn.active {
+  color: var(--accent);
+  border-color: var(--accent-dim);
+}
+
+.plan-notes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-6);
+  flex-shrink: 0;
+  padding: var(--space-5) var(--space-10);
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-base);
+}
+
+.plan-note {
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+}
+
+.plan-note::before {
+  content: "•";
+  margin-right: var(--space-5);
+  color: var(--warning);
+}
+
+.plan-body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.plan-tree-scroll {
+  flex: 1;
+  min-width: 0;
+  overflow: auto;
+  scrollbar-width: thin;
+}
+
+.plan-tree {
+  min-width: min-content;
+  font-size: var(--text-sm);
+}
+
+/* The tree supplies the template, dropping columns the engine reported nothing for. */
+.plan-head,
+.plan-row {
+  display: grid;
+  grid-template-columns: var(--plan-cols, minmax(18rem, 1fr) 10rem 10rem 10rem);
+  align-items: stretch;
+}
+
+.plan-head {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-panel);
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  user-select: none;
+}
+
+.plan-head-node {
+  padding: var(--space-5) var(--space-8);
+}
+
+.plan-head-metric {
+  padding: var(--space-5) var(--space-8);
+  text-align: right;
+}
+
+.plan-row {
+  position: relative;
+  border-bottom: 1px solid color-mix(in srgb, var(--border) 45%, transparent);
+}
+
+.plan-row:hover {
+  background: var(--bg-hover);
+}
+
+.plan-row-selected {
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+}
+
+.plan-row-selected:hover {
+  background: color-mix(in srgb, var(--accent) 20%, transparent);
+}
+
+/* Width and intensity both track --plan-heat, so cheap nodes stay quiet. */
+.plan-heat {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: 0;
+  width: calc(var(--plan-heat, 0) * 100%);
+  background: var(--danger);
+  opacity: calc(var(--plan-heat, 0) * 0.28);
+  pointer-events: none;
+}
+
+.plan-row-hottest {
+  box-shadow: inset var(--space-2) 0 0 var(--danger);
+}
+
+.plan-row-never .plan-node-label {
+  color: var(--text-muted);
+}
+
+.plan-row-main {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+  padding: 0 var(--space-8) 0 var(--space-4);
+}
+
+.plan-twisty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: var(--space-16);
+  height: var(--space-16);
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-xs);
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.plan-twisty:hover {
+  color: var(--text);
+  background: var(--bg-elevated);
+}
+
+.plan-twisty-spacer {
+  flex-shrink: 0;
+  width: var(--space-16);
+}
+
+.plan-node-btn {
+  display: flex;
+  align-items: center;
+  gap: var(--space-6);
+  flex: 1;
+  min-width: 0;
+  padding: var(--space-5) var(--space-4);
+  border: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.plan-node-label {
+  flex-shrink: 0;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.plan-node-relation,
+.plan-node-index {
+  flex-shrink: 0;
+  padding: 0 var(--space-5);
+  border-radius: var(--radius-xs);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+}
+
+.plan-node-relation {
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+}
+
+.plan-node-index {
+  color: var(--success);
+  background: color-mix(in srgb, var(--success) 14%, transparent);
+}
+
+.plan-node-detail {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+}
+
+.plan-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-shrink: 0;
+  padding: 0 var(--space-5);
+  border-radius: var(--radius-xs);
+  font-size: var(--text-2xs);
+  font-weight: 600;
+  color: var(--text-muted);
+  background: var(--bg-elevated);
+}
+
+.plan-chip-warn {
+  color: var(--warning);
+  background: color-mix(in srgb, var(--warning) 16%, transparent);
+}
+
+.plan-cell {
+  display: flex;
+  align-items: baseline;
+  justify-content: flex-end;
+  gap: var(--space-5);
+  min-width: 0;
+  padding: var(--space-5) var(--space-8);
+  overflow: hidden;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* Estimated rows next to measured, inclusive time next to own. */
+.plan-cell-sub {
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+}
+
+.plan-cell-sub::before {
+  content: "/";
+  margin-right: var(--space-3);
+}
+
+.plan-details {
+  flex: 0 0 21rem;
+  min-width: 0;
+  overflow: auto;
+  padding: var(--space-10);
+  border-left: 1px solid var(--border);
+  background: var(--bg-base);
+  scrollbar-width: thin;
+}
+
+.plan-details-head {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-6);
+  margin-bottom: var(--space-8);
+}
+
+.plan-details-title {
+  font-size: var(--text-md);
+  font-weight: 600;
+}
+
+.plan-details-detail {
+  margin-bottom: var(--space-10);
+  padding: var(--space-6);
+  border-radius: var(--radius-sm);
+  background: var(--bg-panel);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--text);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.plan-details-grid {
+  display: grid;
+  grid-template-columns: minmax(0, auto) minmax(0, 1fr);
+  gap: var(--space-3) var(--space-8);
+  margin: 0;
+  font-size: var(--text-xs);
+}
+
+.plan-details-entry {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: subgrid;
+}
+
+.plan-details-grid dt {
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.plan-details-grid dd {
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+.plan-details-fields {
+  margin-top: var(--space-10);
+  padding-top: var(--space-10);
+  border-top: 1px solid var(--border);
+}
+
+.plan-details-fields dd {
+  font-family: var(--font-mono);
+}
+
+.plan-raw {
+  flex: 1;
+  min-height: 0;
+  margin: 0;
+  padding: var(--space-10);
+  overflow: auto;
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  line-height: 1.5;
+  color: var(--text);
+  white-space: pre;
+  scrollbar-width: thin;
+}

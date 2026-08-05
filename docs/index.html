@@ -166,7 +166,7 @@
         </div>
         <div class="feature-card">
           <h3>📜 Multi-statement scripts</h3>
-          <p>Run several <code>;</code>-separated statements at once on a single connection - temp tables, <code>SET</code> and scripted transactions hold. Each result set gets its own tab.</p>
+          <p>Run several <code>;</code>-separated statements at once on a single connection - temp tables, <code>SET</code> and scripted transactions hold. Every output gets its own tab, query plans included.</p>
         </div>
         <div class="feature-card">
           <h3>📌 Pinned transactions</h3>
@@ -175,6 +175,14 @@
         <div class="feature-card">
           <h3>🌊 Streaming results</h3>
           <p>Rows render as the driver yields them, in a virtualized grid that scrolls smoothly over thousands of rows. Stop long-running queries with one click.</p>
+        </div>
+        <div class="feature-card">
+          <h3>🧭 Query plan viewer</h3>
+          <p>See why a query is slow, in one tree whatever the engine. Each node's bar is its own share of the time, cost or rows, so the expensive step is the one you see first - and a row count 10x off the planner's guess is flagged where the missing index hides.</p>
+        </div>
+        <div class="feature-card">
+          <h3>📊 Estimated or measured</h3>
+          <p><code>Ctrl+Shift+E</code> plans without running. <code>Ctrl+Shift+A</code> executes the statement for real rows and timings - and rolls a write back so nothing lands. Type <code>EXPLAIN</code> yourself and Run opens the same viewer instead of a table of raw output.</p>
         </div>
         <div class="feature-card">
           <h3>🗃️ Schema Explorer</h3>
