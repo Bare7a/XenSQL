@@ -1,61 +1,10 @@
 /* Import dialog: file picker, parse options and the column mapping table. */
 
-.import-body {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-8);
-}
-
-.import-file-row {
-  display: flex;
-  gap: var(--space-6);
-  align-items: center;
-}
-
-.import-file-row input {
-  flex: 1;
-  min-width: 0;
-}
-
-.import-file-row .btn {
-  flex-shrink: 0;
-}
-
-.import-options {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: var(--space-8);
-}
-
-.import-checks {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-12);
-}
-
-.import-checks label,
-.import-inline-check {
+.import-note {
   display: flex;
   align-items: center;
   gap: var(--space-5);
-  font-size: var(--text-sm);
-  cursor: pointer;
-}
-
-.import-inline-check {
-  margin-top: var(--space-5);
-}
-
-.import-note,
-.import-error {
-  display: flex;
-  align-items: center;
-  gap: var(--space-5);
-  font-size: var(--text-sm);
-}
-
-.import-error {
-  color: var(--danger);
+  margin: 0;
 }
 
 .import-preview {
@@ -75,13 +24,18 @@
   font-size: var(--text-sm);
 }
 
+.import-map-scroll {
+  max-height: 21.5rem;
+  overflow: auto;
+}
+
+/* Fixed layout so the columns split the dialog evenly in every language
+   instead of hugging the widest source name. */
 .import-map-table {
   width: 100%;
+  table-layout: fixed;
   border-collapse: collapse;
   font-size: var(--text-sm);
-  display: block;
-  max-height: 280px;
-  overflow: auto;
 }
 
 .import-map-table th,
@@ -116,10 +70,11 @@
 .import-source-name {
   font-family: var(--font-mono);
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .import-sample {
-  max-width: 160px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;

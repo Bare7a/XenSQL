@@ -173,6 +173,7 @@
 .sidebar-toggle-group .btn {
   flex: 1;
   justify-content: center;
+  white-space: nowrap;
 }
 
 .sidebar-toggle-group .btn.active {

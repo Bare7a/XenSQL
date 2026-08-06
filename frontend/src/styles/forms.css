@@ -1,7 +1,9 @@
 /* Form controls: form-group, checkbox, color picker. */
 
+/* Indented to line up with the label text rather than the box. */
 .form-group-checkbox .form-hint {
   margin: var(--space-6) 0 0;
+  padding-left: calc(var(--space-18) + var(--space-8));
 }
 
 .form-group .checkbox-label {
@@ -85,6 +87,35 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: var(--space-10);
+}
+
+/* Fields split the row evenly, and one whose label needs more than its share
+   moves to the next line instead of wrapping mid-phrase - the widths follow the
+   translation rather than a fixed column count. */
+.form-row-fluid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-10);
+}
+
+.form-row-fluid > .form-group {
+  flex: 1 1 0;
+}
+
+/* Keeps a checkbox label on one line, so the whole field wraps instead. */
+.form-row-fluid .checkbox-text {
+  min-width: max-content;
+}
+
+/* Same for a dropdown: its width:100% would otherwise let the row shrink it
+   until the longest option is cut off. */
+.form-row-fluid select {
+  min-width: max-content;
+}
+
+/* Text fields have no such floor: they shrink to share the row. */
+.form-row-fluid input:not([type="checkbox"]) {
+  min-width: 0;
 }
 
 /* Groups related fields under a divider. */

@@ -692,7 +692,7 @@
     "existingTable": "Table",
     "truncate": "Delete existing rows first",
     "noTables": "This schema has no tables yet",
-    "stopOnError": "Stop at the first error (otherwise bad rows are skipped)",
+    "stopOnError": "Stop at the first error",
     "reading": "Reading the file",
     "columnsHeading": "Columns",
     "detectedDelimiter": "Delimiter: {{delimiter}}",
@@ -718,6 +718,8 @@
       "bool": "Boolean",
       "date": "Date",
       "timestamp": "Timestamp"
-    }
+    },
+    "newTableHint": "Created with the column types below. Every column is nullable.",
+    "truncateHint": "Runs before the import and cannot be undone."
   }
 }

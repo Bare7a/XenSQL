@@ -147,6 +147,20 @@ export function ImportDialog({ connectionId, schema, tables, initialTable, onClo
     onClose();
   };
 
+  const stopOnErrorCheck = (
+    <div className="form-group form-group-checkbox">
+      <label className="checkbox-label">
+        <input
+          type="checkbox"
+          checked={stopOnError}
+          onChange={(e) => setStopOnError(e.target.checked)}
+          disabled={running}
+        />
+        <span className="checkbox-text">{t('import.stopOnError')}</span>
+      </label>
+    </div>
+  );
+
   const setMappingAt = (i: number, value: string) =>
     setMapping((prev) => prev.map((m, idx) => (idx === i ? value : m)));
   const setTypeAt = (i: number, value: ImportColumnType) =>
@@ -154,114 +168,41 @@ export function ImportDialog({ connectionId, schema, tables, initialTable, onClo
 
   return (
     <Modal title={t('import.title')} onClose={dismiss} size="lg">
-      <div className="modal-body import-body">
-        <div className="form-group">
-          <label htmlFor="import-kind-group">{t('import.kind')}</label>
-          <div className="sidebar-toggle-group" id="import-kind-group" role="group" aria-label={t('import.kind')}>
-            <button
-              type="button"
-              className={cx('btn btn-sm', kind === 'csv' && 'active')}
-              onClick={() => {
-                setKind('csv');
-                setPath('');
-                setPreview(null);
-                reset();
-              }}
-              disabled={running}
-            >
-              <FileSpreadsheet className="icon-xs" /> {t('import.kindCSV')}
-            </button>
-            <button
-              type="button"
-              className={cx('btn btn-sm', kind === 'sql' && 'active')}
-              onClick={() => {
-                setKind('sql');
-                setPath('');
-                setPreview(null);
-                reset();
-              }}
-              disabled={running}
-            >
-              <FileText className="icon-xs" /> {t('import.kindSQL')}
-            </button>
-          </div>
-        </div>
-
-        <div className="form-group">
-          <label htmlFor="import-path">{t('import.file')}</label>
-          <div className="import-file-row">
-            <input id="import-path" type="text" value={path} readOnly placeholder={t('import.noFile')} />
-            <button type="button" className="btn btn-sm" onClick={() => void pickFile()} disabled={running}>
-              <FolderOpen className="icon-xs" /> {t('common.browse')}
-            </button>
-          </div>
-        </div>
-
-        {kind === 'csv' && (
-          <>
-            <div className="import-options">
-              <div className="form-group">
-                <label htmlFor="import-delimiter">{t('import.delimiter')}</label>
-                <select
-                  id="import-delimiter"
-                  value={delimiter}
-                  onChange={(e) => setDelimiter(e.target.value)}
-                  disabled={running}
-                >
-                  {DELIMITERS.map((d) => (
-                    <option key={d.value || 'auto'} value={d.value}>
-                      {t(d.labelKey)}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="form-group">
-                <label htmlFor="import-null">{t('import.nullLiteral')}</label>
-                <input
-                  id="import-null"
-                  type="text"
-                  value={nullLiteral}
-                  placeholder={t('import.nullPlaceholder')}
-                  onChange={(e) => setNullLiteral(e.target.value)}
-                  disabled={running}
-                />
-              </div>
-              <div className="form-group">
-                <label htmlFor="import-skip">{t('import.skipRows')}</label>
-                <input
-                  id="import-skip"
-                  type="number"
-                  min={0}
-                  value={skipRows}
-                  onChange={(e) => setSkipRows(Math.max(0, Number(e.target.value) || 0))}
-                  disabled={running}
-                />
-              </div>
+      <div className="modal-body">
+        <div className={cx(kind === 'csv' && 'form-row-fluid')}>
+          <div className="form-group">
+            <label htmlFor="import-kind-group">{t('import.kind')}</label>
+            <div className="sidebar-toggle-group" id="import-kind-group" role="group" aria-label={t('import.kind')}>
+              <button
+                type="button"
+                className={cx('btn btn-sm', kind === 'csv' && 'active')}
+                onClick={() => {
+                  setKind('csv');
+                  setPath('');
+                  setPreview(null);
+                  reset();
+                }}
+                disabled={running}
+              >
+                <FileSpreadsheet className="icon-xs" /> {t('import.kindCSV')}
+              </button>
+              <button
+                type="button"
+                className={cx('btn btn-sm', kind === 'sql' && 'active')}
+                onClick={() => {
+                  setKind('sql');
+                  setPath('');
+                  setPreview(null);
+                  reset();
+                }}
+                disabled={running}
+              >
+                <FileText className="icon-xs" /> {t('import.kindSQL')}
+              </button>
             </div>
+          </div>
 
-            <div className="import-checks">
-              <label htmlFor="import-header">
-                <input
-                  id="import-header"
-                  type="checkbox"
-                  checked={hasHeader}
-                  onChange={(e) => setHasHeader(e.target.checked)}
-                  disabled={running}
-                />
-                {t('import.hasHeader')}
-              </label>
-              <label htmlFor="import-trim">
-                <input
-                  id="import-trim"
-                  type="checkbox"
-                  checked={trimSpace}
-                  onChange={(e) => setTrimSpace(e.target.checked)}
-                  disabled={running}
-                />
-                {t('import.trimSpace')}
-              </label>
-            </div>
-
+          {kind === 'csv' && (
             <div className="form-group">
               <label htmlFor="import-target-group">{t('import.target')}</label>
               <div
@@ -289,7 +230,21 @@ export function ImportDialog({ connectionId, schema, tables, initialTable, onClo
                 </button>
               </div>
             </div>
+          )}
+        </div>
 
+        <div className="form-group">
+          <label htmlFor="import-path">{t('import.file')}</label>
+          <div className="form-file-row">
+            <input id="import-path" type="text" value={path} readOnly placeholder={t('import.noFile')} />
+            <button type="button" className="btn" onClick={() => void pickFile()} disabled={running}>
+              <FolderOpen className="icon-xs" /> {t('common.browse')}
+            </button>
+          </div>
+        </div>
+
+        {kind === 'csv' && (
+          <>
             {target === 'new' ? (
               <div className="form-group">
                 <label htmlFor="import-newtable">{t('import.newTableName')}</label>
@@ -300,44 +255,117 @@ export function ImportDialog({ connectionId, schema, tables, initialTable, onClo
                   onChange={(e) => setNewTable(e.target.value)}
                   disabled={running}
                 />
+                <p className="form-hint">{t('import.newTableHint')}</p>
               </div>
             ) : (
-              <div className="form-group">
-                <label htmlFor="import-table">{t('import.existingTable')}</label>
-                <select
-                  id="import-table"
-                  value={existingTable}
-                  onChange={(e) => setExistingTable(e.target.value)}
-                  disabled={running}
-                >
-                  {tables.map((tbl) => (
-                    <option key={tbl.name} value={tbl.name}>
-                      {tbl.name}
-                    </option>
-                  ))}
-                </select>
-                <label htmlFor="import-truncate" className="import-inline-check">
-                  <input
-                    id="import-truncate"
-                    type="checkbox"
-                    checked={truncate}
-                    onChange={(e) => setTruncate(e.target.checked)}
+              <>
+                <div className="form-group">
+                  <label htmlFor="import-table">{t('import.existingTable')}</label>
+                  <select
+                    id="import-table"
+                    value={existingTable}
+                    onChange={(e) => setExistingTable(e.target.value)}
                     disabled={running}
-                  />
-                  {t('import.truncate')}
-                </label>
-              </div>
+                  >
+                    {tables.map((tbl) => (
+                      <option key={tbl.name} value={tbl.name}>
+                        {tbl.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="form-group form-group-checkbox">
+                  <label className="checkbox-label">
+                    <input
+                      type="checkbox"
+                      checked={truncate}
+                      onChange={(e) => setTruncate(e.target.checked)}
+                      disabled={running}
+                    />
+                    <span className="checkbox-text">{t('import.truncate')}</span>
+                  </label>
+                  <p className="form-hint">{t('import.truncateHint')}</p>
+                </div>
+              </>
             )}
 
+            <div className="form-section">
+              <div className="form-row-fluid">
+                <div className="form-group">
+                  <label htmlFor="import-delimiter">{t('import.delimiter')}</label>
+                  <select
+                    id="import-delimiter"
+                    value={delimiter}
+                    onChange={(e) => setDelimiter(e.target.value)}
+                    disabled={running}
+                  >
+                    {DELIMITERS.map((d) => (
+                      <option key={d.value || 'auto'} value={d.value}>
+                        {t(d.labelKey)}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label htmlFor="import-skip">{t('import.skipRows')}</label>
+                  <input
+                    id="import-skip"
+                    type="number"
+                    min={0}
+                    value={skipRows}
+                    onChange={(e) => setSkipRows(Math.max(0, Number(e.target.value) || 0))}
+                    disabled={running}
+                  />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="import-null">{t('import.nullLiteral')}</label>
+                  <input
+                    id="import-null"
+                    type="text"
+                    value={nullLiteral}
+                    placeholder={t('import.nullPlaceholder')}
+                    onChange={(e) => setNullLiteral(e.target.value)}
+                    disabled={running}
+                  />
+                </div>
+              </div>
+
+              <div className="form-row-fluid">
+                <div className="form-group form-group-checkbox">
+                  <label className="checkbox-label">
+                    <input
+                      type="checkbox"
+                      checked={hasHeader}
+                      onChange={(e) => setHasHeader(e.target.checked)}
+                      disabled={running}
+                    />
+                    <span className="checkbox-text">{t('import.hasHeader')}</span>
+                  </label>
+                </div>
+                <div className="form-group form-group-checkbox">
+                  <label className="checkbox-label">
+                    <input
+                      type="checkbox"
+                      checked={trimSpace}
+                      onChange={(e) => setTrimSpace(e.target.checked)}
+                      disabled={running}
+                    />
+                    <span className="checkbox-text">{t('import.trimSpace')}</span>
+                  </label>
+                </div>
+                {stopOnErrorCheck}
+              </div>
+            </div>
+
             {previewing && (
-              <p className="text-muted import-note">
+              <p className="form-hint import-note">
                 <Loader2 className="icon-xs spin" /> {t('import.reading')}
               </p>
             )}
             {previewError && (
-              <p className="import-error" role="alert">
-                <CircleAlert className="icon-xs" /> {previewError}
-              </p>
+              <div className="form-alert form-alert--error" role="alert">
+                {previewError}
+              </div>
             )}
 
             {preview && !previewing && (
@@ -348,67 +376,58 @@ export function ImportDialog({ connectionId, schema, tables, initialTable, onClo
                     {t('import.detectedDelimiter', { delimiter: displayDelimiter(preview.delimiter) })}
                   </span>
                 </div>
-                <table className="import-map-table">
-                  <thead>
-                    <tr>
-                      <th>{t('import.sourceColumn')}</th>
-                      <th>{t('import.sample')}</th>
-                      <th>{t('import.targetColumn')}</th>
-                      {target === 'new' && <th>{t('import.columnType')}</th>}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {preview.columns.map((col, i) => (
-                      <tr key={col} className={cx(!mapping[i]?.trim() && 'import-row-skipped')}>
-                        <td className="import-source-name">{col}</td>
-                        <td className="import-sample">{preview.rows[0]?.[i] ?? ''}</td>
-                        <td>
-                          <input
-                            type="text"
-                            value={mapping[i] ?? ''}
-                            placeholder={t('import.skipColumn')}
-                            aria-label={t('import.targetColumnFor', { name: col })}
-                            onChange={(e) => setMappingAt(i, e.target.value)}
-                            disabled={running}
-                          />
-                        </td>
-                        {target === 'new' && (
-                          <td>
-                            <select
-                              value={columnTypes[i] ?? 'text'}
-                              aria-label={t('import.columnTypeFor', { name: col })}
-                              onChange={(e) => setTypeAt(i, e.target.value as ImportColumnType)}
-                              disabled={running}
-                            >
-                              {IMPORT_COLUMN_TYPES.map((ct) => (
-                                <option key={ct} value={ct}>
-                                  {t(`import.type.${ct}`)}
-                                </option>
-                              ))}
-                            </select>
-                          </td>
-                        )}
+                <div className="import-map-scroll">
+                  <table className="import-map-table">
+                    <thead>
+                      <tr>
+                        <th>{t('import.sourceColumn')}</th>
+                        <th>{t('import.sample')}</th>
+                        <th>{t('import.targetColumn')}</th>
+                        {target === 'new' && <th>{t('import.columnType')}</th>}
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody>
+                      {preview.columns.map((col, i) => (
+                        <tr key={col} className={cx(!mapping[i]?.trim() && 'import-row-skipped')}>
+                          <td className="import-source-name">{col}</td>
+                          <td className="import-sample">{preview.rows[0]?.[i] ?? ''}</td>
+                          <td>
+                            <input
+                              type="text"
+                              value={mapping[i] ?? ''}
+                              placeholder={t('import.skipColumn')}
+                              aria-label={t('import.targetColumnFor', { name: col })}
+                              onChange={(e) => setMappingAt(i, e.target.value)}
+                              disabled={running}
+                            />
+                          </td>
+                          {target === 'new' && (
+                            <td>
+                              <select
+                                value={columnTypes[i] ?? 'text'}
+                                aria-label={t('import.columnTypeFor', { name: col })}
+                                onChange={(e) => setTypeAt(i, e.target.value as ImportColumnType)}
+                                disabled={running}
+                              >
+                                {IMPORT_COLUMN_TYPES.map((ct) => (
+                                  <option key={ct} value={ct}>
+                                    {t(`import.type.${ct}`)}
+                                  </option>
+                                ))}
+                              </select>
+                            </td>
+                          )}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             )}
           </>
         )}
 
-        <div className="import-checks">
-          <label htmlFor="import-stop">
-            <input
-              id="import-stop"
-              type="checkbox"
-              checked={stopOnError}
-              onChange={(e) => setStopOnError(e.target.checked)}
-              disabled={running}
-            />
-            {t('import.stopOnError')}
-          </label>
-        </div>
+        {kind !== 'csv' && stopOnErrorCheck}
 
         {running && progress && (
           <div className="import-progress" aria-live="polite">
@@ -426,9 +445,9 @@ export function ImportDialog({ connectionId, schema, tables, initialTable, onClo
         )}
 
         {error && (
-          <p className="import-error" role="alert">
-            <CircleAlert className="icon-xs" /> {error}
-          </p>
+          <div className="form-alert form-alert--error" role="alert">
+            {error}
+          </div>
         )}
 
         {result && (

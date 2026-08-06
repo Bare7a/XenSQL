@@ -692,7 +692,7 @@
     "existingTable": "Tabelle",
     "truncate": "Vorhandene Zeilen zuerst löschen",
     "noTables": "Dieses Schema hat noch keine Tabellen",
-    "stopOnError": "Beim ersten Fehler anhalten (sonst werden fehlerhafte Zeilen übersprungen)",
+    "stopOnError": "Beim ersten Fehler anhalten",
     "reading": "Datei wird gelesen",
     "columnsHeading": "Spalten",
     "detectedDelimiter": "Trennzeichen: {{delimiter}}",
@@ -718,6 +718,8 @@
       "bool": "Boolesch",
       "date": "Datum",
       "timestamp": "Zeitstempel"
-    }
+    },
+    "newTableHint": "Wird mit den Spaltentypen unten angelegt. Alle Spalten sind nullable.",
+    "truncateHint": "Läuft vor dem Import und kann nicht rückgängig gemacht werden."
   }
 }
