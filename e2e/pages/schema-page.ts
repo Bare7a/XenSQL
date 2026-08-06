@@ -104,14 +104,13 @@ export class SchemaPage {
     return this.page.locator(`[data-testid="schema-group-${group}-row"][data-object="${name}"]`);
   }
 
-async expandGroup(table: string, group: SchemaObjectGroup): Promise<void> {
+  async expandGroup(table: string, group: SchemaObjectGroup): Promise<void> {
     const header = this.groupRow(group).first();
-
+    // expandColumns toggles, so expanding a second group would collapse the table again.
     if (!(await header.isVisible().catch(() => false))) {
       await this.expandColumns(table);
       await header.waitFor({ state: 'visible' });
     }
-
     await header.click();
     await expect(this.groupRows(group).first().or(this.page.locator('.tree-children .text-muted').first())).toBeVisible(
       { timeout: 30_000 },
