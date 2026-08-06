@@ -258,7 +258,9 @@ test.describe('README screenshots', () => {
     await ensureUsersExpanded(schema);
     await jsonViewer.open();
     await applyDemoPanelWidths(page);
-    await applyDemoZoom(page);
+
+    // Intentionally Disabled
+    // await applyDemoZoom(page);
 
     // Sanity: tab colors / order
     await expect(page.locator('.editor-tab').nth(0).locator('.tab-title')).toHaveText('Query 1 - Postgres');
@@ -439,8 +441,7 @@ test.describe('README screenshots', () => {
     if ((await themeSwitch.getAttribute('aria-checked')) === 'true') {
       await themeSwitch.click();
     }
-    // Already at 108% from applyDemoZoom — show that value in the View menu.
-    await expect(page.getByText('108%', { exact: true })).toBeVisible();
+
     await capture(page, '9.png');
   });
 });
