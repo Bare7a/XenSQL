@@ -132,6 +132,15 @@ async function runPastedSql(page: Page, editor: { runAll: () => Promise<void> },
   await editor.runAll();
 }
 
+/** Demo settings: one UI Zoom step (default 100% → 108%). Leaves editor font size alone. */
+async function applyDemoZoom(page: Page): Promise<void> {
+  await openViewMenu(page);
+  await page.getByRole('button', { name: 'Zoom in', exact: true }).click();
+  await expect(page.getByText('108%', { exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'View', exact: true }).click();
+  await expect(page.getByRole('switch')).toBeHidden();
+}
+
 /** Demo settings.json: sidebar 364px, JSON viewer 410px (defaults are 280 / 320). */
 async function applyDemoPanelWidths(page: Page): Promise<void> {
   const SIDEBAR = 364;
@@ -166,9 +175,13 @@ async function applyDemoPanelWidths(page: Page): Promise<void> {
 
 /** expandColumns toggles — only click when columns are not already visible. */
 async function ensureUsersExpanded(schema: SchemaPage): Promise<void> {
-  if (await schema.columnRow('username').first().isVisible().catch(() => false)) return;
+  const username = schema.columnRow('username').first();
+  // SchemaPanel debounces search by 200ms. The input can be empty while the tree
+  // is still filtered — clicking then toggles an already-expanded table shut.
+  await schema.page.waitForTimeout(350);
+  if (await username.isVisible().catch(() => false)) return;
   await schema.expandColumns('users');
-  await expect(schema.columnRow('username').first()).toBeVisible();
+  await expect(username).toBeVisible();
 }
 
 /** Wait until Monaco has painted syntax tokens (avoids all-white JSON in the cell viewer). */
@@ -245,6 +258,7 @@ test.describe('README screenshots', () => {
     await ensureUsersExpanded(schema);
     await jsonViewer.open();
     await applyDemoPanelWidths(page);
+    await applyDemoZoom(page);
 
     // Sanity: tab colors / order
     await expect(page.locator('.editor-tab').nth(0).locator('.tab-title')).toHaveText('Query 1 - Postgres');
@@ -425,8 +439,8 @@ test.describe('README screenshots', () => {
     if ((await themeSwitch.getAttribute('aria-checked')) === 'true') {
       await themeSwitch.click();
     }
-    await page.getByRole('button', { name: 'Zoom in', exact: true }).click();
-    await expect(themeSwitch).toBeVisible();
+    // Already at 108% from applyDemoZoom — show that value in the View menu.
+    await expect(page.getByText('108%', { exact: true })).toBeVisible();
     await capture(page, '9.png');
   });
 });
