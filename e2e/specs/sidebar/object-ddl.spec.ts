@@ -19,7 +19,12 @@ test.describe('Object DDL and the deeper schema tree', () => {
     await expect(schema.objectRow('indexes', `${child}_pkey`)).toContainText('PK');
 
     await schema.expandGroup(child, 'constraints');
+
+    const pk = schema.objectRow('constraints', `${child}_pkey`);
+    await expect(pk).toContainText('PK');
+    await expect(pk).toContainText('(id)');
     await expect(schema.objectRow('constraints', `${child}_pkey`)).toContainText('PRIMARY KEY');
+
     const fk = schema.groupRows('constraints').filter({ hasText: 'FK' }).first();
     await expect(fk).toContainText(parent);
 
