@@ -15,7 +15,7 @@ type DDLColumn struct {
 	Collation string
 	// Identity is "ALWAYS" or "BY DEFAULT" on an identity column.
 	Identity string
-	// Generated is the expression of a stored generated column, which cannot also have a Default.
+	// Generated excludes Default; a generated column cannot have one.
 	Generated string
 }
 
@@ -42,7 +42,6 @@ func RenderColumn(driver DriverType, col DDLColumn) string {
 	return b.String()
 }
 
-// ComposeCreateTable takes already-rendered constraint clauses, e.g. `CONSTRAINT "pk" PRIMARY KEY ("id")`.
 func ComposeCreateTable(driver DriverType, schema, table string, cols []DDLColumn, tableConstraints []string) string {
 	lines := make([]string, 0, len(cols)+len(tableConstraints))
 	for _, col := range cols {

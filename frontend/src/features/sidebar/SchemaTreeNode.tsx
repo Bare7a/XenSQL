@@ -1,16 +1,19 @@
-import { ChevronDown, ChevronRight, FolderOpen, FunctionSquare, Loader2 } from 'lucide-react';
+import { ChevronDown, ChevronRight, Loader2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { tableKey } from '@/features/sidebar/hooks/useSchemaTree';
 import { routinesKey, type SchemaObjectRow } from '@/features/sidebar/lib/schemaObjects';
 import { SchemaObjectGroupNode } from '@/features/sidebar/SchemaObjectGroupNode';
 import { SchemaTableRow } from '@/features/sidebar/SchemaTableRow';
 import { rowActivateKeyDown } from '@/shared/hooks/useListKeyboardNav';
+import { iconFor } from '@/shared/lib/objectIcon';
 import type { ColumnInfo, ObjectKind, SchemaInfo, SchemaObjectGroup, TableInfo } from '@/types';
 
 // Stable ref so tables without loaded columns keep equal props (a fresh [] would defeat memo).
 const EMPTY_COLS: ColumnInfo[] = [];
 
-const ROUTINE_ICON = <FunctionSquare className="icon-xs icon" />;
+const SchemaIcon = iconFor('schema');
+const RoutineIcon = iconFor('function');
+const ROUTINE_ICON = <RoutineIcon className="icon-xs icon" />;
 
 interface SchemaTreeNodeProps {
   connId: string;
@@ -77,7 +80,7 @@ export function SchemaTreeNode({
         onKeyDown={rowActivateKeyDown}
       >
         {schemaExpanded ? <ChevronDown className="icon-sm" /> : <ChevronRight className="icon-sm" />}
-        <FolderOpen className="icon-sm icon" />
+        <SchemaIcon className="icon-sm icon" />
         <span className="tree-label">{sch.name}</span>
         {allTables.length > 0 && (
           <span className="ui-text-2xs text-muted">
@@ -124,7 +127,6 @@ export function SchemaTreeNode({
               );
             })}
 
-          {/* Hidden during a search, which is a table/column hunt. */}
           {!tablesLoading && !schemaSearch && (
             <SchemaObjectGroupNode
               label={t('sidebar.group.routines')}

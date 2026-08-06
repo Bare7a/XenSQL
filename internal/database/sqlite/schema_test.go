@@ -100,7 +100,6 @@ func TestListConstraints(t *testing.T) {
 	}
 }
 
-// A composite key spans several PRAGMA rows sharing one id and must collapse to one constraint.
 func TestListConstraintsGroupsCompositeForeignKey(t *testing.T) {
 	s := newTestSession(t)
 	ctx := context.Background()

@@ -63,7 +63,6 @@ export interface SchemaInfo {
   name: string;
 }
 
-// See database.ObjectKind.
 export type ObjectKind =
   | 'table'
   | 'view'
@@ -79,7 +78,6 @@ export interface IndexInfo {
   schema: string;
   table: string;
   columns: string[];
-  /** The index backing a primary key, which has no standalone DDL. */
   isPrimary: boolean;
   isUnique: boolean;
   method?: string;
@@ -110,11 +108,10 @@ export interface RoutineInfo {
   schema: string;
   kind: ObjectKind;
   returnType?: string;
-  /** Argument list without parentheses; disambiguates overloads. */
   args?: string;
 }
 
-// See database.ObjectRef. `table` names the parent relation for index/constraint/trigger kinds.
+// `table` is set for index / constraint / trigger kinds only.
 export interface ObjectRef {
   schema: string;
   name: string;

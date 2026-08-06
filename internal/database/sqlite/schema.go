@@ -65,7 +65,6 @@ func (s *Session) indexList(ctx context.Context, table string) ([]sqliteIndexEnt
 	return out, rows.Err()
 }
 
-// indexColumns skips expression parts, whose name PRAGMA index_info reports as NULL.
 func (s *Session) indexColumns(ctx context.Context, index string) ([]string, error) {
 	rows, err := s.DB.QueryContext(ctx,
 		fmt.Sprintf("PRAGMA index_info(%s)", database.QuoteIdent(database.DriverSQLite, index)))
@@ -87,7 +86,7 @@ func (s *Session) indexColumns(ctx context.Context, index string) ([]string, err
 	return cols, rows.Err()
 }
 
-// ListConstraints reads the pragmas; CHECK has none, so it appears only in the table's own DDL.
+// CHECK has no pragma, so it appears only in the table's own DDL.
 func (s *Session) ListConstraints(ctx context.Context, schema, table string) ([]database.ConstraintInfo, error) {
 	cols, err := s.ListColumns(ctx, schema, table)
 	if err != nil {
@@ -124,7 +123,6 @@ func (s *Session) ListConstraints(ctx context.Context, schema, table string) ([]
 	return append(out, fks...), nil
 }
 
-// foreignKeyConstraints groups rows by id, so a composite key is one constraint.
 func (s *Session) foreignKeyConstraints(ctx context.Context, table string) ([]database.ConstraintInfo, error) {
 	rows, err := s.DB.QueryContext(ctx,
 		fmt.Sprintf("PRAGMA foreign_key_list(%s)", database.QuoteIdent(database.DriverSQLite, table)))
@@ -188,7 +186,6 @@ func (s *Session) ListTriggers(ctx context.Context, schema, table string) ([]dat
 	return out, rows.Err()
 }
 
-// sqliteTriggerHead captures the text between the trigger name and ON, where the keywords live.
 var sqliteTriggerHead = regexp.MustCompile(`(?is)\bCREATE\s+(?:TEMP(?:ORARY)?\s+)?TRIGGER\s+(?:IF\s+NOT\s+EXISTS\s+)?(.*?)\s+ON\s`)
 
 // parseTriggerHead reads timing and event from a stored CREATE TRIGGER; SQLite defaults to BEFORE.
@@ -229,7 +226,7 @@ func (s *Session) ObjectDDL(ctx context.Context, ref database.ObjectRef) (string
 	return "", database.ErrUnsupportedDDL(database.DriverSQLite, ref.Kind)
 }
 
-// relationDDL appends the table's standalone indexes, which SQLite stores as separate statements.
+// SQLite stores standalone indexes as separate statements.
 func (s *Session) relationDDL(ctx context.Context, ref database.ObjectRef) (string, error) {
 	base, err := s.masterDDL(ctx, string(ref.Kind), ref.Name)
 	if err != nil {
@@ -260,7 +257,7 @@ func (s *Session) relationDDL(ctx context.Context, ref database.ObjectRef) (stri
 	return database.JoinDDL(blocks...), nil
 }
 
-// indexDDL synthesizes a statement for implicit indexes, which sqlite_master stores with NULL sql.
+// Implicit indexes are stored with a NULL sql, so they are synthesized.
 func (s *Session) indexDDL(ctx context.Context, ref database.ObjectRef) (string, error) {
 	ddl, err := s.masterDDL(ctx, "index", ref.Name)
 	if err == nil && ddl != "" {
@@ -282,7 +279,7 @@ func (s *Session) indexDDL(ctx context.Context, ref database.ObjectRef) (string,
 	return "", err
 }
 
-// masterDDL reads an object's original statement text, empty when sql is NULL.
+// Empty, not an error, when sql is NULL.
 func (s *Session) masterDDL(ctx context.Context, objType, name string) (string, error) {
 	var ddl sql.NullString
 	err := s.DB.QueryRowContext(ctx,

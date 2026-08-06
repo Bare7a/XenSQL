@@ -11,7 +11,6 @@ import (
 
 func (s *Session) ListIndexes(ctx context.Context, schema, table string) ([]database.IndexInfo, error) {
 	schema = s.SchemaOr(schema)
-	// One row per index column rather than an aggregate, so nothing has to scan a Postgres array.
 	rows, err := s.DB.QueryContext(ctx, `
 		SELECT i.relname, ix.indisunique, ix.indisprimary, am.amname, a.attname
 		FROM pg_catalog.pg_index ix
@@ -32,7 +31,6 @@ func (s *Session) ListIndexes(ctx context.Context, schema, table string) ([]data
 	for rows.Next() {
 		var name, method string
 		var unique, primary bool
-		// NULL for an expression part, whose indkey entry is 0 and matches no attribute.
 		var column sql.NullString
 		if err := rows.Scan(&name, &unique, &primary, &method, &column); err != nil {
 			return nil, err
@@ -101,7 +99,6 @@ func (s *Session) ListConstraints(ctx context.Context, schema, table string) ([]
 	grouped := map[string]*database.ConstraintInfo{}
 	for rows.Next() {
 		var name, contype, def, refTable string
-		// NULL on a CHECK constraint, which references no key column.
 		var column, refColumn sql.NullString
 		if err := rows.Scan(&name, &contype, &def, &refTable, &column, &refColumn); err != nil {
 			return nil, err
@@ -295,7 +292,6 @@ func (s *Session) constraintDDL(ctx context.Context, schema string, ref database
 		strings.TrimSuffix(def, ";")), nil
 }
 
-// routineDDL matches on the identity argument list, resolving overloads.
 func (s *Session) routineDDL(ctx context.Context, schema string, ref database.ObjectRef) (string, error) {
 	return s.scalarDDL(ctx, `
 		SELECT pg_catalog.pg_get_functiondef(p.oid)
@@ -337,7 +333,7 @@ func (s *Session) tableDDL(ctx context.Context, schema, table string) (string, e
 		return "", err
 	}
 	for _, idx := range indexes {
-		// A constraint's backing index shares its name and is already covered by the clause above.
+		// Shares the constraint name; already covered by the clause above.
 		if constrained[idx.Name] {
 			continue
 		}
@@ -353,8 +349,20 @@ func (s *Session) tableDDL(ctx context.Context, schema, table string) (string, e
 	return database.JoinDDL(append(blocks, comments)...), nil
 }
 
+func serialTypeFor(dtype string) string {
+	switch dtype {
+	case "smallint":
+		return "smallserial"
+	case "integer":
+		return "serial"
+	case "bigint":
+		return "bigserial"
+	}
+	return ""
+}
+
 func (s *Session) ddlColumns(ctx context.Context, schema, table string) ([]database.DDLColumn, error) {
-	// The collation join drops the type's own default, so only an explicit override emits COLLATE.
+	// Only an explicit override emits COLLATE.
 	rows, err := s.DB.QueryContext(ctx, `
 		SELECT a.attname,
 			pg_catalog.format_type(a.atttypid, a.atttypmod),
@@ -362,7 +370,10 @@ func (s *Session) ddlColumns(ctx context.Context, schema, table string) ([]datab
 			COALESCE(pg_catalog.pg_get_expr(ad.adbin, ad.adrelid), ''),
 			a.attidentity,
 			a.attgenerated,
-			COALESCE(co.collname, '')
+			COALESCE(co.collname, ''),
+			pg_catalog.pg_get_serial_sequence(
+				pg_catalog.quote_ident(n.nspname) || '.' || pg_catalog.quote_ident(c.relname),
+				a.attname) IS NOT NULL
 		FROM pg_catalog.pg_attribute a
 		JOIN pg_catalog.pg_class c ON c.oid = a.attrelid
 		JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace
@@ -380,8 +391,8 @@ func (s *Session) ddlColumns(ctx context.Context, schema, table string) ([]datab
 	var cols []database.DDLColumn
 	for rows.Next() {
 		var name, dtype, defaultExpr, identity, generated, collation string
-		var notNull bool
-		if err := rows.Scan(&name, &dtype, &notNull, &defaultExpr, &identity, &generated, &collation); err != nil {
+		var notNull, isSerial bool
+		if err := rows.Scan(&name, &dtype, &notNull, &defaultExpr, &identity, &generated, &collation, &isSerial); err != nil {
 			return nil, err
 		}
 		col := database.DDLColumn{
@@ -389,12 +400,15 @@ func (s *Session) ddlColumns(ctx context.Context, schema, table string) ([]datab
 		}
 		switch {
 		case generated == "s":
-			// A stored generated column keeps its expression in pg_attrdef, not as a DEFAULT.
+			// Its expression lives in pg_attrdef, not as a DEFAULT.
 			col.Generated = defaultExpr
 		case identity == "a":
 			col.Identity = "ALWAYS"
 		case identity == "d":
 			col.Identity = "BY DEFAULT"
+		case isSerial && serialTypeFor(dtype) != "":
+			// The sequence is dropped with the table, so a nextval() default would not replay.
+			col.Type = serialTypeFor(dtype)
 		default:
 			col.Default = defaultExpr
 		}

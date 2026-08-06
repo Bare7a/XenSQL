@@ -82,7 +82,6 @@ export function SchemaPanel({ onOpenQuery, onBrowseTable, onOpenConnectionTab }:
     [t],
   );
 
-  // Null when the lookup fails, with the reason already surfaced; callers just stop.
   const fetchDDL = useCallback(
     async (ref: ObjectRef): Promise<string | null> => {
       if (!connId) return null;
@@ -110,7 +109,6 @@ export function SchemaPanel({ onOpenQuery, onBrowseTable, onOpenConnectionTab }:
     [fetchDDL, t],
   );
 
-  // An ordinary SQL tab, so highlighting, search and editing come free.
   const openDDLInTab = useCallback(
     async (ref: ObjectRef) => {
       if (!connId) return;

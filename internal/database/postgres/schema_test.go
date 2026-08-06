@@ -62,6 +62,22 @@ func TestDecodeTriggerType(t *testing.T) {
 	}
 }
 
+func TestSerialTypeFor(t *testing.T) {
+	tests := []struct{ in, want string }{
+		{"smallint", "smallserial"},
+		{"integer", "serial"},
+		{"bigint", "bigserial"},
+		{"text", ""},
+		{"numeric", ""},
+		{"", ""},
+	}
+	for _, tc := range tests {
+		if got := serialTypeFor(tc.in); got != tc.want {
+			t.Errorf("serialTypeFor(%q) = %q, want %q", tc.in, got, tc.want)
+		}
+	}
+}
+
 func TestQuoteLiteral(t *testing.T) {
 	tests := []struct{ in, want string }{
 		{"plain", "'plain'"},

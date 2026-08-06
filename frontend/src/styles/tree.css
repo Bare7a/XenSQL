@@ -146,7 +146,6 @@
   cursor: pointer;
 }
 
-/* Object groups sit a step below their relations: same row mechanics, quieter type. */
 .tree-item--group {
   font-size: var(--text-sm);
   color: var(--text-muted);
@@ -160,12 +159,12 @@
   cursor: default;
 }
 
-/* Sized from its own text, so the name holds its width against the detail. */
+/* Sized from its own text so the name holds width against the detail. */
 .tree-object .tree-column-name {
   flex: 1 1 auto;
 }
 
-/* Yields space ~100x faster than the name, which stays readable. */
+/* Yields space ~100x faster than the name. */
 .tree-object-detail {
   flex: 0 100 auto;
   min-width: 0;

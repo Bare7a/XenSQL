@@ -3,7 +3,6 @@ import {
   constraintRows,
   groupKey,
   indexRows,
-  isViewKind,
   routineRows,
   routinesKey,
   triggerRows,
@@ -152,14 +151,5 @@ describe('cache keys', () => {
 
   it('scopes routines to a schema', () => {
     expect(routinesKey('c1', 'public')).toBe('c1:public:routines');
-  });
-});
-
-describe('isViewKind', () => {
-  it('treats plain and materialized views alike', () => {
-    expect(isViewKind('view')).toBe(true);
-    expect(isViewKind('materialized view')).toBe(true);
-    expect(isViewKind('table')).toBe(false);
-    expect(isViewKind('index')).toBe(false);
   });
 });

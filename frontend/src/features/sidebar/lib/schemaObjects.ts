@@ -1,20 +1,10 @@
-import type {
-  ConstraintInfo,
-  IndexInfo,
-  ObjectKind,
-  ObjectRef,
-  RoutineInfo,
-  SchemaObjectGroup,
-  TriggerInfo,
-} from '@/types';
+import type { ConstraintInfo, IndexInfo, ObjectRef, RoutineInfo, SchemaObjectGroup, TriggerInfo } from '@/types';
 
 export type ObjectBadge = 'pk' | 'fk' | 'unique' | 'check' | 'index' | 'function' | 'procedure';
 
-// The four backend shapes flattened so one component renders them all.
 export interface SchemaObjectRow {
-  /** Unique within its group; `name` alone isn't, since SQLite reports inline keys unnamed. */
+  /** Unique within its group; `name` alone is not. */
   key: string;
-  /** The object's own name, as the DDL lookup expects it. */
   name: string;
   label: string;
   detail: string;
@@ -35,7 +25,6 @@ export function indexRows(indexes: IndexInfo[]): SchemaObjectRow[] {
   }));
 }
 
-// An unrecognised type (EXCLUDE) gets no badge rather than a wrong one.
 function constraintBadge(type: string): ObjectBadge | undefined {
   switch (type.toUpperCase()) {
     case 'PRIMARY KEY':
@@ -56,7 +45,6 @@ function constraintDetail(c: ConstraintInfo): string {
     const target = c.refTable ? `${c.refTable}${cols(c.refColumns)}` : '';
     return target ? `${cols(c.columns)} → ${target}` : cols(c.columns);
   }
-  // A CHECK owns no key columns, so its body is all there is to show.
   if (c.type.toUpperCase() === 'CHECK') {
     return c.definition ?? '';
   }
@@ -65,10 +53,10 @@ function constraintDetail(c: ConstraintInfo): string {
 
 export function constraintRows(constraints: ConstraintInfo[]): SchemaObjectRow[] {
   return constraints.map((c) => ({
-    // Two unnamed constraints of the same type can't cover the same columns, so this is unique.
+    // Unique: two unnamed constraints of one type cannot cover the same columns.
     key: c.name || `${c.type}:${c.columns.join(',')}`,
     name: c.name,
-    // SQLite's inline keys arrive unnamed; the type beats an empty row.
+    // SQLite's inline keys arrive unnamed.
     label: c.name || c.type,
     detail: constraintDetail(c),
     badge: constraintBadge(c.type),
@@ -103,7 +91,3 @@ export const groupKey = (connectionId: string, schema: string, table: string, gr
 export const routinesKey = (connectionId: string, schema: string) => `${connectionId}:${schema}:routines`;
 
 export const TABLE_GROUPS: SchemaObjectGroup[] = ['indexes', 'constraints', 'triggers'];
-
-export function isViewKind(kind: ObjectKind): boolean {
-  return kind === 'view' || kind === 'materialized view';
-}

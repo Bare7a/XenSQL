@@ -109,14 +109,13 @@ func RelationKind(tableType string) ObjectKind {
 }
 
 type IndexInfo struct {
-	Name    string   `json:"name"`
-	Schema  string   `json:"schema"`
-	Table   string   `json:"table"`
-	Columns []string `json:"columns"`
-	// IsPrimary marks the index backing a primary key, which has no standalone DDL.
-	IsPrimary bool   `json:"isPrimary"`
-	IsUnique  bool   `json:"isUnique"`
-	Method    string `json:"method,omitempty"`
+	Name      string   `json:"name"`
+	Schema    string   `json:"schema"`
+	Table     string   `json:"table"`
+	Columns   []string `json:"columns"`
+	IsPrimary bool     `json:"isPrimary"`
+	IsUnique  bool     `json:"isUnique"`
+	Method    string   `json:"method,omitempty"`
 }
 
 type ConstraintInfo struct {
@@ -128,7 +127,7 @@ type ConstraintInfo struct {
 	Columns    []string `json:"columns"`
 	RefTable   string   `json:"refTable,omitempty"`
 	RefColumns []string `json:"refColumns,omitempty"`
-	// Definition is the engine's own rendering of the body, when it exposes one.
+	// Definition is the engine's own rendering, where it exposes one.
 	Definition string `json:"definition,omitempty"`
 }
 
@@ -142,16 +141,14 @@ type TriggerInfo struct {
 }
 
 type RoutineInfo struct {
-	Name   string `json:"name"`
-	Schema string `json:"schema"`
-	// Kind is ObjectFunction or ObjectProcedure.
+	Name       string     `json:"name"`
+	Schema     string     `json:"schema"`
 	Kind       ObjectKind `json:"kind"`
 	ReturnType string     `json:"returnType,omitempty"`
-	// Args is the argument list without parentheses; it disambiguates overloads.
-	Args string `json:"args,omitempty"`
+	Args       string     `json:"args,omitempty"`
 }
 
-// ObjectRef names the parent relation in Table for index / constraint / trigger kinds only.
+// Table is set for index / constraint / trigger kinds only.
 type ObjectRef struct {
 	Schema string     `json:"schema"`
 	Name   string     `json:"name"`

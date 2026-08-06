@@ -178,7 +178,6 @@ describe('normalizeQueryResult disambiguates duplicate columns', () => {
   });
 });
 
-// Go omits empty slices over the Wails boundary, so list fields must survive arriving undefined.
 describe('schema object normalizers', () => {
   it('normalizeIndexes fills missing fields', () => {
     const [idx] = normalizeIndexes([{ name: 'i', schema: 'public', table: 'users', isUnique: true }]);

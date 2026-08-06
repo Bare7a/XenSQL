@@ -8,7 +8,7 @@ import (
 	"xensql/internal/database"
 )
 
-// schemaTimeout keeps a saturated pool from wedging the sidebar, which fires these lazily.
+// The tree fires these lazily; a saturated pool must not wedge the sidebar.
 const schemaTimeout = 15 * time.Second
 
 func (a *App) schemaContext() (context.Context, context.CancelFunc) {

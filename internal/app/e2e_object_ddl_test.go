@@ -10,7 +10,6 @@ import (
 	"xensql/internal/database"
 )
 
-// createFunctionSQL returns a trivial function; MySQL needs DETERMINISTIC under binary logging.
 func createFunctionSQL(e engine, name string) string {
 	if e.driver == database.DriverPostgres {
 		return fmt.Sprintf(`CREATE FUNCTION %s(a int) RETURNS int LANGUAGE sql AS $$ SELECT a + 1 $$`, name)
@@ -18,7 +17,6 @@ func createFunctionSQL(e engine, name string) string {
 	return fmt.Sprintf(`CREATE FUNCTION %s(a INT) RETURNS INT DETERMINISTIC RETURN a + 1`, name)
 }
 
-// createTriggerSQL returns AFTER UPDATE statements; Postgres needs a trigger function first.
 func createTriggerSQL(e engine, trigger, table, helperFn string) []string {
 	target := qualified(e, table)
 	if e.driver == database.DriverPostgres {
@@ -55,8 +53,8 @@ func constraintOfType(constraints []database.ConstraintInfo, ctype string) (data
 	return database.ConstraintInfo{}, false
 }
 
-// TestE2EObjectDDL covers the catalog listings and GetObjectDDL per object class. The table DDL
-// is verified by round-trip: drop it, replay the generated statements, check the shape returns.
+// The table DDL is verified by round-trip: drop it, replay the generated statements, check the
+// shape returns.
 func TestE2EObjectDDL(t *testing.T) {
 	forEachEngine(t, func(t *testing.T, a *App, e engine, connID string) {
 		parent := uniqueTable("ddl_orgs")
@@ -165,8 +163,11 @@ func TestE2EObjectDDL(t *testing.T) {
 			if err != nil {
 				t.Fatalf("trigger DDL: %v", err)
 			}
-			if !strings.Contains(strings.ToUpper(ddl), "CREATE TRIGGER") {
-				t.Errorf("trigger DDL should be a CREATE TRIGGER:\n%s", ddl)
+			// MySQL puts DEFINER=... between the two words.
+			upper := strings.ToUpper(ddl)
+			if !strings.HasPrefix(upper, "CREATE") || !strings.Contains(upper, "TRIGGER") ||
+				!strings.Contains(ddl, trigger) {
+				t.Errorf("trigger DDL should create %q:\n%s", trigger, ddl)
 			}
 		})
 
@@ -253,7 +254,6 @@ func TestE2EObjectDDL(t *testing.T) {
 			}
 		})
 
-		// Rebuilds the table from the generated DDL alone, so a malformed clause fails here.
 		t.Run("TableDDLRoundTrips", func(t *testing.T) {
 			ddl, err := a.GetObjectDDL(connID, database.ObjectRef{
 				Kind: database.ObjectTable, Schema: e.browseSchema, Name: child,

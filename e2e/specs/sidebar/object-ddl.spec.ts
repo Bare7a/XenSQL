@@ -1,7 +1,6 @@
 import { POSTGRES } from '@support/databases';
 import { expect, test } from '@support/fixtures';
 
-// Clipboard reads need explicit permission; granted once for the whole file.
 test.use({ permissions: ['clipboard-read', 'clipboard-write'] });
 
 test.describe('Object DDL and the deeper schema tree', () => {
@@ -56,7 +55,6 @@ test.describe('Object DDL and the deeper schema tree', () => {
       expect(ddl).toContain(`CREATE TABLE`);
       expect(ddl).toContain(table);
       expect(ddl).toContain('email');
-      // Proves the composed Postgres statement carries more than column names.
       expect(ddl).toContain('NOT NULL');
       expect(ddl).toContain('PRIMARY KEY');
     }).toPass({ timeout: 15_000 });

@@ -1,18 +1,26 @@
-import { ChevronDown, ChevronRight, Columns3, Eye, Hash, KeyRound, Loader2, Table2, View, Zap } from 'lucide-react';
+import { ChevronDown, ChevronRight, Eye, Loader2 } from 'lucide-react';
 import { memo, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { columnMatchesSearch } from '@/features/sidebar/hooks/useSchemaTree';
-import { groupKey, isViewKind, type SchemaObjectRow, TABLE_GROUPS } from '@/features/sidebar/lib/schemaObjects';
+import { groupKey, type SchemaObjectRow, TABLE_GROUPS } from '@/features/sidebar/lib/schemaObjects';
 import { SchemaObjectGroupNode } from '@/features/sidebar/SchemaObjectGroupNode';
 import { rowActivateKeyDown } from '@/shared/hooks/useListKeyboardNav';
 import { cx } from '@/shared/lib/cx';
+import { iconFor, isViewKind } from '@/shared/lib/objectIcon';
 import type { ColumnInfo, ObjectKind, SchemaObjectGroup, TableInfo } from '@/types';
 
-const GROUP_ICON: Record<SchemaObjectGroup, React.ReactNode> = {
-  indexes: <Hash className="icon-xs icon" />,
-  constraints: <KeyRound className="icon-xs icon" />,
-  triggers: <Zap className="icon-xs icon" />,
+const GROUP_KIND: Record<SchemaObjectGroup, ObjectKind> = {
+  indexes: 'index',
+  constraints: 'constraint',
+  triggers: 'trigger',
 };
+
+function groupIcon(group: SchemaObjectGroup) {
+  const Icon = iconFor(GROUP_KIND[group]);
+  return <Icon className="icon-xs icon" />;
+}
+
+const ColumnIcon = iconFor('column');
 
 interface SchemaTableRowProps {
   connId: string;
@@ -22,8 +30,8 @@ interface SchemaTableRowProps {
   cols: ColumnInfo[];
   colsLoading: boolean;
   schemaSearch: string;
-  // Passed whole and indexed here: they change only on an explicit group toggle, so the
-  // search pre-warm path that drives most re-renders still benefits from the memo.
+  // Indexed here, not sliced by the parent: they change only on an explicit group toggle, so
+  // the search pre-warm path keeps the memo.
   expandedGroups: Record<string, boolean>;
   loadingGroups: Record<string, boolean>;
   objectRows: Record<string, SchemaObjectRow[]>;
@@ -75,6 +83,7 @@ export const SchemaTableRow = memo(function SchemaTableRow({
   const isTableExpanded = tableOpen || (!!schemaSearch && !tableNameMatches && (columnMatches || colsLoading));
   const kind = (table.type || 'table') as ObjectKind;
   const isView = isViewKind(kind);
+  const RelationIcon = iconFor(kind);
 
   return (
     <div>
@@ -92,7 +101,7 @@ export const SchemaTableRow = memo(function SchemaTableRow({
         onContextMenu={(e) => onTableContextMenu(e, schemaName, table.name, kind)}
       >
         {isTableExpanded ? <ChevronDown className="icon-sm" /> : <ChevronRight className="icon-sm" />}
-        {isView ? <View className="icon-sm icon tree-icon--view" /> : <Table2 className="icon-sm icon" />}
+        <RelationIcon className={cx('icon-sm', 'icon', isView && 'tree-icon--view')} />
         <span className="tree-label">{table.name}</span>
         {isView && <span className="tree-object-badge tree-object-badge--view">{t('sidebar.badge.view')}</span>}
         <button
@@ -141,7 +150,7 @@ export const SchemaTableRow = memo(function SchemaTableRow({
                 onKeyDown={rowActivateKeyDown}
                 onContextMenu={(e) => onColumnContextMenu(e, col.name)}
               >
-                <Columns3 className="icon-xs icon" />
+                <ColumnIcon className="icon-xs icon" />
                 <span className="tree-column-name">{col.name}</span>
                 {col.isPrimary && (
                   <span className="tree-column-pk" data-tooltip={t('tooltip.primaryKey')}>
@@ -157,8 +166,7 @@ export const SchemaTableRow = memo(function SchemaTableRow({
               </div>
             ))}
 
-          {/* Collapsed until asked for, so the table-and-columns path costs no extra
-              round-trips. Hidden during a search, which is a column hunt. */}
+          {/* Collapsed until asked for; hidden during a search, which is a column hunt. */}
           {!schemaSearch &&
             TABLE_GROUPS.map((group) => {
               const key = groupKey(connId, schemaName, table.name, group);
@@ -166,8 +174,8 @@ export const SchemaTableRow = memo(function SchemaTableRow({
                 <SchemaObjectGroupNode
                   key={group}
                   label={t(`sidebar.group.${group}`)}
-                  icon={GROUP_ICON[group]}
-                  rowIcon={GROUP_ICON[group]}
+                  icon={groupIcon(group)}
+                  rowIcon={groupIcon(group)}
                   open={!!expandedGroups[key]}
                   loading={!!loadingGroups[key]}
                   rows={objectRows[key]}

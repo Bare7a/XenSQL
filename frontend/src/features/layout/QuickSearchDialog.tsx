@@ -1,11 +1,11 @@
 import { type ReactNode, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { isSavedQueryOpenInTabs } from '@/features/editor/lib/savedQueryTab';
-import { iconForEditorTab, iconForQuickSearchKind } from '@/features/editor/lib/tabKindIcon';
 import { isTableViewOpenInTabs } from '@/features/table-view/lib/tableViewTab';
 import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue';
 import { rankCandidate } from '@/shared/lib/fuzzyMatch';
-import type { ConnectionConfig, EditorTab, SavedQuery, TableInfo } from '@/types';
+import { iconFor, iconForEditorTab, relationKindOf } from '@/shared/lib/objectIcon';
+import type { ConnectionConfig, EditorTab, ObjectKind, SavedQuery, TableInfo } from '@/types';
 
 type QuickItem = { score: number; ranges: [number, number][] } & (
   | { type: 'tab'; key: string; label: string; detail?: string; color: string; tab: EditorTab }
@@ -18,6 +18,7 @@ type QuickItem = { score: number; ranges: [number, number][] } & (
       connectionId: string;
       schema: string;
       table: string;
+      kind: ObjectKind;
     }
   | { type: 'saved'; key: string; label: string; detail?: string; color: string; saved: SavedQuery }
   | {
@@ -56,9 +57,12 @@ const KIND_KEY: Record<QuickItem['type'], string> = {
   conn: 'quickSearch.kindConnection',
 };
 
-function iconForItem(item: QuickItem) {
-  if (item.type === 'tab') return iconForEditorTab(item.tab);
-  return iconForQuickSearchKind(item.type);
+const QUICK_ITEM_ICON = { saved: 'savedQuery', conn: 'connection' } as const;
+
+function iconForItem(item: QuickItem, tables: Record<string, TableInfo[]>) {
+  if (item.type === 'tab') return iconForEditorTab(item.tab, relationKindOf(tables, item.tab));
+  if (item.type === 'table') return iconFor(item.kind);
+  return iconFor(QUICK_ITEM_ICON[item.type]);
 }
 
 function highlightLabel(text: string, ranges: [number, number][]): ReactNode {
@@ -159,6 +163,7 @@ function QuickSearchContent({
             connectionId,
             schema,
             table: tbl.name,
+            kind: (tbl.type || 'table') as ObjectKind,
             score: r.score,
             ranges: r.ranges,
           });
@@ -244,7 +249,7 @@ function QuickSearchContent({
             <div className="quick-search-empty">{t('quickSearch.noResults')}</div>
           ) : (
             items.map((item, idx) => {
-              const Icon = iconForItem(item);
+              const Icon = iconForItem(item, tables);
               const kind = t(KIND_KEY[item.type]);
               return (
                 <button

@@ -158,7 +158,7 @@ export class ConstraintInfo {
     "refColumns"?: string[];
 
     /**
-     * Definition is the engine's own rendering of the body, when it exposes one.
+     * Definition is the engine's own rendering, where it exposes one.
      */
     "definition"?: string;
 
@@ -262,10 +262,6 @@ export class IndexInfo {
     "schema": string;
     "table": string;
     "columns": string[];
-
-    /**
-     * IsPrimary marks the index backing a primary key, which has no standalone DDL.
-     */
     "isPrimary": boolean;
     "isUnique": boolean;
     "method"?: string;
@@ -324,7 +320,7 @@ export enum ObjectKind {
 };
 
 /**
- * ObjectRef names the parent relation in Table for index / constraint / trigger kinds only.
+ * Table is set for index / constraint / trigger kinds only.
  */
 export class ObjectRef {
     "schema": string;
@@ -552,16 +548,8 @@ export class QueryResult {
 export class RoutineInfo {
     "name": string;
     "schema": string;
-
-    /**
-     * Kind is ObjectFunction or ObjectProcedure.
-     */
     "kind": ObjectKind;
     "returnType"?: string;
-
-    /**
-     * Args is the argument list without parentheses; it disambiguates overloads.
-     */
     "args"?: string;
 
     /** Creates a new RoutineInfo instance. */

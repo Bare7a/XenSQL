@@ -25,7 +25,6 @@ func (s *Session) ListIndexes(ctx context.Context, schema, table string) ([]data
 	for rows.Next() {
 		var name, indexType string
 		var nonUnique int
-		// NULL for a functional index part (MySQL 8.0.13+), which has an expression, not a column.
 		var column sql.NullString
 		if err := rows.Scan(&name, &nonUnique, &indexType, &column); err != nil {
 			return nil, err
@@ -77,7 +76,6 @@ func (s *Session) ListConstraints(ctx context.Context, schema, table string) ([]
 	grouped := map[string]*database.ConstraintInfo{}
 	for rows.Next() {
 		var name, ctype string
-		// All NULL for a CHECK constraint, which owns no key columns.
 		var column, refTable, refColumn sql.NullString
 		if err := rows.Scan(&name, &ctype, &column, &refTable, &refColumn); err != nil {
 			return nil, err
@@ -118,8 +116,7 @@ func (s *Session) ListConstraints(ctx context.Context, schema, table string) ([]
 	return out, nil
 }
 
-// checkClauses maps constraint name to CHECK body. The table only exists on MySQL 8.0.16+ and
-// MariaDB 10.2.22+ with differing columns, so a failure degrades to no clauses.
+// The table only exists on MySQL 8.0.16+ / MariaDB 10.2.22+, so a failure degrades to no clauses.
 func (s *Session) checkClauses(ctx context.Context, schema string) map[string]string {
 	rows, err := s.DB.QueryContext(ctx, `
 		SELECT CONSTRAINT_NAME, CHECK_CLAUSE
@@ -200,21 +197,38 @@ func (s *Session) ObjectDDL(ctx context.Context, ref database.ObjectRef) (string
 	qualified := database.BuildQualifiedTable(database.DriverMySQL, schema, ref.Name)
 	switch ref.Kind {
 	case database.ObjectTable:
-		return s.showCreate(ctx, "SHOW CREATE TABLE "+qualified)
+		return s.showCreate(ctx, "SHOW CREATE TABLE "+qualified, "Create Table")
 	case database.ObjectView:
-		return s.showCreate(ctx, "SHOW CREATE VIEW "+qualified)
+		return s.showCreate(ctx, "SHOW CREATE VIEW "+qualified, "Create View")
 	case database.ObjectTrigger:
-		return s.showCreate(ctx, "SHOW CREATE TRIGGER "+qualified)
+		// Not a "Create *" column, and the row also carries a "Created" timestamp.
+		return s.showCreate(ctx, "SHOW CREATE TRIGGER "+qualified, "SQL Original Statement")
 	case database.ObjectFunction:
-		return s.showCreate(ctx, "SHOW CREATE FUNCTION "+qualified)
+		return s.showCreate(ctx, "SHOW CREATE FUNCTION "+qualified, "Create Function")
 	case database.ObjectProcedure:
-		return s.showCreate(ctx, "SHOW CREATE PROCEDURE "+qualified)
+		return s.showCreate(ctx, "SHOW CREATE PROCEDURE "+qualified, "Create Procedure")
 	case database.ObjectIndex:
 		return s.indexDDL(ctx, schema, ref)
 	case database.ObjectConstraint:
 		return s.constraintDDL(ctx, schema, ref)
 	}
 	return "", database.ErrUnsupportedDDL(database.DriverMySQL, ref.Kind)
+}
+
+// The fallback skips "Created", which is a timestamp, not DDL.
+func columnIndex(cols []string, defColumn string) int {
+	for i, c := range cols {
+		if strings.EqualFold(c, defColumn) {
+			return i
+		}
+	}
+	for i, c := range cols {
+		lc := strings.ToLower(c)
+		if strings.HasPrefix(lc, "create") && lc != "created" {
+			return i
+		}
+	}
+	return -1
 }
 
 // indexDDL synthesizes CREATE INDEX; MySQL has no SHOW CREATE INDEX.
@@ -258,8 +272,7 @@ func (s *Session) constraintDDL(ctx context.Context, schema string, ref database
 	return "", fmt.Errorf("constraint %s not found on %s", ref.Name, ref.Table)
 }
 
-// showCreate locates the definition column by name; the result shape differs per object type.
-func (s *Session) showCreate(ctx context.Context, stmt string) (string, error) {
+func (s *Session) showCreate(ctx context.Context, stmt, defColumn string) (string, error) {
 	rows, err := s.DB.QueryContext(ctx, stmt)
 	if err != nil {
 		return "", err
@@ -269,15 +282,9 @@ func (s *Session) showCreate(ctx context.Context, stmt string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	target := -1
-	for i, c := range cols {
-		if strings.HasPrefix(strings.ToLower(c), "create") {
-			target = i
-			break
-		}
-	}
+	target := columnIndex(cols, defColumn)
 	if target < 0 {
-		return "", fmt.Errorf("no definition column in %s", stmt)
+		return "", fmt.Errorf("no %q column in %s", defColumn, stmt)
 	}
 	if !rows.Next() {
 		if err := rows.Err(); err != nil {

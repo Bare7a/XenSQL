@@ -30,10 +30,8 @@ type Session interface {
 	ListIndexes(ctx context.Context, schema, table string) ([]IndexInfo, error)
 	ListConstraints(ctx context.Context, schema, table string) ([]ConstraintInfo, error)
 	ListTriggers(ctx context.Context, schema, table string) ([]TriggerInfo, error)
-	// ListRoutines returns the schema's functions and procedures; empty where there are none.
 	ListRoutines(ctx context.Context, schema string) ([]RoutineInfo, error)
-	// ObjectDDL renders the object's CREATE statement, verbatim where the engine stores it and
-	// composed from the catalog otherwise.
+	// Verbatim where the engine stores the statement, composed from the catalog otherwise.
 	ObjectDDL(ctx context.Context, ref ObjectRef) (string, error)
 	QueryTable(ctx context.Context, req TableDataRequest) (*QueryResult, error)
 	QueryTableStream(ctx context.Context, req TableDataRequest, opts StreamOpts) (*QueryResult, error)

@@ -2,8 +2,9 @@ import { Lock, Plus, X } from 'lucide-react';
 import { forwardRef, memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { isSavedQueryTabDirty } from '@/features/editor/lib/savedQueryTab';
-import { iconForEditorTab } from '@/features/editor/lib/tabKindIcon';
 import { cx } from '@/shared/lib/cx';
+import { iconForEditorTab, relationKindOf } from '@/shared/lib/objectIcon';
+import { useTablesMap } from '@/store/selectors';
 import type { ConnectionConfig, EditorTab } from '@/types';
 
 interface EditorTabBarProps {
@@ -45,6 +46,7 @@ export const EditorTabBar = memo(
     ref,
   ) {
     const { t } = useTranslation();
+    const tables = useTablesMap();
 
     return (
       <div ref={ref} className="editor-tabs" role="tablist">
@@ -53,7 +55,7 @@ export const EditorTabBar = memo(
           const tabReadOnly = !!conn?.readOnly;
           const tabDirty = isSavedQueryTabDirty(tab);
           const isActive = tab.id === activeTabId;
-          const TabIcon = iconForEditorTab(tab);
+          const TabIcon = iconForEditorTab(tab, relationKindOf(tables, tab));
           const tabKindTooltip = tab.tableView
             ? t('tooltip.tableViewTab')
             : tab.savedQueryId
