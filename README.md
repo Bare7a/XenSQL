@@ -69,6 +69,7 @@ Work with **SQLite**, **PostgreSQL** and **MySQL / MariaDB** in a single fast de
 - Run multi-statement scripts and get a result tab per output
 - Explore schemas instantly - down to indexes, constraints and triggers
 - Copy any object's DDL in one click
+- Import a CSV or run a `.sql` script
 - Save and reuse queries
 - Export anything in one click
 - Auto-update with one click
@@ -276,6 +277,35 @@ View and modify table data directly in the grid - no hand-written `UPDATE` / `DE
 - Save, update, rename and delete from the sidebar or toolbar
 - **Per-connection query history** with success/error and duration
 - Clear history per connection or delete individual entries
+
+---
+
+## 📥 Import
+
+Load a **CSV** (or any delimited file) or run a **`.sql` script**, from the ⬆ button in the Schema
+Explorer or a table's right-click menu.
+
+### CSV
+- **Delimiter auto-detected** (`,` `;` tab `|`) - the one that splits every line the same way wins,
+  so commas inside quoted values don't fool it; override it if you'd rather
+- **Column mapping** - each source column shows its first value and the target column it loads
+  into; blank the target to skip that column entirely
+- **Import into an existing table**, optionally emptying it first, **or create a new one** with
+  types inferred from the data (integer, decimal, boolean, date, timestamp, text) - each one
+  editable before you commit to it, and named in your engine's own dialect
+- Headers optional, `NULL` text configurable (`\N`, `NULL`, whatever your exporter writes),
+  leading lines skippable for files with a preamble, whitespace trimmable
+- UTF-8 BOMs stripped, ragged rows tolerated
+- **Bad rows are skipped and reported**, not fatal - or tick **stop at the first error** if you'd
+  rather nothing partial lands
+- Rows load in batches with live progress, and **Stop** ends a long run
+
+### SQL scripts
+A `.sql` file runs statement by statement on one connection, so `SET`, temp tables and scripted
+transactions behave. You get a progress bar and a count - not thousands of result tabs.
+
+> Batches are committed as they go, so a stopped or failed import keeps the rows it had already
+> loaded and tells you how many that was. Read-only connections refuse imports outright.
 
 ---
 

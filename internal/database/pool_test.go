@@ -19,6 +19,7 @@ func (f *fakeSession) DriverType() DriverType     { return "fake" }
 func (f *fakeSession) Execute(context.Context, string) (*QueryResult, error) {
 	return &QueryResult{}, nil
 }
+func (f *fakeSession) ExecuteArgs(context.Context, string, []any) error { return nil }
 func (f *fakeSession) ExecuteStream(context.Context, string, StreamOpts) (*QueryResult, error) {
 	return &QueryResult{}, nil
 }

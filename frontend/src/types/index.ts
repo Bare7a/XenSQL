@@ -122,6 +122,75 @@ export interface ObjectRef {
 
 export type SchemaObjectGroup = 'indexes' | 'constraints' | 'triggers';
 
+// See service.CSVOptions.
+export interface CSVOptions {
+  delimiter?: string;
+  hasHeader: boolean;
+  nullLiteral?: string;
+  skipRows?: number;
+  trimSpace?: boolean;
+}
+
+export type ImportColumnType = 'bool' | 'int' | 'float' | 'date' | 'timestamp' | 'text';
+
+export const IMPORT_COLUMN_TYPES: ImportColumnType[] = ['text', 'int', 'float', 'bool', 'date', 'timestamp'];
+
+export interface ImportPreview {
+  columns: string[];
+  rows: string[][];
+  inferredTypes: ImportColumnType[];
+  sqlTypes: string[];
+  delimiter: string;
+  totalBytes: number;
+  truncated: boolean;
+}
+
+export interface CSVImportRequest {
+  path: string;
+  schema: string;
+  table: string;
+  createTable: boolean;
+  truncate: boolean;
+  options: CSVOptions;
+  /** Parallel to the file's columns; empty skips that column. */
+  mapping: string[];
+  columnTypes: string[];
+  batchSize: number;
+  stopOnError: boolean;
+}
+
+export interface SQLImportRequest {
+  path: string;
+  stopOnError: boolean;
+}
+
+// See app.ImportResult. Batches autocommit, so a failed run keeps what it loaded.
+export interface ImportResult {
+  inserted: number;
+  skipped: number;
+  statements: number;
+  durationMs: number;
+  errors?: string[];
+  cancelled: boolean;
+}
+
+export interface ImportProgressPayload {
+  seq: number;
+  importId: string;
+  processed: number;
+  inserted: number;
+  skipped: number;
+  bytesRead: number;
+  totalBytes: number;
+}
+
+export interface ImportDonePayload {
+  seq: number;
+  importId: string;
+  result?: ImportResult | null;
+  error?: string;
+}
+
 export interface SchemaTables {
   schema: string;
   tables: TableInfo[];

@@ -1,7 +1,8 @@
-import { CircleAlert, Copy, Loader2, Plug, RefreshCw } from 'lucide-react';
+import { CircleAlert, Copy, Loader2, Plug, RefreshCw, Upload } from 'lucide-react';
 import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { buildQualifiedTable } from '@/features/editor/lib/sqlQuoting';
+import { ImportDialog } from '@/features/import/ImportDialog';
 import { tableKey, tableMatchesSearch, useSchemaTree } from '@/features/sidebar/hooks/useSchemaTree';
 import type { SchemaObjectRow } from '@/features/sidebar/lib/schemaObjects';
 import { SchemaTreeNode } from '@/features/sidebar/SchemaTreeNode';
@@ -39,6 +40,7 @@ export function SchemaPanel({ onOpenQuery, onBrowseTable, onOpenConnectionTab }:
   const { setConnected } = useStoreActions();
 
   const [tableSearch, setTableSearch] = useState('');
+  const [importFor, setImportFor] = useState<{ schema: string; table?: string } | null>(null);
   const { menu, openMenu, closeMenu } = useContextMenu();
 
   const { onKeyDown } = useListKeyboardNav();
@@ -46,6 +48,7 @@ export function SchemaPanel({ onOpenQuery, onBrowseTable, onOpenConnectionTab }:
   const connConnected = !!(connId && connectedIds[connId]);
   const schemaDriver = connections.find((c) => c.id === connId)?.driver ?? 'postgres';
   const schemaList = connId ? (schemas[connId] ?? []) : [];
+  const defaultImportSchema = schemaList[0]?.name ?? '';
   const debouncedSearch = useDebouncedValue(tableSearch, 200);
   const schemaSearch = debouncedSearch.trim().toLowerCase();
 
@@ -151,6 +154,11 @@ export function SchemaPanel({ onOpenQuery, onBrowseTable, onOpenConnectionTab }:
             }),
         },
         { label: '', action: () => {}, separator: true },
+        {
+          label: t('sidebar.importIntoTable'),
+          action: () => setImportFor({ schema: schemaName, table }),
+        },
+        { label: '', action: () => {}, separator: true },
         ...ddlMenuItems({ schema: schemaName, name: table, kind }),
         { label: '', action: () => {}, separator: true },
         { label: t('sidebar.insertName'), action: () => insertSqlIntoEditor(qualified) },
@@ -248,6 +256,16 @@ export function SchemaPanel({ onOpenQuery, onBrowseTable, onOpenConnectionTab }:
         onChange={setTableSearch}
         disabled={!connId || !connConnected}
       >
+        <button
+          type="button"
+          className="btn btn-sm sidebar-filter-btn"
+          data-testid="schema-import"
+          data-tooltip={t('sidebar.importData')}
+          disabled={!connId || !connConnected}
+          onClick={() => setImportFor({ schema: defaultImportSchema })}
+        >
+          <Upload className="icon-xs" />
+        </button>
         <button
           type="button"
           className="btn btn-sm sidebar-filter-btn"
@@ -367,6 +385,17 @@ export function SchemaPanel({ onOpenQuery, onBrowseTable, onOpenConnectionTab }:
       )}
 
       {menu && <ContextMenu x={menu.x} y={menu.y} items={menu.items} onClose={closeMenu} />}
+
+      {importFor && connId && (
+        <ImportDialog
+          connectionId={connId}
+          schema={importFor.schema}
+          tables={tables[`${connId}:${importFor.schema}`] ?? []}
+          initialTable={importFor.table}
+          onClose={() => setImportFor(null)}
+          onImported={() => void loadSchema(connId)}
+        />
+      )}
     </>
   );
 }

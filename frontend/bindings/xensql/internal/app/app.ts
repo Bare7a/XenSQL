@@ -13,6 +13,9 @@ import * as appmenu$0 from "../appmenu/models.js";
 import * as database$0 from "../database/models.js";
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore: Unused imports
+import * as service$0 from "../service/models.js";
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore: Unused imports
 import * as storage$0 from "../storage/models.js";
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -184,6 +187,20 @@ export function GetSettings(): $CancellablePromise<{ [_ in string]?: string }> {
     });
 }
 
+/**
+ * Returns once the run is registered; import:progress and import:done carry the outcome.
+ */
+export function ImportCSV(connectionID: string, importID: string, req: $models.CSVImportRequest): $CancellablePromise<void> {
+    return $Call.ByID(3870150748, connectionID, importID, req);
+}
+
+/**
+ * Reports progress instead of a result tab per statement; a dump can hold thousands.
+ */
+export function ImportSQL(connectionID: string, importID: string, req: $models.SQLImportRequest): $CancellablePromise<void> {
+    return $Call.ByID(2865009632, connectionID, importID, req);
+}
+
 export function InitStores(configDir: string): $CancellablePromise<void> {
     return $Call.ByID(1152712829, configDir);
 }
@@ -276,6 +293,10 @@ export function PickExportSavePath(ext: string): $CancellablePromise<string> {
     return $Call.ByID(1154457340, ext);
 }
 
+export function PickImportFile(kind: string): $CancellablePromise<string> {
+    return $Call.ByID(452154835, kind);
+}
+
 export function PickKnownHostsFile(): $CancellablePromise<string> {
     return $Call.ByID(155068216);
 }
@@ -286,6 +307,12 @@ export function PickSQLiteFile(): $CancellablePromise<string> {
 
 export function PickSSHKeyFile(): $CancellablePromise<string> {
     return $Call.ByID(4136702487);
+}
+
+export function PreviewImportFile(connectionID: string, path: string, opts: service$0.CSVOptions): $CancellablePromise<$models.ImportPreview> {
+    return $Call.ByID(2193346560, connectionID, path, opts).then(($result: any) => {
+        return $$createType33($result);
+    });
 }
 
 export function QueryTableStream(connectionID: string, tabID: string, req: database$0.TableDataRequest): $CancellablePromise<void> {
@@ -357,7 +384,7 @@ export function SetWindowStateFlush(flush: any): $CancellablePromise<void> {
 
 export function SettingsStore(): $CancellablePromise<storage$0.SettingsStore | null> {
     return $Call.ByID(2329735545).then(($result: any) => {
-        return $$createType34($result);
+        return $$createType35($result);
     });
 }
 
@@ -410,5 +437,6 @@ const $$createType29 = $Create.Array($$createType28);
 const $$createType30 = database$0.TriggerInfo.createFrom;
 const $$createType31 = $Create.Array($$createType30);
 const $$createType32 = database$0.SchemaBundle.createFrom;
-const $$createType33 = storage$0.SettingsStore.createFrom;
-const $$createType34 = $Create.Nullable($$createType33);
+const $$createType33 = $models.ImportPreview.createFrom;
+const $$createType34 = storage$0.SettingsStore.createFrom;
+const $$createType35 = $Create.Nullable($$createType34);

@@ -5,6 +5,10 @@
 // @ts-ignore: Unused imports
 import { Create as $Create } from "@wailsio/runtime";
 
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore: Unused imports
+import * as service$0 from "../service/models.js";
+
 export class AppInfo {
     "name": string;
     "version": string;
@@ -50,6 +54,156 @@ export class AppInfo {
     }
 }
 
+export class CSVImportRequest {
+    "path": string;
+    "schema": string;
+    "table": string;
+    "createTable": boolean;
+    "truncate": boolean;
+    "options": service$0.CSVOptions;
+
+    /**
+     * Mapping is parallel to the file's columns: the target column, or empty to skip it.
+     */
+    "mapping": string[];
+
+    /**
+     * ColumnTypes is parallel to Mapping; it drives CREATE TABLE and boolean normalization.
+     */
+    "columnTypes": string[];
+    "batchSize": number;
+
+    /**
+     * StopOnError aborts at the first bad row instead of skipping it.
+     */
+    "stopOnError": boolean;
+
+    /** Creates a new CSVImportRequest instance. */
+    constructor($$source: Partial<CSVImportRequest> = {}) {
+        if (!("path" in $$source)) {
+            this["path"] = "";
+        }
+        if (!("schema" in $$source)) {
+            this["schema"] = "";
+        }
+        if (!("table" in $$source)) {
+            this["table"] = "";
+        }
+        if (!("createTable" in $$source)) {
+            this["createTable"] = false;
+        }
+        if (!("truncate" in $$source)) {
+            this["truncate"] = false;
+        }
+        if (!("options" in $$source)) {
+            this["options"] = (new service$0.CSVOptions());
+        }
+        if (!("mapping" in $$source)) {
+            this["mapping"] = [];
+        }
+        if (!("columnTypes" in $$source)) {
+            this["columnTypes"] = [];
+        }
+        if (!("batchSize" in $$source)) {
+            this["batchSize"] = 0;
+        }
+        if (!("stopOnError" in $$source)) {
+            this["stopOnError"] = false;
+        }
+
+        Object.assign(this, $$source);
+    }
+
+    /**
+     * Creates a new CSVImportRequest instance from a string or object.
+     */
+    static createFrom($$source: any = {}): CSVImportRequest {
+        const $$createField5_0 = $$createType0;
+        const $$createField6_0 = $$createType1;
+        const $$createField7_0 = $$createType1;
+        let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
+        if ("options" in $$parsedSource) {
+            $$parsedSource["options"] = $$createField5_0($$parsedSource["options"]);
+        }
+        if ("mapping" in $$parsedSource) {
+            $$parsedSource["mapping"] = $$createField6_0($$parsedSource["mapping"]);
+        }
+        if ("columnTypes" in $$parsedSource) {
+            $$parsedSource["columnTypes"] = $$createField7_0($$parsedSource["columnTypes"]);
+        }
+        return new CSVImportRequest($$parsedSource as Partial<CSVImportRequest>);
+    }
+}
+
+export class ImportPreview {
+    "columns": string[];
+    "rows": string[][];
+
+    /**
+     * InferredTypes are driver-neutral shapes; SQLTypes are the same in the connection's dialect.
+     */
+    "inferredTypes": string[];
+    "sqlTypes": string[];
+
+    /**
+     * Delimiter is what was actually used, so a sniffed one shows in the dialog.
+     */
+    "delimiter": string;
+    "totalBytes": number;
+    "truncated": boolean;
+
+    /** Creates a new ImportPreview instance. */
+    constructor($$source: Partial<ImportPreview> = {}) {
+        if (!("columns" in $$source)) {
+            this["columns"] = [];
+        }
+        if (!("rows" in $$source)) {
+            this["rows"] = [];
+        }
+        if (!("inferredTypes" in $$source)) {
+            this["inferredTypes"] = [];
+        }
+        if (!("sqlTypes" in $$source)) {
+            this["sqlTypes"] = [];
+        }
+        if (!("delimiter" in $$source)) {
+            this["delimiter"] = "";
+        }
+        if (!("totalBytes" in $$source)) {
+            this["totalBytes"] = 0;
+        }
+        if (!("truncated" in $$source)) {
+            this["truncated"] = false;
+        }
+
+        Object.assign(this, $$source);
+    }
+
+    /**
+     * Creates a new ImportPreview instance from a string or object.
+     */
+    static createFrom($$source: any = {}): ImportPreview {
+        const $$createField0_0 = $$createType1;
+        const $$createField1_0 = $$createType2;
+        const $$createField2_0 = $$createType1;
+        const $$createField3_0 = $$createType1;
+        let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
+        if ("columns" in $$parsedSource) {
+            $$parsedSource["columns"] = $$createField0_0($$parsedSource["columns"]);
+        }
+        if ("rows" in $$parsedSource) {
+            $$parsedSource["rows"] = $$createField1_0($$parsedSource["rows"]);
+        }
+        if ("inferredTypes" in $$parsedSource) {
+            $$parsedSource["inferredTypes"] = $$createField2_0($$parsedSource["inferredTypes"]);
+        }
+        if ("sqlTypes" in $$parsedSource) {
+            $$parsedSource["sqlTypes"] = $$createField3_0($$parsedSource["sqlTypes"]);
+        }
+        return new ImportPreview($$parsedSource as Partial<ImportPreview>);
+    }
+}
+
 /**
  * PathDefaults lets the UI show example paths that match the host, not one platform's convention.
  */
@@ -83,3 +237,33 @@ export class PathDefaults {
         return new PathDefaults($$parsedSource as Partial<PathDefaults>);
     }
 }
+
+export class SQLImportRequest {
+    "path": string;
+    "stopOnError": boolean;
+
+    /** Creates a new SQLImportRequest instance. */
+    constructor($$source: Partial<SQLImportRequest> = {}) {
+        if (!("path" in $$source)) {
+            this["path"] = "";
+        }
+        if (!("stopOnError" in $$source)) {
+            this["stopOnError"] = false;
+        }
+
+        Object.assign(this, $$source);
+    }
+
+    /**
+     * Creates a new SQLImportRequest instance from a string or object.
+     */
+    static createFrom($$source: any = {}): SQLImportRequest {
+        let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
+        return new SQLImportRequest($$parsedSource as Partial<SQLImportRequest>);
+    }
+}
+
+// Private type creation functions
+const $$createType0 = service$0.CSVOptions.createFrom;
+const $$createType1 = $Create.Array($Create.Any);
+const $$createType2 = $Create.Array($$createType1);

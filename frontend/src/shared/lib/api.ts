@@ -24,6 +24,8 @@ import {
   GetPathDefaults,
   GetPendingFile,
   GetQueryHistory,
+  ImportCSV,
+  ImportSQL,
   InsertRow,
   IsConnected,
   ListColumns,
@@ -38,9 +40,11 @@ import {
   ListTriggers,
   LoadSchemaData,
   PickExportSavePath,
+  PickImportFile,
   PickKnownHostsFile,
   PickSQLiteFile,
   PickSSHKeyFile,
+  PreviewImportFile,
   QueryTableStream,
   ReorderConnections,
   RollbackTransaction,
@@ -69,12 +73,16 @@ import {
 import type {
   ConnectionConfig,
   ConnectionFolder,
+  CSVImportRequest,
+  CSVOptions,
   EditorTab,
   HistoryEntry,
+  ImportPreview,
   ObjectRef,
   QueryPlan,
   QueryResult,
   SavedQuery,
+  SQLImportRequest,
   TableDataRequest,
 } from '@/types';
 
@@ -111,6 +119,13 @@ export const api = {
     normalizeTriggers(await ListTriggers(connId, schema, table)),
   listRoutines: async (connId: string, schema: string) => normalizeRoutines(await ListRoutines(connId, schema)),
   getObjectDDL: (connId: string, ref: ObjectRef): Promise<string> => cast(GetObjectDDL(connId, ref as never)),
+  pickImportFile: (kind: 'csv' | 'sql'): Promise<string> => PickImportFile(kind),
+  previewImportFile: (connId: string, path: string, opts: CSVOptions): Promise<ImportPreview> =>
+    cast(PreviewImportFile(connId, path, opts as never)),
+  importCSV: (connId: string, importId: string, req: CSVImportRequest): Promise<void> =>
+    cast(ImportCSV(connId, importId, req as never)),
+  importSQL: (connId: string, importId: string, req: SQLImportRequest): Promise<void> =>
+    cast(ImportSQL(connId, importId, req as never)),
   executeQueryStream: (connId: string, tabId: string, sql: string): Promise<void> =>
     cast(ExecuteQueryStream(connId, tabId, sql)),
   explainQuery: (connId: string, tabId: string, sql: string, analyze: boolean): Promise<QueryPlan> =>

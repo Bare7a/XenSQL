@@ -68,6 +68,17 @@ func (b *SessionBase) Execute(ctx context.Context, sqlText string) (*QueryResult
 	})
 }
 
+// Same read-only gate as Execute; the values ride as parameters and cannot alter the statement.
+func (b *SessionBase) ExecuteArgs(ctx context.Context, sqlText string, args []any) error {
+	if b.ReadOnly {
+		if err := AssertReadOnlySQLFor(b.Driver, sqlText); err != nil {
+			return err
+		}
+	}
+	_, err := b.DB.ExecContext(ctx, sqlText, args...)
+	return err
+}
+
 func (b *SessionBase) ExecuteStream(ctx context.Context, sqlText string, opts StreamOpts) (*QueryResult, error) {
 	if b.ReadOnly {
 		if err := AssertReadOnlySQLFor(b.Driver, sqlText); err != nil {

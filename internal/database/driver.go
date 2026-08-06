@@ -16,6 +16,8 @@ type Session interface {
 	Close() error
 	Ping(ctx context.Context) error
 	Execute(ctx context.Context, sql string) (*QueryResult, error)
+	// Values travel as parameters rather than interpolated into the statement text.
+	ExecuteArgs(ctx context.Context, sql string, args []any) error
 	// Returned QueryResult carries metadata only; rows are delivered via OnBatch. Non-SELECT acts like Execute.
 	ExecuteStream(ctx context.Context, sql string, opts StreamOpts) (*QueryResult, error)
 	// BeginTxn checks out a dedicated connection, issues BEGIN and returns a PinnedTxn that must be
