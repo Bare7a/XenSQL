@@ -2,6 +2,12 @@ import { expect, type Locator, type Page } from '@playwright/test';
 import type { DbConfig } from '../support/databases';
 import { html5DragTo } from '../support/dnd';
 
+export type ConnectionDialogOptions = DbConfig & {
+  /** Hex color from DEFAULT_COLORS (e.g. `#ef4444`). */
+  color?: string;
+  readOnly?: boolean;
+};
+
 /** Connection switcher, connection dialog and the connection list (connect / disconnect / delete / reorder). */
 export class ConnectionsPage {
   readonly page: Page;
@@ -39,7 +45,7 @@ export class ConnectionsPage {
     await this.dialog.waitFor({ state: 'visible' });
   }
 
-  async fillDialog(cfg: DbConfig): Promise<void> {
+  async fillDialog(cfg: ConnectionDialogOptions): Promise<void> {
     // Choose the driver first; switching drivers resets dependent fields.
     await this.page.locator('#conn-driver').selectOption(cfg.driver);
     await this.page.locator('#conn-name').fill(cfg.label);
@@ -53,6 +59,41 @@ export class ConnectionsPage {
     } else {
       await this.page.locator('#conn-file').fill(cfg.filePath ?? '');
     }
+
+    if (cfg.readOnly != null) {
+      const box = this.dialog.locator('.form-group-checkbox input[type="checkbox"]').first();
+      if (cfg.readOnly) await box.check();
+      else await box.uncheck();
+    }
+
+    if (cfg.color) {
+      const swatch = this.dialog.locator('.color-swatch').evaluateAll(
+        (els, color) => {
+          const want = color.toLowerCase();
+          return els.findIndex((el) => {
+            const bg = getComputedStyle(el).backgroundColor;
+            // style="" uses the hex; computed is rgb(r, g, b).
+            const inline = (el as HTMLElement).style.backgroundColor || (el as HTMLElement).style.background;
+            return inline.toLowerCase() === want || rgbToHex(bg) === want;
+          });
+
+          function rgbToHex(rgb: string): string {
+            const m = rgb.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
+            if (!m) return '';
+            return (
+              '#' +
+              [m[1], m[2], m[3]]
+                .map((n) => Number(n).toString(16).padStart(2, '0'))
+                .join('')
+            );
+          }
+        },
+        cfg.color,
+      );
+      const idx = await swatch;
+      if (idx < 0) throw new Error(`No color swatch matching ${cfg.color}`);
+      await this.dialog.locator('.color-swatch').nth(idx).click();
+    }
   }
 
   async testConnectionInDialog(): Promise<void> {
@@ -65,14 +106,14 @@ export class ConnectionsPage {
   }
 
   /** Open the dialog, fill it for the given driver and save. */
-  async create(cfg: DbConfig): Promise<void> {
+  async create(cfg: ConnectionDialogOptions): Promise<void> {
     await this.openNewDialog();
     await this.fillDialog(cfg);
     await this.saveDialog();
   }
 
   /** Save a connection and immediately connect to it - the common "given a live connection" setup. */
-  async createAndConnect(cfg: DbConfig): Promise<void> {
+  async createAndConnect(cfg: ConnectionDialogOptions): Promise<void> {
     await this.create(cfg);
     await this.connect(cfg.label);
   }

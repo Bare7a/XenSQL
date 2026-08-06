@@ -172,3 +172,9 @@ tasks:
       - defer: { task: e2e:down }
       - task: e2e:up
       - task: e2e:ui
+
+  screenshots:
+    summary: Capture README screenshots into .github/screenshots (starts Postgres + restores forum.dump.sql)
+    dir: e2e
+    cmds:
+      - npm run screenshots

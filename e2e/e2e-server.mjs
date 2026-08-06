@@ -20,12 +20,22 @@ const serverHost = process.env.WAILS_SERVER_HOST ?? '127.0.0.1';
 const serverPort = process.env.WAILS_SERVER_PORT ?? '8080';
 
 // 1. Fresh data directory so tests start from a known-empty state.
-rmSync(dataDir, { recursive: true, force: true });
+if (process.env.XENSQL_SKIP_DATA_RESET !== '1') {
+  rmSync(dataDir, { recursive: true, force: true });
+}
 mkdirSync(dataDir, { recursive: true });
 
 // 2. Build the frontend and copy it into the embed directory.
 console.log('[e2e-server] building frontend (build:dev)...');
-execSync('npm run build:dev', { cwd: frontendDir, stdio: 'inherit' });
+execSync('npm run build:dev', {
+  cwd: frontendDir,
+  stdio: 'inherit',
+  env: {
+    ...process.env,
+    // Forward so screenshot captures can show minimize/maximize/close in server mode.
+    VITE_FORCE_WINDOW_CHROME: process.env.XENSQL_FORCE_WINDOW_CHROME ?? '',
+  },
+});
 
 console.log('[e2e-server] staging assets into cmd/e2e-server/dist...');
 stageDist();

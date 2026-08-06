@@ -10,6 +10,7 @@
     "e2e:debug": "playwright test --debug",
     "e2e:report": "playwright show-report",
     "e2e:server": "node e2e-server.mjs",
+    "screenshots": "playwright test --config=playwright.screenshots.config.ts",
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {

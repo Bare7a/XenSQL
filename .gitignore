@@ -10,6 +10,7 @@ XenSQL-data/
 
 # Playwright E2E
 /e2e/XenSQL-data/
+/e2e/XenSQL-data-screenshots/
 /e2e/test-results/
 /e2e/blob-report/
 /e2e/playwright/.cache/
