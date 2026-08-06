@@ -3,12 +3,16 @@ import {
   formatError,
   normalizeColumns,
   normalizeConnectionStatus,
+  normalizeConstraints,
   normalizeHistory,
+  normalizeIndexes,
   normalizeQueryResult,
+  normalizeRoutines,
   normalizeSavedQueries,
   normalizeSchemaBundle,
   normalizeSchemas,
   normalizeTables,
+  normalizeTriggers,
   toArray,
   uniquifyColumns,
 } from '@/shared/lib/normalize';
@@ -171,6 +175,51 @@ describe('normalizeQueryResult disambiguates duplicate columns', () => {
       durationMs: 0,
     });
     expect(out?.columns).toEqual(['id', 'id_2']);
+  });
+});
+
+// Go omits empty slices over the Wails boundary, so list fields must survive arriving undefined.
+describe('schema object normalizers', () => {
+  it('normalizeIndexes fills missing fields', () => {
+    const [idx] = normalizeIndexes([{ name: 'i', schema: 'public', table: 'users', isUnique: true }]);
+    expect(idx).toEqual({
+      name: 'i',
+      schema: 'public',
+      table: 'users',
+      columns: [],
+      isPrimary: false,
+      isUnique: true,
+      method: undefined,
+    });
+  });
+
+  it('normalizeConstraints keeps optional FK fields undefined when absent', () => {
+    const [pk] = normalizeConstraints([{ name: 'pk', type: 'PRIMARY KEY', columns: ['id'] }]);
+    expect(pk.columns).toEqual(['id']);
+    expect(pk.refTable).toBeUndefined();
+    expect(pk.refColumns).toBeUndefined();
+
+    const [fk] = normalizeConstraints([
+      { name: 'fk', type: 'FOREIGN KEY', columns: ['org_id'], refTable: 'orgs', refColumns: ['id'] },
+    ]);
+    expect(fk.refColumns).toEqual(['id']);
+  });
+
+  it('normalizeTriggers tolerates a missing timing', () => {
+    const [tr] = normalizeTriggers([{ name: 't', schema: 'main', table: 'users' }]);
+    expect(tr).toEqual({ name: 't', schema: 'main', table: 'users', timing: undefined, events: undefined });
+  });
+
+  it('normalizeRoutines defaults an unlabelled routine to a function', () => {
+    const rows = normalizeRoutines([{ name: 'a' }, { name: 'b', kind: 'procedure' }, { name: 'c', kind: 'junk' }]);
+    expect(rows.map((r) => r.kind)).toEqual(['function', 'procedure', 'function']);
+  });
+
+  it('returns an empty array for null and non-array input', () => {
+    expect(normalizeIndexes(null)).toEqual([]);
+    expect(normalizeConstraints(undefined)).toEqual([]);
+    expect(normalizeTriggers('nope')).toEqual([]);
+    expect(normalizeRoutines(42)).toEqual([]);
   });
 });
 

@@ -3,6 +3,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { buildQualifiedTable } from '@/features/editor/lib/sqlQuoting';
 import { tableKey, tableMatchesSearch, useSchemaTree } from '@/features/sidebar/hooks/useSchemaTree';
+import type { SchemaObjectRow } from '@/features/sidebar/lib/schemaObjects';
 import { SchemaTreeNode } from '@/features/sidebar/SchemaTreeNode';
 import { SidebarFilterBar } from '@/features/sidebar/SidebarFilterBar';
 import { ContextMenu } from '@/shared/components/ContextMenu';
@@ -10,7 +11,7 @@ import { useContextMenu } from '@/shared/hooks/useContextMenu';
 import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue';
 import { useListKeyboardNav } from '@/shared/hooks/useListKeyboardNav';
 import { api } from '@/shared/lib/api';
-import { appToast } from '@/shared/lib/appToast';
+import { appToast, toastError } from '@/shared/lib/appToast';
 import { cx } from '@/shared/lib/cx';
 import { insertSqlIntoEditor } from '@/shared/lib/insertSql';
 import { formatError } from '@/shared/lib/normalize';
@@ -21,7 +22,7 @@ import {
   useSchemas,
   useStoreActions,
 } from '@/store/selectors';
-import type { TableInfo } from '@/types';
+import type { ObjectKind, ObjectRef, SchemaObjectGroup, TableInfo } from '@/types';
 
 interface SchemaPanelProps {
   onOpenQuery: (connId: string, sql?: string, options?: { forceNew?: boolean; title?: string }) => void;
@@ -62,6 +63,11 @@ export function SchemaPanel({ onOpenQuery, onBrowseTable, onOpenConnectionTab }:
     loadSchema,
     loadTables,
     toggleTableColumns,
+    expandedGroups,
+    loadingGroups,
+    objectRows,
+    toggleObjectGroup,
+    toggleRoutines,
   } = useSchemaTree({ connId, connConnected, schemaList, schemaSearch });
 
   const copyText = useCallback(
@@ -76,8 +82,55 @@ export function SchemaPanel({ onOpenQuery, onBrowseTable, onOpenConnectionTab }:
     [t],
   );
 
+  // Null when the lookup fails, with the reason already surfaced; callers just stop.
+  const fetchDDL = useCallback(
+    async (ref: ObjectRef): Promise<string | null> => {
+      if (!connId) return null;
+      try {
+        return await api.getObjectDDL(connId, ref);
+      } catch (err) {
+        toastError(err, t('errors.ddlFailed'));
+        return null;
+      }
+    },
+    [connId, t],
+  );
+
+  const copyDDL = useCallback(
+    async (ref: ObjectRef) => {
+      const ddl = await fetchDDL(ref);
+      if (ddl == null) return;
+      try {
+        await api.copyToClipboard(ddl);
+        appToast.success(t('toast.copiedDDL'));
+      } catch {
+        /* clipboard unavailable */
+      }
+    },
+    [fetchDDL, t],
+  );
+
+  // An ordinary SQL tab, so highlighting, search and editing come free.
+  const openDDLInTab = useCallback(
+    async (ref: ObjectRef) => {
+      if (!connId) return;
+      const ddl = await fetchDDL(ref);
+      if (ddl == null) return;
+      onOpenQuery(connId, ddl, { forceNew: true, title: t('sidebar.ddlTabTitle', { name: ref.name }) });
+    },
+    [connId, fetchDDL, onOpenQuery, t],
+  );
+
+  const ddlMenuItems = useCallback(
+    (ref: ObjectRef) => [
+      { label: t('sidebar.copyDDL'), action: () => void copyDDL(ref) },
+      { label: t('sidebar.openDDLInTab'), action: () => void openDDLInTab(ref) },
+    ],
+    [copyDDL, openDDLInTab, t],
+  );
+
   const openTableMenu = useCallback(
-    (e: React.MouseEvent, schemaName: string, table: string) => {
+    (e: React.MouseEvent, schemaName: string, table: string, kind: ObjectKind) => {
       if (!connId) return;
       const cid = connId;
       const qualified = buildQualifiedTable(schemaDriver, schemaName, table);
@@ -100,12 +153,14 @@ export function SchemaPanel({ onOpenQuery, onBrowseTable, onOpenConnectionTab }:
             }),
         },
         { label: '', action: () => {}, separator: true },
+        ...ddlMenuItems({ schema: schemaName, name: table, kind }),
+        { label: '', action: () => {}, separator: true },
         { label: t('sidebar.insertName'), action: () => insertSqlIntoEditor(qualified) },
         { label: t('sidebar.copyName'), action: () => void copyText(table) },
         { label: t('sidebar.copyQualifiedName'), action: () => void copyText(qualified) },
       ]);
     },
-    [connId, schemaDriver, onBrowseTable, onOpenQuery, copyText, openMenu, t],
+    [connId, schemaDriver, onBrowseTable, onOpenQuery, copyText, ddlMenuItems, openMenu, t],
   );
 
   const openColumnMenu = useCallback(
@@ -116,6 +171,17 @@ export function SchemaPanel({ onOpenQuery, onBrowseTable, onOpenConnectionTab }:
       ]);
     },
     [copyText, openMenu, t],
+  );
+
+  const openObjectMenu = useCallback(
+    (e: React.MouseEvent, row: SchemaObjectRow) => {
+      openMenu(e, [
+        ...ddlMenuItems(row.ref),
+        { label: '', action: () => {}, separator: true },
+        { label: t('sidebar.copyName'), action: () => void copyText(row.ref.name) },
+      ]);
+    },
+    [copyText, ddlMenuItems, openMenu, t],
   );
 
   // Stable callbacks so memo(SchemaTableRow) holds across tree re-renders.
@@ -132,6 +198,18 @@ export function SchemaPanel({ onOpenQuery, onBrowseTable, onOpenConnectionTab }:
     [connId, onBrowseTable],
   );
   const handleColumnClick = useCallback((colName: string) => insertSqlIntoEditor(colName), []);
+  const handleToggleGroup = useCallback(
+    (schemaName: string, table: string, group: SchemaObjectGroup) => {
+      if (connId) void toggleObjectGroup(connId, schemaName, table, group);
+    },
+    [connId, toggleObjectGroup],
+  );
+  const handleToggleRoutines = useCallback(
+    (schemaName: string) => {
+      if (connId) void toggleRoutines(connId, schemaName);
+    },
+    [connId, toggleRoutines],
+  );
 
   const visibleTablesByKey = useMemo<Record<string, TableInfo[]> | null>(() => {
     if (!schemaSearch || !connId) return null;
@@ -269,6 +347,9 @@ export function SchemaPanel({ onOpenQuery, onBrowseTable, onOpenConnectionTab }:
                 expandedTables={expandedTables}
                 tableColumns={tableColumns}
                 loadingColumns={loadingColumns}
+                expandedGroups={expandedGroups}
+                loadingGroups={loadingGroups}
+                objectRows={objectRows}
                 onToggleSchema={() => {
                   if (!isOpen) void loadTables(connId, sch.name);
                   else setExpandedSchemas((e) => ({ ...e, [key]: false }));
@@ -278,6 +359,9 @@ export function SchemaPanel({ onOpenQuery, onBrowseTable, onOpenConnectionTab }:
                 onBrowse={handleBrowseTableRow}
                 onColumnClick={handleColumnClick}
                 onColumnContextMenu={openColumnMenu}
+                onToggleGroup={handleToggleGroup}
+                onToggleRoutines={handleToggleRoutines}
+                onObjectContextMenu={openObjectMenu}
               />
             );
           })}

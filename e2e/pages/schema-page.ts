@@ -1,5 +1,8 @@
 import { expect, type Locator, type Page } from '@playwright/test';
 
+/** Mirrors the frontend's SchemaObjectGroup. */
+type SchemaObjectGroup = 'indexes' | 'constraints' | 'triggers';
+
 /** The sidebar schema browser: refresh, expand schemas/tables and inspect columns. */
 export class SchemaPage {
   readonly page: Page;
@@ -88,5 +91,64 @@ export class SchemaPage {
   /** Click a column row to insert its name into the active editor. */
   async insertColumn(column: string): Promise<void> {
     await this.columnRow(column).click();
+  }
+
+  // ── Object groups (indexes / constraints / triggers / functions) ───────────
+  /** A table's group header row; the table must already be expanded. */
+  groupRow(group: SchemaObjectGroup): Locator {
+    return this.page.getByTestId(`schema-group-${group}`);
+  }
+
+  /** Present only once the group has been expanded. */
+  groupRows(group: SchemaObjectGroup): Locator {
+    return this.page.getByTestId(`schema-group-${group}-row`);
+  }
+
+  objectRow(group: SchemaObjectGroup, name: string): Locator {
+    return this.page.locator(`[data-testid="schema-group-${group}-row"][data-object="${name}"]`);
+  }
+
+  /** Expand a table and one of its groups, waiting for the lazily-loaded rows. */
+  async expandGroup(table: string, group: SchemaObjectGroup): Promise<void> {
+    await this.expandColumns(table);
+    const header = this.groupRow(group).first();
+    await header.waitFor({ state: 'visible' });
+    await header.click();
+    // An empty group renders a placeholder instead of rows.
+    await expect(this.groupRows(group).first().or(this.page.locator('.tree-children .text-muted').first())).toBeVisible(
+      { timeout: 30_000 },
+    );
+  }
+
+  /** Expand the schema-level Functions group. */
+  async expandRoutines(): Promise<void> {
+    const header = this.page.getByTestId('schema-group-routines').first();
+    await header.waitFor({ state: 'visible' });
+    await header.click();
+  }
+
+  // ── DDL ───────────────────────────────────────────────────────────────────
+  /** Table context menu → "Copy DDL". */
+  async copyTableDDL(table: string): Promise<void> {
+    await this.openTableMenu(table);
+    await this.page.getByRole('menuitem', { name: 'Copy DDL', exact: true }).click();
+  }
+
+  /** Table context menu → "Open DDL in new tab". */
+  async openTableDDLInTab(table: string): Promise<void> {
+    await this.openTableMenu(table);
+    await this.page.getByRole('menuitem', { name: 'Open DDL in new tab', exact: true }).click();
+  }
+
+  /** Object-row context menu → "Copy DDL". */
+  async copyObjectDDL(group: SchemaObjectGroup, name: string): Promise<void> {
+    await this.objectRow(group, name).click({ button: 'right' });
+    await this.page.locator('.context-menu').waitFor({ state: 'visible' });
+    await this.page.getByRole('menuitem', { name: 'Copy DDL', exact: true }).click();
+  }
+
+  /** Reads the clipboard; the caller must have granted clipboard permissions. */
+  async clipboardText(): Promise<string> {
+    return this.page.evaluate(() => navigator.clipboard.readText());
   }
 }

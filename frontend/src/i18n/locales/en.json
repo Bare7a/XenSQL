@@ -97,7 +97,8 @@
     "jumpToError": "Jump to error",
     "detailLabel": "Detail",
     "hintLabel": "Hint",
-    "unknown": "Unknown error"
+    "unknown": "Unknown error",
+    "ddlFailed": "Could not read DDL"
   },
   "toast": {
     "dismiss": "Dismiss",
@@ -109,7 +110,8 @@
     "exportCopied": "Export copied to clipboard",
     "connectionSuccess": "Connection successful!",
     "savedQuery": "Query saved",
-    "exportStopped": "Export stopped - {{fileName}} holds only the first {{count}} row(s)"
+    "exportStopped": "Export stopped - {{fileName}} holds only the first {{count}} row(s)",
+    "copiedDDL": "DDL copied to clipboard"
   },
   "tooltip": {
     "runStatement": "Run this statement",
@@ -162,7 +164,8 @@
     "prettify": "Pretty-print JSON, XML, or HTML",
     "minify": "Compact JSON, XML, or HTML",
     "schemaTableRow": "Click to expand · Right-click for actions",
-    "schemaColumnRow": "Click to insert · Right-click for actions"
+    "schemaColumnRow": "Click to insert · Right-click for actions",
+    "schemaObjectRow": "Right-click for DDL"
   },
   "editor": {
     "fontSize": "Font size",
@@ -381,7 +384,33 @@
     "copySql": "Copy SQL",
     "pin": "Pin",
     "unpin": "Unpin",
-    "connectedLabel": "Connected"
+    "connectedLabel": "Connected",
+    "loadingObjects": "Loading",
+    "copyDDL": "Copy DDL",
+    "openDDLInTab": "Open DDL in new tab",
+    "ddlTabTitle": "DDL: {{name}}",
+    "group": {
+      "indexes": "Indexes",
+      "constraints": "Constraints",
+      "triggers": "Triggers",
+      "routines": "Functions"
+    },
+    "empty": {
+      "indexes": "No indexes",
+      "constraints": "No constraints",
+      "triggers": "No triggers",
+      "routines": "No functions"
+    },
+    "badge": {
+      "pk": "PK",
+      "fk": "FK",
+      "unique": "UQ",
+      "check": "CK",
+      "index": "IDX",
+      "function": "FN",
+      "procedure": "PROC",
+      "view": "VIEW"
+    }
   },
   "errorBoundary": {
     "schema": "Schema browser error",

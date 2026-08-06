@@ -97,7 +97,8 @@
     "jumpToError": "Zur Fehlerstelle springen",
     "detailLabel": "Detail",
     "hintLabel": "Hinweis",
-    "unknown": "Unbekannter Fehler"
+    "unknown": "Unbekannter Fehler",
+    "ddlFailed": "DDL konnte nicht gelesen werden"
   },
   "toast": {
     "dismiss": "Schließen",
@@ -109,7 +110,8 @@
     "exportCopied": "Export in Zwischenablage kopiert",
     "connectionSuccess": "Verbindung erfolgreich!",
     "savedQuery": "Abfrage gespeichert",
-    "exportStopped": "Export abgebrochen - {{fileName}} enthält nur die ersten {{count}} Zeile(n)"
+    "exportStopped": "Export abgebrochen - {{fileName}} enthält nur die ersten {{count}} Zeile(n)",
+    "copiedDDL": "DDL in die Zwischenablage kopiert"
   },
   "tooltip": {
     "runStatement": "Diese Anweisung ausführen",
@@ -162,7 +164,8 @@
     "prettify": "JSON, XML oder HTML formatieren",
     "minify": "JSON, XML oder HTML komprimieren",
     "schemaTableRow": "Klick zum Aufklappen · Rechtsklick für Aktionen",
-    "schemaColumnRow": "Klick zum Einfügen · Rechtsklick für Aktionen"
+    "schemaColumnRow": "Klick zum Einfügen · Rechtsklick für Aktionen",
+    "schemaObjectRow": "Rechtsklick für DDL"
   },
   "editor": {
     "fontSize": "Schriftgröße",
@@ -381,7 +384,33 @@
     "copySql": "SQL kopieren",
     "pin": "Anheften",
     "unpin": "Lösen",
-    "connectedLabel": "Verbunden"
+    "connectedLabel": "Verbunden",
+    "loadingObjects": "Lädt",
+    "copyDDL": "DDL kopieren",
+    "openDDLInTab": "DDL in neuem Tab öffnen",
+    "ddlTabTitle": "DDL: {{name}}",
+    "group": {
+      "indexes": "Indizes",
+      "constraints": "Constraints",
+      "triggers": "Trigger",
+      "routines": "Funktionen"
+    },
+    "empty": {
+      "indexes": "Keine Indizes",
+      "constraints": "Keine Constraints",
+      "triggers": "Keine Trigger",
+      "routines": "Keine Funktionen"
+    },
+    "badge": {
+      "pk": "PK",
+      "fk": "FK",
+      "unique": "UQ",
+      "check": "CK",
+      "index": "IDX",
+      "function": "FN",
+      "procedure": "PROZ",
+      "view": "VIEW"
+    }
   },
   "errorBoundary": {
     "schema": "Fehler im Schema-Browser",

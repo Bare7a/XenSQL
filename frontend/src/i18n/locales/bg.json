@@ -97,7 +97,8 @@
     "jumpToError": "Към грешката",
     "detailLabel": "Детайл",
     "hintLabel": "Подсказка",
-    "unknown": "Неизвестна грешка"
+    "unknown": "Неизвестна грешка",
+    "ddlFailed": "DDL не можа да бъде прочетен"
   },
   "toast": {
     "dismiss": "Затвори",
@@ -109,7 +110,8 @@
     "exportCopied": "Експортът е копиран в клипборда",
     "connectionSuccess": "Връзката е успешна!",
     "savedQuery": "Заявката е запазена",
-    "exportStopped": "Експортирането е спряно - {{fileName}} съдържа само първите {{count}} ред(а)"
+    "exportStopped": "Експортирането е спряно - {{fileName}} съдържа само първите {{count}} ред(а)",
+    "copiedDDL": "DDL е копиран в клипборда"
   },
   "tooltip": {
     "runStatement": "Изпълни тази заявка",
@@ -162,7 +164,8 @@
     "prettify": "Форматирай JSON, XML или HTML",
     "minify": "Компресирай JSON, XML или HTML",
     "schemaTableRow": "Клик за разгъване · Десен бутон за действия",
-    "schemaColumnRow": "Клик за вмъкване · Десен бутон за действия"
+    "schemaColumnRow": "Клик за вмъкване · Десен бутон за действия",
+    "schemaObjectRow": "Десен бутон за DDL"
   },
   "editor": {
     "fontSize": "Шрифт",
@@ -381,7 +384,33 @@
     "copySql": "Копирай SQL",
     "pin": "Закачи",
     "unpin": "Откачи",
-    "connectedLabel": "Свързан"
+    "connectedLabel": "Свързан",
+    "loadingObjects": "Зареждане",
+    "copyDDL": "Копирай DDL",
+    "openDDLInTab": "Отвори DDL в нов таб",
+    "ddlTabTitle": "DDL: {{name}}",
+    "group": {
+      "indexes": "Индекси",
+      "constraints": "Ограничения",
+      "triggers": "Тригери",
+      "routines": "Функции"
+    },
+    "empty": {
+      "indexes": "Няма индекси",
+      "constraints": "Няма ограничения",
+      "triggers": "Няма тригери",
+      "routines": "Няма функции"
+    },
+    "badge": {
+      "pk": "PK",
+      "fk": "FK",
+      "unique": "UQ",
+      "check": "CK",
+      "index": "IDX",
+      "function": "FN",
+      "procedure": "ПРОЦ",
+      "view": "VIEW"
+    }
   },
   "errorBoundary": {
     "schema": "Грешка в прегледа на схемата",

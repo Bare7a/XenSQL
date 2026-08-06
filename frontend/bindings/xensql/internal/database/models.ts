@@ -144,6 +144,62 @@ export class ConnectionStatus {
     }
 }
 
+export class ConstraintInfo {
+    "name": string;
+    "schema": string;
+    "table": string;
+
+    /**
+     * Type is one of PRIMARY KEY, FOREIGN KEY, UNIQUE, CHECK.
+     */
+    "type": string;
+    "columns": string[];
+    "refTable"?: string;
+    "refColumns"?: string[];
+
+    /**
+     * Definition is the engine's own rendering of the body, when it exposes one.
+     */
+    "definition"?: string;
+
+    /** Creates a new ConstraintInfo instance. */
+    constructor($$source: Partial<ConstraintInfo> = {}) {
+        if (!("name" in $$source)) {
+            this["name"] = "";
+        }
+        if (!("schema" in $$source)) {
+            this["schema"] = "";
+        }
+        if (!("table" in $$source)) {
+            this["table"] = "";
+        }
+        if (!("type" in $$source)) {
+            this["type"] = "";
+        }
+        if (!("columns" in $$source)) {
+            this["columns"] = [];
+        }
+
+        Object.assign(this, $$source);
+    }
+
+    /**
+     * Creates a new ConstraintInfo instance from a string or object.
+     */
+    static createFrom($$source: any = {}): ConstraintInfo {
+        const $$createField4_0 = $$createType1;
+        const $$createField6_0 = $$createType1;
+        let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
+        if ("columns" in $$parsedSource) {
+            $$parsedSource["columns"] = $$createField4_0($$parsedSource["columns"]);
+        }
+        if ("refColumns" in $$parsedSource) {
+            $$parsedSource["refColumns"] = $$createField6_0($$parsedSource["refColumns"]);
+        }
+        return new ConstraintInfo($$parsedSource as Partial<ConstraintInfo>);
+    }
+}
+
 export enum DriverType {
     /**
      * The Go zero value for the underlying type of the enum.
@@ -198,6 +254,106 @@ export class HistoryEntry {
     static createFrom($$source: any = {}): HistoryEntry {
         let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
         return new HistoryEntry($$parsedSource as Partial<HistoryEntry>);
+    }
+}
+
+export class IndexInfo {
+    "name": string;
+    "schema": string;
+    "table": string;
+    "columns": string[];
+
+    /**
+     * IsPrimary marks the index backing a primary key, which has no standalone DDL.
+     */
+    "isPrimary": boolean;
+    "isUnique": boolean;
+    "method"?: string;
+
+    /** Creates a new IndexInfo instance. */
+    constructor($$source: Partial<IndexInfo> = {}) {
+        if (!("name" in $$source)) {
+            this["name"] = "";
+        }
+        if (!("schema" in $$source)) {
+            this["schema"] = "";
+        }
+        if (!("table" in $$source)) {
+            this["table"] = "";
+        }
+        if (!("columns" in $$source)) {
+            this["columns"] = [];
+        }
+        if (!("isPrimary" in $$source)) {
+            this["isPrimary"] = false;
+        }
+        if (!("isUnique" in $$source)) {
+            this["isUnique"] = false;
+        }
+
+        Object.assign(this, $$source);
+    }
+
+    /**
+     * Creates a new IndexInfo instance from a string or object.
+     */
+    static createFrom($$source: any = {}): IndexInfo {
+        const $$createField3_0 = $$createType1;
+        let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
+        if ("columns" in $$parsedSource) {
+            $$parsedSource["columns"] = $$createField3_0($$parsedSource["columns"]);
+        }
+        return new IndexInfo($$parsedSource as Partial<IndexInfo>);
+    }
+}
+
+export enum ObjectKind {
+    /**
+     * The Go zero value for the underlying type of the enum.
+     */
+    $zero = "",
+
+    ObjectTable = "table",
+    ObjectView = "view",
+    ObjectMatView = "materialized view",
+    ObjectIndex = "index",
+    ObjectConstraint = "constraint",
+    ObjectTrigger = "trigger",
+    ObjectFunction = "function",
+    ObjectProcedure = "procedure",
+};
+
+/**
+ * ObjectRef names the parent relation in Table for index / constraint / trigger kinds only.
+ */
+export class ObjectRef {
+    "schema": string;
+    "name": string;
+    "kind": ObjectKind;
+    "table"?: string;
+    "args"?: string;
+
+    /** Creates a new ObjectRef instance. */
+    constructor($$source: Partial<ObjectRef> = {}) {
+        if (!("schema" in $$source)) {
+            this["schema"] = "";
+        }
+        if (!("name" in $$source)) {
+            this["name"] = "";
+        }
+        if (!("kind" in $$source)) {
+            this["kind"] = ObjectKind.$zero;
+        }
+
+        Object.assign(this, $$source);
+    }
+
+    /**
+     * Creates a new ObjectRef instance from a string or object.
+     */
+    static createFrom($$source: any = {}): ObjectRef {
+        let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
+        return new ObjectRef($$parsedSource as Partial<ObjectRef>);
     }
 }
 
@@ -262,8 +418,8 @@ export class PlanNode {
      * Creates a new PlanNode instance from a string or object.
      */
     static createFrom($$source: any = {}): PlanNode {
-        const $$createField12_0 = $$createType2;
-        const $$createField13_0 = $$createType4;
+        const $$createField12_0 = $$createType3;
+        const $$createField13_0 = $$createType5;
         let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
         if ("fields" in $$parsedSource) {
             $$parsedSource["fields"] = $$createField12_0($$parsedSource["fields"]);
@@ -319,8 +475,8 @@ export class QueryPlan {
      * Creates a new QueryPlan instance from a string or object.
      */
     static createFrom($$source: any = {}): QueryPlan {
-        const $$createField4_0 = $$createType4;
-        const $$createField9_0 = $$createType5;
+        const $$createField4_0 = $$createType5;
+        const $$createField9_0 = $$createType1;
         let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
         if ("nodes" in $$parsedSource) {
             $$parsedSource["nodes"] = $$createField4_0($$parsedSource["nodes"]);
@@ -372,10 +528,10 @@ export class QueryResult {
      * Creates a new QueryResult instance from a string or object.
      */
     static createFrom($$source: any = {}): QueryResult {
-        const $$createField0_0 = $$createType5;
-        const $$createField1_0 = $$createType5;
+        const $$createField0_0 = $$createType1;
+        const $$createField1_0 = $$createType1;
         const $$createField2_0 = $$createType7;
-        const $$createField7_0 = $$createType5;
+        const $$createField7_0 = $$createType1;
         let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
         if ("columns" in $$parsedSource) {
             $$parsedSource["columns"] = $$createField0_0($$parsedSource["columns"]);
@@ -390,6 +546,45 @@ export class QueryResult {
             $$parsedSource["primaryKeys"] = $$createField7_0($$parsedSource["primaryKeys"]);
         }
         return new QueryResult($$parsedSource as Partial<QueryResult>);
+    }
+}
+
+export class RoutineInfo {
+    "name": string;
+    "schema": string;
+
+    /**
+     * Kind is ObjectFunction or ObjectProcedure.
+     */
+    "kind": ObjectKind;
+    "returnType"?: string;
+
+    /**
+     * Args is the argument list without parentheses; it disambiguates overloads.
+     */
+    "args"?: string;
+
+    /** Creates a new RoutineInfo instance. */
+    constructor($$source: Partial<RoutineInfo> = {}) {
+        if (!("name" in $$source)) {
+            this["name"] = "";
+        }
+        if (!("schema" in $$source)) {
+            this["schema"] = "";
+        }
+        if (!("kind" in $$source)) {
+            this["kind"] = ObjectKind.$zero;
+        }
+
+        Object.assign(this, $$source);
+    }
+
+    /**
+     * Creates a new RoutineInfo instance from a string or object.
+     */
+    static createFrom($$source: any = {}): RoutineInfo {
+        let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
+        return new RoutineInfo($$parsedSource as Partial<RoutineInfo>);
     }
 }
 
@@ -707,13 +902,48 @@ export class TableInfo {
     }
 }
 
+export class TriggerInfo {
+    "name": string;
+    "schema": string;
+    "table": string;
+
+    /**
+     * Timing is BEFORE / AFTER / INSTEAD OF; Events is the comma-joined event list.
+     */
+    "timing"?: string;
+    "events"?: string;
+
+    /** Creates a new TriggerInfo instance. */
+    constructor($$source: Partial<TriggerInfo> = {}) {
+        if (!("name" in $$source)) {
+            this["name"] = "";
+        }
+        if (!("schema" in $$source)) {
+            this["schema"] = "";
+        }
+        if (!("table" in $$source)) {
+            this["table"] = "";
+        }
+
+        Object.assign(this, $$source);
+    }
+
+    /**
+     * Creates a new TriggerInfo instance from a string or object.
+     */
+    static createFrom($$source: any = {}): TriggerInfo {
+        let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
+        return new TriggerInfo($$parsedSource as Partial<TriggerInfo>);
+    }
+}
+
 // Private type creation functions
 const $$createType0 = SSHConfig.createFrom;
-const $$createType1 = PlanField.createFrom;
-const $$createType2 = $Create.Array($$createType1);
-const $$createType3 = PlanNode.createFrom;
-const $$createType4 = $Create.Array($$createType3);
-const $$createType5 = $Create.Array($Create.Any);
+const $$createType1 = $Create.Array($Create.Any);
+const $$createType2 = PlanField.createFrom;
+const $$createType3 = $Create.Array($$createType2);
+const $$createType4 = PlanNode.createFrom;
+const $$createType5 = $Create.Array($$createType4);
 const $$createType6 = $Create.Array($Create.Any);
 const $$createType7 = $Create.Array($$createType6);
 const $$createType8 = $Create.Map($Create.Any, $Create.Any);

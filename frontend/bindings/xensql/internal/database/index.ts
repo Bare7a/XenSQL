@@ -5,12 +5,17 @@ export {
     ColumnInfo,
     ConnectionConfig,
     ConnectionStatus,
+    ConstraintInfo,
     DriverType,
     HistoryEntry,
+    IndexInfo,
+    ObjectKind,
+    ObjectRef,
     PlanField,
     PlanNode,
     QueryPlan,
     QueryResult,
+    RoutineInfo,
     RowDelete,
     RowUpdate,
     SSHAuthMethod,
@@ -20,5 +25,6 @@ export {
     SchemaInfo,
     SchemaTables,
     TableDataRequest,
-    TableInfo
+    TableInfo,
+    TriggerInfo
 } from "./models.js";

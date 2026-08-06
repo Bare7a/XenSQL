@@ -153,6 +153,13 @@ export function GetEditorSession(): $CancellablePromise<storage$0.EditorSession>
     });
 }
 
+/**
+ * GetObjectDDL reads the catalog only, so it stays available on read-only connections.
+ */
+export function GetObjectDDL(connectionID: string, ref: database$0.ObjectRef): $CancellablePromise<string> {
+    return $Call.ByID(3474183456, connectionID, ref);
+}
+
 export function GetPathDefaults(): $CancellablePromise<$models.PathDefaults> {
     return $Call.ByID(230484794).then(($result: any) => {
         return $$createType7($result);
@@ -207,27 +214,51 @@ export function ListConnections(): $CancellablePromise<database$0.ConnectionConf
     });
 }
 
+export function ListConstraints(connectionID: string, schema: string, table: string): $CancellablePromise<database$0.ConstraintInfo[]> {
+    return $Call.ByID(459667143, connectionID, schema, table).then(($result: any) => {
+        return $$createType17($result);
+    });
+}
+
 export function ListFolders(): $CancellablePromise<storage$0.ConnectionFolder[]> {
     return $Call.ByID(1373072582).then(($result: any) => {
-        return $$createType17($result);
+        return $$createType19($result);
+    });
+}
+
+export function ListIndexes(connectionID: string, schema: string, table: string): $CancellablePromise<database$0.IndexInfo[]> {
+    return $Call.ByID(1696593423, connectionID, schema, table).then(($result: any) => {
+        return $$createType21($result);
+    });
+}
+
+export function ListRoutines(connectionID: string, schema: string): $CancellablePromise<database$0.RoutineInfo[]> {
+    return $Call.ByID(1660715140, connectionID, schema).then(($result: any) => {
+        return $$createType23($result);
     });
 }
 
 export function ListSavedQueries(connectionID: string): $CancellablePromise<database$0.SavedQuery[]> {
     return $Call.ByID(2254370512, connectionID).then(($result: any) => {
-        return $$createType19($result);
+        return $$createType25($result);
     });
 }
 
 export function ListSchemas(connectionID: string): $CancellablePromise<database$0.SchemaInfo[]> {
     return $Call.ByID(2969331507, connectionID).then(($result: any) => {
-        return $$createType21($result);
+        return $$createType27($result);
     });
 }
 
 export function ListTables(connectionID: string, schema: string): $CancellablePromise<database$0.TableInfo[]> {
     return $Call.ByID(773846824, connectionID, schema).then(($result: any) => {
-        return $$createType23($result);
+        return $$createType29($result);
+    });
+}
+
+export function ListTriggers(connectionID: string, schema: string, table: string): $CancellablePromise<database$0.TriggerInfo[]> {
+    return $Call.ByID(1037368812, connectionID, schema, table).then(($result: any) => {
+        return $$createType31($result);
     });
 }
 
@@ -237,7 +268,7 @@ export function ListTables(connectionID: string, schema: string): $CancellablePr
  */
 export function LoadSchemaData(connectionID: string): $CancellablePromise<database$0.SchemaBundle> {
     return $Call.ByID(4233994986, connectionID).then(($result: any) => {
-        return $$createType24($result);
+        return $$createType32($result);
     });
 }
 
@@ -284,13 +315,13 @@ export function SaveEditorSession(session: storage$0.EditorSession): $Cancellabl
 
 export function SaveFolder(f: storage$0.ConnectionFolder): $CancellablePromise<storage$0.ConnectionFolder> {
     return $Call.ByID(1026390748, f).then(($result: any) => {
-        return $$createType16($result);
+        return $$createType18($result);
     });
 }
 
 export function SaveSavedQuery(q: database$0.SavedQuery): $CancellablePromise<database$0.SavedQuery> {
     return $Call.ByID(1936361457, q).then(($result: any) => {
-        return $$createType18($result);
+        return $$createType24($result);
     });
 }
 
@@ -326,7 +357,7 @@ export function SetWindowStateFlush(flush: any): $CancellablePromise<void> {
 
 export function SettingsStore(): $CancellablePromise<storage$0.SettingsStore | null> {
     return $Call.ByID(2329735545).then(($result: any) => {
-        return $$createType26($result);
+        return $$createType34($result);
     });
 }
 
@@ -362,14 +393,22 @@ const $$createType12 = database$0.ColumnInfo.createFrom;
 const $$createType13 = $Create.Array($$createType12);
 const $$createType14 = database$0.ConnectionConfig.createFrom;
 const $$createType15 = $Create.Array($$createType14);
-const $$createType16 = storage$0.ConnectionFolder.createFrom;
+const $$createType16 = database$0.ConstraintInfo.createFrom;
 const $$createType17 = $Create.Array($$createType16);
-const $$createType18 = database$0.SavedQuery.createFrom;
+const $$createType18 = storage$0.ConnectionFolder.createFrom;
 const $$createType19 = $Create.Array($$createType18);
-const $$createType20 = database$0.SchemaInfo.createFrom;
+const $$createType20 = database$0.IndexInfo.createFrom;
 const $$createType21 = $Create.Array($$createType20);
-const $$createType22 = database$0.TableInfo.createFrom;
+const $$createType22 = database$0.RoutineInfo.createFrom;
 const $$createType23 = $Create.Array($$createType22);
-const $$createType24 = database$0.SchemaBundle.createFrom;
-const $$createType25 = storage$0.SettingsStore.createFrom;
-const $$createType26 = $Create.Nullable($$createType25);
+const $$createType24 = database$0.SavedQuery.createFrom;
+const $$createType25 = $Create.Array($$createType24);
+const $$createType26 = database$0.SchemaInfo.createFrom;
+const $$createType27 = $Create.Array($$createType26);
+const $$createType28 = database$0.TableInfo.createFrom;
+const $$createType29 = $Create.Array($$createType28);
+const $$createType30 = database$0.TriggerInfo.createFrom;
+const $$createType31 = $Create.Array($$createType30);
+const $$createType32 = database$0.SchemaBundle.createFrom;
+const $$createType33 = storage$0.SettingsStore.createFrom;
+const $$createType34 = $Create.Nullable($$createType33);

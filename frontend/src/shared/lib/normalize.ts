@@ -2,12 +2,16 @@ import { t } from '@/i18n';
 import type {
   ColumnInfo,
   ConnectionStatus,
+  ConstraintInfo,
   HistoryEntry,
+  IndexInfo,
   QueryResult,
+  RoutineInfo,
   SavedQuery,
   SchemaBundle,
   SchemaInfo,
   TableInfo,
+  TriggerInfo,
 } from '@/types';
 
 export function toArray<T>(data: unknown): T[] {
@@ -48,6 +52,55 @@ export function normalizeColumns(data: unknown): ColumnInfo[] {
     foreignTable: c?.foreignTable,
     foreignColumn: c?.foreignColumn,
     defaultVal: c?.defaultVal,
+  }));
+}
+
+function toStringArray(data: unknown): string[] {
+  return toArray<unknown>(data).map((v) => String(v ?? ''));
+}
+
+export function normalizeIndexes(data: unknown): IndexInfo[] {
+  return toArray<Record<string, unknown>>(data).map((i) => ({
+    name: String(i?.name ?? ''),
+    schema: String(i?.schema ?? ''),
+    table: String(i?.table ?? ''),
+    columns: toStringArray(i?.columns),
+    isPrimary: Boolean(i?.isPrimary),
+    isUnique: Boolean(i?.isUnique),
+    method: i?.method != null ? String(i.method) : undefined,
+  }));
+}
+
+export function normalizeConstraints(data: unknown): ConstraintInfo[] {
+  return toArray<Record<string, unknown>>(data).map((c) => ({
+    name: String(c?.name ?? ''),
+    schema: String(c?.schema ?? ''),
+    table: String(c?.table ?? ''),
+    type: String(c?.type ?? ''),
+    columns: toStringArray(c?.columns),
+    refTable: c?.refTable != null ? String(c.refTable) : undefined,
+    refColumns: c?.refColumns != null ? toStringArray(c.refColumns) : undefined,
+    definition: c?.definition != null ? String(c.definition) : undefined,
+  }));
+}
+
+export function normalizeTriggers(data: unknown): TriggerInfo[] {
+  return toArray<Record<string, unknown>>(data).map((tr) => ({
+    name: String(tr?.name ?? ''),
+    schema: String(tr?.schema ?? ''),
+    table: String(tr?.table ?? ''),
+    timing: tr?.timing != null ? String(tr.timing) : undefined,
+    events: tr?.events != null ? String(tr.events) : undefined,
+  }));
+}
+
+export function normalizeRoutines(data: unknown): RoutineInfo[] {
+  return toArray<Record<string, unknown>>(data).map((r) => ({
+    name: String(r?.name ?? ''),
+    schema: String(r?.schema ?? ''),
+    kind: r?.kind === 'procedure' ? 'procedure' : 'function',
+    returnType: r?.returnType != null ? String(r.returnType) : undefined,
+    args: r?.args != null ? String(r.args) : undefined,
   }));
 }
 

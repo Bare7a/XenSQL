@@ -20,6 +20,7 @@ import {
   GetAppInfo,
   GetConnectionStatus,
   GetEditorSession,
+  GetObjectDDL,
   GetPathDefaults,
   GetPendingFile,
   GetQueryHistory,
@@ -27,10 +28,14 @@ import {
   IsConnected,
   ListColumns,
   ListConnections,
+  ListConstraints,
   ListFolders,
+  ListIndexes,
+  ListRoutines,
   ListSavedQueries,
   ListSchemas,
   ListTables,
+  ListTriggers,
   LoadSchemaData,
   PickExportSavePath,
   PickKnownHostsFile,
@@ -50,11 +55,15 @@ import {
 import { writeClipboardText } from '@/shared/lib/clipboard';
 import {
   normalizeColumns,
+  normalizeConstraints,
   normalizeHistory,
+  normalizeIndexes,
+  normalizeRoutines,
   normalizeSavedQueries,
   normalizeSchemaBundle,
   normalizeSchemas,
   normalizeTables,
+  normalizeTriggers,
   toArray,
 } from '@/shared/lib/normalize';
 import type {
@@ -62,6 +71,7 @@ import type {
   ConnectionFolder,
   EditorTab,
   HistoryEntry,
+  ObjectRef,
   QueryPlan,
   QueryResult,
   SavedQuery,
@@ -93,6 +103,14 @@ export const api = {
   listTables: async (connId: string, schema: string) => normalizeTables(await ListTables(connId, schema)),
   listColumns: async (connId: string, schema: string, table: string) =>
     normalizeColumns(await ListColumns(connId, schema, table)),
+  listIndexes: async (connId: string, schema: string, table: string) =>
+    normalizeIndexes(await ListIndexes(connId, schema, table)),
+  listConstraints: async (connId: string, schema: string, table: string) =>
+    normalizeConstraints(await ListConstraints(connId, schema, table)),
+  listTriggers: async (connId: string, schema: string, table: string) =>
+    normalizeTriggers(await ListTriggers(connId, schema, table)),
+  listRoutines: async (connId: string, schema: string) => normalizeRoutines(await ListRoutines(connId, schema)),
+  getObjectDDL: (connId: string, ref: ObjectRef): Promise<string> => cast(GetObjectDDL(connId, ref as never)),
   executeQueryStream: (connId: string, tabId: string, sql: string): Promise<void> =>
     cast(ExecuteQueryStream(connId, tabId, sql)),
   explainQuery: (connId: string, tabId: string, sql: string, analyze: boolean): Promise<QueryPlan> =>

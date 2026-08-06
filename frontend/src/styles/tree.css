@@ -145,3 +145,60 @@
 .tree-column--clickable {
   cursor: pointer;
 }
+
+/* Object groups sit a step below their relations: same row mechanics, quieter type. */
+.tree-item--group {
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+}
+
+.tree-icon--view {
+  color: var(--accent);
+}
+
+.tree-object {
+  cursor: default;
+}
+
+/* Sized from its own text, so the name holds its width against the detail. */
+.tree-object .tree-column-name {
+  flex: 1 1 auto;
+}
+
+/* Yields space ~100x faster than the name, which stays readable. */
+.tree-object-detail {
+  flex: 0 100 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--text-2xs);
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+}
+
+.tree-object-badge {
+  flex-shrink: 0;
+  font-size: var(--text-3xs);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  padding: 0 var(--space-4);
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  background: color-mix(in srgb, var(--text-muted) 12%, transparent);
+}
+
+.tree-object-badge--unique {
+  color: var(--success);
+  background: color-mix(in srgb, var(--success) 12%, transparent);
+}
+
+.tree-object-badge--check {
+  color: var(--warning);
+  background: color-mix(in srgb, var(--warning) 12%, transparent);
+}
+
+.tree-object-badge--view {
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+}

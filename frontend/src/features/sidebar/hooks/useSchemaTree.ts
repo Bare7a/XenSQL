@@ -1,11 +1,20 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import {
+  constraintRows,
+  groupKey,
+  indexRows,
+  routineRows,
+  routinesKey,
+  type SchemaObjectRow,
+  triggerRows,
+} from '@/features/sidebar/lib/schemaObjects';
 import { api } from '@/shared/lib/api';
 import { invalidateColumnCache } from '@/shared/lib/columnCache';
 import { formatError } from '@/shared/lib/normalize';
 import { readStoredJson, STORAGE_KEYS, writeStoredJson } from '@/shared/lib/storageKeys';
 import { useSchemas, useStoreActions, useTablesMap } from '@/store/selectors';
-import type { ColumnInfo, SchemaInfo } from '@/types';
+import type { ColumnInfo, SchemaInfo, SchemaObjectGroup } from '@/types';
 
 export const tableKey = (connectionId: string, schema: string, table: string) => `${connectionId}:${schema}:${table}`;
 
@@ -44,6 +53,10 @@ export function useSchemaTree({ connId, connConnected, schemaList, schemaSearch 
   const [schemaError, setSchemaError] = useState('');
   const [loadingColumns, setLoadingColumns] = useState<Record<string, boolean>>({});
   const [tableColumns, setTableColumns] = useState<Record<string, ColumnInfo[]>>({});
+  // Not persisted: cheap to refetch, and a stale index list is worse than a round-trip.
+  const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
+  const [loadingGroups, setLoadingGroups] = useState<Record<string, boolean>>({});
+  const [objectRows, setObjectRows] = useState<Record<string, SchemaObjectRow[]>>({});
 
   // "Fetched" tracked apart from "has rows": an empty schema ([] tables) is loaded and must not be
   // re-fetched, else the effects below loop on every `tables` change.
@@ -62,10 +75,12 @@ export function useSchemaTree({ connId, connConnected, schemaList, schemaSearch 
       }
       setLoadingSchema(true);
       setSchemaError('');
-      // Full (re)load: forget fetch markers and the editor's column cache.
+      // Full (re)load: forget fetch markers, cached groups and the editor's column cache.
       loadedTablesRef.current.clear();
       loadedColumnsRef.current.clear();
       setTableColumns({});
+      setObjectRows({});
+      setExpandedGroups({});
       invalidateColumnCache(connectionId);
 
       try {
@@ -156,6 +171,66 @@ export function useSchemaTree({ connId, connConnected, schemaList, schemaSearch 
     [expandedTables, fetchTableColumns],
   );
 
+  // Collapsed by default and fetched on first expand.
+  const toggleObjectGroup = useCallback(
+    async (connectionId: string, schema: string, table: string, group: SchemaObjectGroup) => {
+      const key = groupKey(connectionId, schema, table, group);
+      if (expandedGroups[key]) {
+        setExpandedGroups((prev) => ({ ...prev, [key]: false }));
+        return;
+      }
+      setExpandedGroups((prev) => ({ ...prev, [key]: true }));
+      if (objectRows[key] || loadingGroups[key]) return;
+
+      setLoadingGroups((prev) => ({ ...prev, [key]: true }));
+      try {
+        await api.connect(connectionId);
+        setConnected(connectionId, true);
+        let rows: SchemaObjectRow[];
+        if (group === 'indexes') {
+          rows = indexRows(await api.listIndexes(connectionId, schema, table));
+        } else if (group === 'constraints') {
+          rows = constraintRows(await api.listConstraints(connectionId, schema, table));
+        } else {
+          rows = triggerRows(await api.listTriggers(connectionId, schema, table));
+        }
+        setObjectRows((prev) => ({ ...prev, [key]: rows }));
+      } catch (err) {
+        setSchemaError(formatError(err));
+        setExpandedGroups((prev) => ({ ...prev, [key]: false }));
+      } finally {
+        setLoadingGroups((prev) => ({ ...prev, [key]: false }));
+      }
+    },
+    [expandedGroups, objectRows, loadingGroups, setConnected],
+  );
+
+  const toggleRoutines = useCallback(
+    async (connectionId: string, schema: string) => {
+      const key = routinesKey(connectionId, schema);
+      if (expandedGroups[key]) {
+        setExpandedGroups((prev) => ({ ...prev, [key]: false }));
+        return;
+      }
+      setExpandedGroups((prev) => ({ ...prev, [key]: true }));
+      if (objectRows[key] || loadingGroups[key]) return;
+
+      setLoadingGroups((prev) => ({ ...prev, [key]: true }));
+      try {
+        await api.connect(connectionId);
+        setConnected(connectionId, true);
+        const rows = routineRows(await api.listRoutines(connectionId, schema));
+        setObjectRows((prev) => ({ ...prev, [key]: rows }));
+      } catch (err) {
+        setSchemaError(formatError(err));
+        setExpandedGroups((prev) => ({ ...prev, [key]: false }));
+      } finally {
+        setLoadingGroups((prev) => ({ ...prev, [key]: false }));
+      }
+    },
+    [expandedGroups, objectRows, loadingGroups, setConnected],
+  );
+
   // Drop a stale error on connection switch (sync, so it can't wipe loadSchema's later async error).
   useEffect(() => {
     setSchemaError('');
@@ -241,5 +316,10 @@ export function useSchemaTree({ connId, connConnected, schemaList, schemaSearch 
     loadSchema,
     loadTables,
     toggleTableColumns,
+    expandedGroups,
+    loadingGroups,
+    objectRows,
+    toggleObjectGroup,
+    toggleRoutines,
   };
 }

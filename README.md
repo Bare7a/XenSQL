@@ -67,7 +67,8 @@ Work with **SQLite**, **PostgreSQL** and **MySQL / MariaDB** in a single fast de
 - Reach databases behind a bastion over an SSH tunnel
 - Stream results - rows arrive as the driver yields them
 - Run multi-statement scripts and get a result tab per output
-- Explore schemas instantly
+- Explore schemas instantly - down to indexes, constraints and triggers
+- Copy any object's DDL in one click
 - Save and reuse queries
 - Export anything in one click
 - Auto-update with one click
@@ -214,11 +215,33 @@ gives you `Result 1 · Plan 1` as switchable tabs, each keeping its own state.
 
 ## 🗃️ Schema Explorer
 
-- Tree view: schemas → tables → columns
+- Tree view: schemas → tables / views → columns, then **indexes**, **constraints** and **triggers**
+- Views are called out with their own icon and badge; **functions and procedures** close each schema
 - Search tables and columns instantly
 - **Double-click** a table → `SELECT` in a new tab
 - **Ctrl+double-click** → browse table data in the grid (editable when primary keys exist)
 - Refresh schema on demand
+
+Columns stay directly under their table, so nothing moved. Indexes, constraints and triggers sit
+below them as collapsed groups and are fetched only when you open one - expanding a table costs
+exactly what it did before.
+
+Each group row carries what you actually want at a glance: an index's columns and whether it's
+unique, a foreign key's target (`(org_id) → orgs(id)`), a check's expression, a trigger's timing
+and events.
+
+### 📋 Copy DDL
+
+Right-click any object - table, view, index, constraint, trigger, function - for **Copy DDL** and
+**Open DDL in new tab**. The second opens an ordinary SQL tab, so the statement arrives with
+syntax highlighting, search and editing, ready to run or tweak.
+
+- **SQLite** and **MySQL / MariaDB** hand back the engine's own text (`sqlite_master`,
+  `SHOW CREATE …`), so what you copy is what the server stored
+- **PostgreSQL** has no `SHOW CREATE TABLE`, so the statement is composed from the catalog:
+  columns with their types, defaults, identity and generated expressions, collations, every table
+  constraint, the indexes no constraint already implies, and `COMMENT ON` for anything documented
+- A table's DDL includes its standalone indexes, so pasting it elsewhere rebuilds the table whole
 
 ---
 

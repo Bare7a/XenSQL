@@ -1,5 +1,7 @@
 package database
 
+import "strings"
+
 type DriverType string
 
 const (
@@ -73,6 +75,89 @@ type TableInfo struct {
 	Schema string `json:"schema"`
 	Name   string `json:"name"`
 	Type   string `json:"type"`
+}
+
+type ObjectKind string
+
+const (
+	ObjectTable      ObjectKind = "table"
+	ObjectView       ObjectKind = "view"
+	ObjectMatView    ObjectKind = "materialized view"
+	ObjectIndex      ObjectKind = "index"
+	ObjectConstraint ObjectKind = "constraint"
+	ObjectTrigger    ObjectKind = "trigger"
+	ObjectFunction   ObjectKind = "function"
+	ObjectProcedure  ObjectKind = "procedure"
+)
+
+func (k ObjectKind) IsRelation() bool {
+	switch k {
+	case ObjectTable, ObjectView, ObjectMatView:
+		return true
+	}
+	return false
+}
+
+func RelationKind(tableType string) ObjectKind {
+	switch ObjectKind(strings.ToLower(tableType)) {
+	case ObjectView:
+		return ObjectView
+	case ObjectMatView:
+		return ObjectMatView
+	}
+	return ObjectTable
+}
+
+type IndexInfo struct {
+	Name    string   `json:"name"`
+	Schema  string   `json:"schema"`
+	Table   string   `json:"table"`
+	Columns []string `json:"columns"`
+	// IsPrimary marks the index backing a primary key, which has no standalone DDL.
+	IsPrimary bool   `json:"isPrimary"`
+	IsUnique  bool   `json:"isUnique"`
+	Method    string `json:"method,omitempty"`
+}
+
+type ConstraintInfo struct {
+	Name   string `json:"name"`
+	Schema string `json:"schema"`
+	Table  string `json:"table"`
+	// Type is one of PRIMARY KEY, FOREIGN KEY, UNIQUE, CHECK.
+	Type       string   `json:"type"`
+	Columns    []string `json:"columns"`
+	RefTable   string   `json:"refTable,omitempty"`
+	RefColumns []string `json:"refColumns,omitempty"`
+	// Definition is the engine's own rendering of the body, when it exposes one.
+	Definition string `json:"definition,omitempty"`
+}
+
+type TriggerInfo struct {
+	Name   string `json:"name"`
+	Schema string `json:"schema"`
+	Table  string `json:"table"`
+	// Timing is BEFORE / AFTER / INSTEAD OF; Events is the comma-joined event list.
+	Timing string `json:"timing,omitempty"`
+	Events string `json:"events,omitempty"`
+}
+
+type RoutineInfo struct {
+	Name   string `json:"name"`
+	Schema string `json:"schema"`
+	// Kind is ObjectFunction or ObjectProcedure.
+	Kind       ObjectKind `json:"kind"`
+	ReturnType string     `json:"returnType,omitempty"`
+	// Args is the argument list without parentheses; it disambiguates overloads.
+	Args string `json:"args,omitempty"`
+}
+
+// ObjectRef names the parent relation in Table for index / constraint / trigger kinds only.
+type ObjectRef struct {
+	Schema string     `json:"schema"`
+	Name   string     `json:"name"`
+	Kind   ObjectKind `json:"kind"`
+	Table  string     `json:"table,omitempty"`
+	Args   string     `json:"args,omitempty"`
 }
 
 type SchemaInfo struct {

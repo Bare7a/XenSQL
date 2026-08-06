@@ -27,6 +27,17 @@ func (f *fakeSession) ListTables(context.Context, string) ([]TableInfo, error) {
 func (f *fakeSession) ListColumns(context.Context, string, string) ([]ColumnInfo, error) {
 	return nil, nil
 }
+func (f *fakeSession) ListIndexes(context.Context, string, string) ([]IndexInfo, error) {
+	return nil, nil
+}
+func (f *fakeSession) ListConstraints(context.Context, string, string) ([]ConstraintInfo, error) {
+	return nil, nil
+}
+func (f *fakeSession) ListTriggers(context.Context, string, string) ([]TriggerInfo, error) {
+	return nil, nil
+}
+func (f *fakeSession) ListRoutines(context.Context, string) ([]RoutineInfo, error) { return nil, nil }
+func (f *fakeSession) ObjectDDL(context.Context, ObjectRef) (string, error)        { return "", nil }
 func (f *fakeSession) QueryTable(context.Context, TableDataRequest) (*QueryResult, error) {
 	return &QueryResult{}, nil
 }
