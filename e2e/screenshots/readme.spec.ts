@@ -195,11 +195,11 @@ async function setResultsSplit(page: Page, percent: number): Promise<void> {
   await page.mouse.up();
 }
 
-/** expandColumns toggles — only click when columns are not already visible. */
+/** expandColumns toggles - only click when columns are not already visible. */
 async function ensureUsersExpanded(schema: SchemaPage): Promise<void> {
   const username = schema.columnRow('username').first();
   // SchemaPanel debounces search by 200ms. The input can be empty while the tree
-  // is still filtered — clicking then toggles an already-expanded table shut.
+  // is still filtered - clicking then toggles an already-expanded table shut.
   await schema.page.waitForTimeout(350);
   if (await username.isVisible().catch(() => false)) return;
   await schema.expandColumns('users');
@@ -298,7 +298,7 @@ test.describe('README screenshots', () => {
     await expect(page.locator('.editor-tab').nth(0).locator('.tab-title')).toHaveText('Query 1 - Postgres');
     await expect(page.locator('.editor-tab').nth(0)).toHaveClass(/read-only-tab/);
 
-    // ── 1.png — Editor ─────────────────────────────────────────────────────
+    // ── 1.png - Editor ─────────────────────────────────────────────────────
     await activateTab(page, 'Get All Posts');
     await queries.showSaved();
     await results.focusRow(0);
@@ -311,7 +311,7 @@ test.describe('README screenshots', () => {
     // Restore saved SQL so the tab isn't left dirty (yellow) in later shots.
     await pasteSql(page, GET_ALL_POSTS_SQL);
 
-    // ── 2.png — Transactions & multiple results ────────────────────────────
+    // ── 2.png - Transactions & multiple results ────────────────────────────
     await page.keyboard.press('Control+t');
     await expect(tabs.activeTitle).toContainText(/Query \d+/);
     await editor.beginTransaction();
@@ -326,12 +326,12 @@ test.describe('README screenshots', () => {
     // Close the txn tab so later shots match the 4-tab Demo layout.
     await tabs.closeActiveWithKeyboard();
 
-    // ── 3.png — Table data (schema search "id" + JSON filter "la") ──────────
+    // ── 3.png - Table data (schema search "id" + JSON filter "la") ──────────
     await activateTab(page, 'users');
     await tableView.waitForRows();
     await schema.search('id');
     await expect(schema.columnRow('id').first()).toBeVisible();
-    // Pending edit + deletes first (do not Apply — marketing shot).
+    // Pending edit + deletes first (do not Apply - marketing shot).
     await tableView.editCell(3, COL.username, 'maria_young82');
     await tableView.markRowForDelete(5);
     await tableView.markRowForDelete(6);
@@ -358,7 +358,7 @@ test.describe('README screenshots', () => {
     await page.keyboard.press('Delete');
     await page.keyboard.press('Escape');
 
-    // ── 4.png — Cell editor ────────────────────────────────────────────────
+    // ── 4.png - Cell editor ────────────────────────────────────────────────
     await page.locator('.sidebar-tabs').getByRole('button', { name: 'Schema' }).click();
     await ensureUsersExpanded(schema);
     const prefCell = tableView.cellAt(32, COL.preferences);
@@ -371,7 +371,7 @@ test.describe('README screenshots', () => {
     await capture(page, '4.png');
     await cellViewer.close();
 
-    // ── 5.png — Grid selection + format menu ───────────────────────────────
+    // ── 5.png - Grid selection + format menu ───────────────────────────────
     // Shot 4 scrolled to preferences; reset scroll so id is visible and the
     // selection clearly spans username → display_name (README original).
     await tableView.scroll.evaluate((el) => {
@@ -387,7 +387,7 @@ test.describe('README screenshots', () => {
     await capture(page, '5.png');
     await hideFormatMenu(page);
 
-    // ── 6.png — Export dialog ──────────────────────────────────────────────
+    // ── 6.png - Export dialog ──────────────────────────────────────────────
     await tableView.activePane.getByRole('button', { name: 'Export', exact: true }).click();
     const exportDialog = page.locator('.modal').filter({ has: page.locator('#export-format') });
     await expect(exportDialog).toBeVisible();
@@ -403,7 +403,7 @@ test.describe('README screenshots', () => {
     await exportDialog.getByRole('button', { name: 'Cancel' }).click();
     await expect(exportDialog).toBeHidden();
 
-    // ── 7.png — New connection over grouped connections ────────────────────
+    // ── 7.png - New connection over grouped connections ────────────────────
     // Match Demo/4-XenSQL-data: Development{Forum, Postgres blue} + Production{Postgres red}.
     await connections.openMenu();
     await createFolder(page, 'Development');
@@ -453,7 +453,7 @@ test.describe('README screenshots', () => {
     await page.locator('.modal-overlay').waitFor({ state: 'hidden' });
     await connections.closeMenu();
 
-    // ── 8.png — Quick Search ───────────────────────────────────────────────
+    // ── 8.png - Quick Search ───────────────────────────────────────────────
     await page.keyboard.press('Control+p');
     const quickSearch = page.locator('.quick-search-dialog');
     await expect(quickSearch).toBeVisible();
@@ -467,7 +467,7 @@ test.describe('README screenshots', () => {
     await page.keyboard.press('Escape');
     await expect(quickSearch).toBeHidden();
 
-    // ── 9.png — DDL viewer + the deeper schema tree ────────────────────────
+    // ── 9.png - DDL viewer + the deeper schema tree ────────────────────────
     // The JSON viewer only mirrors grid rows: dead space next to an editor-only tab.
     await jsonViewer.toggle();
     await expect(jsonViewer.panel).toBeHidden();
@@ -485,7 +485,7 @@ test.describe('README screenshots', () => {
     await capture(page, '9.png');
     await tabs.closeActiveWithKeyboard();
 
-    // ── 10.png — Plan viewer (EXPLAIN ANALYZE) ─────────────────────────────
+    // ── 10.png - Plan viewer (EXPLAIN ANALYZE) ─────────────────────────────
     await activateTab(page, 'users');
     await page.keyboard.press('Control+t');
     await expect(tabs.activeTitle).toContainText(/Query \d+/);
@@ -501,7 +501,7 @@ test.describe('README screenshots', () => {
     await setResultsSplit(page, 40);
     await tabs.closeActiveWithKeyboard();
 
-    // ── 11.png — CSV / SQL importer (loaded, never run) ────────────────────
+    // ── 11.png - CSV / SQL importer (loaded, never run) ────────────────────
     await jsonViewer.open();
     await stubImportFilePicker(page, IMPORT_CSV);
     await schema.openTableMenu('users');
@@ -518,7 +518,7 @@ test.describe('README screenshots', () => {
     await expect(importDialog).toBeHidden();
     await page.unroute('**/wails/runtime');
 
-    // ── 12.png — Appearance (light theme + View menu) ──────────────────────
+    // ── 12.png - Appearance (light theme + View menu) ──────────────────────
     await openViewMenu(page);
     const themeSwitch = page.getByRole('switch');
     if ((await themeSwitch.getAttribute('aria-checked')) === 'true') {

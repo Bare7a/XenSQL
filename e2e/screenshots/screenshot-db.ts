@@ -15,7 +15,7 @@ const password = env('XENSQL_SCREENSHOT_PG_PASSWORD', env('XENSQL_E2E_PG_PASSWOR
 /** Where `global-setup.ts` restores the dump; every demo connection points here. */
 export const SCREENSHOT_PG = { host, port, username, password } as const;
 
-/** Green Forum connection (writable) — used for most README tabs. */
+/** Green Forum connection (writable) - used for most README tabs. */
 export const FORUM: DbConfig = {
   key: 'postgres',
   label: 'Forum',
@@ -28,7 +28,7 @@ export const FORUM: DbConfig = {
   password,
 };
 
-/** Red readonly Postgres — the "Query 1 - Postgres" tab in every shot. */
+/** Red readonly Postgres - the "Query 1 - Postgres" tab in every shot. */
 export const POSTGRES_READONLY: DbConfig = {
   key: 'postgres',
   label: 'Postgres',
@@ -56,9 +56,9 @@ export const POSTGRES_DEV: DbConfig = {
 
 /** Demo color swatches (DEFAULT_COLORS indices). */
 export const COLOR = {
-  red: '#ef4444', // index 0 — readonly Postgres
-  green: '#22c55e', // index 5 — Forum
-  blue: '#3b82f6', // index 9 — Development Postgres / new-connection dialog
+  red: '#ef4444', // index 0 - readonly Postgres
+  green: '#22c55e', // index 5 - Forum
+  blue: '#3b82f6', // index 9 - Development Postgres / new-connection dialog
 } as const;
 
 export const COLOR_INDEX = { red: 0, green: 5, blue: 9 } as const;
