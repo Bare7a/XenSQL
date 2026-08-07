@@ -63,8 +63,7 @@ export function AppTitleBar({ onAction, sidebarOpen, onToggleSidebar, jsonPanelO
   // Windows/Linux desktop: this bar is the frameless window's chrome.
   // XENSQL_FORCE_WINDOW_CHROME=1 (via VITE_FORCE_WINDOW_CHROME at build) also shows
   // the buttons in server-mode screenshot captures.
-  const windowChrome =
-    (isDesktop() || import.meta.env.VITE_FORCE_WINDOW_CHROME === '1') && !isMac;
+  const windowChrome = (isDesktop() || import.meta.env.VITE_FORCE_WINDOW_CHROME === '1') && !isMac;
 
   const closeAll = () => {
     setOpen(null);
