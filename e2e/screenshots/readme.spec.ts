@@ -4,18 +4,28 @@ import { fileURLToPath } from 'node:url';
 import type { Page } from '@playwright/test';
 import { expect, test } from '@support/fixtures';
 import type { SchemaPage } from '../pages/schema-page';
-import {
-  COLOR,
-  COLOR_INDEX,
-  FORUM,
-  POSTGRES_DEV,
-  POSTGRES_READONLY,
-} from '@support/screenshot-db';
+import { COLOR, COLOR_INDEX, FORUM, POSTGRES_DEV, POSTGRES_READONLY } from './screenshot-db';
 
-const e2eDir = path.dirname(fileURLToPath(import.meta.url));
-const OUT_DIR = path.resolve(e2eDir, '../../.github/screenshots');
+const screenshotsDir = path.dirname(fileURLToPath(import.meta.url));
+const OUT_DIR = path.resolve(screenshotsDir, '../../.github/screenshots');
+
+// 20 rows headed by the `public.users` columns; the dialog shows the path, so it's overridable.
+const IMPORT_CSV = process.env.XENSQL_SCREENSHOT_CSV ?? path.join(screenshotsDir, 'fixtures', 'users.csv');
+const IMPORT_CSV_COLUMNS = 13;
+
+/** Wails binding ID of `App.PickImportFile` (frontend/bindings/…/app.ts). */
+const PICK_IMPORT_FILE_ID = 452154835;
 
 const GET_ALL_POSTS_SQL = 'SELECT * FROM posts p ORDER BY p.id;';
+const PLAN_SQL = `SELECT c.name AS category, u.display_name AS author,
+       COUNT(*) AS posts, SUM(p.views) AS views
+FROM posts p
+JOIN users u ON u.id = p.author_id
+JOIN categories c ON c.id = p.category_id
+WHERE p.score > 10
+GROUP BY c.name, u.display_name
+ORDER BY views DESC
+LIMIT 25;`;
 const TXN_SQL = `INSERT INTO categories
   (name, description, settings) VALUES
   ('Go', 'Talk about anything related to Go.', '{"allowLinks": true}'),
@@ -173,6 +183,18 @@ async function applyDemoPanelWidths(page: Page): Promise<void> {
   }
 }
 
+/** Drag the editor/results splitter; the app's default is 40%. */
+async function setResultsSplit(page: Page, percent: number): Promise<void> {
+  const area = await page.locator('.main-area').boundingBox();
+  const handle = await page.locator('.resizer').boundingBox();
+  if (!area || !handle) throw new Error('results splitter not visible');
+  const x = handle.x + handle.width / 2;
+  await page.mouse.move(x, handle.y + handle.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(x, area.y + area.height * (1 - percent / 100), { steps: 12 });
+  await page.mouse.up();
+}
+
 /** expandColumns toggles — only click when columns are not already visible. */
 async function ensureUsersExpanded(schema: SchemaPage): Promise<void> {
   const username = schema.columnRow('username').first();
@@ -196,6 +218,15 @@ async function waitForCellViewerSyntax(page: Page): Promise<void> {
   await page.waitForTimeout(250);
 }
 
+/** Server mode has no native file dialog, so answer that one binding with a fixture path. */
+async function stubImportFilePicker(page: Page, filePath: string): Promise<void> {
+  await page.route('**/wails/runtime', async (route) => {
+    const body = route.request().postDataJSON() as { args?: { methodID?: number } } | null;
+    if (body?.args?.methodID !== PICK_IMPORT_FILE_ID) return route.fallback();
+    await route.fulfill({ contentType: 'application/json', body: JSON.stringify(filePath) });
+  });
+}
+
 async function createFolder(page: Page, name: string): Promise<void> {
   // Assumes the connection switcher menu is already open.
   await page.locator('.sidebar-connections-toolbar button[data-tooltip="New folder"]').click();
@@ -216,11 +247,12 @@ async function moveConnectionToFolder(page: Page, connName: string, folderName: 
 test.describe('README screenshots', () => {
   test.describe.configure({ mode: 'serial' });
 
-  test('capture 1–9 into .github/screenshots', async ({
+  test('capture 1–12 into .github/screenshots', async ({
     page,
     connections,
     editor,
     results,
+    plan,
     schema,
     queries,
     tableView,
@@ -435,13 +467,64 @@ test.describe('README screenshots', () => {
     await page.keyboard.press('Escape');
     await expect(quickSearch).toBeHidden();
 
-    // ── 9.png — Appearance (light theme + View menu) ───────────────────────
+    // ── 9.png — DDL viewer + the deeper schema tree ────────────────────────
+    // The JSON viewer only mirrors grid rows: dead space next to an editor-only tab.
+    await jsonViewer.toggle();
+    await expect(jsonViewer.panel).toBeHidden();
+    await activateTab(page, 'users');
+    await ensureUsersExpanded(schema);
+    await schema.expandGroup('users', 'indexes');
+    await expect(schema.objectRow('indexes', 'users_pkey')).toBeVisible();
+    await schema.expandGroup('users', 'constraints');
+    await expect(schema.objectRow('constraints', 'users_pkey')).toBeVisible();
+    await schema.openTableDDLInTab('users');
+    await expect(tabs.activeTitle).toContainText('DDL: users');
+    await expect(editor.active.locator('.view-lines')).toContainText('CREATE TABLE');
+    // A DDL tab has no results.
+    await setResultsSplit(page, 15);
+    await capture(page, '9.png');
+    await tabs.closeActiveWithKeyboard();
+
+    // ── 10.png — Plan viewer (EXPLAIN ANALYZE) ─────────────────────────────
+    await activateTab(page, 'users');
+    await page.keyboard.press('Control+t');
+    await expect(tabs.activeTitle).toContainText(/Query \d+/);
+    await pasteSql(page, PLAN_SQL);
+    await plan.explainAnalyze();
+    await expect(plan.badge).toHaveText('Measured');
+    await setResultsSplit(page, 58);
+    // Metrics can tie for hottest; the deepest of them has the richest details.
+    await plan.view.locator('.plan-row-hottest .plan-node-btn').last().click();
+    await expect(plan.detailsTitle).toBeVisible();
+    await capture(page, '10.png');
+    // Back to the demo layout.
+    await setResultsSplit(page, 40);
+    await tabs.closeActiveWithKeyboard();
+
+    // ── 11.png — CSV / SQL importer (loaded, never run) ────────────────────
+    await jsonViewer.open();
+    await stubImportFilePicker(page, IMPORT_CSV);
+    await schema.openTableMenu('users');
+    await page.getByRole('menuitem', { name: 'Import into this table…' }).click();
+    const importDialog = page.getByRole('dialog');
+    await expect(importDialog).toBeVisible();
+    await expect(importDialog.getByLabel('Table')).toHaveValue('users');
+    await importDialog.getByRole('button', { name: 'Browse' }).click();
+    await expect(importDialog.locator('#import-path')).toHaveValue(IMPORT_CSV);
+    await expect(importDialog.locator('.import-map-table tbody tr')).toHaveCount(IMPORT_CSV_COLUMNS);
+    await expect(importDialog.getByRole('button', { name: 'Import', exact: true })).toBeEnabled();
+    await capture(page, '11.png');
+    await importDialog.locator('.modal-footer').getByRole('button', { name: 'Close', exact: true }).click();
+    await expect(importDialog).toBeHidden();
+    await page.unroute('**/wails/runtime');
+
+    // ── 12.png — Appearance (light theme + View menu) ──────────────────────
     await openViewMenu(page);
     const themeSwitch = page.getByRole('switch');
     if ((await themeSwitch.getAttribute('aria-checked')) === 'true') {
       await themeSwitch.click();
     }
 
-    await capture(page, '9.png');
+    await capture(page, '12.png');
   });
 });

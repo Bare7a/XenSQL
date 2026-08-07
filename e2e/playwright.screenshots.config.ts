@@ -1,7 +1,7 @@
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { defineConfig } from '@playwright/test';
-import { SCREENSHOT_VIEWPORT } from './support/screenshot-db';
+import { SCREENSHOT_VIEWPORT } from './screenshots/screenshot-db';
 
 const e2eDir = path.dirname(fileURLToPath(import.meta.url));
 const dataDir = path.join(e2eDir, 'XenSQL-data-screenshots');
@@ -12,8 +12,8 @@ const baseURL = `http://127.0.0.1:${serverPort}`;
 /**
  * Captures the README gallery under `.github/screenshots/`.
  *
- * Starts the e2e Postgres service and restores `forum.dump.sql` (see
- * `global-setup-screenshots.ts`). Builds the frontend with window chrome enabled.
+ * Starts the e2e Postgres service and restores `screenshots/fixtures/forum.dump.sql`
+ * (see `screenshots/global-setup.ts`). Builds the frontend with window chrome enabled.
  *
  *   npm run screenshots
  *   # or: wails3 task screenshots
@@ -37,7 +37,7 @@ export default defineConfig({
       args: process.env.PW_SINGLE_PROCESS ? ['--single-process', '--no-zygote'] : [],
     },
   },
-  globalSetup: './global-setup-screenshots.ts',
+  globalSetup: './screenshots/global-setup.ts',
   webServer: {
     command: 'npm run e2e:server',
     url: `${baseURL}/health`,

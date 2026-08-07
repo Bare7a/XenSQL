@@ -92,7 +92,12 @@ Work with **SQLite**, **PostgreSQL** and **MySQL / MariaDB** in a single fast de
   <tr>
     <td align="center"><img src=".github/screenshots/7.png?raw=true" width="100%"><br><sub><b>Connections</b></sub></td>
     <td align="center"><img src=".github/screenshots/8.png?raw=true" width="100%"><br><sub><b>Quick Search</b></sub></td>
-    <td align="center"><img src=".github/screenshots/9.png?raw=true" width="100%"><br><sub><b>Appearance</b></sub></td>
+    <td align="center"><img src=".github/screenshots/9.png?raw=true" width="100%"><br><sub><b>DDL viewer</b></sub></td>
+  </tr>
+  <tr>
+    <td align="center"><img src=".github/screenshots/10.png?raw=true" width="100%"><br><sub><b>Plan viewer</b></sub></td>
+    <td align="center"><img src=".github/screenshots/11.png?raw=true" width="100%"><br><sub><b>CSV & SQL import</b></sub></td>
+    <td align="center"><img src=".github/screenshots/12.png?raw=true" width="100%"><br><sub><b>Appearance</b></sub></td>
   </tr>
 </table>
 

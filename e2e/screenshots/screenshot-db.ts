@@ -1,20 +1,19 @@
-import type { DbConfig } from './databases';
+import type { DbConfig } from '@support/databases';
 
 const env = (key: string, fallback: string): string => process.env[key] ?? fallback;
 const envNum = (key: string, fallback: number): number => Number(process.env[key] ?? fallback);
 
 /**
- * Marketing-screenshot database targets.
- *
- * Defaults match the e2e Postgres from docker-compose.yml after
- * `global-setup-screenshots.ts` restores `forum.dump.sql` into a `forum` DB.
- *
- * Override with XENSQL_SCREENSHOT_PG_* when needed.
+ * Demo targets: the docker-compose Postgres, with `forum` restored by `global-setup.ts`.
+ * Override with XENSQL_SCREENSHOT_PG_*.
  */
 const host = env('XENSQL_SCREENSHOT_PG_HOST', env('XENSQL_E2E_PG_HOST', '127.0.0.1'));
 const port = envNum('XENSQL_SCREENSHOT_PG_PORT', envNum('XENSQL_E2E_PG_PORT', 55432));
 const username = env('XENSQL_SCREENSHOT_PG_USER', env('XENSQL_E2E_PG_USER', 'postgres'));
 const password = env('XENSQL_SCREENSHOT_PG_PASSWORD', env('XENSQL_E2E_PG_PASSWORD', 'postgres'));
+
+/** Where `global-setup.ts` restores the dump; every demo connection points here. */
+export const SCREENSHOT_PG = { host, port, username, password } as const;
 
 /** Green Forum connection (writable) — used for most README tabs. */
 export const FORUM: DbConfig = {
@@ -29,10 +28,7 @@ export const FORUM: DbConfig = {
   password,
 };
 
-/**
- * Red readonly Postgres connection — first tab in every README shot
- * ("Query 1 - Postgres").
- */
+/** Red readonly Postgres — the "Query 1 - Postgres" tab in every shot. */
 export const POSTGRES_READONLY: DbConfig = {
   key: 'postgres',
   label: 'Postgres',

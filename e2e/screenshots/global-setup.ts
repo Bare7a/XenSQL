@@ -1,42 +1,18 @@
 import { execFileSync, execSync } from 'node:child_process';
 import fs from 'node:fs';
-import net from 'node:net';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { POSTGRES } from './support/databases';
+import { probePort, waitForPort } from '../support/ports';
+import { SCREENSHOT_PG } from './screenshot-db';
 
-const e2eDir = path.dirname(fileURLToPath(import.meta.url));
-const rootDir = path.resolve(e2eDir, '..');
+const screenshotsDir = path.dirname(fileURLToPath(import.meta.url));
+const rootDir = path.resolve(screenshotsDir, '../..');
 const compose = process.env.COMPOSE ?? 'docker compose';
-const dumpPath = path.join(e2eDir, 'support', 'forum.dump.sql');
+const dumpPath = path.join(screenshotsDir, 'fixtures', 'forum.dump.sql');
 
-const host = POSTGRES.host as string;
-const port = POSTGRES.port as number;
-const user = POSTGRES.username as string;
-const password = POSTGRES.password as string;
+// The demo connections' server, so an XENSQL_SCREENSHOT_PG_* override restores where they connect.
+const { host, port, username: user, password } = SCREENSHOT_PG;
 const forumDb = process.env.XENSQL_SCREENSHOT_PG_DB ?? 'forum';
-
-function probePort(h: string, p: number): Promise<boolean> {
-  return new Promise((resolve) => {
-    const socket = net.connect({ host: h, port: p });
-    const done = (ok: boolean) => {
-      socket.destroy();
-      resolve(ok);
-    };
-    socket.once('connect', () => done(true));
-    socket.once('error', () => done(false));
-    socket.setTimeout(1_000, () => done(false));
-  });
-}
-
-async function waitForPort(h: string, p: number, timeoutMs: number): Promise<boolean> {
-  const deadline = Date.now() + timeoutMs;
-  while (Date.now() < deadline) {
-    if (await probePort(h, p)) return true;
-    await new Promise((r) => setTimeout(r, 500));
-  }
-  return false;
-}
 
 function pgEnv(): NodeJS.ProcessEnv {
   return { ...process.env, PGPASSWORD: password };
@@ -83,7 +59,7 @@ function runPsql(args: string[], stdin?: string): void {
 export default async function globalSetup(): Promise<void> {
   if (!fs.existsSync(dumpPath)) {
     throw new Error(
-      `Missing ${dumpPath}. Create it with a trimmed Forum dump (≤500 rows/table) under e2e/support/.`,
+      `Missing ${dumpPath}. Create it with a trimmed Forum dump (≤500 rows/table) under e2e/screenshots/fixtures/.`,
     );
   }
 

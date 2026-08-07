@@ -183,15 +183,25 @@ npm run e2e
 ```
 e2e/
   playwright.config.ts    config; starts the app via `npm run e2e:server`
+  playwright.screenshots.config.ts
+                          the README gallery run (see README screenshots below)
   global-setup.ts         brings the database stack up if it isn't already
   e2e-server.mjs          builds the frontend, then runs `go run -tags server ./cmd/e2e-server`
   pages/                  page objects, one per app surface
-  support/
+  support/                shared by both suites
     fixtures.ts           the `test` every spec imports: page-object fixtures + `seed`
     databases.ts          the driver matrix (POSTGRES / MYSQL / MARIADB / SQLITE)
     seed.ts               Seeder: create + populate a uniquely-named table through the UI
+    ports.ts              port probe/wait helpers both global setups use
   specs/                  grouped by surface: editor/, results/, sidebar/, table-view/,
                           plus app-shell and connections at the root
+  screenshots/            everything only the gallery run needs
+    readme.spec.ts        one serial test that captures 1.png - 12.png
+    global-setup.ts       recreates the `forum` database from the dump
+    screenshot-db.ts      the demo connections (Forum / Postgres) and the 2048x1152 viewport
+    fixtures/
+      forum.dump.sql      the demo dataset restored before every run
+      users.csv           20 rows matching `public.users`, loaded by the import shot
 ```
 
 Specs import shared code via the `@support/*` alias (see `tsconfig.json`), so nesting
@@ -233,6 +243,30 @@ the matrix suites replay it on all four drivers.
 **When to run it:** before merging UI-facing changes (sidebar, editor, connections,
 results grid, table view, tabs, etc.) or when touching `e2e/`, `cmd/e2e-server/`, or
 server-mode event handling in `internal/app/`.
+
+### README screenshots
+
+A second Playwright run captures the whole README gallery - `1.png` - `12.png` under
+[`.github/screenshots/`](screenshots/) - from one serial test, so every shot shares the
+same workspace, theme and panel sizes:
+
+```bash
+task screenshots          # or: cd e2e && npm run screenshots
+```
+
+`screenshots/global-setup.ts` recreates the `forum` database from
+`screenshots/fixtures/forum.dump.sql` first, so the data in the gallery is reproducible.
+Overrides: `XENSQL_SCREENSHOT_PG_*` (server), `XENSQL_SCREENSHOT_CSV` (the CSV in the
+import shot - its path is visible in the dialog), `XENSQL_SCREENSHOT_PG_CONTAINER`
+(restore via `docker exec` instead of `docker compose exec`).
+
+Unlike the functional suite it runs at 2048x1152 and builds the frontend with
+`XENSQL_FORCE_WINDOW_CHROME=1` so server mode still draws the window controls. The native
+file picker can't open there, so the import shot answers the `PickImportFile` binding over
+`POST /wails/runtime` with a fixture path.
+
+**Not in CI**, and it rewrites the committed PNGs - regenerate deliberately, then review
+the diff.
 
 ---
 
