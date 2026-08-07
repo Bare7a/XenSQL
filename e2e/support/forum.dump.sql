@@ -705,6 +705,7 @@ COPY public.post_reactions (id, post_id, user_id, reaction_type, created_at) FRO
 --
 
 COPY public.posts (id, category_id, author_id, title, content, views, score, is_pinned, is_locked, metadata, created_at, updated_at) FROM stdin;
+1	3	5d11cd9f-3e3c-4fc5-8725-a1300b9cf50a	Handling large SQL datasets	I've been working on a project recently and wanted to gather some feedback from the community. What approaches have worked well for you and what pitfalls should be avoided?	1766	242	t	f	{"edited": true, "client_ip": "245.51.39.29", "attachments": 2}	2025-08-16 12:26:36.504009	2025-07-05 07:36:15.131474
 3	3	5d11cd9f-3e3c-4fc5-8725-a1300b9cf50a	JSONB query optimization	I've been working on a project recently and wanted to gather some feedback from the community. What approaches have worked well for you and what pitfalls should be avoided?	2778	507	t	f	{"edited": false, "client_ip": "117.159.121.252", "attachments": 3}	2025-05-27 20:31:56.328009	2026-01-08 17:19:11.853195
 4	3	5d11cd9f-3e3c-4fc5-8725-a1300b9cf50a	Monitoring a distributed system	I've been working on a project recently and wanted to gather some feedback from the community. What approaches have worked well for you and what pitfalls should be avoided?	9241	612	t	f	{"edited": false, "client_ip": "131.78.89.168", "attachments": 3}	2025-05-14 15:53:37.800009	2025-09-28 01:08:45.475319
 5	3	5d11cd9f-3e3c-4fc5-8725-a1300b9cf50a	Improving API performance	I've been working on a project recently and wanted to gather some feedback from the community. What approaches have worked well for you and what pitfalls should be avoided?	21611	895	f	f	{"edited": false, "client_ip": "49.216.226.245", "attachments": 2}	2026-01-11 03:50:06.552009	2025-08-30 00:10:56.246065
@@ -1203,7 +1204,6 @@ COPY public.posts (id, category_id, author_id, title, content, views, score, is_
 498	3	5d11cd9f-3e3c-4fc5-8725-a1300b9cf50a	Kubernetes deployment tips	I've been working on a project recently and wanted to gather some feedback from the community. What approaches have worked well for you and what pitfalls should be avoided?	1147	306	f	f	{"edited": true, "client_ip": "193.17.131.76", "attachments": 3}	2026-02-07 10:28:44.836809	2026-04-08 11:48:31.301547
 499	3	5d11cd9f-3e3c-4fc5-8725-a1300b9cf50a	Monitoring a distributed system	I've been working on a project recently and wanted to gather some feedback from the community. What approaches have worked well for you and what pitfalls should be avoided?	18212	986	f	f	{"edited": false, "client_ip": "53.241.95.253", "attachments": 4}	2024-07-19 00:30:01.272009	2025-10-21 15:27:55.944598
 500	3	5d11cd9f-3e3c-4fc5-8725-a1300b9cf50a	Handling large SQL datasets	I've been working on a project recently and wanted to gather some feedback from the community. What approaches have worked well for you and what pitfalls should be avoided?	20202	129	f	f	{"edited": true, "client_ip": "135.26.241.123", "attachments": 0}	2026-03-01 15:55:16.728009	2026-04-01 14:10:02.267311
-1	3	5d11cd9f-3e3c-4fc5-8725-a1300b9cf50a	Handling large SQL datasets	I've been working on a project recently and wanted to gather some feedback from the community. What approaches have worked well for you and what pitfalls should be avoided?	1766	242	t	f	{"edited": true, "client_ip": "245.51.39.29", "attachments": 2}	2025-08-16 12:26:36.504009	2025-07-05 07:36:15.131474
 501	\N	\N	My new title	some content	0	0	f	f	\N	2026-06-02 13:33:06.362152	\N
 \.
 
@@ -1370,14 +1370,14 @@ d126e24a-a245-4109-8ddd-0510931ec5fa	peter_miller143	peter.miller143@example.com
 -- Name: categories_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('public.categories_id_seq', 8, true);
+SELECT pg_catalog.setval('public.categories_id_seq', 4, true);
 
 
 --
 -- Name: post_reactions_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('public.post_reactions_id_seq', 5000, true);
+SELECT pg_catalog.setval('public.post_reactions_id_seq', 500, true);
 
 
 --
