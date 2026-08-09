@@ -52,8 +52,19 @@ export class AppPage {
   // ── Test isolation ───────────────────────────────────────────────────────
   /** Reset shared backend state: the editor session (tabs) and saved connections both persist and restore on load. */
   async resetState(): Promise<void> {
+    await this.dismissModals();
     await this.closeAllTabs();
     await this.resetConnections();
+  }
+
+  /** A modal left open by a test covers the whole page and would block every click below. */
+  async dismissModals(): Promise<void> {
+    for (let i = 0; i < 3; i++) {
+      const overlay = this.page.locator('.modal-overlay').last();
+      if (!(await overlay.isVisible().catch(() => false))) return;
+      await this.page.keyboard.press('Escape');
+      await overlay.waitFor({ state: 'hidden', timeout: 1_000 }).catch(() => {});
+    }
   }
 
   /**

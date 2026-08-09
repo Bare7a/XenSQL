@@ -3,6 +3,8 @@ import { POSTGRES } from '@support/databases';
 import { expect, test } from '@support/fixtures';
 import { stubImportFilePicker, writeCSVFixture } from '@support/importFile';
 
+test.use({ permissions: ['clipboard-read', 'clipboard-write'] });
+
 // The native picker is stubbed at the binding; row-level behaviour lives in app_import_test.go.
 test.describe('Import dialog', () => {
   test('opens from the schema toolbar with CSV selected', async ({ connections, page }) => {
@@ -107,7 +109,7 @@ test.describe('Import dialog', () => {
     await results.waitForRows();
     await results.openExportDialog();
     await results.setExportFormat('csv');
-    const csv = await results.copyExportToClipboard();
+    const csv = (await results.copyExportToClipboard()).replace(/\r\n/g, '\n');
     expect(csv).toBe(`id,txt,note\n1,,plain\n2,"",'-not a number\n3,x,'=1+2`);
 
     const file = writeCSVFixture('roundtrip.csv', csv.split('\n'));
