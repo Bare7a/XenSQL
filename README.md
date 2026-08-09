@@ -300,6 +300,9 @@ Explorer or a table's right-click menu.
   editable before you commit to it, and named in your engine's own dialect
 - Headers optional, `NULL` text configurable (`\N`, `NULL`, whatever your exporter writes),
   leading lines skippable for files with a preamble, whitespace trimmable
+- **Empty fields keep their meaning**: a bare one is `NULL`, a quoted `""` is an empty string -
+  the same convention Postgres `COPY … FORMAT csv` uses, and what lets a XenSQL CSV export load
+  straight back in. In a numeric or date column, where `""` is never valid, both mean `NULL`
 - UTF-8 BOMs stripped, ragged rows tolerated
 - **Bad rows are skipped and reported**, not fatal - or tick **stop at the first error** if you'd
   rather nothing partial lands
@@ -320,6 +323,8 @@ transactions behave. You get a progress bar and a count - not thousands of resul
 - Export all or **selected** rows and columns
 - Copy to clipboard or **save to file**
 - Remembers your last export format
+- **CSV and SQL exports import back cleanly** - `NULL` stays apart from an empty string, and cells
+  that spreadsheets would treat as formulas are guarded on the way out and unguarded on the way in
 
 ---
 

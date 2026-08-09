@@ -106,8 +106,8 @@ function jsonFormatter(view: ExportView): RowFormatter {
 
 function csvFormatter(view: ExportView): RowFormatter {
   const escapeCsv = (cell: string) => {
-    // Mirror Go's encoding/csv: quote on delimiter/quote/newline, leading whitespace, or \. sentinel.
-    const needsQuote = cell === '\\.' || /[",\n\r]/.test(cell) || /^\s/u.test(cell);
+    // Mirrors Go's escaping; '' is quoted too, telling it apart from NULL on re-import.
+    const needsQuote = cell === '' || cell === '\\.' || /[",\n\r]/.test(cell) || /^\s/u.test(cell);
     if (needsQuote) return `"${cell.replace(/"/g, '""')}"`;
     return cell;
   };

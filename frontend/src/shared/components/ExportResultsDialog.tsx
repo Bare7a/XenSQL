@@ -1,6 +1,7 @@
 import { useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Modal } from '@/shared/components/Modal';
+import { formatCount, TaskProgress } from '@/shared/components/TaskProgress';
 import { api } from '@/shared/lib/api';
 import { appToast, toastError } from '@/shared/lib/appToast';
 import { writeChunkedFile } from '@/shared/lib/exportFile';
@@ -203,12 +204,14 @@ export function ExportResultsDialog({
             })}
           </p>
         ) : (
-          <div className="export-progress" aria-live="polite">
-            <p className="export-results-summary">
-              {t('export.progress', { done: progress, total: exportOptions.rowIndices.length })}
-            </p>
-            <progress className="export-progress-bar" value={progress} max={exportOptions.rowIndices.length} />
-          </div>
+          <TaskProgress
+            label={t('export.progress', {
+              done: formatCount(progress),
+              total: formatCount(exportOptions.rowIndices.length),
+            })}
+            value={progress}
+            max={exportOptions.rowIndices.length}
+          />
         )}
       </div>
       <div className="modal-footer">

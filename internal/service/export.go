@@ -2,11 +2,11 @@ package service
 
 import (
 	"bytes"
-	"encoding/csv"
 	"encoding/json"
 	"fmt"
 	"strconv"
 	"strings"
+	"unicode"
 
 	"xensql/internal/database"
 )
@@ -83,27 +83,43 @@ func exportJSON(result *database.QueryResult) (string, error) {
 	return strings.TrimRight(b.String(), "\n"), nil
 }
 
+// Hand-escaped: NULL bare, ” quoted - mirrors csvFormatter in exportResult.ts.
 func exportCSV(result *database.QueryResult) (string, error) {
 	var b strings.Builder
-	w := csv.NewWriter(&b)
-	if err := w.Write(result.Columns); err != nil {
-		return "", err
-	}
+	writeCSVRecord(&b, result.Columns)
 	for _, row := range result.Rows {
+		b.WriteByte('\n')
 		record := make([]string, len(row))
 		for i, v := range row {
-			record[i] = sanitizeCSVCell(cellString(v))
+			if v == nil {
+				record[i] = ""
+				continue
+			}
+			record[i] = escapeCSVCell(sanitizeCSVCell(fmt.Sprint(v)))
 		}
-		if err := w.Write(record); err != nil {
-			return "", err
+		b.WriteString(strings.Join(record, ","))
+	}
+	return b.String(), nil
+}
+
+func writeCSVRecord(b *strings.Builder, fields []string) {
+	for i, f := range fields {
+		if i > 0 {
+			b.WriteByte(',')
 		}
+		b.WriteString(escapeCSVCell(f))
 	}
-	w.Flush()
-	if err := w.Error(); err != nil {
-		return "", err
+}
+
+func escapeCSVCell(s string) string {
+	if s == "" || s == `\.` || strings.ContainsAny(s, ",\"\n\r") || startsWithSpace(s) {
+		return `"` + strings.ReplaceAll(s, `"`, `""`) + `"`
 	}
-	// csv.Writer always appends a trailing newline; drop it to match the TS exporter.
-	return strings.TrimSuffix(b.String(), "\n"), nil
+	return s
+}
+
+func startsWithSpace(s string) bool {
+	return s != "" && unicode.IsSpace(rune(s[0]))
 }
 
 func exportSQL(result *database.QueryResult) string {

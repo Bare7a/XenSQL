@@ -142,7 +142,7 @@ func blockCommentEnd(s string, i, n int, nested bool) int {
 	return n
 }
 
-// quoteEnd: index past the closing quote ('' doubling; optional \x escapes), or n when unterminated.
+// quoteEnd: index past the closing quote (” doubling; optional \x escapes), or n when unterminated.
 func quoteEnd(s string, i int, quote byte, backslashEscapes bool, n int) int {
 	i++
 	for i < n {

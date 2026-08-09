@@ -3,6 +3,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { Page } from '@playwright/test';
 import { expect, test } from '@support/fixtures';
+import { stubImportFilePicker } from '@support/importFile';
 import type { SchemaPage } from '../pages/schema-page';
 import { COLOR, COLOR_INDEX, FORUM, POSTGRES_DEV, POSTGRES_READONLY } from './screenshot-db';
 
@@ -12,9 +13,6 @@ const OUT_DIR = path.resolve(screenshotsDir, '../../.github/screenshots');
 // 20 rows headed by the `public.users` columns; the dialog shows the path, so it's overridable.
 const IMPORT_CSV = process.env.XENSQL_SCREENSHOT_CSV ?? path.join(screenshotsDir, 'fixtures', 'users.csv');
 const IMPORT_CSV_COLUMNS = 13;
-
-/** Wails binding ID of `App.PickImportFile` (frontend/bindings/…/app.ts). */
-const PICK_IMPORT_FILE_ID = 452154835;
 
 const GET_ALL_POSTS_SQL = 'SELECT * FROM posts p ORDER BY p.id;';
 const PLAN_SQL = `SELECT c.name AS category, u.display_name AS author,
@@ -216,15 +214,6 @@ async function waitForCellViewerSyntax(page: Page): Promise<void> {
     .poll(async () => token.evaluate((el) => getComputedStyle(el).color), { timeout: 15_000 })
     .not.toBe('rgb(255, 255, 255)');
   await page.waitForTimeout(250);
-}
-
-/** Server mode has no native file dialog, so answer that one binding with a fixture path. */
-async function stubImportFilePicker(page: Page, filePath: string): Promise<void> {
-  await page.route('**/wails/runtime', async (route) => {
-    const body = route.request().postDataJSON() as { args?: { methodID?: number } } | null;
-    if (body?.args?.methodID !== PICK_IMPORT_FILE_ID) return route.fallback();
-    await route.fulfill({ contentType: 'application/json', body: JSON.stringify(filePath) });
-  });
 }
 
 async function createFolder(page: Page, name: string): Promise<void> {

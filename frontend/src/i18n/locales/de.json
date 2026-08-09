@@ -314,7 +314,7 @@
     "formatJson": "JSON",
     "formatMarkdown": "Markdown",
     "formatSql": "SQL INSERT",
-    "progress": "Exportiert… {{done}} von {{total}} Zeilen geschrieben",
+    "progress": "Exportiere… {{done}} von {{total}} Zeilen geschrieben",
     "stop": "Stoppen"
   },
   "sidebar": {
@@ -696,6 +696,7 @@
     "reading": "Datei wird gelesen",
     "columnsHeading": "Spalten",
     "detectedDelimiter": "Trennzeichen: {{delimiter}}",
+    "fileRows": "{{rows}} Zeile(n)",
     "sourceColumn": "In der Datei",
     "sample": "Erster Wert",
     "targetColumn": "Laden nach",
@@ -706,8 +707,9 @@
     "run": "Importieren",
     "running": "Importiere…",
     "stop": "Anhalten",
-    "progressRows": "{{rows}} Zeile(n) gelesen · {{inserted}} eingefügt",
-    "progressStatements": "Anweisung {{done}} von {{total}}",
+    "progressRows": "Importiere… {{rows}} Zeilen gelesen",
+    "progressRowsOf": "Importiere… {{done}} von {{total}} Zeilen gelesen",
+    "progressStatements": "Importiere… {{done}} von {{total}} Anweisungen ausgeführt",
     "doneRows": "{{count}} Zeile(n) importiert, {{skipped}} übersprungen",
     "doneStatements": "{{count}} Anweisung(en) ausgeführt, {{skipped}} übersprungen",
     "cancelledNote": "Vorzeitig angehalten - die bereits geladenen Zeilen bleiben erhalten.",

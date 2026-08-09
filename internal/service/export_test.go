@@ -275,3 +275,19 @@ func TestExportFormatIsCaseInsensitive(t *testing.T) {
 		t.Fatalf("JSON (uppercase) should work: %v", err)
 	}
 }
+
+// Both exporters: NULL bare, ” quoted.
+func TestExportCSVDistinguishesNullFromEmptyString(t *testing.T) {
+	result := &database.QueryResult{
+		Columns: []string{"a", "b"},
+		Rows:    [][]any{{nil, ""}},
+	}
+	out, err := ExportResult(result, "csv")
+	if err != nil {
+		t.Fatalf("ExportResult: %v", err)
+	}
+	want := "a,b\n,\"\""
+	if out != want {
+		t.Errorf("csv = %q, want %q", out, want)
+	}
+}

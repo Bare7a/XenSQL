@@ -7,7 +7,9 @@
   margin: 0;
 }
 
+/* flex-shrink: 0 or the flex-column body squashes this box and overflow:hidden clips the rows. */
 .import-preview {
+  flex-shrink: 0;
   border: 1px solid var(--border);
   border-radius: var(--radius);
   overflow: hidden;
@@ -22,11 +24,6 @@
   background: var(--bg-elevated);
   border-bottom: 1px solid var(--border);
   font-size: var(--text-sm);
-}
-
-.import-map-scroll {
-  max-height: 21.5rem;
-  overflow: auto;
 }
 
 /* Fixed layout so the columns split the dialog evenly in every language
@@ -46,9 +43,6 @@
 }
 
 .import-map-table thead th {
-  position: sticky;
-  top: 0;
-  z-index: 1;
   background: var(--bg-elevated);
   font-weight: 600;
   font-size: var(--text-2xs);
@@ -61,10 +55,11 @@
   border-top: 1px solid var(--border);
 }
 
+/* A width floor would push the fixed-layout table sideways. */
 .import-map-table input,
 .import-map-table select {
   width: 100%;
-  min-width: 90px;
+  min-width: 0;
 }
 
 .import-source-name {
@@ -87,12 +82,6 @@
 .import-row-skipped .import-source-name,
 .import-row-skipped .import-sample {
   opacity: 0.45;
-}
-
-.import-progress {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-5);
 }
 
 .import-result {

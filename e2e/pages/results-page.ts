@@ -151,4 +151,11 @@ export class ResultsPage {
     await this.exportDialog.getByRole('button', { name: 'Cancel' }).click();
     await expect(this.exportDialog).toBeHidden();
   }
+
+  /** Copies the export to the clipboard (which closes the dialog) and returns its text. */
+  async copyExportToClipboard(): Promise<string> {
+    await this.exportDialog.getByRole('button', { name: 'Copy to clipboard' }).click();
+    await expect(this.exportDialog).toBeHidden();
+    return this.page.evaluate(() => navigator.clipboard.readText());
+  }
 }

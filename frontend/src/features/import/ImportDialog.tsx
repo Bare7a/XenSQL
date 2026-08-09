@@ -1,8 +1,10 @@
+import type { TFunction } from 'i18next';
 import { CircleAlert, CircleCheck, FileSpreadsheet, FileText, FolderOpen, Loader2 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useImportRun } from '@/features/import/hooks/useImportRun';
+import { type ImportProgress, useImportRun } from '@/features/import/hooks/useImportRun';
 import { Modal } from '@/shared/components/Modal';
+import { formatCount, TaskProgress } from '@/shared/components/TaskProgress';
 import { api } from '@/shared/lib/api';
 import { cx } from '@/shared/lib/cx';
 import { formatError } from '@/shared/lib/normalize';
@@ -107,6 +109,15 @@ export function ImportDialog({ connectionId, schema, tables, initialTable, onClo
     }
   };
 
+  const shownProgress: ImportProgress = progress ?? {
+    processed: 0,
+    inserted: 0,
+    skipped: 0,
+    bytesRead: 0,
+    totalBytes: preview?.totalBytes ?? 0,
+    totalRows: kind === 'csv' ? (preview?.totalRows ?? 0) : 0,
+  };
+
   const targetTable = target === 'new' ? newTable.trim() : existingTable;
   const mappedCount = mapping.filter((m) => m.trim()).length;
   const canRun =
@@ -167,7 +178,7 @@ export function ImportDialog({ connectionId, schema, tables, initialTable, onClo
     setColumnTypes((prev) => prev.map((c, idx) => (idx === i ? value : c)));
 
   return (
-    <Modal title={t('import.title')} onClose={dismiss} size="lg">
+    <Modal title={t('import.title')} onClose={dismiss} size="lg" scrollBody>
       <div className="modal-body">
         <div className={cx(kind === 'csv' && 'form-row-fluid')}>
           <div className="form-group">
@@ -373,6 +384,7 @@ export function ImportDialog({ connectionId, schema, tables, initialTable, onClo
                 <div className="import-preview-head">
                   <span>{t('import.columnsHeading')}</span>
                   <span className="text-muted ui-text-2xs">
+                    {preview.totalRows > 0 && `${t('import.fileRows', { rows: formatCount(preview.totalRows) })} · `}
                     {t('import.detectedDelimiter', { delimiter: displayDelimiter(preview.delimiter) })}
                   </span>
                 </div>
@@ -429,19 +441,8 @@ export function ImportDialog({ connectionId, schema, tables, initialTable, onClo
 
         {kind !== 'csv' && stopOnErrorCheck}
 
-        {running && progress && (
-          <div className="import-progress" aria-live="polite">
-            <p className="text-muted">
-              {kind === 'sql'
-                ? t('import.progressStatements', { done: progress.processed, total: progress.totalBytes })
-                : t('import.progressRows', { rows: progress.processed, inserted: progress.inserted })}
-            </p>
-            <progress
-              className="export-progress-bar"
-              value={kind === 'sql' ? progress.processed : progress.bytesRead}
-              max={kind === 'sql' ? progress.totalBytes || 1 : progress.totalBytes || 1}
-            />
-          </div>
+        {running && (
+          <TaskProgress label={progressLabel(t, kind, shownProgress)} {...progressBar(kind, shownProgress)} />
         )}
 
         {error && (
@@ -455,8 +456,11 @@ export function ImportDialog({ connectionId, schema, tables, initialTable, onClo
             <p>
               {result.cancelled ? <CircleAlert className="icon-xs" /> : <CircleCheck className="icon-xs" />}{' '}
               {kind === 'sql'
-                ? t('import.doneStatements', { count: result.statements, skipped: result.skipped })
-                : t('import.doneRows', { count: result.inserted, skipped: result.skipped })}
+                ? t('import.doneStatements', {
+                    count: formatCount(result.statements),
+                    skipped: formatCount(result.skipped),
+                  })
+                : t('import.doneRows', { count: formatCount(result.inserted), skipped: formatCount(result.skipped) })}
             </p>
             {result.cancelled && <p className="text-muted ui-text-2xs">{t('import.cancelledNote')}</p>}
             {!!result.errors?.length && (
@@ -484,4 +488,23 @@ export function ImportDialog({ connectionId, schema, tables, initialTable, onClo
 
 function displayDelimiter(d: string): string {
   return d === '\t' ? '\\t' : d;
+}
+
+function progressLabel(t: TFunction, kind: ImportKind, p: ImportProgress): string {
+  if (kind === 'sql') {
+    return t('import.progressStatements', { done: formatCount(p.processed), total: formatCount(p.totalBytes) });
+  }
+  if (p.totalRows > 0) {
+    return t('import.progressRowsOf', {
+      done: formatCount(Math.min(p.processed, p.totalRows)),
+      total: formatCount(p.totalRows),
+    });
+  }
+  return t('import.progressRows', { rows: formatCount(p.processed) });
+}
+
+function progressBar(kind: ImportKind, p: ImportProgress): { value: number; max: number } {
+  if (kind === 'sql') return { value: p.processed, max: p.totalBytes };
+  if (p.totalRows > 0) return { value: Math.min(p.processed, p.totalRows), max: p.totalRows };
+  return { value: p.bytesRead, max: p.totalBytes };
 }

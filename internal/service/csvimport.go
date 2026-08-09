@@ -2,7 +2,6 @@ package service
 
 import (
 	"bufio"
-	"encoding/csv"
 	"fmt"
 	"io"
 	"strconv"
@@ -15,7 +14,7 @@ type CSVOptions struct {
 	// Delimiter is empty to sniff it. Quoting is always the CSV standard.
 	Delimiter string `json:"delimiter,omitempty"`
 	HasHeader bool   `json:"hasHeader"`
-	// NullLiteral is the text that becomes SQL NULL; blank fields always are.
+	// NullLiteral is extra text that becomes SQL NULL; a bare empty field already is.
 	NullLiteral string `json:"nullLiteral,omitempty"`
 	// SkipRows drops leading lines before the header is read.
 	SkipRows  int  `json:"skipRows,omitempty"`
@@ -82,7 +81,7 @@ func countFields(line string, delim rune) int {
 	return fields
 }
 
-func NewCSVReader(r io.Reader, opts CSVOptions) (*csv.Reader, error) {
+func NewCSVReader(r io.Reader, opts CSVOptions) (*CSVReader, error) {
 	br := bufio.NewReaderSize(r, 64*1024)
 	if err := stripBOM(br); err != nil {
 		return nil, err
@@ -95,13 +94,7 @@ func NewCSVReader(r io.Reader, opts CSVOptions) (*csv.Reader, error) {
 	if err != nil {
 		return nil, err
 	}
-	reader := csv.NewReader(br)
-	reader.Comma = delim
-	// Keep reading a ragged file so the import reports bad rows instead of aborting.
-	reader.FieldsPerRecord = -1
-	reader.LazyQuotes = true
-	reader.TrimLeadingSpace = opts.TrimSpace
-	return reader, nil
+	return &CSVReader{br: br, comma: delim, trim: opts.TrimSpace}, nil
 }
 
 func skipLines(br *bufio.Reader, n int) error {

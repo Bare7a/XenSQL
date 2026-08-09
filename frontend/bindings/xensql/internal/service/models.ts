@@ -13,7 +13,7 @@ export class CSVOptions {
     "hasHeader": boolean;
 
     /**
-     * NullLiteral is the text that becomes SQL NULL; blank fields always are.
+     * NullLiteral is extra text that becomes SQL NULL; a bare empty field already is.
      */
     "nullLiteral"?: string;
 

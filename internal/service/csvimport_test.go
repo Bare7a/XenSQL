@@ -77,14 +77,14 @@ func TestNewCSVReaderStripsBOMAndSkipsRows(t *testing.T) {
 	if err != nil {
 		t.Fatalf("read header: %v", err)
 	}
-	if header[0] != "name" {
-		t.Errorf("header[0] = %q, want %q", header[0], "name")
+	if header[0].Value != "name" {
+		t.Errorf("header[0] = %q, want %q", header[0].Value, "name")
 	}
 	row, err := reader.Read()
 	if err != nil {
 		t.Fatalf("read row: %v", err)
 	}
-	if row[0] != "Alice" || row[1] != "30" {
+	if row[0].Value != "Alice" || row[1].Value != "30" {
 		t.Errorf("row = %v", row)
 	}
 	if _, err := reader.Read(); err != io.EOF {
@@ -97,8 +97,8 @@ func TestNewCSVReaderSniffsDelimiter(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NewCSVReader: %v", err)
 	}
-	if reader.Comma != ';' {
-		t.Errorf("Comma = %q, want ';'", reader.Comma)
+	if reader.Comma() != ';' {
+		t.Errorf("Comma = %q, want ';'", reader.Comma())
 	}
 	rec, _ := reader.Read()
 	if len(rec) != 2 {

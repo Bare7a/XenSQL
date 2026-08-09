@@ -152,6 +152,11 @@ export class ImportPreview {
     "totalBytes": number;
     "truncated": boolean;
 
+    /**
+     * 0 when the file was too large to count.
+     */
+    "totalRows": number;
+
     /** Creates a new ImportPreview instance. */
     constructor($$source: Partial<ImportPreview> = {}) {
         if (!("columns" in $$source)) {
@@ -174,6 +179,9 @@ export class ImportPreview {
         }
         if (!("truncated" in $$source)) {
             this["truncated"] = false;
+        }
+        if (!("totalRows" in $$source)) {
+            this["totalRows"] = 0;
         }
 
         Object.assign(this, $$source);

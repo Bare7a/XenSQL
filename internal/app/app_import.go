@@ -2,13 +2,13 @@ package app
 
 import (
 	"context"
-	"encoding/csv"
 	"errors"
 	"fmt"
 	"io"
 	"os"
 	"strings"
 	"sync/atomic"
+	"time"
 
 	"xensql/internal/database"
 	"xensql/internal/service"
@@ -21,6 +21,11 @@ const maxReportedErrors = 20
 
 const defaultImportBatchSize = 500
 
+// Above this the row count is skipped; bytes drive the bar.
+const maxRowCountBytes = 64 << 20
+
+const progressInterval = 100 * time.Millisecond
+
 type ImportPreview struct {
 	Columns []string   `json:"columns"`
 	Rows    [][]string `json:"rows"`
@@ -31,6 +36,8 @@ type ImportPreview struct {
 	Delimiter  string `json:"delimiter"`
 	TotalBytes int64  `json:"totalBytes"`
 	Truncated  bool   `json:"truncated"`
+	// 0 when the file was too large to count.
+	TotalRows int64 `json:"totalRows"`
 }
 
 type CSVImportRequest struct {
@@ -72,6 +79,8 @@ type ImportProgressEvent struct {
 	Skipped    int64  `json:"skipped"`
 	BytesRead  int64  `json:"bytesRead"`
 	TotalBytes int64  `json:"totalBytes"`
+	// 0 when unknown; BytesRead then drives the bar.
+	TotalRows int64 `json:"totalRows"`
 }
 
 type ImportDoneEvent struct {
@@ -120,6 +129,8 @@ func (a *App) PreviewImportFile(connectionID, path string, opts service.CSVOptio
 	if info, statErr := file.Stat(); statErr == nil {
 		totalBytes = info.Size()
 	}
+	// Before the sample, which consumes the reader.
+	totalRows := countCSVRows(file, opts, totalBytes)
 	reader, err := service.NewCSVReader(file, opts)
 	if err != nil {
 		return ImportPreview{}, err
@@ -152,13 +163,46 @@ func (a *App) PreviewImportFile(connectionID, path string, opts service.CSVOptio
 		Rows:          rows,
 		InferredTypes: inferred,
 		SQLTypes:      sqlTypes,
-		Delimiter:     string(reader.Comma),
+		Delimiter:     string(reader.Comma()),
 		TotalBytes:    totalBytes,
 		Truncated:     truncated,
+		TotalRows:     totalRows,
 	}, nil
 }
 
-func readSample(reader *csv.Reader, hasHeader bool, limit int) (columns []string, rows [][]string, truncated bool, err error) {
+// countCSVRows counts with the import's own reader settings; 0 when too big to scan twice.
+func countCSVRows(file *os.File, opts service.CSVOptions, totalBytes int64) int64 {
+	defer func() { _, _ = file.Seek(0, io.SeekStart) }()
+	if totalBytes > maxRowCountBytes {
+		return 0
+	}
+	if _, err := file.Seek(0, io.SeekStart); err != nil {
+		return 0
+	}
+	reader, err := service.NewCSVReader(file, opts)
+	if err != nil {
+		return 0
+	}
+	if opts.HasHeader {
+		if _, hErr := reader.Read(); hErr != nil {
+			return 0
+		}
+	}
+	var rows int64
+	for {
+		_, readErr := reader.Read()
+		if readErr == io.EOF {
+			return rows
+		}
+		if readErr != nil {
+			// An I/O failure must not report a half count.
+			return 0
+		}
+		rows++
+	}
+}
+
+func readSample(reader *service.CSVReader, hasHeader bool, limit int) (columns []string, rows [][]string, truncated bool, err error) {
 	first, err := reader.Read()
 	if err == io.EOF {
 		return nil, nil, false, fmt.Errorf("the file is empty")
@@ -167,10 +211,10 @@ func readSample(reader *csv.Reader, hasHeader bool, limit int) (columns []string
 		return nil, nil, false, err
 	}
 	if hasHeader {
-		columns = service.UniqueColumnNames(first)
+		columns = service.UniqueColumnNames(service.CSVValues(first))
 	} else {
 		columns = service.PositionalHeader(len(first))
-		rows = append(rows, padRow(first, len(columns)))
+		rows = append(rows, padRow(service.CSVValues(first), len(columns)))
 	}
 	for len(rows) < limit {
 		rec, readErr := reader.Read()
@@ -181,7 +225,7 @@ func readSample(reader *csv.Reader, hasHeader bool, limit int) (columns []string
 			// A malformed row shouldn't sink the preview; show what we have.
 			return columns, rows, false, nil
 		}
-		rows = append(rows, padRow(rec, len(columns)))
+		rows = append(rows, padRow(service.CSVValues(rec), len(columns)))
 	}
 	if _, readErr := reader.Read(); readErr == nil {
 		truncated = true
@@ -256,6 +300,8 @@ func (a *App) runCSVImport(
 	if info, statErr := file.Stat(); statErr == nil {
 		totalBytes = info.Size()
 	}
+	// Before the byte counter, so bytesRead covers only the import's own pass.
+	em.totalRows = countCSVRows(file, req.Options, totalBytes)
 	counter := &countingReader{r: file}
 	reader, err := service.NewCSVReader(counter, req.Options)
 	if err != nil {
@@ -294,7 +340,7 @@ func (a *App) runCSVImport(
 		}
 	}
 
-	boolCols := boolColumns(req.ColumnTypes, sources)
+	conv := a.valueConverter(ctx, s, schema, req, targets, sources)
 	result := &ImportResult{}
 	batch := make([][]any, 0, batchSize)
 
@@ -332,20 +378,21 @@ func (a *App) runCSVImport(
 			continue
 		}
 		processed++
-		batch = append(batch, buildValues(record, sources, boolCols, req.Options.NullLiteral, req.Options.TrimSpace))
+		batch = append(batch, conv.buildValues(record, sources))
 		if len(batch) >= batchSize {
 			if fErr := flush(); fErr != nil {
 				return nil, fErr
 			}
-			em.progress(processed, result.Inserted, result.Skipped, counter.n.Load(), totalBytes)
 		}
+		// Throttled, so a file smaller than one batch still reports progress.
+		em.progress(processed, result.Inserted, result.Skipped, counter.n.Load(), totalBytes)
 	}
 	if !result.Cancelled {
 		if fErr := flush(); fErr != nil {
 			return nil, fErr
 		}
 	}
-	em.progress(processed, result.Inserted, result.Skipped, counter.n.Load(), totalBytes)
+	em.progressNow(processed, result.Inserted, result.Skipped, counter.n.Load(), totalBytes)
 	return result, nil
 }
 
@@ -382,36 +429,162 @@ func execInsert(ctx context.Context, s database.Session, schema, table string, t
 	return s.ExecuteArgs(ctx, stmt, args)
 }
 
-func buildValues(record []string, sources []int, boolCols map[int]bool, nullLiteral string, trim bool) []any {
+// valueConv turns one CSV record into insert parameters; built once per run.
+type valueConv struct {
+	// boolCols hit real boolean columns; boolIntCols load bool-shaped data into numerics as 1/0.
+	boolCols    map[int]bool
+	boolIntCols map[int]bool
+	// dateCols need MySQL's datetime literal rather than RFC 3339.
+	dateCols map[int]bool
+	// textCols can hold ''; elsewhere a quoted empty field still means NULL.
+	textCols    map[int]bool
+	nullLiteral string
+	trim        bool
+	// pgx encodes only Go bools into Postgres booleans; MySQL/SQLite take 1/0.
+	boolAsBool bool
+}
+
+// A quoted empty field is ”; a bare one is NULL - the distinction Postgres COPY csv draws.
+func (c *valueConv) buildValues(record []service.CSVField, sources []int) []any {
 	out := make([]any, len(sources))
 	for i, src := range sources {
 		if src >= len(record) {
 			out[i] = nil
 			continue
 		}
-		v := record[src]
-		if trim {
+		field := record[src]
+		v := field.Value
+		if c.trim {
 			v = strings.TrimSpace(v)
 		}
-		if v == "" || (nullLiteral != "" && v == nullLiteral) {
+		if c.nullLiteral != "" && v == c.nullLiteral {
 			out[i] = nil
 			continue
 		}
-		if boolCols[i] {
-			out[i] = normalizeBool(v)
+		if v == "" {
+			if field.Quoted && c.textCols[i] {
+				out[i] = ""
+				continue
+			}
+			out[i] = nil
 			continue
 		}
-		out[i] = v
+		v = undefuseFormula(v)
+		switch {
+		case c.boolCols[i]:
+			out[i] = normalizeBool(v, c.boolAsBool)
+		case c.boolIntCols[i]:
+			out[i] = normalizeBool(v, false)
+		case c.dateCols[i]:
+			out[i] = mysqlDateTime(v)
+		default:
+			out[i] = v
+		}
 	}
 	return out
 }
 
+// Reverses the export's spreadsheet-formula guard (a leading ' before = + - @).
+func undefuseFormula(v string) string {
+	if len(v) < 2 || v[0] != '\'' {
+		return v
+	}
+	switch v[1] {
+	case '=', '+', '-', '@':
+		return v[1:]
+	}
+	return v
+}
+
+// Rewrites RFC 3339 into the literal MySQL accepts; anything else passes through.
+func mysqlDateTime(v string) string {
+	if ts, err := time.Parse(time.RFC3339Nano, v); err == nil {
+		return ts.Format("2006-01-02 15:04:05.999999")
+	}
+	return v
+}
+
+// New tables: types from the request; existing tables: the catalog.
+func (a *App) valueConverter(
+	ctx context.Context,
+	s database.Session,
+	schema string,
+	req CSVImportRequest,
+	targets []string,
+	sources []int,
+) *valueConv {
+	conv := &valueConv{
+		boolCols:    map[int]bool{},
+		boolIntCols: map[int]bool{},
+		dateCols:    map[int]bool{},
+		textCols:    map[int]bool{},
+		nullLiteral: req.Options.NullLiteral,
+		trim:        req.Options.TrimSpace,
+		boolAsBool:  s.DriverType() == database.DriverPostgres,
+	}
+	mysql := s.DriverType() == database.DriverMySQL
+	reqBool := boolColumns(req.ColumnTypes, sources)
+
+	if req.CreateTable {
+		conv.boolCols = reqBool
+		for i, src := range sources {
+			t := database.ImportText
+			if src < len(req.ColumnTypes) && req.ColumnTypes[src] != "" {
+				t = database.ImportColumnType(req.ColumnTypes[src])
+			}
+			conv.textCols[i] = t == database.ImportText
+			if mysql && (t == database.ImportDate || t == database.ImportTimestamp) {
+				conv.dateCols[i] = true
+			}
+		}
+		return conv
+	}
+
+	cols, err := s.ListColumns(ctx, schema, req.Table)
+	if err != nil {
+		// No catalog: raw strings everywhere, and honour the quoting.
+		for i := range targets {
+			conv.textCols[i] = true
+		}
+		return conv
+	}
+	byName := make(map[string]string, len(cols))
+	for _, col := range cols {
+		byName[strings.ToLower(col.Name)] = col.DataType
+	}
+	for i, target := range targets {
+		dataType, known := byName[strings.ToLower(target)]
+		conv.textCols[i] = !known || database.AcceptsEmptyString(dataType)
+		upper := strings.ToUpper(strings.TrimSpace(dataType))
+		switch {
+		case strings.Contains(upper, "BOOL"):
+			conv.boolCols[i] = true
+		case reqBool[i] && !conv.textCols[i]:
+			// 1/0 into numerics; text targets keep the value as written.
+			conv.boolIntCols[i] = true
+		}
+		if mysql {
+			switch upper {
+			case "DATE", "DATETIME", "TIMESTAMP":
+				conv.dateCols[i] = true
+			}
+		}
+	}
+	return conv
+}
+
 // Unrecognised text passes through so the engine reports it rather than this rewriting data.
-func normalizeBool(v string) any {
+func normalizeBool(v string, asBool bool) any {
 	switch strings.ToLower(strings.TrimSpace(v)) {
 	case "true", "t", "yes", "y", "1":
+		if asBool {
+			return true
+		}
 		return 1
 	case "false", "f", "no", "n", "0":
+		if asBool {
+			return false
+		}
 		return 0
 	}
 	return v
@@ -520,9 +693,11 @@ func (a *App) runSQLImport(ctx context.Context, em *importEmitter, connectionID 
 }
 
 type importEmitter struct {
-	app      *App
-	importID string
-	seq      int
+	app       *App
+	importID  string
+	seq       int
+	totalRows int64
+	lastEmit  time.Time
 }
 
 func (e *importEmitter) nextSeq() int {
@@ -531,7 +706,16 @@ func (e *importEmitter) nextSeq() int {
 	return seq
 }
 
+// Safe to call per row: drops anything arriving inside progressInterval.
 func (e *importEmitter) progress(processed, inserted, skipped, bytesRead, totalBytes int64) {
+	if time.Since(e.lastEmit) < progressInterval {
+		return
+	}
+	e.progressNow(processed, inserted, skipped, bytesRead, totalBytes)
+}
+
+func (e *importEmitter) progressNow(processed, inserted, skipped, bytesRead, totalBytes int64) {
+	e.lastEmit = time.Now()
 	e.app.emit("import:progress", ImportProgressEvent{
 		Seq:        e.nextSeq(),
 		ImportID:   e.importID,
@@ -540,6 +724,7 @@ func (e *importEmitter) progress(processed, inserted, skipped, bytesRead, totalB
 		Skipped:    skipped,
 		BytesRead:  bytesRead,
 		TotalBytes: totalBytes,
+		TotalRows:  e.totalRows,
 	})
 }
 

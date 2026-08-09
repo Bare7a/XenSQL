@@ -16,6 +16,7 @@ export interface ImportProgress {
   skipped: number;
   bytesRead: number;
   totalBytes: number;
+  totalRows: number;
 }
 
 // The frontend mints the id, so a cancelled run's events can't be mistaken for this one's.
@@ -28,7 +29,7 @@ export function useImportRun(connectionId: string | null) {
 
   useEffect(() => {
     const unsubProgress = Events.On('import:progress', (e) => {
-      const p = (e.data as ImportProgressPayload[] | undefined)?.[0];
+      const p = e.data as ImportProgressPayload | undefined;
       if (!p || p.importId !== activeId.current) return;
       setProgress({
         processed: p.processed,
@@ -36,10 +37,11 @@ export function useImportRun(connectionId: string | null) {
         skipped: p.skipped,
         bytesRead: p.bytesRead,
         totalBytes: p.totalBytes,
+        totalRows: p.totalRows,
       });
     });
     const unsubDone = Events.On('import:done', (e) => {
-      const d = (e.data as ImportDonePayload[] | undefined)?.[0];
+      const d = e.data as ImportDonePayload | undefined;
       if (!d || d.importId !== activeId.current) return;
       activeId.current = null;
       setRunning(false);

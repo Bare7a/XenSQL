@@ -143,6 +143,8 @@ export interface ImportPreview {
   delimiter: string;
   totalBytes: number;
   truncated: boolean;
+  /** 0 when the file was too large to count. */
+  totalRows: number;
 }
 
 export interface CSVImportRequest {
@@ -182,6 +184,8 @@ export interface ImportProgressPayload {
   skipped: number;
   bytesRead: number;
   totalBytes: number;
+  /** 0 when unknown; bytesRead then drives the bar. */
+  totalRows: number;
 }
 
 export interface ImportDonePayload {

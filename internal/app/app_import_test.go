@@ -282,16 +282,22 @@ func TestResolveMapping(t *testing.T) {
 
 func TestNormalizeBool(t *testing.T) {
 	for _, v := range []string{"true", "T", "yes", "Y", "1"} {
-		if got := normalizeBool(v); got != 1 {
-			t.Errorf("normalizeBool(%q) = %v, want 1", v, got)
+		if got := normalizeBool(v, false); got != 1 {
+			t.Errorf("normalizeBool(%q, false) = %v, want 1", v, got)
+		}
+		if got := normalizeBool(v, true); got != true {
+			t.Errorf("normalizeBool(%q, true) = %v, want true", v, got)
 		}
 	}
 	for _, v := range []string{"false", "F", "no", "N", "0"} {
-		if got := normalizeBool(v); got != 0 {
-			t.Errorf("normalizeBool(%q) = %v, want 0", v, got)
+		if got := normalizeBool(v, false); got != 0 {
+			t.Errorf("normalizeBool(%q, false) = %v, want 0", v, got)
+		}
+		if got := normalizeBool(v, true); got != false {
+			t.Errorf("normalizeBool(%q, true) = %v, want false", v, got)
 		}
 	}
-	if got := normalizeBool("maybe"); got != "maybe" {
+	if got := normalizeBool("maybe", true); got != "maybe" {
 		t.Errorf("normalizeBool(\"maybe\") = %v, want it unchanged", got)
 	}
 }
@@ -321,6 +327,79 @@ func TestPreviewImportFile(t *testing.T) {
 	}
 	if preview.Truncated {
 		t.Error("a 2-row file should not report truncation")
+	}
+	if preview.TotalRows != 2 {
+		t.Errorf("totalRows = %d, want 2", preview.TotalRows)
+	}
+}
+
+// The count must cover the whole file, not just the preview sample.
+func TestPreviewImportFileCountsEveryRow(t *testing.T) {
+	var b strings.Builder
+	b.WriteString("id,name\n")
+	for i := 1; i <= previewRowLimit*3; i++ {
+		fmt.Fprintf(&b, "%d,name%d\n", i, i)
+	}
+	a, connID, path := importFixture(t, "people.csv", b.String())
+
+	preview, err := a.PreviewImportFile(connID, path, service.CSVOptions{HasHeader: true})
+	if err != nil {
+		t.Fatalf("PreviewImportFile: %v", err)
+	}
+	if len(preview.Rows) != previewRowLimit || !preview.Truncated {
+		t.Errorf("sample = %d rows, truncated = %v", len(preview.Rows), preview.Truncated)
+	}
+	if preview.TotalRows != int64(previewRowLimit*3) {
+		t.Errorf("totalRows = %d, want %d", preview.TotalRows, previewRowLimit*3)
+	}
+}
+
+// An unterminated quote is data under lazy quoting, counted like the import will load it.
+func TestPreviewImportFileCountsLazyQuotedRows(t *testing.T) {
+	csv := "id,name\n1,Alice\n2,\"unterminated\n"
+	a, connID, path := importFixture(t, "people.csv", csv)
+
+	preview, err := a.PreviewImportFile(connID, path, service.CSVOptions{HasHeader: true})
+	if err != nil {
+		t.Fatalf("PreviewImportFile: %v", err)
+	}
+	if preview.TotalRows != 2 {
+		t.Errorf("totalRows = %d, want 2", preview.TotalRows)
+	}
+}
+
+func TestPreviewImportFileHeaderOnlyCountsNoRows(t *testing.T) {
+	a, connID, path := importFixture(t, "people.csv", "id,name\n")
+	preview, err := a.PreviewImportFile(connID, path, service.CSVOptions{HasHeader: true})
+	if err != nil {
+		t.Fatalf("PreviewImportFile: %v", err)
+	}
+	if preview.TotalRows != 0 {
+		t.Errorf("totalRows = %d, want 0", preview.TotalRows)
+	}
+}
+
+// The row target rides on every progress event.
+func TestImportCSVReportsRowTarget(t *testing.T) {
+	csv := "id,name\n1,Alice\n2,Bob\n3,Carol\n"
+	a, connID, path := importFixture(t, "people.csv", csv)
+	mustExecSQL(t, a, connID, "CREATE TABLE people (id INTEGER, name TEXT)")
+
+	targets, sources, err := resolveMapping([]string{"id", "name"})
+	if err != nil {
+		t.Fatalf("resolveMapping: %v", err)
+	}
+	em := &importEmitter{app: a, importID: "test"}
+	if _, err = a.runCSVImport(context.Background(), em, connID, CSVImportRequest{
+		Path:    path,
+		Table:   "people",
+		Options: service.CSVOptions{HasHeader: true},
+		Mapping: []string{"id", "name"},
+	}, targets, sources); err != nil {
+		t.Fatalf("runCSVImport: %v", err)
+	}
+	if em.totalRows != 3 {
+		t.Errorf("emitter totalRows = %d, want 3", em.totalRows)
 	}
 }
 
@@ -447,5 +526,94 @@ func mustExecSQL(t *testing.T, a *App, connID, sql string) {
 	t.Helper()
 	if _, err := a.ExecuteQuery(connID, sql); err != nil {
 		t.Fatalf("exec %q: %v", sql, err)
+	}
+}
+
+// Bare empty field → NULL; quoted → ”. This is what re-imports into a NOT NULL column.
+func TestImportCSVKeepsQuotedEmptyStringApartFromNull(t *testing.T) {
+	csv := "id,a,b\n1,,\"\"\n"
+	a, connID, path := importFixture(t, "blanks.csv", csv)
+	mustExecSQL(t, a, connID, "CREATE TABLE t (id INTEGER, a TEXT, b TEXT NOT NULL)")
+
+	result := runCSV(t, a, connID, CSVImportRequest{
+		Path:    path,
+		Table:   "t",
+		Options: service.CSVOptions{HasHeader: true},
+		Mapping: []string{"id", "a", "b"},
+	})
+	if result.Inserted != 1 || result.Skipped != 0 {
+		t.Fatalf("result = %+v, want 1 inserted", result)
+	}
+	rows := queryAll(t, a, connID, "SELECT a IS NULL, b IS NULL, b FROM t")
+	if rows[0][0] != "1" {
+		t.Errorf("bare empty field should be NULL, got %v", rows[0])
+	}
+	if rows[0][1] != "0" || rows[0][2] != "" {
+		t.Errorf("quoted empty field should be an empty string, got %v", rows[0])
+	}
+}
+
+func TestImportCSVStripsFormulaGuardApostrophe(t *testing.T) {
+	csv := "v\n'=1+1\n'@handle\n'-not a number\n'plain\nO'Brien\n"
+	a, connID, path := importFixture(t, "formulas.csv", csv)
+	mustExecSQL(t, a, connID, "CREATE TABLE t (v TEXT)")
+
+	result := runCSV(t, a, connID, CSVImportRequest{
+		Path:    path,
+		Table:   "t",
+		Options: service.CSVOptions{HasHeader: true},
+		Mapping: []string{"v"},
+	})
+	if result.Inserted != 5 {
+		t.Fatalf("result = %+v", result)
+	}
+	rows := queryAll(t, a, connID, "SELECT v FROM t")
+	got := make([]string, 0, len(rows))
+	for _, r := range rows {
+		got = append(got, r[0])
+	}
+	want := []string{"=1+1", "@handle", "-not a number", "'plain", "O'Brien"}
+	if strings.Join(got, "|") != strings.Join(want, "|") {
+		t.Errorf("values = %v, want %v", got, want)
+	}
+}
+
+func TestImportCSVNullLiteralBeatsQuoting(t *testing.T) {
+	csv := "v\n\"\\N\"\n"
+	a, connID, path := importFixture(t, "nulls.csv", csv)
+	mustExecSQL(t, a, connID, "CREATE TABLE t (v TEXT)")
+
+	result := runCSV(t, a, connID, CSVImportRequest{
+		Path:    path,
+		Table:   "t",
+		Options: service.CSVOptions{HasHeader: true, NullLiteral: `\N`},
+		Mapping: []string{"v"},
+	})
+	if result.Inserted != 1 {
+		t.Fatalf("result = %+v", result)
+	}
+	rows := queryAll(t, a, connID, "SELECT v IS NULL FROM t")
+	if rows[0][0] != "1" {
+		t.Errorf("the NULL literal should win over quoting, got %v", rows[0])
+	}
+}
+
+func TestImportCSVBoolShapedTextStaysText(t *testing.T) {
+	a, connID, path := importFixture(t, "flags.csv", "v\ntrue\nf\n")
+	mustExecSQL(t, a, connID, "CREATE TABLE t (v TEXT)")
+
+	result := runCSV(t, a, connID, CSVImportRequest{
+		Path:        path,
+		Table:       "t",
+		Options:     service.CSVOptions{HasHeader: true},
+		Mapping:     []string{"v"},
+		ColumnTypes: []string{"bool"},
+	})
+	if result.Inserted != 2 {
+		t.Fatalf("result = %+v", result)
+	}
+	rows := queryAll(t, a, connID, "SELECT v FROM t ORDER BY rowid")
+	if rows[0][0] != "true" || rows[1][0] != "f" {
+		t.Errorf("values = %v, want [true f]", rows)
 	}
 }

@@ -25,6 +25,38 @@ var sqlTypeNames = map[ImportColumnType]struct{ postgres, mysql, sqlite string }
 	ImportText:      {"text", "TEXT", "TEXT"},
 }
 
+// Matched as substrings, so VARCHAR(50), LONGTEXT, NVARCHAR etc. all hit.
+var emptyStringTypes = []string{"CHAR", "TEXT", "CLOB", "STRING", "ENUM", "SET", "BINARY", "BLOB", "BYTEA"}
+
+// AcceptsEmptyString reports whether this type can hold ”; unknown or blank types are assumed to.
+func AcceptsEmptyString(dataType string) bool {
+	upper := strings.ToUpper(strings.TrimSpace(dataType))
+	if upper == "" {
+		return true
+	}
+	for _, t := range emptyStringTypes {
+		if strings.Contains(upper, t) {
+			return true
+		}
+	}
+	return !knownNonTextType(upper)
+}
+
+// Types that reject ” outright.
+var nonTextTypes = []string{
+	"INT", "SERIAL", "DECIMAL", "NUMERIC", "FLOAT", "DOUBLE", "REAL", "MONEY", "BIT",
+	"BOOL", "DATE", "TIME", "YEAR", "JSON", "UUID", "INTERVAL", "XML", "OID", "ARRAY",
+}
+
+func knownNonTextType(upper string) bool {
+	for _, t := range nonTextTypes {
+		if strings.Contains(upper, t) {
+			return true
+		}
+	}
+	return false
+}
+
 func SQLTypeFor(driver DriverType, t ImportColumnType) string {
 	names, ok := sqlTypeNames[t]
 	if !ok {

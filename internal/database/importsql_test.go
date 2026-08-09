@@ -129,3 +129,40 @@ func TestBuildTruncate(t *testing.T) {
 		t.Errorf("BuildTruncate() = %q", got)
 	}
 }
+
+func TestAcceptsEmptyString(t *testing.T) {
+	cases := map[string]bool{
+		"TEXT":              true,
+		"text":              true,
+		"VARCHAR(50)":       true,
+		"character varying": true,
+		"LONGTEXT":          true,
+		"NVARCHAR(10)":      true,
+		"CHAR(1)":           true,
+		"ENUM('a','b')":     true,
+		"BYTEA":             true,
+		"BLOB":              true,
+		"":                  true, // SQLite's flexible typing
+		"widget_status":     true, // unknown domain type: assume text-shaped
+		"INT":               false,
+		"INTEGER":           false,
+		"BIGINT":            false,
+		"SERIAL":            false,
+		"DECIMAL(10,2)":     false,
+		"numeric":           false,
+		"DOUBLE PRECISION":  false,
+		"REAL":              false,
+		"BOOLEAN":           false,
+		"DATE":              false,
+		"DATETIME":          false,
+		"TIMESTAMP":         false,
+		"TIME":              false,
+		"JSONB":             false,
+		"UUID":              false,
+	}
+	for dataType, want := range cases {
+		if got := AcceptsEmptyString(dataType); got != want {
+			t.Errorf("AcceptsEmptyString(%q) = %v, want %v", dataType, got, want)
+		}
+	}
+}

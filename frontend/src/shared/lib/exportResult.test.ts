@@ -80,6 +80,18 @@ describe('exportResultToText - csv', () => {
     const out = exportResultToText(sample(), 'csv');
     expect(out).toContain('3,eve,\n'.trimEnd());
   });
+  it('writes NULL bare but quotes an empty string, so the two survive a re-import', () => {
+    const r: QueryResult = {
+      columns: ['a', 'b'],
+      columnTypes: ['text', 'text'],
+      rows: [[null, '']],
+      rowCount: 1,
+      affectedRows: 0,
+      durationMs: 0,
+      tableName: 't',
+    };
+    expect(exportResultToText(r, 'csv').split('\n')[1]).toBe(',""');
+  });
   it('quotes leading-whitespace fields and the \\. sentinel (matching Go csv)', () => {
     const r: QueryResult = {
       columns: ['v'],
