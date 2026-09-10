@@ -20,7 +20,7 @@ We welcome all kinds of contributions - bug reports, feature ideas, documentatio
 
 ### Requirements
 
-- Go 1.26+
+- Go 1.27+
 - [Wails v3](https://v3.wails.io/) CLI (`wails3`)
 - Node.js 24+
 - On Linux: `libgtk-4-dev libwebkitgtk-6.0-dev` (GTK4 + WebKitGTK 6.0)

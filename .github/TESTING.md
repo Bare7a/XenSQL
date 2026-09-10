@@ -48,7 +48,7 @@ export, …) against real database servers started from
 ### Requirements
 
 - Docker with Compose v2 (`docker compose`) **or** Podman (`podman compose`)
-- Go 1.26+
+- Go 1.27+
 
 ### Run it
 
