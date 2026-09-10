@@ -1,6 +1,6 @@
 # ⚡ XenSQL
 
-![Go](https://img.shields.io/badge/Go-1.26+-00ADD8?style=for-the-badge&logo=go)
+![Go](https://img.shields.io/badge/Go-1.27+-00ADD8?style=for-the-badge&logo=go)
 ![Wails](https://img.shields.io/badge/Wails-v3-4B275F?style=for-the-badge)
 ![Node.js](https://img.shields.io/badge/Node.js-v26-5FA04E?style=for-the-badge&logo=nodedotjs&logoColor=white)
 ![License](https://img.shields.io/badge/license-GPL--3.0-blue?style=for-the-badge)
@@ -416,7 +416,7 @@ XenSQL uses **[Wails v3](https://v3.wails.io/)**, which embeds a web UI into a n
 
 ## Requirements
 
-- Go 1.26+
+- Go 1.27+
 - [Wails v3](https://v3.wails.io/) CLI (`wails3`)
 - Node.js 24.16+
 

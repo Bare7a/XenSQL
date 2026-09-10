@@ -1,7 +1,7 @@
 {
   "name": "xensql-frontend",
   "private": true,
-  "version": "1.5.2",
+  "version": "1.5.3",
   "homepage": "https://xensql.bare7a.eu",
   "type": "module",
   "scripts": {
@@ -21,26 +21,26 @@
     "@fontsource/inter": "^5.3.0",
     "@fontsource/fira-code": "^5.3.0",
     "@monaco-editor/react": "^4.7.0",
-    "@tanstack/react-virtual": "^3.14.9",
+    "@tanstack/react-virtual": "^3.14.11",
     "@wailsio/runtime": "latest",
-    "i18next": "^26.3.6",
-    "lucide-react": "^1.31.0",
+    "i18next": "^26.4.2",
+    "lucide-react": "^1.44.0",
     "monaco-editor": "^0.56.0",
-    "react": "^19.2.8",
-    "react-dom": "^19.2.8",
-    "react-i18next": "^17.0.11",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "react-i18next": "^17.0.13",
     "sql-formatter": "^15.8.2",
-    "zustand": "^5.0.14"
+    "zustand": "^5.0.15"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.5.8",
+    "@biomejs/biome": "2.5.13",
     "@types/node": "^26.2.0",
-    "@types/react": "^19.2.18",
-    "@types/react-dom": "^19.2.4",
-    "@vitejs/plugin-react": "^6.0.5",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.1.1",
     "typescript": "^7.0.2",
-    "vite": "^8.2.1",
-    "vitest": "^4.1.10"
+    "vite": "^8.3.0",
+    "vitest": "^5.0.0"
   },
   "overrides": {
     "dompurify": "^3.4.13"
