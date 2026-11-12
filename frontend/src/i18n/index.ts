@@ -50,7 +50,7 @@ export function subscribeLanguageChanged(listener: () => void): () => void {
 
 /** Use outside React (toasts, dialogs, Monaco). */
 export function t(key: string, options?: Record<string, unknown>): string {
-  return i18n.t(key, options);
+  return i18n.t(key, options ?? {});
 }
 
 export function initI18n(): void {

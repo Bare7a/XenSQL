@@ -3,6 +3,7 @@ package app
 import (
 	"os"
 	"path/filepath"
+	"runtime"
 	"testing"
 )
 
@@ -51,6 +52,9 @@ func TestAppendTextFileTruncatesExistingContents(t *testing.T) {
 }
 
 func TestAppendTextFileCreatesWithOwnerOnlyPermissions(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("Windows has no Unix permission bits: Go reports 0666 for any writable file")
+	}
 	a := &App{}
 	path := filepath.Join(t.TempDir(), "export.csv")
 	if err := a.AppendTextFile(path, "x", true); err != nil {

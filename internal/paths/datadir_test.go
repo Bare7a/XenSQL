@@ -105,8 +105,11 @@ func TestPortableDataDir(t *testing.T) {
 }
 
 func TestMacAppBundleParent(t *testing.T) {
-	if parent, ok := macAppBundleParent("/Applications/XenSQL.app/Contents/MacOS"); !ok || parent != "/Applications" {
-		t.Fatalf("bundle path: got (%q, %v), want (\"/Applications\", true)", parent, ok)
+	// macAppBundleParent works on native paths (filepath), as TestPortableDataDir
+	// expects, so on Windows the parent comes back with backslashes.
+	want := filepath.FromSlash("/Applications")
+	if parent, ok := macAppBundleParent("/Applications/XenSQL.app/Contents/MacOS"); !ok || parent != want {
+		t.Fatalf("bundle path: got (%q, %v), want (%q, true)", parent, ok, want)
 	}
 	if _, ok := macAppBundleParent("/usr/local/bin"); ok {
 		t.Fatal("non-bundle path should not be detected as a bundle")

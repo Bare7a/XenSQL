@@ -2,7 +2,7 @@
 
 ![Go](https://img.shields.io/badge/Go-1.27+-00ADD8?style=for-the-badge&logo=go)
 ![Wails](https://img.shields.io/badge/Wails-v3-4B275F?style=for-the-badge)
-![Node.js](https://img.shields.io/badge/Node.js-v26-5FA04E?style=for-the-badge&logo=nodedotjs&logoColor=white)
+![Node.js](https://img.shields.io/badge/Node.js-24+-5FA04E?style=for-the-badge&logo=nodedotjs&logoColor=white)
 ![License](https://img.shields.io/badge/license-GPL--3.0-blue?style=for-the-badge)
 ![Status](https://img.shields.io/badge/status-active-success?style=for-the-badge)
 
@@ -417,8 +417,8 @@ XenSQL uses **[Wails v3](https://v3.wails.io/)**, which embeds a web UI into a n
 ## Requirements
 
 - Go 1.27+
-- [Wails v3](https://v3.wails.io/) CLI (`wails3`)
-- Node.js 24.16+
+- [Wails v3](https://v3.wails.io/) CLI (`wails3`) v3.1 or newer
+- Node.js 24+
 
 ## Dev setup
 
@@ -461,19 +461,22 @@ wails3 task build       # or: wails3 task package  (platform bundle/installer)
 
 # 🧰 Tech Stack
 
-| Layer      | Technology                                                                  |
-| ---------- | --------------------------------------------------------------------------- |
-| Backend    | [Go](https://go.dev/)                                                       |
-| Desktop    | [Wails v3](https://v3.wails.io/)                                            |
-| UI         | [React](https://react.dev/) + [TypeScript](https://www.typescriptlang.org/) |
-| Editor     | [Monaco Editor](https://microsoft.github.io/monaco-editor/)                 |
-| PostgreSQL | [pgx](https://github.com/jackc/pgx)                                         |
-| MySQL      | [go-sql-driver/mysql](https://github.com/go-sql-driver/mysql)               |
-| SQLite     | [modernc.org/sqlite](https://pkg.go.dev/modernc.org/sqlite)                 |
-| Tables     | [TanStack Virtual](https://tanstack.com/virtual)                            |
-| State      | [Zustand](https://zustand-demo.pmnd.rs/)                                    |
-| Icons      | [Lucide](https://lucide.dev/)                                               |
-| i18n       | [i18next](https://www.i18next.com/)                                         |
+| Layer         | Technology                                                                  | Version     |
+| ------------- | --------------------------------------------------------------------------- | ----------- |
+| Backend       | [Go](https://go.dev/)                                                       | 1.27        |
+| Desktop       | [Wails](https://v3.wails.io/)                                               | 3.1         |
+| UI            | [React](https://react.dev/) + [TypeScript](https://www.typescriptlang.org/) | 19.3 / 7.0  |
+| Editor        | [Monaco Editor](https://microsoft.github.io/monaco-editor/)                 | 0.57        |
+| PostgreSQL    | [pgx](https://github.com/jackc/pgx)                                         | 5.13        |
+| MySQL         | [go-sql-driver/mysql](https://github.com/go-sql-driver/mysql)               | 1.10        |
+| SQLite        | [modernc.org/sqlite](https://pkg.go.dev/modernc.org/sqlite)                 | 1.62        |
+| Tables        | [TanStack Virtual](https://tanstack.com/virtual)                            | 3.14        |
+| State         | [Zustand](https://zustand-demo.pmnd.rs/)                                    | 5.1         |
+| Icons         | [Lucide](https://lucide.dev/)                                               | 1.72        |
+| i18n          | [i18next](https://www.i18next.com/)                                         | 27.1        |
+| Build         | [Vite](https://vite.dev/)                                                   | 8.3         |
+| Lint / format | [Biome](https://biomejs.dev/)                                               | 2.6         |
+| Tests         | [Vitest](https://vitest.dev/) + [Playwright](https://playwright.dev/)       | 5.1 / 1.65  |
 
 ---
 
