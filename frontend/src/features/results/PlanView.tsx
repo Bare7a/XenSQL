@@ -1,3 +1,4 @@
+import type { TFunction } from 'i18next';
 import { ChevronDown, ChevronRight, Code2, Copy, ListTree, TriangleAlert } from 'lucide-react';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -353,7 +354,7 @@ const PlanTreeRow = memo(function PlanTreeRow({
   );
 });
 
-function planRowsTitle(t: (key: string, opts?: Record<string, unknown>) => string, node: PlanNode): string {
+function planRowsTitle(t: TFunction, node: PlanNode): string {
   if (node.rowsActual != null && node.rowsPlanned != null) {
     return t('results.planRowsTitle', {
       actual: formatPlanRows(node.rowsActual),

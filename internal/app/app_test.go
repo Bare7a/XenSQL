@@ -61,6 +61,10 @@ func appForTest(t *testing.T) *App {
 	t.Helper()
 	dir := t.TempDir()
 	a := NewApp()
+	// Close whatever the test opened, as Wails does on exit. Cleanups run last-in
+	// first-out, so this runs before t.TempDir removes the SQLite files - which
+	// Windows refuses to do while they are still open.
+	t.Cleanup(func() { _ = a.ServiceShutdown() })
 	a.ctx = context.Background()
 	var err error
 	if a.store, err = storage.NewStore(dir); err != nil {

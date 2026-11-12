@@ -3,6 +3,7 @@ package storage
 import (
 	"os"
 	"path/filepath"
+	"runtime"
 	"testing"
 )
 
@@ -53,6 +54,9 @@ func TestWriteFileAtomicOverwritesAndLeavesNoTempFiles(t *testing.T) {
 }
 
 func TestWriteFileAtomicAppliesPermission(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("Windows has no Unix permission bits: Go reports 0666 for any writable file")
+	}
 	dir := t.TempDir()
 	path := filepath.Join(dir, "out.json")
 	if err := writeFileAtomic(path, []byte("x"), 0o600); err != nil {
